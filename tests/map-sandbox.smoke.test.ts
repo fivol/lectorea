@@ -77,7 +77,9 @@ describe('map sandbox', () => {
     expect(html).toMatch(/<script>[\s\S]{2000,}<\/script>/);
   });
 
-  it('runs to completion against a DOM stub', () => {
+  // Generous: the stub fires timers synchronously, so one run of this test is
+  // two full map generations at final quality — the real work, not a mock of it.
+  it('runs to completion against a DOM stub', { timeout: 120_000 }, () => {
     const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
     expect(scripts.length).toBe(2);
 

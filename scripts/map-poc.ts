@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { generateMap, defaultConfig, type MapConfig } from '../shared/mapgen.js';
+import {
+  buildDomainGraph,
+  classifyLandforms,
+  defaultLandformConfig,
+} from '../shared/domain-graph.js';
 import { loadSources, reportSourceError } from './lib/sources.js';
 
 /**
@@ -26,7 +31,20 @@ function main(): void {
     }
   }
 
-  const map = generateMap(sources.domains, counts, overrides);
+  const landformConfig = { ...defaultLandformConfig, seed: overrides.seed ?? defaultConfig.seed };
+  const edges = buildDomainGraph(sources.domains, sources.courses, landformConfig);
+  const topology = classifyLandforms(sources.domains, edges, counts, landformConfig);
+
+  const map = generateMap(
+    {
+      domains: sources.domains,
+      courseCounts: counts,
+      landform: new Map([...topology].map(([id, t]) => [id, t.landform])),
+      reaches: new Map([...topology].map(([id, t]) => [id, t.reaches])),
+      edges,
+    },
+    overrides
+  );
 
   const titles = JSON.parse(fs.readFileSync(path.join('data', 'i18n', 'ru.json'), 'utf8')) as Record<
     string,
@@ -38,6 +56,21 @@ function main(): void {
 
   const shadow = map.coasts
     .map((c) => `<path d="${c.path}" fill="#16324a" opacity="0.4" transform="translate(0 10)"/>`)
+    .join('');
+  // Only bridges that touch an island are drawn. Continent-to-continent links
+  // are numerous and run straight across other people's land — as a picture
+  // they are a scribble, and the island ones are the ones that explain
+  // something: why that domain is out there on its own.
+  const offshore = new Set(
+    map.coasts.filter((c) => c.kind === 'island').flatMap((c) => c.id.replace('island:', ''))
+  );
+  const bridges = map.links
+    .filter((l) => offshore.has(l.from) || offshore.has(l.to))
+    .map(
+      (l) =>
+        `<path d="M${l.a.x.toFixed(1)} ${l.a.y.toFixed(1)}L${l.b.x.toFixed(1)} ${l.b.y.toFixed(1)}" ` +
+        `stroke="#f4f6f8" stroke-width="2" stroke-dasharray="6 5" opacity="0.55" fill="none"/>`
+    )
     .join('');
   const fills = map.territories
     .map(
@@ -64,6 +97,7 @@ function main(): void {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${map.viewBox}">
 <rect width="100%" height="100%" fill="#cfe6f0"/>
 ${shadow}
+${bridges}
 <g stroke="#fdfbf4" stroke-width="1.8" stroke-linejoin="round">${fills}</g>
 ${coast}
 ${labels}
@@ -77,6 +111,8 @@ ${labels}
     `mean area error ${(map.metrics.areaError * 100).toFixed(1)}%`,
     `worst           ${(map.metrics.worstAreaError * 100).toFixed(1)}%`,
     `dep adjacency   ${(map.metrics.adjacencyRate * 100).toFixed(0)}%`,
+    `landmasses      ${map.coasts.length} (островов ${map.coasts.filter((c) => c.kind === 'island').length})`,
+    `bridges         ${map.links.length}`,
     `elapsed         ${map.metrics.elapsedMs} ms`,
     `svg             ${(Buffer.byteLength(svg) / 1024).toFixed(0)} KB`,
     '',
