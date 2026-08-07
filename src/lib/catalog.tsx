@@ -167,14 +167,22 @@ export function useFilteredCourses(
     );
     for (const course of core) visible.add(course.id);
 
-    // One hop of context around the selection, dimmed rather than hidden — and
-    // never past the stage cap, which outranks the context.
+    /**
+     * One hop *upstream* as context, dimmed rather than hidden: what the
+     * domain's own courses need in order to be started.
+     *
+     * Dependants are deliberately not included. Robotics needs linear algebra,
+     * but that says nothing about mathematics — pulling it in put an
+     * engineering course into the maths view, four columns from anything that
+     * referred to it. The arrow only points one way for this purpose: a filter
+     * on a field answers "what do I need for this", not "who else uses it".
+     *
+     * `related` is out for the same reason — it is a lateral link, not
+     * something the course rests on.
+     */
     for (const course of core) {
-      for (const neighbour of [...course.deps, ...course.soft, ...course.related]) {
+      for (const neighbour of [...course.deps, ...course.soft]) {
         if (!visible.has(neighbour) && withinCap.has(neighbour)) dimmed.add(neighbour);
-      }
-      for (const dependant of catalog.dependants.get(course.id) ?? []) {
-        if (!visible.has(dependant) && withinCap.has(dependant)) dimmed.add(dependant);
       }
     }
 
