@@ -6,5 +6,8 @@
  * fixed card height are enough for the build's ordering to show up as rows that
  * line up across columns.
  */
-export const CARD_WIDTH = 180;
-export const CARD_HEIGHT = 140;
+export const CARD_WIDTH = 200;
+export const CARD_HEIGHT = 180;
+
+/** Height of the artwork strip; the rest of the card is text. */
+export const CARD_ART_HEIGHT = 60;

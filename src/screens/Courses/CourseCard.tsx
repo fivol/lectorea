@@ -2,7 +2,7 @@ import { memo } from 'react';
 import type { BuiltCourse, BuiltDomain } from '@shared/schema';
 import { useT } from '@/i18n';
 import { withAlpha } from '@/lib/format';
-import { CARD_HEIGHT, CARD_WIDTH } from '@/lib/layout';
+import { CARD_ART_HEIGHT, CARD_HEIGHT, CARD_WIDTH } from '@/lib/layout';
 import { EMPHASIS_OPACITY, type Emphasis } from '@/lib/highlight';
 import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
@@ -68,7 +68,7 @@ function CourseCardInner({
         boxShadow: selected ? `0 0 0 3px ${withAlpha(accent, 0.2)}, var(--shadow-card)` : undefined,
       }}
     >
-      <div className="relative h-[72px] w-full">
+      <div className="relative w-full" style={{ height: CARD_ART_HEIGHT }}>
         <CourseArt courseId={course.id} color={colour} className="h-full w-full" />
         {empty ? (
           <span className="absolute right-1.5 top-1.5 rounded bg-canvas/70 px-1.5 py-0.5 text-[10px] text-ink-faint">
@@ -77,11 +77,19 @@ function CourseCardInner({
         ) : null}
       </div>
 
-      <div className="flex h-[calc(100%-72px)] flex-col justify-between p-2">
+      <div
+        className="flex flex-col gap-1 p-2"
+        style={{ height: `calc(100% - ${CARD_ART_HEIGHT}px)` }}
+      >
         <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-ink">
           {t(`course.${course.id}.title`)}
         </span>
-        <span className="flex items-center justify-between gap-1">
+        {/* The one-line description earns its place here: a title alone leaves
+            "Общая алгебра" and "Теория категорий" looking interchangeable. */}
+        <span className="line-clamp-3 text-[11px] leading-snug text-ink-dim">
+          {t(`course.${course.id}.desc`)}
+        </span>
+        <span className="mt-auto flex items-center justify-between gap-1">
           {/* The column number says where the course sits in this catalogue;
               this says when a person actually meets it, which is the question
               people arrive with. */}
