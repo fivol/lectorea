@@ -185,9 +185,18 @@ button.ghost { width: 100%; margin-top: 10px; color: var(--ink-faint); }
 .label.is-active .label-meta { display: block; }
 `;
 
+/**
+ * Only the part of esbuild this script calls. Declared here rather than
+ * imported: esbuild is reached through vite at runtime and is not a direct
+ * dependency, so `typeof import('esbuild')` would fail `tsc` for everyone.
+ */
+type Bundler = {
+  build(options: Record<string, unknown>): Promise<{ outputFiles: Array<{ text: string }> }>;
+};
+
 async function main(): Promise<void> {
   const require = createRequire(await import.meta.resolve('vite'));
-  const esbuild = require('esbuild') as typeof import('esbuild');
+  const esbuild = require('esbuild') as Bundler;
 
   // Read from the sources rather than from a build output: the sandbox has to
   // work in a fresh checkout, before anything has been built.
