@@ -1,4 +1,11 @@
-import { defaultConfig, generateMap, type MapConfig, type MapResult } from '../../shared/mapgen.js';
+import {
+  bridgeMarkup,
+  defaultConfig,
+  generateMap,
+  templateSvg,
+  type MapConfig,
+  type MapResult,
+} from '../../shared/mapgen.js';
 import {
   buildDomainGraph,
   classifyLandforms,
@@ -39,6 +46,8 @@ const CONTINENT_LABEL: Record<Continent, string> = {
 let config: MapConfig = structuredClone(defaultConfig);
 let landform: LandformConfig = structuredClone(defaultLandformConfig);
 let showTemplate = false;
+let templateBorders = true;
+let templateLinks = true;
 let hovered: string | null = null;
 /**
  * The graph and the landform classification are recomputed with the map, not
@@ -162,6 +171,16 @@ const panel = el('aside', { class: 'panel' });
 const stage = el('main', { class: 'stage' });
 app.append(panel, stage);
 
+/** A checkbox that redraws. The template options are read at render time. */
+function toggle(label: string, checked: boolean, set: (on: boolean) => void): HTMLElement {
+  const box = el('input', { type: 'checkbox', checked });
+  box.addEventListener('change', () => {
+    set(box.checked);
+    paint();
+  });
+  return el('label', { class: 'toggle' }, [box, document.createTextNode(` ${label}`)]);
+}
+
 function buildPanel(): void {
   panel.replaceChildren();
 
@@ -237,17 +256,15 @@ function buildPanel(): void {
         el('button', { class: 'accent', textContent: 'Шаблон для нейросети (JPG)', onclick: () => exportRaster('map-template.jpg', true) }),
         el('button', { textContent: 'Конфиг (JSON)', onclick: () => download('map.config.json', JSON.stringify({ map: config, landform }, null, 2), 'application/json') }),
       ]),
-      el('label', { class: 'toggle' }, [
-        (() => {
-          const box = el('input', { type: 'checkbox', checked: showTemplate });
-          box.addEventListener('change', () => {
-            showTemplate = box.checked;
-            paint();
-          });
-          return box;
-        })(),
-        document.createTextNode(' Показывать шаблон вместо карты'),
-      ]),
+      toggle('Показывать шаблон вместо карты', showTemplate, (on) => {
+        showTemplate = on;
+      }),
+      toggle('  · внутренние границы областей', templateBorders, (on) => {
+        templateBorders = on;
+      }),
+      toggle('  · пунктирные связи через океан', templateLinks, (on) => {
+        templateLinks = on;
+      }),
       el('button', {
         class: 'ghost',
         textContent: 'Сбросить настройки',
@@ -282,19 +299,7 @@ function svgMarkup(template: boolean): string {
   const { width, height, viewBox } = result;
 
   if (template) {
-    // The conditioning image for the image model: land white, ocean black,
-    // coast heavy, internal divisions faint. The model is being told where the
-    // land is — the borders it invents inside are not used for anything, since
-    // the vector supplies every boundary the site actually hit-tests.
-    const coast = result.coasts.map((c) => `<path d="${c.path}" fill="#ffffff"/>`).join('');
-    const divisions = result.territories
-      .map((t) => `<path d="${t.path}" fill="none" stroke="#9a9a9a" stroke-width="1.6"/>`)
-      .join('');
-    const outline = result.coasts
-      .map((c) => `<path d="${c.path}" fill="none" stroke="#000000" stroke-width="5"/>`)
-      .join('');
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="${width}" height="${height}">
-<rect width="100%" height="100%" fill="#000000"/>${coast}${divisions}${outline}</svg>`;
+    return templateSvg(result, { borders: templateBorders, links: templateLinks });
   }
 
   const shadow = result.coasts
@@ -316,21 +321,12 @@ function svgMarkup(template: boolean): string {
     .map((c) => `<path d="${c.path}" fill="none" stroke="#fdfbf4" stroke-width="4.5" stroke-linejoin="round"/>`)
     .join('');
 
-  // Only bridges that touch an island are drawn. Continent-to-continent links
-  // are numerous and run straight over other people's land — as a picture they
-  // are a scribble, while the island ones explain something: why that domain
-  // ended up out there on its own.
-  const offshore = new Set(
-    result.coasts.filter((c) => c.kind === 'island').map((c) => c.id.replace('island:', ''))
-  );
-  const links = result.links
-    .filter((l) => offshore.has(l.from) || offshore.has(l.to))
-    .map(
-      (l) =>
-        `<path d="M${l.a.x.toFixed(1)} ${l.a.y.toFixed(1)}L${l.b.x.toFixed(1)} ${l.b.y.toFixed(1)}" ` +
-        `stroke="#5d7f92" stroke-width="1.6" stroke-dasharray="6 5" opacity="0.55" fill="none"/>`
-    )
-    .join('');
+  const links = bridgeMarkup(result, {
+    colour: '#5d7f92',
+    width: 1.6,
+    dash: '6 5',
+    opacity: 0.55,
+  });
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet">
 <rect width="100%" height="100%" fill="#cfe6f0"/>${shadow}${links}${fills}${coast}</svg>`;
@@ -496,6 +492,7 @@ function paintMetrics(): void {
       m.upwardRate > 0.9 ? 'good' : 'warn'
     ),
     chip('Уровней', `0..${input.layers.maxLevel}`),
+    chip('Разрывов суши', String(m.torn), m.torn ? 'warn' : 'good'),
     chip('Время', `${m.elapsedMs} мс`),
     chip('Областей', String(result.territories.length)),
     chip('Суша', landformTally())

@@ -213,7 +213,6 @@ function layoutWorld(
   targetOf: (id: string) => number,
   landformOf: (id: string) => Landform,
   reachesOf: (id: string) => Continent[],
-  rowOf: (id: string) => number,
   levelOf: (id: string) => number,
   hexArea: number,
   config: MapConfig
@@ -250,18 +249,18 @@ function layoutWorld(
     // foundations everything else rests on sits low, one made of fields that
     // draw on three other continents sits high. Clamped so it stays on canvas,
     // which is also what keeps a shallow continent from hugging the edge.
-    const rows = core.members.map(rowOf);
-    const wanted = rows.length ? rows.reduce((sum, y) => sum + y, 0) / rows.length : config.height / 2;
-    const pad = core.ry + 8;
+    // Centred, deliberately. Ranking the landmasses against each other by the
+    // average level of their contents floated every island and the shallowest
+    // continent to the top of the canvas on every variant — and it was a claim
+    // the map has no business making: the order says psychology rests on
+    // biology, not that one continent as a whole sits above another. The
+    // vertical axis is read inside a landmass; between them it means nothing.
     world.push({
       id: core.continent,
       kind: 'continent',
       continent: core.continent,
       members: core.members,
-      centre: {
-        x: cursor + core.rx,
-        y: Math.min(config.height - pad, Math.max(pad, wanted)),
-      },
+      centre: { x: cursor + core.rx, y: config.height / 2 },
       rx: core.rx,
       ry: core.ry,
     });
@@ -291,9 +290,7 @@ function layoutWorld(
       members: [domain.id],
       centre: {
         x: start.x + (local() * 2 - 1) * config.strait * 0.5,
-        // An island keeps its row too: it depends on things, and drifting off
-        // the vertical axis would be the one place the map stopped saying so.
-        y: rowOf(domain.id) + (local() * 2 - 1) * config.height * 0.1,
+        y: start.y + (local() * 2 - 1) * config.height * 0.3,
       },
       rx: radiusFor(targetOf(domain.id)),
       ry: radiusFor(targetOf(domain.id)),
@@ -377,7 +374,11 @@ function placeSeeds(
     const high = Math.max(...levels);
     for (const id of mass.members) {
       const t = high > low ? (levelOf(id) - low) / (high - low) : 0.5;
-      rowIn.set(id, mass.centre.y + (0.5 - t) * 2 * mass.ry * 0.78);
+      // Compressed on purpose. The rows only have to establish an order, and
+      // spreading them to the full height of the ellipse strings the members
+      // out until the landmass snaps into separate pieces — the level with one
+      // member in it becomes an island of its own.
+      rowIn.set(id, mass.centre.y + (0.5 - t) * 2 * mass.ry * 0.52);
     }
   }
   const rowOf = (id: string): number => rowIn.get(id) ?? 0;
@@ -1069,6 +1070,8 @@ export type MapResult = {
     smallest: number;
     /** Share of dependencies whose source ended up below its dependant. */
     upwardRate: number;
+    /** Landmasses that came out in more than one piece. Should be zero. */
+    torn: number;
     elapsedMs: number;
   };
 };
@@ -1124,16 +1127,17 @@ function hexBudget(
  * dependencies whose source ended up lower on the map than the domain that
  * rests on it.
  *
- * The layout only ever asks for this, it cannot promise it — a domain is also
- * being pulled sideways by its relatives and pushed around by its neighbours'
- * areas. So the claim is measured rather than assumed, and a number that drops
+ * Only within a landmass: that is the whole of what the map claims. The layout
+ * only ever asks for even that, it cannot promise it — a domain is also being
+ * pulled sideways by its relatives and pushed around by its neighbours' areas. So the claim is measured rather than assumed, and a number that drops
  * after a data change is the signal that the map has stopped meaning what it
  * used to.
  */
 function upwardRate(
   domains: Domain[],
   territories: Territory[],
-  levels: Map<string, number>
+  levels: Map<string, number>,
+  homeOf: Map<string, string>
 ): number {
   const at = new Map(territories.map((t) => [t.id, t.label.y]));
   let wanted = 0;
@@ -1141,6 +1145,11 @@ function upwardRate(
 
   for (const domain of domains) {
     for (const source of domain.dependsOn) {
+      // Only pairs sharing a landmass are counted. The layout stopped ranking
+      // continents against each other on purpose, so scoring a dependency that
+      // crosses an ocean would be marking it down for keeping a promise the
+      // map no longer makes.
+      if (homeOf.get(domain.id) !== homeOf.get(source)) continue;
       const mine = at.get(domain.id);
       const theirs = at.get(source);
       if (mine === undefined || theirs === undefined) continue;
@@ -1173,14 +1182,11 @@ export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {})
   );
   const targetOf = (id: string) => targets.get(id) ?? 4;
 
-  // The vertical axis. Level 0 — what nothing else rests on — sits at the
-  // bottom, and each step of the dependency order climbs from there.
+  // The vertical axis, read inside a landmass: level 0 — what nothing else
+  // rests on — sits at the bottom of its own continent, and each step of the
+  // dependency order climbs from there.
   const levels = input.levels ?? new Map<string, number>();
-  const maxLevel = Math.max(1, input.maxLevel ?? Math.max(0, ...levels.values()));
-  const margin = 70;
   const levelOf = (id: string): number => levels.get(id) ?? 0;
-  const rowOf = (id: string): number =>
-    config.height - margin - (levelOf(id) / maxLevel) * (config.height - margin * 2);
 
   const random = rng(config.seed * 7919 + 13);
   const world = layoutWorld(
@@ -1188,7 +1194,6 @@ export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {})
     targetOf,
     landformOf,
     reachesOf,
-    rowOf,
     levelOf,
     hexArea,
     config
@@ -1283,8 +1288,81 @@ export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {})
       // The tightest territory, in px of inscribed radius: the number that says
       // whether the smallest name on the map still fits inside its border.
       smallest: territories.reduce((least, t) => Math.min(least, t.room), Infinity),
-      upwardRate: upwardRate(domains, territories, levels),
+      upwardRate: upwardRate(domains, territories, levels, homeOf),
+      // A landmass drawn in two pieces reads as a mistake rather than as an
+      // archipelago, and it is invisible in a thumbnail — so it is counted.
+      torn: coasts.filter((coast) => (coast.path.match(/M/g) ?? []).length > 1).length,
       elapsedMs: Date.now() - started,
     },
   };
+}
+
+/* ────────────────────────────  The neural template  ────────────────────── */
+
+export type TemplateOptions = {
+  /** Faint lines where one territory gives way to the next. */
+  borders: boolean;
+  /** Dashed lines across the straits, for the model to make bridges of. */
+  links: boolean;
+};
+
+/**
+ * The conditioning image handed to the image model: land white, ocean black.
+ *
+ * Only the coastline has to be obeyed, and it is the one thing drawn heavily.
+ * Everything inside is a hint — in a real atlas a mountain range runs straight
+ * across a border, and the vector supplies every boundary the site actually
+ * hit-tests, so whatever the model invents between the coasts costs nothing.
+ *
+ * It lives here rather than in the sandbox because it is a step of the
+ * pipeline: the build has to be able to produce it without a browser, and two
+ * implementations of the same handoff would drift.
+ */
+export function templateSvg(map: MapResult, options: TemplateOptions): string {
+  const land = map.coasts.map((c) => `<path d="${c.path}" fill="#ffffff"/>`).join('');
+
+  const divisions = options.borders
+    ? map.territories
+        .map((t) => `<path d="${t.path}" fill="none" stroke="#9a9a9a" stroke-width="1.6"/>`)
+        .join('')
+    : '';
+
+  const coast = map.coasts
+    .map((c) => `<path d="${c.path}" fill="none" stroke="#000000" stroke-width="5"/>`)
+    .join('');
+
+  const bridges = options.links
+    ? bridgeMarkup(map, { colour: '#8c8c8c', width: 3, dash: '10 9', opacity: 1 })
+    : '';
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${map.viewBox}" ` +
+    `width="${map.width}" height="${map.height}">` +
+    `<rect width="100%" height="100%" fill="#000000"/>${land}${divisions}${coast}${bridges}</svg>`
+  );
+}
+
+/**
+ * The straits worth drawing: only links that touch an island.
+ *
+ * Continent-to-continent links are numerous and run straight over other
+ * people's land — as a picture they are a scribble. An island's links are the
+ * one thing that explains why that domain ended up out there on its own.
+ */
+export function bridgeMarkup(
+  map: MapResult,
+  style: { colour: string; width: number; dash: string; opacity: number }
+): string {
+  const offshore = new Set(
+    map.coasts.filter((c) => c.kind === 'island').map((c) => c.id.replace('island:', ''))
+  );
+  return map.links
+    .filter((link) => offshore.has(link.from) || offshore.has(link.to))
+    .map(
+      (link) =>
+        `<path d="M${fixed(link.a.x)} ${fixed(link.a.y)}L${fixed(link.b.x)} ${fixed(link.b.y)}" ` +
+        `stroke="${style.colour}" stroke-width="${style.width}" ` +
+        `stroke-dasharray="${style.dash}" opacity="${style.opacity}" fill="none"/>`
+    )
+    .join('');
 }

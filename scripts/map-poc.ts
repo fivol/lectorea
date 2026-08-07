@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { generateMap, defaultConfig, type MapConfig } from '../shared/mapgen.js';
+import {
+  generateMap,
+  defaultConfig,
+  templateSvg,
+  bridgeMarkup,
+  type MapConfig,
+} from '../shared/mapgen.js';
 import {
   buildDomainGraph,
   classifyLandforms,
@@ -64,21 +70,12 @@ function main(): void {
   const shadow = map.coasts
     .map((c) => `<path d="${c.path}" fill="#16324a" opacity="0.4" transform="translate(0 10)"/>`)
     .join('');
-  // Only bridges that touch an island are drawn. Continent-to-continent links
-  // are numerous and run straight across other people's land — as a picture
-  // they are a scribble, and the island ones are the ones that explain
-  // something: why that domain is out there on its own.
-  const offshore = new Set(
-    map.coasts.filter((c) => c.kind === 'island').flatMap((c) => c.id.replace('island:', ''))
-  );
-  const bridges = map.links
-    .filter((l) => offshore.has(l.from) || offshore.has(l.to))
-    .map(
-      (l) =>
-        `<path d="M${l.a.x.toFixed(1)} ${l.a.y.toFixed(1)}L${l.b.x.toFixed(1)} ${l.b.y.toFixed(1)}" ` +
-        `stroke="#f4f6f8" stroke-width="2" stroke-dasharray="6 5" opacity="0.55" fill="none"/>`
-    )
-    .join('');
+  const bridges = bridgeMarkup(map, {
+    colour: '#f4f6f8',
+    width: 2,
+    dash: '6 5',
+    opacity: 0.55,
+  });
   const fills = map.territories
     .map(
       (t) =>
@@ -112,6 +109,14 @@ ${labels}
 `;
   fs.writeFileSync(path.join(OUT, 'map.svg'), svg, 'utf8');
 
+  // The handoff to the image model, written every run so it can be eyeballed
+  // without opening the sandbox.
+  fs.writeFileSync(
+    path.join(OUT, 'template.svg'),
+    templateSvg(map, { borders: true, links: true }),
+    'utf8'
+  );
+
   const worst = [...map.territories].sort((a, b) => Math.abs(b.areaError) - Math.abs(a.areaError));
   const report = [
     `mean area error ${(map.metrics.areaError * 100).toFixed(1)}%`,
@@ -119,6 +124,7 @@ ${labels}
     `hexes           ${map.metrics.hexes}`,
     `min label room  ${map.metrics.smallest.toFixed(0)} px`,
     `snizu vverh    ${(map.metrics.upwardRate * 100).toFixed(0)}% зависимостей идут снизу вверх`,
+    `torn            ${map.metrics.torn} разорванных массивов суши`,
     `levels          0..${layers.maxLevel}`,
     `landmasses      ${map.coasts.length} (островов ${map.coasts.filter((c) => c.kind === 'island').length})`,
     `bridges         ${map.links.length}`,
