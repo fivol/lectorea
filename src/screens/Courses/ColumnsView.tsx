@@ -3,7 +3,7 @@ import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useReducedMotion } from '@/lib/hooks';
-import { useHighlight } from '@/lib/highlight';
+import { isLit, useHighlight } from '@/lib/highlight';
 import { useUi } from '@/store/ui';
 import { useProfile } from '@/store/profile';
 import CourseCard from './CourseCard';
@@ -44,7 +44,7 @@ export default function ColumnsView({
   onDeselect,
 }: Props) {
   const catalog = useCatalog();
-  const { t, count } = useT();
+  const { t } = useT();
   const reducedMotion = useReducedMotion();
 
   const hoveredId = useUi((state) => state.hoveredCourseId);
@@ -79,6 +79,17 @@ export default function ColumnsView({
   }, [courses, visible, dimmed]);
 
   const total = columns.reduce((sum, column) => sum + column.courses.length, 0);
+
+  /**
+   * A card that unmounts under the cursor — a filter change, a domain switch —
+   * never gets its `pointerleave`, and the hover highlight would stay pinned to
+   * a course that is no longer on screen.
+   */
+  useEffect(() => {
+    if (hoveredId && !columns.some((column) => column.courses.some((c) => c.id === hoveredId))) {
+      setHovered(null);
+    }
+  }, [columns, hoveredId, setHovered]);
 
   /** Bring a course into view when the path list or the search box asks for it. */
   useEffect(() => {
@@ -124,29 +135,36 @@ export default function ColumnsView({
               <h2 className="num text-xs font-semibold uppercase tracking-wide text-ink-dim">
                 {t('ui.column.level', { n: column.level + 1 })}
               </h2>
-              <span className="num text-[11px] text-ink-faint">
-                {count(column.courses.length, 'course')}
-              </span>
             </header>
 
             <ul className="flex flex-col gap-5">
-              {column.courses.map((course) => (
-                <li key={course.id}>
-                  <CourseCard
-                    course={course}
-                    domain={catalog.domainById.get(course.domains[0])}
-                    emphasis={highlight.active ? highlight.emphasisOf(course.id) : 'self'}
-                    // The signature effect: the chain lights up right to left.
-                    delay={reducedMotion || !highlight.pinned ? 0 : highlight.depthOf(course.id) * 40}
-                    selected={course.id === selectedId}
-                    status={profile.courses[course.id]?.status ?? null}
-                    favorite={profile.courses[course.id]?.favorite ?? false}
-                    dimmedByFilter={dimmed.has(course.id)}
-                    onSelect={onSelect}
-                    onHover={setHovered}
-                  />
-                </li>
-              ))}
+              {column.courses.map((course) => {
+                const emphasis = highlight.active ? highlight.emphasisOf(course.id) : 'self';
+                return (
+                  <li key={course.id}>
+                    <CourseCard
+                      course={course}
+                      domain={catalog.domainById.get(course.domains[0])}
+                      emphasis={emphasis}
+                      // The signature effect: the chain lights up right to left.
+                      delay={reducedMotion || !highlight.pinned ? 0 : highlight.depthOf(course.id) * 40}
+                      selected={course.id === selectedId}
+                      status={profile.courses[course.id]?.status ?? null}
+                      favorite={profile.courses[course.id]?.favorite ?? false}
+                      /**
+                       * A prerequisite outside the domain filter is dimmed as
+                       * context — but once it is part of the chain being shown,
+                       * dimming it a second time is what made a maths course
+                       * permanently pale under a physics filter. Being in the
+                       * chain wins.
+                       */
+                      dimmedByFilter={dimmed.has(course.id) && !(highlight.active && isLit(emphasis))}
+                      onSelect={onSelect}
+                      onHover={setHovered}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ))}

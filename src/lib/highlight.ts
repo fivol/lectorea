@@ -94,13 +94,25 @@ export function useHighlight(
   }, [catalog, selectedId, hoveredId]);
 }
 
-/** Opacity per emphasis level — one table so the graph and the edges agree. */
+/**
+ * Opacity per emphasis level.
+ *
+ * Everything in the chain reads at full strength, the rest drops away. The
+ * transitive part used to sit at 45 %, which made the far end of a long path —
+ * exactly the part someone is trying to plan around — the hardest thing on the
+ * screen to read. The contrast that matters is chain against not-chain.
+ */
 export const EMPHASIS_OPACITY: Record<Emphasis, number> = {
   self: 1,
   direct: 1,
   downstream: 1,
-  transitive: 0.45,
-  soft: 0.7,
-  related: 0.7,
-  muted: 0.2,
+  transitive: 1,
+  soft: 0.75,
+  related: 0.75,
+  muted: 0.22,
 };
+
+/** True when the course takes part in the current highlight at all. */
+export function isLit(emphasis: Emphasis): boolean {
+  return emphasis !== 'muted';
+}

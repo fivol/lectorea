@@ -44,22 +44,21 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
     };
   }, []);
 
-  /** Domains the hovered one draws from — they glow weaker, in a cascade. */
+  /** Domains the hovered one draws from, transitively — they stay lit. */
   const sources = useMemo(() => {
-    if (!hovered) return new Map<string, number>();
-    const order = new Map<string, number>();
-    const queue: Array<{ id: string; depth: number }> = [{ id: hovered, depth: 0 }];
+    const found = new Set<string>();
+    if (!hovered) return found;
+    const queue = [hovered];
     const seen = new Set([hovered]);
     while (queue.length) {
-      const { id, depth } = queue.shift()!;
-      for (const source of catalog.domainById.get(id)?.dependsOn ?? []) {
+      for (const source of catalog.domainById.get(queue.shift()!)?.dependsOn ?? []) {
         if (seen.has(source)) continue;
         seen.add(source);
-        order.set(source, depth + 1);
-        queue.push({ id: source, depth: depth + 1 });
+        found.add(source);
+        queue.push(source);
       }
     }
-    return order;
+    return found;
   }, [hovered, catalog]);
 
   if (!map) {
@@ -69,6 +68,19 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
       </div>
     );
   }
+
+  /**
+   * SVG has no z-index — paint order is document order, so a territory drawn
+   * earlier sits under its neighbours. Scaling one up without moving it to the
+   * end left its grown edge clipped by whatever came after it, which is what
+   * made the hover look broken rather than raised.
+   */
+  const ordered = hovered
+    ? [
+        ...map.shapes.filter((shape) => shape.domainId !== hovered),
+        ...map.shapes.filter((shape) => shape.domainId === hovered),
+      ]
+    : map.shapes;
 
   const emphasisOf = (domainId: string): Emphasis => {
     if (allowed && !allowed.has(domainId)) return 'dim';
@@ -91,13 +103,12 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         aria-label={t('ui.a11y.mapRegion')}
         onPointerLeave={() => setHovered(null)}
       >
-        {map.shapes.map((shape) => {
+        {ordered.map((shape) => {
           const domain = catalog.domainById.get(shape.domainId);
           if (!domain) return null;
 
           const emphasis = emphasisOf(domain.id);
           const isHovered = hovered === domain.id;
-          const delay = reducedMotion ? 0 : (sources.get(domain.id) ?? 0) * 80;
           // Dimming only has to say "not this one" — the territory must stay
           // readable, otherwise pointing at anything blacks out half the map.
           const opacity = emphasis === 'full' ? 1 : emphasis === 'related' ? 0.88 : 0.68;
@@ -110,15 +121,20 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                  * The lift used to be an SVG `transform` attribute, which CSS
                  * transitions do not animate — every hover was a two-pixel jump.
                  * As a CSS transform it eases, and `fill-box` puts the origin at
-                 * the territory's own centre so it grows in place instead of
-                 * sliding towards the map's origin.
+                 * the territory's own centre so it grows in place.
+                 *
+                 * One duration for everything, no per-domain delays: the map
+                 * should settle into a new state as one movement. Staggering the
+                 * fade made half the territories lag the other half by a quarter
+                 * of a second, which read as the map stuttering rather than as
+                 * anything meaningful.
                  */
                 transformBox: 'fill-box',
                 transformOrigin: 'center',
-                transform: isHovered && !reducedMotion ? 'scale(1.04)' : 'scale(1)',
+                transform: isHovered && !reducedMotion ? 'scale(1.03)' : 'scale(1)',
                 transition: reducedMotion
                   ? 'none'
-                  : `opacity 180ms ease-out ${delay}ms, transform 260ms cubic-bezier(0.16, 1, 0.3, 1)`,
+                  : 'opacity 220ms ease-out, transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
                 opacity,
                 cursor: 'pointer',
               }}
@@ -148,10 +164,17 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                 strokeWidth={isHovered ? 2 : domain.bridge ? 1.4 : 1}
                 strokeDasharray={domain.bridge ? '5 4' : undefined}
                 style={{
-                  filter: isHovered ? `drop-shadow(0 4px 14px ${withAlpha(domain.color, 0.4)})` : undefined,
+                  // Both states name a shadow so the two interpolate. With
+                  // `undefined` on one side there is nothing to animate from and
+                  // the glow snapped in, which is most of what made the hover
+                  // feel abrupt.
+                  filter: `drop-shadow(0 3px 10px ${withAlpha(
+                    domain.color,
+                    isHovered && !reducedMotion ? 0.45 : 0
+                  )})`,
                   transition: reducedMotion
                     ? 'none'
-                    : 'fill 220ms ease-out, stroke-width 220ms ease-out, filter 220ms ease-out',
+                    : 'fill 220ms ease-out, stroke-width 220ms ease-out, filter 260ms ease-out',
                 }}
               />
               <Label

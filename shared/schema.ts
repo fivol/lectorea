@@ -66,6 +66,13 @@ export const Stage = z.enum([
 ]);
 export type Stage = z.infer<typeof Stage>;
 
+/** School first, doctorate last — the order the enum is declared in. */
+export const STAGE_ORDER = Stage.options;
+
+export function stageRank(stage: Stage): number {
+  return STAGE_ORDER.indexOf(stage);
+}
+
 /**
  * Structure only — no titles, no descriptions, no keywords. Those live in
  * `data/i18n/{lang}.json` under `course.{id}.*`, so that a diff on a course file
@@ -292,12 +299,19 @@ export const ProfileSchema = z.object({
       theme: z.enum(['auto', 'light', 'dark']).default('auto'),
       mapView: z.enum(['map', 'blocks']).default('map'),
       splitRatio: z.number().min(0.3).max(0.8).default(0.62),
+      /**
+       * Hide everything past this stage. A setting rather than a URL parameter:
+       * it says something about the reader, not about the view being shared, so
+       * it should hold across domains and across sessions.
+       */
+      maxStage: Stage.nullable().default(null),
     })
     .default({
       lang: 'ru',
       theme: 'auto',
       mapView: 'map',
       splitRatio: 0.62,
+      maxStage: null,
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;

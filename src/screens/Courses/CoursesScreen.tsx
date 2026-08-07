@@ -4,6 +4,7 @@ import { useT } from '@/i18n';
 import { pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
+import { STAGE_ORDER } from '@shared/schema';
 import { courseHref, useCatalogParams } from '@/lib/url';
 import { useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp } from '@/lib/format';
@@ -11,7 +12,7 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
-import Dropdown, { ActionRow, CheckRow } from '@/components/Dropdown';
+import Dropdown, { ActionRow, CheckRow, RadioRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -34,7 +35,8 @@ export default function CoursesScreen() {
   const results = useSearchResults(query);
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
-  const { visible, dimmed } = useFilteredCourses(params.domains, params.providers);
+  const maxStage = useProfile((state) => state.profile.settings.maxStage);
+  const { visible, dimmed } = useFilteredCourses(params.domains, params.providers, maxStage);
 
   const path = useMemo(
     () => (selected ? pathTo(catalog, selected.id) : []),
@@ -145,6 +147,7 @@ export default function CoursesScreen() {
           ) : null}
         </nav>
 
+        <StageFilter />
         <DomainFilter />
         <ProviderFilter />
 
@@ -254,6 +257,38 @@ export default function CoursesScreen() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * "I am in year 11" — everything past that disappears, in every domain and in
+ * the next session too, which is why it is a setting rather than a URL
+ * parameter. Picking a stage means that stage *and below*: the question is how
+ * far someone has got, not which single year they want to look at.
+ */
+function StageFilter() {
+  const { t } = useT();
+  const maxStage = useProfile((state) => state.profile.settings.maxStage);
+  const setSetting = useProfile((state) => state.setSetting);
+
+  return (
+    <Dropdown
+      label={maxStage ? t(`ui.stage.${maxStage}`) : t('ui.filter.stage.all')}
+      active={Boolean(maxStage)}
+    >
+      <RadioRow checked={!maxStage} onChange={() => setSetting('maxStage', null)}>
+        {t('ui.filter.stage.all')}
+      </RadioRow>
+      {STAGE_ORDER.map((stage) => (
+        <RadioRow
+          key={stage}
+          checked={maxStage === stage}
+          onChange={() => setSetting('maxStage', stage)}
+        >
+          {t(`ui.stage.${stage}`)}
+        </RadioRow>
+      ))}
+    </Dropdown>
   );
 }
 

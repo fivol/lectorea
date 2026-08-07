@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
@@ -30,6 +31,15 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
   const toggleFavorite = useProfile((state) => state.toggleCourseFavorite);
   const setEcho = useUi((state) => state.setEcho);
   const requestFocus = useUi((state) => state.requestFocus);
+
+  /**
+   * The echo is set by hovering a link in here and cleared on mouse-out — but
+   * closing the panel unmounts it from under the cursor, so that mouse-out
+   * never arrives and the highlight stays pinned to a course nothing is
+   * pointing at any more. Clearing on unmount covers every way the panel can go
+   * away: the ×, a click on the background, a filter change, navigation.
+   */
+  useEffect(() => () => setEcho(null), [setEcho]);
 
   const domains = course.domains
     .map((id) => catalog.domainById.get(id))
