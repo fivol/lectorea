@@ -1,0 +1,101 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { generateMap, defaultConfig, type MapConfig } from '../shared/mapgen.js';
+import { loadSources, reportSourceError } from './lib/sources.js';
+
+/**
+ * Renders the generator to an SVG plus a metrics report, for looking at from a
+ * terminal. The sandbox is the same generator with sliders — this exists so the
+ * numbers can be diffed between runs.
+ */
+
+const OUT = process.env.MAP_POC_OUT ?? '.map-poc';
+
+function main(): void {
+  const sources = loadSources();
+  const counts = new Map<string, number>();
+  for (const course of sources.courses) {
+    for (const domain of course.domains) counts.set(domain, (counts.get(domain) ?? 0) + 1);
+  }
+
+  const overrides: Partial<MapConfig> = {};
+  for (const argument of process.argv.slice(2)) {
+    const match = argument.match(/^--([a-zA-Z]+)=(.+)$/);
+    if (match && match[1] in defaultConfig) {
+      (overrides as Record<string, number>)[match[1]] = Number(match[2]);
+    }
+  }
+
+  const map = generateMap(sources.domains, counts, overrides);
+
+  const titles = JSON.parse(fs.readFileSync(path.join('data', 'i18n', 'ru.json'), 'utf8')) as Record<
+    string,
+    string
+  >;
+  const titleOf = (id: string) => titles[`domain.${id}.title`] ?? id;
+
+  fs.mkdirSync(OUT, { recursive: true });
+
+  const shadow = map.coasts
+    .map((c) => `<path d="${c.path}" fill="#16324a" opacity="0.4" transform="translate(0 10)"/>`)
+    .join('');
+  const fills = map.territories
+    .map(
+      (t) =>
+        `<path id="shape-${t.id}" data-domain="${t.id}" fill="${t.colour}" fill-opacity="0.8" d="${t.path}"/>`
+    )
+    .join('');
+  const coast = map.coasts
+    .map((c) => `<path d="${c.path}" fill="none" stroke="#fdfbf4" stroke-width="4"/>`)
+    .join('');
+  const labels = map.territories
+    .filter((t) => t.room > 15)
+    .map((t) => {
+      const size = Math.max(9, Math.min(21, t.room * 0.4));
+      return (
+        `<text x="${t.label.x.toFixed(1)}" y="${t.label.y.toFixed(1)}" font-size="${size.toFixed(1)}" ` +
+        `font-family="Helvetica,Arial,sans-serif" font-weight="700" text-anchor="middle" ` +
+        `fill="#1d2c3a" paint-order="stroke" stroke="#fff" stroke-width="${(size * 0.24).toFixed(1)}" ` +
+        `stroke-linejoin="round" stroke-opacity="0.85">${titleOf(t.id).toUpperCase()}</text>`
+      );
+    })
+    .join('');
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${map.viewBox}">
+<rect width="100%" height="100%" fill="#cfe6f0"/>
+${shadow}
+<g stroke="#fdfbf4" stroke-width="1.8" stroke-linejoin="round">${fills}</g>
+${coast}
+${labels}
+</svg>
+`;
+  fs.writeFileSync(path.join(OUT, 'map.svg'), svg, 'utf8');
+
+  const worst = [...map.territories].sort((a, b) => Math.abs(b.areaError) - Math.abs(a.areaError));
+  const report = [
+    `cells           ${map.metrics.cells}`,
+    `mean area error ${(map.metrics.areaError * 100).toFixed(1)}%`,
+    `worst           ${(map.metrics.worstAreaError * 100).toFixed(1)}%`,
+    `dep adjacency   ${(map.metrics.adjacencyRate * 100).toFixed(0)}%`,
+    `elapsed         ${map.metrics.elapsedMs} ms`,
+    `svg             ${(Buffer.byteLength(svg) / 1024).toFixed(0)} KB`,
+    '',
+    ...worst.slice(0, 6).map((t) => `  ${t.id.padEnd(22)} ${(t.areaError * 100).toFixed(1).padStart(7)}%`),
+    '',
+    'tightest label room:',
+    ...[...map.territories]
+      .sort((a, b) => a.room - b.room)
+      .slice(0, 5)
+      .map((t) => `  ${t.id.padEnd(22)} ${t.room.toFixed(0).padStart(4)} px`),
+  ].join('\n');
+
+  fs.writeFileSync(path.join(OUT, 'report.txt'), `${report}\n`, 'utf8');
+  console.log(report);
+  console.log(`\n✓ ${path.join(OUT, 'map.svg')}`);
+}
+
+try {
+  main();
+} catch (error) {
+  reportSourceError(error);
+}
