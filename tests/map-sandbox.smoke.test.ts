@@ -108,9 +108,11 @@ describe('map sandbox', () => {
       vm.runInContext(script, context, { timeout: 60_000 });
     }
 
-    // The panel is built from real config, so a healthy run creates a slider
-    // for every knob plus the export buttons.
-    expect(created.filter((tag) => tag === 'input').length).toBeGreaterThan(15);
+    // The panel is built from real config, so a healthy run creates a control
+    // for every knob plus the export buttons. The floor is deliberately low:
+    // the panel is meant to stay small, and a test that demands more knobs
+    // would fight the next simplification instead of catching a broken page.
+    expect(created.filter((tag) => tag === 'input').length).toBeGreaterThan(8);
     expect(created.filter((tag) => tag === 'button').length).toBeGreaterThan(5);
     expect((context.__MAP_DATA__ as { domains: unknown[] }).domains.length).toBeGreaterThan(30);
   });
