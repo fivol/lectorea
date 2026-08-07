@@ -3,7 +3,7 @@ import type { BuiltPlaylist, LectureLength, ProviderType } from '@shared/schema'
 import { normalize } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import Dropdown, { CheckRow, RadioRow, RangeRow } from '@/components/Dropdown';
+import Dropdown, { Caption, CheckRow, RadioRow, RangeRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import {
   activeFilterCount,
@@ -88,6 +88,11 @@ export default function PlaylistFilters({
             placeholder: t('ui.filter.searchProvider'),
           }}
         >
+          <Caption>
+            {providerQuery
+              ? t('ui.filter.found', { n: shownProviders.length })
+              : t('ui.filter.popular')}
+          </Caption>
           {shownProviders.length ? null : (
             <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
           )}

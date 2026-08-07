@@ -119,6 +119,19 @@ export function CheckRow({
   );
 }
 
+/**
+ * A caption over the list, naming what is in it.
+ *
+ * A search field above an unlabelled list reads as "type something and hope".
+ * Saying "Популярные" up front tells you the rows already there are worth
+ * looking at, and that typing narrows them rather than starting a search.
+ */
+export function Caption({ children }: { children: ReactNode }) {
+  return (
+    <p className="px-2 pb-1 pt-0.5 text-[11px] uppercase tracking-wide text-ink-faint">{children}</p>
+  );
+}
+
 /** A one-shot action inside a popover — "clear all" and the like. Closes on click. */
 export function ActionRow({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   const close = useCloseDropdown();

@@ -12,7 +12,7 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
-import Dropdown, { ActionRow, CheckRow, RadioRow } from '@/components/Dropdown';
+import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -292,27 +292,66 @@ function StageFilter() {
   );
 }
 
+/**
+ * Names, not a count. "Выбрано: 2" makes you open the menu to find out what you
+ * picked, which is the one thing the trigger exists to save you.
+ */
+function useFilterLabel(): (names: string[], fallback: string) => string {
+  const { t } = useT();
+  return (names, fallback) => {
+    if (!names.length) return fallback;
+    if (names.length <= 2) return names.join(', ');
+    return `${names.slice(0, 2).join(', ')} ${t('ui.filter.andMore', { n: names.length - 2 })}`;
+  };
+}
+
 function DomainFilter() {
   const catalog = useCatalog();
   const params = useCatalogParams();
   const { t } = useT();
+  const summarise = useFilterLabel();
+  const [query, setQuery] = useState('');
 
-  const label = params.domains.length
-    ? t('ui.filter.domain.selected', { n: params.domains.length })
-    : t('ui.filter.domain.all');
+  /**
+   * Biggest first, so the list is already useful before anything is typed —
+   * the map and the blocks view are where the continents are grouped.
+   */
+  const domains = useMemo(() => {
+    const needle = normalize(query);
+    return [...catalog.domains]
+      .filter((domain) => !needle || normalize(t(`domain.${domain.id}.title`)).includes(needle))
+      .sort((a, b) => b.courseCount - a.courseCount || a.id.localeCompare(b.id));
+  }, [catalog.domains, query, t]);
+
+  const label = summarise(
+    params.domains.map((id) => t(`domain.${id}.title`)),
+    t('ui.filter.domain.all')
+  );
 
   return (
-    <Dropdown label={label} active={params.domains.length > 0}>
+    <Dropdown
+      label={<span className="max-w-[210px] truncate">{label}</span>}
+      active={params.domains.length > 0}
+      search={{ value: query, onChange: setQuery, placeholder: t('ui.filter.searchDomain') }}
+    >
       <ActionRow onClick={() => params.setDomains([])}>{t('ui.filter.domain.all')}</ActionRow>
-      {catalog.domains.map((domain) => (
+      <Caption>{query ? t('ui.filter.found', { n: domains.length }) : t('ui.filter.largest')}</Caption>
+      {!domains.length ? (
+        <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
+      ) : null}
+      {domains.map((domain) => (
         <CheckRow
           key={domain.id}
           checked={params.domains.includes(domain.id)}
           onChange={() => params.toggleDomain(domain.id)}
         >
           <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full" style={{ background: domain.color }} />
-            {t(`domain.${domain.id}.title`)}
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ background: domain.color }}
+            />
+            <span className="min-w-0 flex-1 truncate">{t(`domain.${domain.id}.title`)}</span>
+            <span className="num shrink-0 text-[11px] text-ink-faint">{domain.courseCount}</span>
           </span>
         </CheckRow>
       ))}
@@ -333,6 +372,7 @@ function ProviderFilter() {
   const catalog = useCatalog();
   const params = useCatalogParams();
   const { t, count } = useT();
+  const summarise = useFilterLabel();
   const [query, setQuery] = useState('');
 
   const providers = useMemo(() => {
@@ -343,17 +383,19 @@ function ProviderFilter() {
       .sort((a, b) => b.playlistCount - a.playlistCount || a.title.localeCompare(b.title));
   }, [catalog.providers, params.providers, query]);
 
-  const label = params.providers.length
-    ? t('ui.filter.provider.selected', { n: params.providers.length })
-    : t('ui.filter.provider.all');
+  const label = summarise(
+    params.providers.map((id) => catalog.providers[id]?.title ?? id),
+    t('ui.filter.provider.all')
+  );
 
   return (
     <Dropdown
-      label={label}
+      label={<span className="max-w-[210px] truncate">{label}</span>}
       active={params.providers.length > 0}
       search={{ value: query, onChange: setQuery, placeholder: t('ui.filter.searchProvider') }}
     >
       <ActionRow onClick={() => params.setProviders([])}>{t('ui.filter.provider.all')}</ActionRow>
+      <Caption>{query ? t('ui.filter.found', { n: providers.length }) : t('ui.filter.popular')}</Caption>
       {!providers.length ? (
         <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
       ) : null}
