@@ -17,17 +17,21 @@
 
 - id: art-history-intro
   domains: [art-history]
+  stage: bachelor-1
 
 - id: ancient-art
   domains: [art-history]
+  stage: bachelor-1
   deps: [art-history-intro]
   related: [archaeology-intro]
 
 - id: renaissance-art
   domains: [art-history]
+  stage: bachelor-1
   deps: [art-history-intro]
   related: [medieval-history]
 
 - id: modern-art
   domains: [art-history]
+  stage: bachelor-1
   deps: [art-history-intro]

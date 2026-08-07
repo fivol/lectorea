@@ -17,8 +17,10 @@
 
 - id: management-intro
   domains: [management]
+  stage: bachelor-1
   deps: [econ-intro]
 
 - id: organizational-behavior
   domains: [management]
+  stage: bachelor-2
   deps: [management-intro, social-psychology]

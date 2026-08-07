@@ -27,6 +27,7 @@ export type IconName =
   | 'upload'
   | 'sliders'
   | 'sort'
+  | 'circle'
   | 'warning';
 
 /** One inline sprite instead of an icon package — twenty glyphs is not a dependency. */
@@ -54,6 +55,7 @@ const PATHS: Record<IconName, string> = {
   upload: 'M12 21V9m0 0L8 13m4-4l4 4M4 5h16',
   sliders: 'M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6',
   sort: 'M7 4v16m0 0l-3-3m3 3l3-3M17 20V4m0 0l-3 3m3-3l3 3',
+  circle: 'M12 4a8 8 0 100 16 8 8 0 000-16z',
   warning: 'M12 4l9 16H3zM12 10v4m0 3v.5',
 };
 

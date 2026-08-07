@@ -17,38 +17,46 @@
 
 - id: philosophy-intro
   domains: [philosophy]
+  stage: bachelor-1
   related: [logic-intro]
 
 - id: ancient-philosophy
   domains: [philosophy]
+  stage: bachelor-1
   deps: [philosophy-intro]
   related: [ancient-history]
 
 - id: medieval-philosophy
   domains: [philosophy]
+  stage: bachelor-2
   deps: [ancient-philosophy]
   related: [religious-studies-intro]
 
 - id: modern-philosophy
   domains: [philosophy]
+  stage: bachelor-3
   deps: [medieval-philosophy]
 
 - id: ethics
   domains: [philosophy]
+  stage: bachelor-1
   deps: [philosophy-intro]
   related: [political-philosophy]
 
 - id: epistemology
   domains: [philosophy]
+  stage: bachelor-1
   deps: [philosophy-intro]
   related: [logic-intro]
 
 - id: philosophy-of-science
   domains: [philosophy]
+  stage: bachelor-2
   deps: [epistemology]
   related: [history-of-science-intro]
 
 - id: philosophy-of-language
   domains: [philosophy]
+  stage: bachelor-2
   deps: [epistemology]
   related: [semantics]

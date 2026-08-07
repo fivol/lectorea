@@ -17,8 +17,10 @@
 
 - id: archaeology-intro
   domains: [archaeology]
+  stage: bachelor-1
   related: [ancient-history]
 
 - id: field-archaeology
   domains: [archaeology]
+  stage: bachelor-1
   deps: [archaeology-intro]

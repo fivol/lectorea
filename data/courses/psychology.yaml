@@ -17,23 +17,29 @@
 
 - id: psychology-intro
   domains: [psychology]
+  stage: bachelor-1
 
 - id: cognitive-psychology
   domains: [psychology]
+  stage: bachelor-1
   deps: [psychology-intro]
 
 - id: social-psychology
   domains: [psychology]
+  stage: bachelor-1
   deps: [psychology-intro]
 
 - id: developmental-psychology
   domains: [psychology]
+  stage: bachelor-1
   deps: [psychology-intro]
 
 - id: psych-research-methods
   domains: [psychology]
+  stage: bachelor-4
   deps: [psychology-intro, statistics]
 
 - id: clinical-psychology
   domains: [psychology]
+  stage: master-1
   deps: [psych-research-methods]

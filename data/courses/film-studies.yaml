@@ -17,8 +17,10 @@
 
 - id: film-studies-intro
   domains: [film-studies]
+  stage: bachelor-1
   related: [art-history-intro]
 
 - id: film-history
   domains: [film-studies]
+  stage: bachelor-1
   deps: [film-studies-intro]

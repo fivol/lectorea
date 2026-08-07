@@ -17,8 +17,10 @@
 
 - id: anthropology-intro
   domains: [anthropology]
+  stage: bachelor-1
 
 - id: cultural-anthropology
   domains: [anthropology]
+  stage: bachelor-1
   deps: [anthropology-intro]
   related: [sociology-intro]

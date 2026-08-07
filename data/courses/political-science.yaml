@@ -17,16 +17,20 @@
 
 - id: political-science-intro
   domains: [political-science]
+  stage: bachelor-1
 
 - id: comparative-politics
   domains: [political-science]
+  stage: bachelor-1
   deps: [political-science-intro]
 
 - id: international-relations
   domains: [political-science]
+  stage: bachelor-1
   deps: [political-science-intro]
   related: [modern-history]
 
 - id: political-philosophy
   domains: [political-science, philosophy]
+  stage: bachelor-1
   deps: [political-science-intro, philosophy-intro]

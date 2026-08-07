@@ -17,20 +17,25 @@
 
 - id: logic-intro
   domains: [logic]
+  stage: school-11
   related: [philosophy-intro]
 
 - id: mathematical-logic
   domains: [logic]
+  stage: bachelor-2
   deps: [discrete-math, logic-intro]
 
 - id: set-theory
   domains: [logic]
+  stage: bachelor-2
   deps: [mathematical-logic]
 
 - id: computability
   domains: [logic, cs]
+  stage: bachelor-2
   deps: [mathematical-logic]
 
 - id: model-theory
   domains: [logic]
+  stage: bachelor-3
   deps: [set-theory, abstract-algebra]

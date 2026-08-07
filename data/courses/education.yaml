@@ -17,8 +17,10 @@
 
 - id: pedagogy-intro
   domains: [education]
+  stage: bachelor-1
   deps: [psychology-intro]
 
 - id: learning-sciences
   domains: [education]
+  stage: bachelor-2
   deps: [pedagogy-intro, cognitive-psychology]

@@ -17,21 +17,26 @@
 
 - id: literary-theory
   domains: [literature]
+  stage: bachelor-1
 
 - id: poetics
   domains: [literature]
+  stage: bachelor-1
   deps: [literary-theory]
   related: [linguistics-intro]
 
 - id: ancient-literature
   domains: [literature]
+  stage: bachelor-1
   deps: [literary-theory]
   related: [ancient-history]
 
 - id: russian-literature
   domains: [literature]
+  stage: bachelor-1
   deps: [literary-theory]
 
 - id: world-literature
   domains: [literature]
+  stage: bachelor-1
   deps: [literary-theory]

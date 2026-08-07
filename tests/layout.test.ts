@@ -11,7 +11,7 @@ import { layoutColumns } from '../scripts/lib/layout';
  */
 
 function course(id: string, deps: string[] = [], domain = 'math'): Course {
-  return { id, domains: [domain], deps, soft: [], related: [] };
+  return { id, domains: [domain], stage: 'bachelor-1', deps, soft: [], related: [] };
 }
 
 function domain(id: string, bandOrder: number): Domain {

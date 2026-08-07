@@ -54,6 +54,8 @@ function CourseCardInner({
       aria-current={selected ? 'true' : undefined}
       className={`relative shrink-0 overflow-hidden rounded-lg border text-left
                   transition-[opacity,transform,box-shadow] duration-200 ease-out
+                  hover:z-10 hover:scale-[1.03] hover:shadow-[var(--shadow-card)]
+                  motion-reduce:hover:scale-100
                   ${selected ? 'z-10' : ''}`}
       style={{
         width: CARD_WIDTH,
@@ -79,8 +81,12 @@ function CourseCardInner({
         <span className="line-clamp-2 text-[13px] font-semibold leading-tight text-ink">
           {t(`course.${course.id}.title`)}
         </span>
-        <span className="flex items-center justify-between">
-          <span className="flex items-center gap-1 text-ink-faint">
+        <span className="flex items-center justify-between gap-1">
+          {/* The column number says where the course sits in this catalogue;
+              this says when a person actually meets it, which is the question
+              people arrive with. */}
+          <span className="flex min-w-0 items-center gap-1 text-ink-faint">
+            <span className="num truncate text-[11px]">{t(`ui.stage.${course.stage}`)}</span>
             {favorite ? <Icon name="star-filled" size={12} className="text-social" /> : null}
             {status === 'done' ? <Icon name="check" size={12} className="text-accent" /> : null}
             {status === 'in_progress' ? (

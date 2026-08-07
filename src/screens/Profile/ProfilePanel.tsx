@@ -7,8 +7,9 @@ import CoursesTab from './CoursesTab';
 import PlaylistsTab from './PlaylistsTab';
 import SettingsTab from './SettingsTab';
 import DataTab from './DataTab';
+import RecentTab from './RecentTab';
 
-const TABS = ['courses', 'playlists', 'settings', 'data'] as const;
+const TABS = ['courses', 'playlists', 'recent', 'settings', 'data'] as const;
 type Tab = (typeof TABS)[number];
 
 /**
@@ -83,6 +84,7 @@ export default function ProfilePanel() {
         <div className="panel-scroll min-h-0 flex-1" role="tabpanel">
           {tab === 'courses' ? <CoursesTab /> : null}
           {tab === 'playlists' ? <PlaylistsTab /> : null}
+          {tab === 'recent' ? <RecentTab /> : null}
           {tab === 'settings' ? <SettingsTab /> : null}
           {tab === 'data' ? <DataTab /> : null}
         </div>

@@ -21,4 +21,9 @@ data/proposed-courses.yaml
 *.tsbuildinfo
 coverage/
 dev-dist/
+
+# Sandbox and map preview output. Rebuildable with `pnpm map:sandbox`.
 .map-poc/
+
+# Agent scratch worktrees.
+.claude/worktrees/

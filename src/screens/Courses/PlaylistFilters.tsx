@@ -1,7 +1,9 @@
+import { useMemo, useState } from 'react';
 import type { BuiltPlaylist, LectureLength, ProviderType } from '@shared/schema';
+import { normalize } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import Dropdown, { CheckRow, RadioRow, RangeRow } from '@/components/Dropdown';
+import Dropdown, { Caption, CheckRow, RadioRow, RangeRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import {
   activeFilterCount,
@@ -39,6 +41,17 @@ export default function PlaylistFilters({
   const facets = facetsOf(playlists);
   const activeCount = activeFilterCount(state);
 
+  // The provider list is the only facet long enough to need finding rather than
+  // scanning — a popular course pulls in a couple of dozen channels.
+  const [providerQuery, setProviderQuery] = useState('');
+  const shownProviders = useMemo(() => {
+    const needle = normalize(providerQuery);
+    if (!needle) return facets.providers;
+    return facets.providers.filter((id) =>
+      normalize(catalog.providers[id]?.title ?? id).includes(needle)
+    );
+  }, [facets.providers, providerQuery, catalog.providers]);
+
   const toggle = <K extends keyof PlaylistFilterState>(
     key: K,
     list: string[],
@@ -66,8 +79,24 @@ export default function PlaylistFilters({
           ))}
         </Dropdown>
 
-        <Dropdown label={t('ui.filters.provider')} active={state.providers.length > 0}>
-          {facets.providers.map((id) => (
+        <Dropdown
+          label={t('ui.filters.provider')}
+          active={state.providers.length > 0}
+          search={{
+            value: providerQuery,
+            onChange: setProviderQuery,
+            placeholder: t('ui.filter.searchProvider'),
+          }}
+        >
+          <Caption>
+            {providerQuery
+              ? t('ui.filter.found', { n: shownProviders.length })
+              : t('ui.filter.popular')}
+          </Caption>
+          {shownProviders.length ? null : (
+            <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
+          )}
+          {shownProviders.map((id) => (
             <CheckRow
               key={id}
               checked={state.providers.includes(id)}

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
@@ -7,6 +8,7 @@ import { courseHref } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
+import CourseArt from '@/components/CourseArt';
 import PathBlock from './PathBlock';
 import PlaylistList, { fixDataUrl, suggestPlaylistUrl } from './PlaylistList';
 
@@ -15,10 +17,12 @@ type Props = {
   search: string;
   /** How many path courses the active domain filter would hide. */
   outsideFilter?: number;
+  /** Clears the selection. Absent on mobile, where the sheet has its own close. */
+  onClose?: () => void;
 };
 
 /** Everything known about the selected course, in the order it is needed. */
-export default function CoursePanel({ course, search, outsideFilter = 0 }: Props) {
+export default function CoursePanel({ course, search, outsideFilter = 0, onClose }: Props) {
   const { t, count, has } = useT();
   const catalog = useCatalog();
   const status = useProfile((state) => state.profile.courses[course.id]?.status ?? null);
@@ -27,6 +31,15 @@ export default function CoursePanel({ course, search, outsideFilter = 0 }: Props
   const toggleFavorite = useProfile((state) => state.toggleCourseFavorite);
   const setEcho = useUi((state) => state.setEcho);
   const requestFocus = useUi((state) => state.requestFocus);
+
+  /**
+   * The echo is set by hovering a link in here and cleared on mouse-out — but
+   * closing the panel unmounts it from under the cursor, so that mouse-out
+   * never arrives and the highlight stays pinned to a course nothing is
+   * pointing at any more. Clearing on unmount covers every way the panel can go
+   * away: the ×, a click on the background, a filter change, navigation.
+   */
+  useEffect(() => () => setEcho(null), [setEcho]);
 
   const domains = course.domains
     .map((id) => catalog.domainById.get(id))
@@ -48,9 +61,21 @@ export default function CoursePanel({ course, search, outsideFilter = 0 }: Props
               {t(`domain.${domain.id}.title`)}
             </Link>
           ))}
+          <span className="num chip">{t(`ui.stage.${course.stage}`)}</span>
           <span className="num chip">{t('ui.course.level', { n: course.level + 1 })}</span>
           {course.hours ? (
             <span className="num chip">{t('ui.course.hoursShort', { n: formatHours(course.hours) })}</span>
+          ) : null}
+          {onClose ? (
+            <button
+              type="button"
+              className="btn-ghost ml-auto rounded p-1"
+              onClick={onClose}
+              aria-label={t('ui.course.deselect')}
+              title={t('ui.course.deselect')}
+            >
+              <Icon name="close" size={14} />
+            </button>
           ) : null}
         </div>
 
@@ -66,14 +91,21 @@ export default function CoursePanel({ course, search, outsideFilter = 0 }: Props
             <Icon name={favorite ? 'star-filled' : 'star'} />
             {favorite ? t('ui.course.favoriteOn') : t('ui.course.favorite')}
           </button>
+          {/* The label names what the click does, not what the course already
+              is — "Не начат" beside a dot read as a disabled badge. The state
+              is still legible, from the icon and the filled button. */}
           <button
             type="button"
             className={`btn ${status ? 'btn-primary' : ''}`}
             onClick={() => cycleStatus(course.id)}
-            aria-label={t('ui.course.statusToggle')}
+            title={t('ui.course.statusToggle')}
           >
-            <Icon name={status === 'done' ? 'check' : 'half'} />
-            {t(`ui.course.status.${status ?? 'none'}`)}
+            <Icon name={status === 'done' ? 'check' : status === 'in_progress' ? 'half' : 'circle'} />
+            {status === 'done'
+              ? t('ui.course.done')
+              : status === 'in_progress'
+                ? t('ui.course.finish')
+                : t('ui.course.start')}
           </button>
         </div>
       </header>
@@ -92,35 +124,43 @@ export default function CoursePanel({ course, search, outsideFilter = 0 }: Props
 
       <section className="border-t border-line px-4 py-4">
         <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
+        {/* Cards rather than chips: these are courses, and a chip reads as a
+            filter you could switch on. The artwork is the same one the columns
+            use, so the link is recognisably the card you would land on. */}
         {unlocks.length ? (
-          <div className="flex flex-wrap gap-1.5">
+          <ul className="grid gap-1.5 sm:grid-cols-2">
             {unlocks.map((step) => {
               const next = catalog.courseById.get(step.id);
               if (!next) return null;
               const domain = catalog.domainById.get(next.domains[0]);
+              const colour = domain?.color ?? 'var(--c-formal)';
               return (
-                <Link
-                  key={step.id}
-                  to={courseHref(step.id, search)}
-                  onMouseEnter={() => setEcho(step.id)}
-                  onMouseLeave={() => setEcho(null)}
-                  onClick={() => requestFocus(step.id)}
-                  className="chip hover:text-ink"
-                  style={{ borderColor: withAlpha(domain?.color ?? '#ffffff', 0.35) }}
-                >
-                  {t(`course.${step.id}.title`)}
-                  {step.behind ? (
-                    <span
-                      className="num text-[10px] text-ink-faint"
-                      title={t('ui.unlocks.behind', { n: step.behind })}
-                    >
-                      +{step.behind}
+                <li key={step.id}>
+                  <Link
+                    to={courseHref(step.id, search)}
+                    onMouseEnter={() => setEcho(step.id)}
+                    onMouseLeave={() => setEcho(null)}
+                    onClick={() => requestFocus(step.id)}
+                    className="surface flex items-center gap-2.5 p-2 transition-colors hover:border-accent"
+                  >
+                    <span className="h-10 w-14 shrink-0 overflow-hidden rounded">
+                      <CourseArt courseId={step.id} color={colour} className="h-full w-full" />
                     </span>
-                  ) : null}
-                </Link>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-ink">
+                        {t(`course.${step.id}.title`)}
+                      </span>
+                      <span className="num block truncate text-xs text-ink-faint">
+                        {domain ? t(`domain.${domain.id}.title`) : ''}
+                        {step.behind ? ` · ${t('ui.unlocks.behind', { n: step.behind })}` : ''}
+                      </span>
+                    </span>
+                    <Icon name="chevron-right" size={13} className="shrink-0 text-ink-faint" />
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         ) : (
           <p className="text-sm text-ink-faint">{t('ui.unlocks.empty')}</p>
         )}

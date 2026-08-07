@@ -19,7 +19,7 @@ import { findGraphWarnings, validateFilePlacement, validateReferences } from '..
  */
 
 function course(id: string, deps: string[] = [], extra: Partial<Course> = {}): Course {
-  return { id, domains: ['math'], deps, soft: [], related: [], ...extra };
+  return { id, domains: ['math'], stage: 'bachelor-1', deps, soft: [], related: [], ...extra };
 }
 
 describe('cycle detection', () => {

@@ -17,20 +17,25 @@
 
 - id: ml-intro
   domains: [machine-learning]
+  stage: bachelor-3
   deps: [linear-algebra, probability, programming-intro]
 
 - id: deep-learning
   domains: [machine-learning]
+  stage: bachelor-3
   deps: [ml-intro, optimization]
 
 - id: nlp
   domains: [machine-learning]
+  stage: bachelor-4
   deps: [deep-learning]
 
 - id: computer-vision
   domains: [machine-learning]
+  stage: bachelor-4
   deps: [deep-learning, signal-processing]
 
 - id: reinforcement-learning
   domains: [machine-learning]
+  stage: bachelor-4
   deps: [ml-intro, random-processes]

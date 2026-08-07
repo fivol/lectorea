@@ -17,9 +17,11 @@
 
 - id: human-geography-intro
   domains: [human-geography]
+  stage: bachelor-1
   related: [sociology-intro]
 
 - id: urban-studies
   domains: [human-geography]
+  stage: bachelor-1
   deps: [human-geography-intro]
   related: [sociology-intro]

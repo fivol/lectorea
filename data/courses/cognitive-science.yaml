@@ -17,9 +17,11 @@
 
 - id: cognitive-science-intro
   domains: [cognitive-science]
+  stage: bachelor-3
   deps: [cognitive-psychology, neuroscience]
   soft: [linguistics-intro]
 
 - id: psycholinguistics
   domains: [cognitive-science, linguistics]
+  stage: bachelor-4
   deps: [cognitive-science-intro, linguistics-intro]

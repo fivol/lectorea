@@ -17,4 +17,5 @@
 
 - id: quantum-chemistry
   domains: [quantum-chemistry, chemistry]
+  stage: master-1
   deps: [physical-chemistry, quantum-mechanics]

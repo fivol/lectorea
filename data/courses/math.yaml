@@ -17,90 +17,111 @@
 
 - id: school-algebra
   domains: [math]
+  stage: school-9
 
 - id: calculus-1
   domains: [math]
+  stage: bachelor-1
   deps: [school-algebra]
   refs:
     syllabus: https://ocw.mit.edu/courses/18-01-single-variable-calculus-fall-2006/
 
 - id: calculus-2
   domains: [math]
+  stage: bachelor-2
   deps: [calculus-1]
 
 - id: calculus-3
   domains: [math]
+  stage: bachelor-2
   deps: [calculus-2]
   refs:
     syllabus: https://ocw.mit.edu/courses/18-02-multivariable-calculus-fall-2007/
 
 - id: linear-algebra
   domains: [math]
+  stage: bachelor-1
   deps: [school-algebra]
   refs:
     syllabus: https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/
 
 - id: discrete-math
   domains: [math]
+  stage: bachelor-1
   deps: [school-algebra]
 
 - id: combinatorics
   domains: [math]
+  stage: bachelor-2
   deps: [discrete-math]
 
 - id: number-theory
   domains: [math]
+  stage: bachelor-2
   deps: [discrete-math]
 
 - id: abstract-algebra
   domains: [math]
+  stage: bachelor-2
   deps: [linear-algebra, discrete-math]
 
 - id: real-analysis
   domains: [math]
+  stage: bachelor-2
   deps: [calculus-2]
 
 - id: complex-analysis
   domains: [math]
+  stage: bachelor-3
   deps: [real-analysis, calculus-3]
 
 - id: topology
   domains: [math]
+  stage: bachelor-3
   deps: [real-analysis]
 
 - id: measure-theory
   domains: [math]
+  stage: bachelor-3
   deps: [real-analysis]
 
 - id: functional-analysis
   domains: [math]
+  stage: bachelor-3
   deps: [measure-theory, topology]
 
 - id: differential-equations
   domains: [math]
+  stage: bachelor-3
   deps: [calculus-3, linear-algebra]
 
 - id: pde
   domains: [math]
+  stage: bachelor-3
   deps: [differential-equations]
 
 - id: differential-geometry
   domains: [math]
+  stage: bachelor-3
   deps: [calculus-3, linear-algebra, topology]
 
 - id: graph-theory
   domains: [math, cs]
+  stage: bachelor-2
   deps: [discrete-math]
 
 - id: optimization
   domains: [math]
+  stage: bachelor-3
   deps: [calculus-3, linear-algebra]
 
 - id: numerical-methods
   domains: [math, cs]
+  stage: bachelor-2
   deps: [calculus-2, linear-algebra]
   soft: [programming-intro]
 
 - id: category-theory
   domains: [math]
+  stage: bachelor-3
   deps: [abstract-algebra, topology]

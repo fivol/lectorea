@@ -17,63 +17,78 @@
 
 - id: programming-intro
   domains: [cs]
+  stage: school-11
 
 - id: data-structures
   domains: [cs]
+  stage: bachelor-2
   deps: [programming-intro, discrete-math]
 
 - id: algorithms
   domains: [cs]
+  stage: bachelor-2
   deps: [data-structures]
   refs:
     syllabus: https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/
 
 - id: computer-architecture
   domains: [cs]
+  stage: bachelor-1
   deps: [programming-intro]
 
 - id: operating-systems
   domains: [cs]
+  stage: bachelor-3
   deps: [computer-architecture, algorithms]
 
 - id: networks
   domains: [cs]
+  stage: bachelor-3
   deps: [operating-systems]
 
 - id: databases
   domains: [cs]
+  stage: bachelor-3
   deps: [algorithms]
 
 - id: theory-of-computation
   domains: [cs, logic]
+  stage: bachelor-2
   deps: [discrete-math, mathematical-logic]
 
 - id: compilers
   domains: [cs]
+  stage: bachelor-3
   deps: [algorithms, theory-of-computation]
 
 - id: distributed-systems
   domains: [cs]
+  stage: bachelor-4
   deps: [networks, operating-systems]
 
 - id: cryptography
   domains: [cs]
+  stage: bachelor-3
   deps: [number-theory, algorithms]
 
 - id: computer-graphics
   domains: [cs]
+  stage: bachelor-3
   deps: [linear-algebra, algorithms]
 
 - id: functional-programming
   domains: [cs]
+  stage: bachelor-1
   deps: [programming-intro]
   soft: [category-theory]
 
 - id: software-engineering
   domains: [cs]
+  stage: bachelor-1
   deps: [programming-intro]
   soft: [databases]
 
 - id: computer-security
   domains: [cs]
+  stage: bachelor-4
   deps: [networks, cryptography]

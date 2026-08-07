@@ -17,8 +17,10 @@
 
 - id: computational-linguistics-intro
   domains: [computational-linguistics]
+  stage: bachelor-3
   deps: [syntax, programming-intro]
 
 - id: corpus-linguistics
   domains: [computational-linguistics]
+  stage: bachelor-4
   deps: [computational-linguistics-intro, statistics]

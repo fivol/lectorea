@@ -17,24 +17,30 @@
 
 - id: ancient-history
   domains: [history]
+  stage: school-10
 
 - id: medieval-history
   domains: [history]
+  stage: bachelor-1
   deps: [ancient-history]
 
 - id: modern-history
   domains: [history]
+  stage: bachelor-2
   deps: [medieval-history]
 
 - id: contemporary-history
   domains: [history]
+  stage: bachelor-3
   deps: [modern-history]
 
 - id: historiography
   domains: [history]
+  stage: bachelor-3
   deps: [modern-history]
   related: [philosophy-of-science]
 
 - id: economic-history
   domains: [history, economics]
+  stage: bachelor-3
   deps: [modern-history, econ-intro]

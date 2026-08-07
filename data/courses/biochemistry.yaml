@@ -17,8 +17,10 @@
 
 - id: biochemistry
   domains: [biochemistry, biology]
+  stage: bachelor-2
   deps: [organic-chemistry, cell-biology]
 
 - id: enzymology
   domains: [biochemistry]
+  stage: bachelor-2
   deps: [biochemistry]

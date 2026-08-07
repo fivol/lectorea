@@ -17,20 +17,25 @@
 
 - id: general-chemistry
   domains: [chemistry]
+  stage: school-10
 
 - id: inorganic-chemistry
   domains: [chemistry]
+  stage: bachelor-1
   deps: [general-chemistry]
 
 - id: organic-chemistry
   domains: [chemistry]
+  stage: bachelor-1
   deps: [general-chemistry]
 
 - id: physical-chemistry
   domains: [chemistry]
+  stage: bachelor-3
   deps: [general-chemistry, thermodynamics]
 
 - id: analytical-chemistry
   domains: [chemistry]
+  stage: bachelor-1
   deps: [general-chemistry]
   soft: [statistics]

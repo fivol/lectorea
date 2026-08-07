@@ -17,22 +17,27 @@
 
 - id: strength-of-materials
   domains: [engineering]
+  stage: bachelor-3
   deps: [mechanics]
 
 - id: electrical-circuits
   domains: [engineering]
+  stage: bachelor-4
   deps: [electrodynamics, differential-equations]
 
 - id: control-theory
   domains: [engineering]
+  stage: bachelor-3
   deps: [differential-equations, linear-algebra]
 
 - id: signal-processing
   domains: [engineering]
+  stage: bachelor-3
   deps: [calculus-3, linear-algebra]
   soft: [probability]
 
 - id: robotics
   domains: [engineering]
+  stage: bachelor-4
   deps: [control-theory, linear-algebra]
   soft: [programming-intro]

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { BuiltCourse, BuiltDomain } from '@shared/schema';
+import { stageRank, type BuiltCourse, type BuiltDomain, type Stage } from '@shared/schema';
 import { upstreamOf } from '@shared/graph';
 import { loadCatalog, type Catalog } from './data';
 import { I18nProvider, useT } from '@/i18n';
@@ -129,15 +129,27 @@ export function useDomainTitle(): (id: string) => string {
  */
 export function useFilteredCourses(
   domainFilter: string[],
-  providerFilter: string[]
+  providerFilter: string[],
+  maxStage: Stage | null = null
 ): { visible: Set<string>; dimmed: Set<string> } {
   const catalog = useCatalog();
 
   return useMemo(() => {
     const visible = new Set<string>();
     const dimmed = new Set<string>();
+
+    /**
+     * The stage cap is a hard cut, not a dimming: someone who says they are in
+     * year 11 is saying a doctorate course is not context they want, so showing
+     * it faded would be answering a question they did not ask.
+     */
+    const capped = maxStage
+      ? catalog.courses.filter((course) => stageRank(course.stage) <= stageRank(maxStage))
+      : catalog.courses;
+    const withinCap = new Set(capped.map((course) => course.id));
+
     if (!domainFilter.length && !providerFilter.length) {
-      for (const course of catalog.courses) visible.add(course.id);
+      for (const course of capped) visible.add(course.id);
       return { visible, dimmed };
     }
 
@@ -150,21 +162,30 @@ export function useFilteredCourses(
     const inDomain = (course: BuiltCourse): boolean =>
       !domainFilter.length || course.domains.some((d) => domainFilter.includes(d));
 
-    const core = catalog.courses.filter(
+    const core = capped.filter(
       (course) => inDomain(course) && (!providerCourses || providerCourses.has(course.id))
     );
     for (const course of core) visible.add(course.id);
 
-    // One hop of context around the selection, dimmed rather than hidden.
+    /**
+     * One hop *upstream* as context, dimmed rather than hidden: what the
+     * domain's own courses need in order to be started.
+     *
+     * Dependants are deliberately not included. Robotics needs linear algebra,
+     * but that says nothing about mathematics — pulling it in put an
+     * engineering course into the maths view, four columns from anything that
+     * referred to it. The arrow only points one way for this purpose: a filter
+     * on a field answers "what do I need for this", not "who else uses it".
+     *
+     * `related` is out for the same reason — it is a lateral link, not
+     * something the course rests on.
+     */
     for (const course of core) {
-      for (const neighbour of [...course.deps, ...course.soft, ...course.related]) {
-        if (!visible.has(neighbour)) dimmed.add(neighbour);
-      }
-      for (const dependant of catalog.dependants.get(course.id) ?? []) {
-        if (!visible.has(dependant)) dimmed.add(dependant);
+      for (const neighbour of [...course.deps, ...course.soft]) {
+        if (!visible.has(neighbour) && withinCap.has(neighbour)) dimmed.add(neighbour);
       }
     }
 
     return { visible, dimmed };
-  }, [catalog, domainFilter, providerFilter]);
+  }, [catalog, domainFilter, providerFilter, maxStage]);
 }

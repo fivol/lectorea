@@ -40,12 +40,19 @@ in one click.
 ```yaml
 - id: probability
   domains: [probability]          # the first domain is primary: colour, and which file this is in
+  stage: bachelor-2               # when a person normally meets it
   deps: [calculus-2, combinatorics]
   soft: []
   related: []
   refs:
     syllabus: https://ocw.mit.edu/courses/6-041-…/
 ```
+
+`stage` is one of `school-8`…`school-11`, `bachelor-1`…`bachelor-4`, `master-1`,
+`master-2`, `phd`. Do not read it off `level`: the column counts prerequisites
+inside this catalogue, while the stage is where a real curriculum puts the
+course. Answer it as "which year would a student normally take this?" — and when
+the two disagree, that is information, not an error.
 
 `minLevel` is available as a manual floor under the computed level, for a course
 with no formal prerequisites that column zero would misrepresent — history of art
@@ -98,6 +105,10 @@ neighbours — the existing ones are spaced by ten so there is always room. It i
 written by hand rather than derived so that the whole screen does not reshuffle
 when something unrelated changes.
 
+And an icon, in `src/components/DomainIcon.tsx`: a line-art glyph on the 24×24
+grid, stroked only, no fills. A test fails when a domain has none — the fallback
+ring renders fine, so nothing else would notice.
+
 ## Adding a playlist
 
 Do not edit playlist data by hand. Playlists are crawled; add the channel to
@@ -114,7 +125,9 @@ to `data/overrides.yaml`. That file is committed and is the reviewed record.
 - every `deps`, `soft` and `related` target exists
 - every course claims a domain that exists
 - every course is in the file its first domain names
+- every course declares a `stage` from the allowed set
 - every course has a title, a description and at least one search keyword
+- every domain has an icon in `src/components/DomainIcon.tsx`
 - every i18n key used in code is present, and every key present is used
 - types and tests pass
 

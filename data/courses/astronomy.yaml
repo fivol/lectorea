@@ -17,15 +17,19 @@
 
 - id: astronomy-intro
   domains: [astronomy]
+  stage: school-11
 
 - id: celestial-mechanics
   domains: [astronomy]
+  stage: bachelor-4
   deps: [analytical-mechanics]
 
 - id: astrophysics
   domains: [astronomy]
+  stage: bachelor-3
   deps: [astronomy-intro, mechanics, thermodynamics]
 
 - id: cosmology
   domains: [astronomy]
+  stage: phd
   deps: [astrophysics, general-relativity]

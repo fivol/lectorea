@@ -3,7 +3,7 @@ import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useReducedMotion } from '@/lib/hooks';
-import { useHighlight } from '@/lib/highlight';
+import { isLit, useHighlight } from '@/lib/highlight';
 import { useUi } from '@/store/ui';
 import { useProfile } from '@/store/profile';
 import CourseCard from './CourseCard';
@@ -14,6 +14,7 @@ type Props = {
   dimmed: Set<string>;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onDeselect: () => void;
 };
 
 /**
@@ -34,9 +35,16 @@ type Props = {
  * pulls a course towards the height of its prerequisites, is visible as
  * alignment instead of as geometry.
  */
-export default function ColumnsView({ courses, visible, dimmed, selectedId, onSelect }: Props) {
+export default function ColumnsView({
+  courses,
+  visible,
+  dimmed,
+  selectedId,
+  onSelect,
+  onDeselect,
+}: Props) {
   const catalog = useCatalog();
-  const { t, count } = useT();
+  const { t } = useT();
   const reducedMotion = useReducedMotion();
 
   const hoveredId = useUi((state) => state.hoveredCourseId);
@@ -72,6 +80,17 @@ export default function ColumnsView({ courses, visible, dimmed, selectedId, onSe
 
   const total = columns.reduce((sum, column) => sum + column.courses.length, 0);
 
+  /**
+   * A card that unmounts under the cursor — a filter change, a domain switch —
+   * never gets its `pointerleave`, and the hover highlight would stay pinned to
+   * a course that is no longer on screen.
+   */
+  useEffect(() => {
+    if (hoveredId && !columns.some((column) => column.courses.some((c) => c.id === hoveredId))) {
+      setHovered(null);
+    }
+  }, [columns, hoveredId, setHovered]);
+
   /** Bring a course into view when the path list or the search box asks for it. */
   useEffect(() => {
     if (!focusRequest) return;
@@ -97,6 +116,14 @@ export default function ColumnsView({ courses, visible, dimmed, selectedId, onSe
       className="h-full overflow-auto"
       role="region"
       aria-label={t('ui.a11y.graphRegion')}
+      // Clicking the background drops the selection, the way clicking away from
+      // a shape in any canvas does. Guarded on `[data-course]` so it only fires
+      // for clicks that missed every card.
+      onClick={(event) => {
+        if (!selectedId) return;
+        if ((event.target as HTMLElement).closest('[data-course]')) return;
+        onDeselect();
+      }}
     >
       <div className="flex items-start gap-6 p-5">
         {columns.map((column) => (
@@ -108,29 +135,36 @@ export default function ColumnsView({ courses, visible, dimmed, selectedId, onSe
               <h2 className="num text-xs font-semibold uppercase tracking-wide text-ink-dim">
                 {t('ui.column.level', { n: column.level + 1 })}
               </h2>
-              <span className="num text-[11px] text-ink-faint">
-                {count(column.courses.length, 'course')}
-              </span>
             </header>
 
             <ul className="flex flex-col gap-5">
-              {column.courses.map((course) => (
-                <li key={course.id}>
-                  <CourseCard
-                    course={course}
-                    domain={catalog.domainById.get(course.domains[0])}
-                    emphasis={highlight.active ? highlight.emphasisOf(course.id) : 'self'}
-                    // The signature effect: the chain lights up right to left.
-                    delay={reducedMotion || !highlight.pinned ? 0 : highlight.depthOf(course.id) * 40}
-                    selected={course.id === selectedId}
-                    status={profile.courses[course.id]?.status ?? null}
-                    favorite={profile.courses[course.id]?.favorite ?? false}
-                    dimmedByFilter={dimmed.has(course.id)}
-                    onSelect={onSelect}
-                    onHover={setHovered}
-                  />
-                </li>
-              ))}
+              {column.courses.map((course) => {
+                const emphasis = highlight.active ? highlight.emphasisOf(course.id) : 'self';
+                return (
+                  <li key={course.id}>
+                    <CourseCard
+                      course={course}
+                      domain={catalog.domainById.get(course.domains[0])}
+                      emphasis={emphasis}
+                      // The signature effect: the chain lights up right to left.
+                      delay={reducedMotion || !highlight.pinned ? 0 : highlight.depthOf(course.id) * 40}
+                      selected={course.id === selectedId}
+                      status={profile.courses[course.id]?.status ?? null}
+                      favorite={profile.courses[course.id]?.favorite ?? false}
+                      /**
+                       * A prerequisite outside the domain filter is dimmed as
+                       * context — but once it is part of the chain being shown,
+                       * dimming it a second time is what made a maths course
+                       * permanently pale under a physics filter. Being in the
+                       * chain wins.
+                       */
+                      dimmedByFilter={dimmed.has(course.id) && !(highlight.active && isLit(emphasis))}
+                      onSelect={onSelect}
+                      onHover={setHovered}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ))}

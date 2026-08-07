@@ -43,15 +43,24 @@ courses in it is fine.
 ```yaml
 - id: probability
   domains: [probability]
+  stage: bachelor-2             # when a person actually meets this
   deps: [calculus-2, combinatorics]
-  soft: [measure-theory]        # dashed, excluded from the path
+  soft: [measure-theory]        # excluded from the path
   refs:
     syllabus: https://ocw.mit.edu/courses/6-041/
 
 - id: art-history-intro
   domains: [art-history]
+  stage: bachelor-1
   minLevel: 1                   # no formal prerequisites, but column 0 lies
 ```
+
+`stage` is one of `school-8`…`school-11`, `bachelor-1`…`bachelor-4`,
+`master-1`, `master-2`, `phd`, and it is **not** derived from `level`. The two
+answer different questions: `level` counts prerequisites inside this catalogue,
+so "Введение в социологию" and "Школьная алгебра" both sit in column zero while
+one is a first-year university course and the other is school. It is a curator's
+judgement, so it lives in the data where a reviewer can argue with it.
 
 No titles, no descriptions, no keywords — only structure. That is deliberate: a
 diff on a course file should read as a change to the graph, not drown in

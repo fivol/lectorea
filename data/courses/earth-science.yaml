@@ -17,16 +17,20 @@
 
 - id: geology
   domains: [earth-science]
+  stage: bachelor-1
   deps: [general-chemistry]
 
 - id: meteorology
   domains: [earth-science]
+  stage: bachelor-3
   deps: [thermodynamics, differential-equations]
 
 - id: oceanography
   domains: [earth-science]
+  stage: bachelor-4
   deps: [geology, meteorology]
 
 - id: geophysics
   domains: [earth-science]
+  stage: bachelor-3
   deps: [geology, mechanics]

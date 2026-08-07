@@ -17,5 +17,6 @@
 
 - id: history-of-science-intro
   domains: [history-of-science]
+  stage: bachelor-3
   deps: [historiography]
   related: [philosophy-of-science]
