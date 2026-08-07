@@ -47,6 +47,14 @@ export type MapConfig = {
   /** Corner rounding of the hex outline, in map units. 0 = hard geometry. */
   cornerRadius: number;
 
+  /**
+   * How firmly the dependency order is imposed on the vertical axis.
+   * 0 ignores it; 1 pulls every domain onto the row its level asks for.
+   */
+  layering: number;
+  /** How strongly linked domains pull towards each other while seeding. */
+  linkPull: number;
+
   /** How far a peninsula is pushed out of its continent's huddle. */
   peninsulaReach: number;
   /** Ocean kept clear around an island. */
@@ -64,6 +72,8 @@ export const defaultConfig: MapConfig = {
   compactness: 1,
   irregularity: 0.4,
   cornerRadius: 5,
+  layering: 0.7,
+  linkPull: 0.55,
   peninsulaReach: 0.5,
   islandGap: 34,
   seed: 7,
@@ -157,17 +167,54 @@ type Landmass = {
   continent: Continent;
   members: string[];
   centre: Point;
-  reach: number;
+  /** Half-axes of the room the cluster may spread into. rx*ry is its area. */
+  rx: number;
+  ry: number;
 };
+
+/** Is the point inside the landmass's room? */
+const within = (mass: Landmass, x: number, y: number): boolean =>
+  ((x - mass.centre.x) / mass.rx) ** 2 + ((y - mass.centre.y) / mass.ry) ** 2 <= 1;
 
 /** Room for the cluster plus slack for it to take an interesting shape. */
 const ROOM = 1.25;
+
+/**
+ * How much taller than wide a landmass gets per unit of level spread.
+ *
+ * A cluster laid out in rows needs vertical room in proportion to how many
+ * rows it holds. Given a circle it cannot fit, and the ends get clamped until
+ * the middle empties and the continent tears into two islands — which is
+ * exactly what happened before this existed.
+ */
+const STRETCH = 0.1;
+
+/** Never so tall that the row of continents cannot be packed side by side. */
+const MAX_STRETCH = 1.5;
+
+/**
+ * Taller than wide in proportion to how many rows the cluster has to hold.
+ * The area is preserved — rx is divided by exactly what ry is multiplied by —
+ * so stretching a continent never changes how much land it gets.
+ *
+ * Counted in levels rather than in pixels. Pixels would make a small continent
+ * spanning many levels stretch to the full height of the canvas on an area
+ * that cannot reach that far, and it tears into a string of islands.
+ */
+function aspectFor(members: string[], levelOf: (id: string) => number): number {
+  if (members.length < 2) return 1;
+  const levels = members.map(levelOf);
+  const span = Math.max(...levels) - Math.min(...levels);
+  return Math.min(MAX_STRETCH, 1 + STRETCH * span);
+}
 
 function layoutWorld(
   domains: Domain[],
   targetOf: (id: string) => number,
   landformOf: (id: string) => Landform,
   reachesOf: (id: string) => Continent[],
+  rowOf: (id: string) => number,
+  levelOf: (id: string) => number,
   hexArea: number,
   config: MapConfig
 ): Landmass[] {
@@ -184,26 +231,42 @@ function layoutWorld(
       (d) => d.continent === continent && landformOf(d.id) !== 'island'
     );
     const cells = members.reduce((sum, d) => sum + targetOf(d.id), 0);
-    return { continent, members: members.map((d) => d.id), reach: radiusFor(cells) };
+    const reach = radiusFor(cells);
+    const stretch = aspectFor(members.map((d) => d.id), levelOf);
+    return {
+      continent,
+      members: members.map((d) => d.id),
+      rx: reach / stretch,
+      ry: reach * stretch,
+    };
   });
 
-  const spanX = cores.reduce((sum, c) => sum + c.reach * 2, 0) + config.strait * (cores.length - 1);
-  const spanY = Math.max(...cores.map((c) => c.reach * 2), 1);
+  const spanX = cores.reduce((sum, c) => sum + c.rx * 2, 0) + config.strait * (cores.length - 1);
 
   const world: Landmass[] = [];
   let cursor = (config.width - spanX) / 2;
   for (const core of cores) {
+    // A continent floats to the height its own content asks for: one built on
+    // foundations everything else rests on sits low, one made of fields that
+    // draw on three other continents sits high. Clamped so it stays on canvas,
+    // which is also what keeps a shallow continent from hugging the edge.
+    const rows = core.members.map(rowOf);
+    const wanted = rows.length ? rows.reduce((sum, y) => sum + y, 0) / rows.length : config.height / 2;
+    const pad = core.ry + 8;
     world.push({
       id: core.continent,
       kind: 'continent',
       continent: core.continent,
       members: core.members,
-      centre: { x: cursor + core.reach, y: config.height / 2 },
-      reach: core.reach,
+      centre: {
+        x: cursor + core.rx,
+        y: Math.min(config.height - pad, Math.max(pad, wanted)),
+      },
+      rx: core.rx,
+      ry: core.ry,
     });
-    cursor += core.reach * 2 + config.strait;
+    cursor += core.rx * 2 + config.strait;
   }
-  void spanY;
 
   const continentAt = new Map(world.map((m) => [m.continent, m]));
 
@@ -228,9 +291,12 @@ function layoutWorld(
       members: [domain.id],
       centre: {
         x: start.x + (local() * 2 - 1) * config.strait * 0.5,
-        y: start.y + (local() * 2 - 1) * config.height * 0.34,
+        // An island keeps its row too: it depends on things, and drifting off
+        // the vertical axis would be the one place the map stopped saying so.
+        y: rowOf(domain.id) + (local() * 2 - 1) * config.height * 0.1,
       },
-      reach: radiusFor(targetOf(domain.id)),
+      rx: radiusFor(targetOf(domain.id)),
+      ry: radiusFor(targetOf(domain.id)),
     };
   });
 
@@ -243,7 +309,10 @@ function layoutWorld(
         const dx = island.centre.x - other.centre.x;
         const dy = island.centre.y - other.centre.y;
         const distance = Math.hypot(dx, dy) || 1;
-        const wanted = island.reach + other.reach + config.islandGap;
+        const wanted =
+          Math.max(island.rx, island.ry) +
+          Math.max(other.rx, other.ry) +
+          config.islandGap;
         if (distance >= wanted) continue;
         const push = ((wanted - distance) / distance) * (other.kind === 'island' ? 0.3 : 0.5);
         island.centre.x += dx * push;
@@ -253,9 +322,10 @@ function layoutWorld(
           other.centre.y -= dy * push;
         }
       }
-      const pad = island.reach + 8;
-      island.centre.x = Math.min(config.width - pad, Math.max(pad, island.centre.x));
-      island.centre.y = Math.min(config.height - pad, Math.max(pad, island.centre.y));
+      const padX = island.rx + 8;
+      const padY = island.ry + 8;
+      island.centre.x = Math.min(config.width - padX, Math.max(padX, island.centre.x));
+      island.centre.y = Math.min(config.height - padY, Math.max(padY, island.centre.y));
     }
   }
 
@@ -279,7 +349,8 @@ function placeSeeds(
   homeOf: Map<string, string>,
   targetOf: (id: string) => number,
   landformOf: (id: string) => Landform,
-  edges: Array<{ a: string; b: string; weight: number }>,
+  edges: Array<{ from: string; to: string; weight: number }>,
+  levelOf: (id: string) => number,
   hexArea: number,
   config: MapConfig,
   random: () => number
@@ -287,6 +358,29 @@ function placeSeeds(
   const seeds = new Map<string, Point>();
   const radiusOf = (id: string) => Math.sqrt((targetOf(id) * hexArea) / Math.PI);
   const massById = new Map(world.map((m) => [m.id, m]));
+
+  /**
+   * The row a domain belongs on, in pixels, inside its own landmass.
+   *
+   * The order is global — a domain's level counts every chain that reaches it,
+   * from any continent — but the spacing is local. Spacing the rows globally
+   * asks a small continent that happens to span five levels to stretch across
+   * the whole canvas on an area that cannot reach, and it snaps into a chain
+   * of islands. Normalising inside the landmass keeps the order and drops only
+   * the promise that a row means the same height everywhere, which no reader
+   * was going to measure across an ocean anyway.
+   */
+  const rowIn = new Map<string, number>();
+  for (const mass of world) {
+    const levels = mass.members.map(levelOf);
+    const low = Math.min(...levels);
+    const high = Math.max(...levels);
+    for (const id of mass.members) {
+      const t = high > low ? (levelOf(id) - low) / (high - low) : 0.5;
+      rowIn.set(id, mass.centre.y + (0.5 - t) * 2 * mass.ry * 0.78);
+    }
+  }
+  const rowOf = (id: string): number => rowIn.get(id) ?? 0;
 
   for (const mass of world) {
     const spin = random() * TAU;
@@ -296,18 +390,25 @@ function placeSeeds(
       const t = (index + 0.5) / mass.members.length;
       const angle = spin + index * 2.399963;
       const out = landformOf(id) === 'peninsula' ? 0.6 + config.peninsulaReach * 0.35 : 0.48;
+      // Start on the row the dependency order asks for and let the forces sort
+      // out the rest. Starting from a spiral and relaxing towards the rows
+      // wastes most of the passes undoing the spiral.
+      const spiralY = mass.centre.y + Math.sin(angle) * mass.ry * out * Math.sqrt(t);
       seeds.set(id, {
-        x: mass.centre.x + Math.cos(angle) * mass.reach * out * Math.sqrt(t),
-        y: mass.centre.y + Math.sin(angle) * mass.reach * out * Math.sqrt(t),
+        x: mass.centre.x + Math.cos(angle) * mass.rx * out * Math.sqrt(t),
+        y: spiralY * (1 - config.layering) + rowOf(id) * config.layering,
       });
     });
   }
 
   const linked = new Map<string, Array<{ id: string; weight: number }>>();
   for (const edge of edges) {
-    if (homeOf.get(edge.a) !== homeOf.get(edge.b)) continue;
-    linked.set(edge.a, [...(linked.get(edge.a) ?? []), { id: edge.b, weight: edge.weight }]);
-    linked.set(edge.b, [...(linked.get(edge.b) ?? []), { id: edge.a, weight: edge.weight }]);
+    if (homeOf.get(edge.from) !== homeOf.get(edge.to)) continue;
+    // Attraction is symmetric even though the edge is not: both ends of a
+    // dependency want to be near each other. Direction is spent on the
+    // vertical axis instead, where it means something.
+    linked.set(edge.from, [...(linked.get(edge.from) ?? []), { id: edge.to, weight: edge.weight }]);
+    linked.set(edge.to, [...(linked.get(edge.to) ?? []), { id: edge.from, weight: edge.weight }]);
   }
 
   for (let pass = 0; pass < 90; pass++) {
@@ -331,7 +432,7 @@ function placeSeeds(
           total += link.weight;
         }
         if (total) {
-          const pull = 0.07 * cooling;
+          const pull = 0.16 * config.linkPull * cooling;
           own.x += (sx / total - own.x) * pull;
           own.y += (sy / total - own.y) * pull;
         }
@@ -344,6 +445,11 @@ function placeSeeds(
         own.x += (mass.centre.x - own.x) * 0.035;
         own.y += (mass.centre.y - own.y) * 0.035;
       }
+
+      // The vertical axis is the dependency order: a domain is pulled onto the
+      // row its level asks for, so what everything else rests on ends up at the
+      // bottom and the most dependent fields at the top.
+      own.y += (rowOf(domain.id) - own.y) * config.layering * 0.3;
     }
 
     for (let i = 0; i < domains.length; i++) {
@@ -367,10 +473,14 @@ function placeSeeds(
           d = Math.hypot(dx, dy);
         }
         const push = ((wanted - d) / d) * 0.5;
+        // Two domains on the same row must give way sideways, not vertically —
+        // resolving a collision by moving one up is exactly the thing the
+        // level spring is there to prevent, and the two would fight forever.
+        const sideways = 1 - config.layering * 0.75;
         a.x -= dx * push;
-        a.y -= dy * push;
+        a.y -= dy * push * sideways;
         b.x += dx * push;
-        b.y += dy * push;
+        b.y += dy * push * sideways;
       }
     }
 
@@ -378,13 +488,16 @@ function placeSeeds(
       const own = seeds.get(domain.id);
       const mass = massById.get(homeOf.get(domain.id) ?? '');
       if (!own || !mass) continue;
+      // Pull the seed back onto the ellipse, keeping room for its own area.
+      const inset = radiusOf(domain.id) * 0.6;
+      const rx = Math.max(1, mass.rx - inset);
+      const ry = Math.max(1, mass.ry - inset);
       const dx = own.x - mass.centre.x;
       const dy = own.y - mass.centre.y;
-      const distance = Math.hypot(dx, dy);
-      const limit = Math.max(0, mass.reach - radiusOf(domain.id) * 0.6);
-      if (distance <= limit || distance < 1e-6) continue;
-      own.x = mass.centre.x + (dx / distance) * limit;
-      own.y = mass.centre.y + (dy / distance) * limit;
+      const reach = Math.hypot(dx / rx, dy / ry);
+      if (reach <= 1 || reach < 1e-6) continue;
+      own.x = mass.centre.x + dx / reach;
+      own.y = mass.centre.y + dy / reach;
     }
   }
 
@@ -433,7 +546,7 @@ function grow(
   const roomFor = (massId: string, x: number, y: number): boolean => {
     const mass = massById.get(massId);
     if (!mass) return false;
-    return Math.hypot(x - mass.centre.x, y - mass.centre.y) <= mass.reach;
+    return within(mass, x, y);
   };
 
   const claim = (key: number, plot: Plot, massId: string): void => {
@@ -934,8 +1047,11 @@ export type MapInput = {
   landform?: Map<string, Landform>;
   /** Continents an offshore domain links to, so its island sits between them. */
   reaches?: Map<string, Continent[]>;
-  /** Weighted domain graph, used to seed relatives next to each other. */
-  edges?: Array<{ a: string; b: string; weight: number }>;
+  /** Directed, weighted domain graph. `from` depends on `to`. */
+  edges?: Array<{ from: string; to: string; weight: number }>;
+  /** Depth in the dependency order. Roots are 0 and belong at the bottom. */
+  levels?: Map<string, number>;
+  maxLevel?: number;
 };
 
 export type MapResult = {
@@ -951,6 +1067,8 @@ export type MapResult = {
     worstAreaError: number;
     hexes: number;
     smallest: number;
+    /** Share of dependencies whose source ended up below its dependant. */
+    upwardRate: number;
     elapsedMs: number;
   };
 };
@@ -984,18 +1102,55 @@ function hexBudget(
     .filter((share) => share > 0);
   if (!shares.length) return 1;
 
-  // Radius of a cluster holding one hex-budget's worth of this share.
+  // Radius of a cluster holding one hex-budget's worth of this share. The row
+  // is packed by the horizontal half-axis, so allow for the widest stretch a
+  // layered continent can take — otherwise the row overflows once the levels
+  // pull the continents tall and thin.
   const unit = shares.map((share) => Math.sqrt((share / totalWeight) * (hexArea / Math.PI)) * ROOM);
   const margin = 24;
 
   const acrossX =
     (config.width - margin * 2 - config.strait * (shares.length - 1)) /
     (2 * unit.reduce((sum, u) => sum + u, 0));
-  const acrossY = (config.height - margin * 2) / (2 * Math.max(...unit));
+  const acrossY = (config.height - margin * 2) / (2 * Math.max(...unit) * MAX_STRETCH);
 
   const room = Math.min(acrossX, acrossY) ** 2;
   const wanted = (config.width * config.height * config.landFraction) / hexArea;
   return Math.max(12, Math.min(wanted, room));
+}
+
+/**
+ * How much of the dependency order the picture actually shows: the share of
+ * dependencies whose source ended up lower on the map than the domain that
+ * rests on it.
+ *
+ * The layout only ever asks for this, it cannot promise it — a domain is also
+ * being pulled sideways by its relatives and pushed around by its neighbours'
+ * areas. So the claim is measured rather than assumed, and a number that drops
+ * after a data change is the signal that the map has stopped meaning what it
+ * used to.
+ */
+function upwardRate(
+  domains: Domain[],
+  territories: Territory[],
+  levels: Map<string, number>
+): number {
+  const at = new Map(territories.map((t) => [t.id, t.label.y]));
+  let wanted = 0;
+  let honoured = 0;
+
+  for (const domain of domains) {
+    for (const source of domain.dependsOn) {
+      const mine = at.get(domain.id);
+      const theirs = at.get(source);
+      if (mine === undefined || theirs === undefined) continue;
+      // Same level, no claim to check — two roots are not above each other.
+      if ((levels.get(domain.id) ?? 0) <= (levels.get(source) ?? 0)) continue;
+      wanted += 1;
+      if (theirs > mine) honoured += 1; // y grows downwards
+    }
+  }
+  return wanted ? honoured / wanted : 1;
 }
 
 export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {}): MapResult {
@@ -1018,8 +1173,26 @@ export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {})
   );
   const targetOf = (id: string) => targets.get(id) ?? 4;
 
+  // The vertical axis. Level 0 — what nothing else rests on — sits at the
+  // bottom, and each step of the dependency order climbs from there.
+  const levels = input.levels ?? new Map<string, number>();
+  const maxLevel = Math.max(1, input.maxLevel ?? Math.max(0, ...levels.values()));
+  const margin = 70;
+  const levelOf = (id: string): number => levels.get(id) ?? 0;
+  const rowOf = (id: string): number =>
+    config.height - margin - (levelOf(id) / maxLevel) * (config.height - margin * 2);
+
   const random = rng(config.seed * 7919 + 13);
-  const world = layoutWorld(domains, targetOf, landformOf, reachesOf, hexArea, config);
+  const world = layoutWorld(
+    domains,
+    targetOf,
+    landformOf,
+    reachesOf,
+    rowOf,
+    levelOf,
+    hexArea,
+    config
+  );
 
   const homeOf = new Map<string, string>();
   for (const mass of world) for (const id of mass.members) homeOf.set(id, mass.id);
@@ -1031,6 +1204,7 @@ export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {})
     targetOf,
     landformOf,
     input.edges ?? [],
+    levelOf,
     hexArea,
     config,
     random
@@ -1079,7 +1253,7 @@ export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {})
   const seen = new Set<string>();
   const links: MapResult['links'] = [];
   const candidates = input.edges?.length
-    ? input.edges.map((edge) => ({ from: edge.a, to: edge.b }))
+    ? input.edges.map((edge) => ({ from: edge.from, to: edge.to }))
     : domains.flatMap((d) => d.dependsOn.map((to) => ({ from: d.id, to })));
 
   for (const edge of candidates) {
@@ -1109,6 +1283,7 @@ export function generateMap(input: MapInput, overrides: Partial<MapConfig> = {})
       // The tightest territory, in px of inscribed radius: the number that says
       // whether the smallest name on the map still fits inside its border.
       smallest: territories.reduce((least, t) => Math.min(least, t.room), Infinity),
+      upwardRate: upwardRate(domains, territories, levels),
       elapsedMs: Date.now() - started,
     },
   };

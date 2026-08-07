@@ -2,6 +2,7 @@ import {
   buildDomainGraph,
   classifyLandforms,
   defaultLandformConfig,
+  domainLevels,
   type LandformConfig,
 } from '../shared/domain-graph.js';
 import { loadSources, reportSourceError } from './lib/sources.js';
@@ -57,6 +58,20 @@ function main(): void {
         `наружу ${(share * 100).toFixed(0).padStart(3)}%` +
         (row.reaches.length ? ` → ${row.reaches.join(',')}` : '')
     );
+  }
+
+  const layers = domainLevels(sources.domains);
+  if (layers.cycle) {
+    console.warn(`\n✗ цикл в dependsOn: ${layers.cycle.join(' → ')}`);
+  }
+  console.log('\n── порядок зависимостей (0 внизу карты)');
+  const byLevel = new Map<number, string[]>();
+  for (const domain of sources.domains) {
+    const level = layers.level.get(domain.id) ?? 0;
+    byLevel.set(level, [...(byLevel.get(level) ?? []), domain.id]);
+  }
+  for (const level of [...byLevel.keys()].sort((a, b) => a - b)) {
+    console.log(`  ${level}: ${byLevel.get(level)!.join(', ')}`);
   }
 
   const tally = new Map<string, number>();

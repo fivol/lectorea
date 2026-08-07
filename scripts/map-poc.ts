@@ -5,6 +5,7 @@ import {
   buildDomainGraph,
   classifyLandforms,
   defaultLandformConfig,
+  domainLevels,
 } from '../shared/domain-graph.js';
 import { loadSources, reportSourceError } from './lib/sources.js';
 
@@ -34,6 +35,10 @@ function main(): void {
   const landformConfig = { ...defaultLandformConfig, seed: overrides.seed ?? defaultConfig.seed };
   const edges = buildDomainGraph(sources.domains, sources.courses, landformConfig);
   const topology = classifyLandforms(sources.domains, edges, counts, landformConfig);
+  const layers = domainLevels(sources.domains);
+  if (layers.cycle) {
+    console.warn(`! цикл в dependsOn: ${layers.cycle.join(' → ')}`);
+  }
 
   const map = generateMap(
     {
@@ -42,6 +47,8 @@ function main(): void {
       landform: new Map([...topology].map(([id, t]) => [id, t.landform])),
       reaches: new Map([...topology].map(([id, t]) => [id, t.reaches])),
       edges,
+      levels: layers.level,
+      maxLevel: layers.maxLevel,
     },
     overrides
   );
@@ -111,6 +118,8 @@ ${labels}
     `worst           ${(map.metrics.worstAreaError * 100).toFixed(1)}%`,
     `hexes           ${map.metrics.hexes}`,
     `min label room  ${map.metrics.smallest.toFixed(0)} px`,
+    `snizu vverh    ${(map.metrics.upwardRate * 100).toFixed(0)}% зависимостей идут снизу вверх`,
+    `levels          0..${layers.maxLevel}`,
     `landmasses      ${map.coasts.length} (островов ${map.coasts.filter((c) => c.kind === 'island').length})`,
     `bridges         ${map.links.length}`,
     `elapsed         ${map.metrics.elapsedMs} ms`,

@@ -3,6 +3,7 @@ import {
   buildDomainGraph,
   classifyLandforms,
   defaultLandformConfig,
+  domainLevels,
   type LandformConfig,
 } from '../../shared/domain-graph.js';
 import type { Continent, Course, Domain } from '../../shared/schema.js';
@@ -48,13 +49,17 @@ function buildInput() {
   const seeded = { ...landform, seed: config.seed };
   const edges = buildDomainGraph(data.domains, data.courses as Course[], seeded);
   const topology = classifyLandforms(data.domains, edges, counts, seeded);
+  const layers = domainLevels(data.domains);
   return {
     domains: data.domains,
     courseCounts: counts,
     landform: new Map([...topology].map(([id, t]) => [id, t.landform])),
     reaches: new Map([...topology].map(([id, t]) => [id, t.reaches])),
     edges,
+    levels: layers.level,
+    maxLevel: layers.maxLevel,
     topology,
+    layers,
   };
 }
 
@@ -96,6 +101,16 @@ const GROUPS: Group[] = [
       { key: 'compactness', label: 'Округлость', min: 0.2, max: 3, step: 0.05 },
       { key: 'irregularity', label: 'Неровность', min: 0, max: 2, step: 0.05 },
       { key: 'cornerRadius', label: 'Скругление углов', min: 0, max: 12, step: 0.5 },
+    ],
+  },
+  {
+    title: 'Порядок зависимостей',
+    note:
+      'Вертикаль — это ориентированный граф: то, на чём всё стоит, внизу, самое зависимое наверху. ' +
+      'Притяжение сближает связанные области внутри материка.',
+    sliders: [
+      { key: 'layering', label: 'Строгость слоёв', min: 0, max: 1, step: 0.05 },
+      { key: 'linkPull', label: 'Притяжение по связям', min: 0, max: 1.5, step: 0.05 },
     ],
   },
   {
@@ -475,6 +490,12 @@ function paintMetrics(): void {
     chip('Худшая', `${(m.worstAreaError * 100).toFixed(1)}%`, m.worstAreaError < 0.15 ? 'good' : 'warn'),
     chip('Гексов', String(m.hexes)),
     chip('Мин. место под надпись', `${m.smallest.toFixed(0)} px`),
+    chip(
+      'Снизу вверх',
+      `${(m.upwardRate * 100).toFixed(0)}%`,
+      m.upwardRate > 0.9 ? 'good' : 'warn'
+    ),
+    chip('Уровней', `0..${input.layers.maxLevel}`),
     chip('Время', `${m.elapsedMs} мс`),
     chip('Областей', String(result.territories.length)),
     chip('Суша', landformTally())

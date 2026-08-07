@@ -17,7 +17,12 @@ import type { Continent, Course, Domain } from './schema.js';
  * after the catalogue changes.
  */
 
-export type DomainEdge = { a: string; b: string; weight: number };
+/**
+ * `from` depends on `to`. Direction is the point of this type: the map uses it
+ * to decide what sits above what, and an undirected version cannot say whether
+ * physics rests on mathematics or the other way round.
+ */
+export type DomainEdge = { from: string; to: string; weight: number };
 
 export type Landform = 'mainland' | 'peninsula' | 'island';
 
@@ -59,8 +64,6 @@ export const defaultLandformConfig: LandformConfig = {
 
 /* ──────────────────────────────  The graph  ────────────────────────────── */
 
-const pairKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`);
-
 /**
  * Declared dependencies and course-derived ones, summed into one weighted
  * undirected graph. Undirected on purpose: the map places territories beside
@@ -74,9 +77,9 @@ export function buildDomainGraph(
   const known = new Set(domains.map((d) => d.id));
   const weights = new Map<string, number>();
 
-  const add = (a: string, b: string, weight: number): void => {
-    if (a === b || !known.has(a) || !known.has(b)) return;
-    const key = pairKey(a, b);
+  const add = (from: string, to: string, weight: number): void => {
+    if (from === to || !known.has(from) || !known.has(to)) return;
+    const key = `${from}>${to}`;
     weights.set(key, (weights.get(key) ?? 0) + weight);
   };
 
@@ -102,12 +105,108 @@ export function buildDomainGraph(
     // there.
     .filter(([, weight]) => weight > 0)
     .map(([key, weight]) => {
-      const [a, b] = key.split('|');
-      return { a, b, weight };
+      const [from, to] = key.split('>');
+      return { from, to, weight };
     })
     // Sorted so the layout is reproducible: iteration order over a Map depends
     // on insertion order, and insertion order depends on the file walk.
-    .sort((x, y) => pairKey(x.a, x.b).localeCompare(pairKey(y.a, y.b)));
+    .sort((x, y) => `${x.from}>${x.to}`.localeCompare(`${y.from}>${y.to}`));
+}
+
+/* ────────────────────────────────  Levels  ─────────────────────────────── */
+
+export type DomainLevels = {
+  /** Longest chain of dependencies ending at this domain. Roots are 0. */
+  level: Map<string, number>;
+  maxLevel: number;
+  /** The loop, if the declared graph has one. Layering is meaningless then. */
+  cycle: string[] | null;
+};
+
+/**
+ * How deep each domain sits in the dependency order — the map's vertical axis.
+ *
+ * The **longest** chain, not the shortest, exactly as course levels are
+ * computed: if a domain rests on something at level 3 and something at level 1,
+ * it belongs at 4, or it would be drawn level with its own foundation.
+ *
+ * Only the declared `dependsOn` counts. The course-derived links are evidence
+ * of affinity, not of order — six pairs of domains cite each other through
+ * their courses (biology and biochemistry, economics and mathematics), and
+ * feeding those into a layering turns a clean order into a knot. They earn
+ * their keep elsewhere, pulling related domains together.
+ */
+export function domainLevels(domains: Domain[]): DomainLevels {
+  const indegree = new Map<string, number>(domains.map((d) => [d.id, 0]));
+  const dependants = new Map<string, string[]>(domains.map((d) => [d.id, []]));
+  const known = new Set(domains.map((d) => d.id));
+
+  for (const domain of domains) {
+    for (const source of domain.dependsOn) {
+      if (!known.has(source)) continue;
+      dependants.set(source, [...(dependants.get(source) ?? []), domain.id]);
+      indegree.set(domain.id, (indegree.get(domain.id) ?? 0) + 1);
+    }
+  }
+
+  // Kahn's algorithm: when a domain leaves the queue every one of its sources
+  // has already left, so its level is final and `max` over them is one step.
+  const level = new Map<string, number>();
+  const queue: string[] = [];
+  for (const domain of domains) {
+    if (!indegree.get(domain.id)) {
+      level.set(domain.id, 0);
+      queue.push(domain.id);
+    }
+  }
+
+  for (let head = 0; head < queue.length; head++) {
+    const id = queue[head];
+    for (const next of dependants.get(id) ?? []) {
+      level.set(next, Math.max(level.get(next) ?? 0, (level.get(id) ?? 0) + 1));
+      indegree.set(next, (indegree.get(next) ?? 0) - 1);
+      if (!indegree.get(next)) queue.push(next);
+    }
+  }
+
+  // Fewer domains came out than went in: what is left is exactly the part of
+  // the graph inside a cycle. Naming it beats a bare "cycle detected".
+  let cycle: string[] | null = null;
+  if (queue.length < domains.length) {
+    const stuck = domains.filter((d) => !level.has(d.id)).map((d) => d.id);
+    cycle = findLoop(domains, new Set(stuck));
+    for (const id of stuck) level.set(id, 0);
+  }
+
+  return { level, maxLevel: Math.max(0, ...level.values()), cycle };
+}
+
+/** Depth-first walk inside the tangled subset, returning the loop it finds. */
+function findLoop(domains: Domain[], scope: Set<string>): string[] | null {
+  const byId = new Map(domains.map((d) => [d.id, d]));
+  const state = new Map<string, 'open' | 'done'>();
+  const trail: string[] = [];
+
+  const walk = (id: string): string[] | null => {
+    if (state.get(id) === 'done') return null;
+    if (state.get(id) === 'open') return [...trail.slice(trail.indexOf(id)), id];
+    state.set(id, 'open');
+    trail.push(id);
+    for (const source of byId.get(id)?.dependsOn ?? []) {
+      if (!scope.has(source)) continue;
+      const found = walk(source);
+      if (found) return found;
+    }
+    trail.pop();
+    state.set(id, 'done');
+    return null;
+  };
+
+  for (const id of scope) {
+    const found = walk(id);
+    if (found) return found;
+  }
+  return null;
 }
 
 /* ────────────────────────────  Landform from it  ───────────────────────── */
@@ -162,9 +261,11 @@ export function classifyLandforms(
   const byId = new Map(domains.map((d) => [d.id, d]));
   const neighbours = new Map<string, Array<{ id: string; weight: number }>>();
   for (const domain of domains) neighbours.set(domain.id, []);
+  // Landform asks who a domain is close to, not who came first, so a directed
+  // edge is read from both ends here.
   for (const edge of edges) {
-    neighbours.get(edge.a)?.push({ id: edge.b, weight: edge.weight });
-    neighbours.get(edge.b)?.push({ id: edge.a, weight: edge.weight });
+    neighbours.get(edge.from)?.push({ id: edge.to, weight: edge.weight });
+    neighbours.get(edge.to)?.push({ id: edge.from, weight: edge.weight });
   }
 
   const topology = new Map<string, DomainTopology>();

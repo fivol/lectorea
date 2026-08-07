@@ -3,6 +3,7 @@ import {
   buildDomainGraph,
   classifyLandforms,
   defaultLandformConfig,
+  domainLevels,
   type LandformConfig,
 } from '../shared/domain-graph.js';
 import type { Course, Domain } from '../shared/schema.js';
@@ -51,7 +52,8 @@ describe('buildDomainGraph', () => {
       [course('algorithms', ['cs'], ['calculus']), course('calculus', ['math'])],
       { declaredWeight: 3, derivedWeight: 1 }
     );
-    expect(edges.map((e) => [e.a, e.b])).toEqual([['cs', 'math']]);
+    // Direction survives: the course that has a prerequisite is the dependant.
+    expect(edges.map((e) => [e.from, e.to])).toEqual([['cs', 'math']]);
   });
 
   it('ignores dependencies on courses that are not in the catalogue', () => {
@@ -149,5 +151,62 @@ describe('classifyLandforms', () => {
     // Three links home is what saves it, not its size.
     expect(result.get('probability')?.ownLinks).toBe(3);
     expect(result.get('probability')?.landform).toBe('mainland');
+  });
+});
+
+describe('domainLevels', () => {
+  it('puts what nothing rests on at the bottom', () => {
+    const domains = [
+      domain('math', 'formal'),
+      domain('physics', 'formal', ['math']),
+      domain('engineering', 'formal', ['physics']),
+    ];
+    const { level, maxLevel } = domainLevels(domains);
+    expect(level.get('math')).toBe(0);
+    expect(level.get('physics')).toBe(1);
+    expect(level.get('engineering')).toBe(2);
+    expect(maxLevel).toBe(2);
+  });
+
+  it('takes the longest chain, not the shortest', () => {
+    // stats rests on math directly and on probability, which rests on math.
+    // Level 1 would draw it alongside its own prerequisite.
+    const domains = [
+      domain('math', 'formal'),
+      domain('probability', 'formal', ['math']),
+      domain('statistics', 'formal', ['math', 'probability']),
+    ];
+    expect(domainLevels(domains).level.get('statistics')).toBe(2);
+  });
+
+  it('layers across continents, so a field rests on its foundations anywhere', () => {
+    const domains = [
+      domain('logic', 'formal'),
+      domain('philosophy', 'humanities', ['logic']),
+    ];
+    const { level } = domainLevels(domains);
+    expect(level.get('logic')).toBe(0);
+    expect(level.get('philosophy')).toBe(1);
+  });
+
+  it('names the loop instead of hanging on it', () => {
+    const domains = [
+      domain('a', 'formal', ['b']),
+      domain('b', 'formal', ['a']),
+      domain('c', 'formal'),
+    ];
+    const { cycle, level } = domainLevels(domains);
+    expect(cycle).not.toBeNull();
+    expect(cycle).toEqual(expect.arrayContaining(['a', 'b']));
+    // The rest of the graph still gets levels; only the tangle is flattened.
+    expect(level.get('c')).toBe(0);
+    expect(level.get('a')).toBe(0);
+  });
+
+  it('ignores dependencies on domains that do not exist', () => {
+    const domains = [domain('math', 'formal', ['ghost'])];
+    const { level, cycle } = domainLevels(domains);
+    expect(cycle).toBeNull();
+    expect(level.get('math')).toBe(0);
   });
 });
