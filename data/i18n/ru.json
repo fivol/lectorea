@@ -26,12 +26,14 @@
   "ui.plural.minute.many": "минут",
 
   "ui.nav.backToMap": "Карта",
-  "ui.nav.breadcrumbRoot": "Карта",
   "ui.nav.profile": "Профиль",
 
   "ui.view.map": "Карта",
   "ui.view.blocks": "Блоки",
   "ui.view.switch": "Переключить вид",
+
+  "ui.theme.toLight": "Светлая тема",
+  "ui.theme.toDark": "Тёмная тема",
 
   "ui.search.placeholder": "Область, курс, вуз…",
   "ui.search.empty": "Ничего не найдено",
@@ -52,7 +54,7 @@
 
   "ui.map.emptyDomain": "нет курсов",
   "ui.map.bridge": "междисциплинарная область",
-  "ui.map.legend": "Площадь области пропорциональна числу курсов",
+  "ui.map.legend": "Три материка — три ветви знания; внутри материка площадь области тем больше, чем больше в ней курсов",
 
   "ui.filter.provider.off": "Снять фильтр",
   "ui.filter.searchProvider": "Найти вуз…",
@@ -68,6 +70,7 @@
 
   "ui.column.level": "Сложность {n}",
   "ui.column.legend": "Колонки — по сложности: чем правее курс, тем длиннее цепочка того, что нужно пройти до него",
+  "ui.column.legendSelected": "Выбран курс «{course}» — ярко подсвечены его цепочка подготовки и то, что он откроет дальше; остальное приглушено",
   "ui.graph.empty": "Под текущими фильтрами курсов нет",
 
   "ui.course.level": "сложность {n}",
@@ -89,7 +92,7 @@
   "ui.course.deselect": "Снять выделение",
   "ui.course.favorite": "В избранное",
   "ui.course.favoriteOn": "В избранном",
-  "ui.course.start": "Начать",
+  "ui.course.start": "Изучать",
   "ui.course.finish": "Отметить пройденным",
   "ui.course.done": "Пройден",
   "ui.course.statusToggle": "Отметить прогресс",
@@ -169,6 +172,8 @@
   "ui.filters.mine": "Мои отметки",
   "ui.filters.mine.hideWatched": "Скрыть просмотренные",
   "ui.filters.mine.onlyFavorite": "Только избранные",
+  "ui.filters.showAll": "Все фильтры",
+  "ui.filters.fewer": "Свернуть",
 
   "ui.profile.title": "Профиль",
   "ui.recent.empty": "Здесь появятся плейлисты, которые вы открывали",

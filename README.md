@@ -32,9 +32,13 @@ pnpm data:seed-dev --wipe # remove them again
 
 Three screens, and the profile is the thread running through them.
 
-**The map** (`/`) is the way in. Fields of knowledge are drawn as territories,
-sized by how many courses they hold and marked with an icon apiece, so the empty
-outskirts are visible as work still to be done. Pick a territory to enter the
+**The map** (`/`) is the way in. Three continents — formal and natural, social,
+humanities — drawn as a painted world (`public/map.png`), with the fields of
+knowledge marked out on it as territories, each sized by how many courses it
+holds and carrying an icon, so the empty outskirts are visible as work still to
+be done. The territories are a separate file, `public/map.svg`, in the
+painting's own coordinates, and they are clipped to its coastline so no border
+runs out into the sea. Pick a territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
 stemmer. On a small screen the map falls back to a grid of blocks carrying the
@@ -45,7 +49,9 @@ N» — the length of the longest chain of prerequisites ending at that course �
 reading left to right is reading how much has to come first, and a line above
 the columns says exactly that. Nothing is drawn between the cards: pointing at
 one lights up what it needs and fades the rest, which answers the same question
-without a web of arrows over 200 cards. Cards of one field stay together
+without a web of arrows over 200 cards. Select a course and that line changes to
+say so — half the screen has just dimmed, and the legend explaining the columns
+would leave the reason for it unsaid. Cards of one field stay together
 vertically, so switching on a domain filter lights a stripe rather than a spray.
 
 Three filters sit in the header. **Ступень** caps the catalogue at a school year
@@ -73,16 +79,22 @@ or a click on empty space, puts the columns back to full width.
   clipboard and downloads it as a Markdown checklist with links.
 - **Playlists** — the concrete recordings of that course, sorted by a bayesian
   rating rather than raw views. Filter by language, provider, lecturer, lecture
-  length, captions, year, completeness; hide what you have watched. The provider
-  list is searchable, here and in the header filter above the columns.
+  length, captions, year, completeness; hide what you have watched. The filters
+  sit in one strip that scrolls sideways, ordered by how often they are reached
+  for, and the button at its end unfolds the lot; sorting has its own row,
+  because at the end of that strip it read as one more filter. The provider list
+  is searchable, here and in the header filter above the columns.
 - Marking a course cycles it through *nothing → in progress → done*, which is
   what makes "what can I study right now" answerable.
 
 **The profile** is a modal, not a page — it opens over whatever you were looking
 at. Courses and playlists you have marked, a **Недавние** tab holding the
 playlists you have opened (clearable in full or row by row), and settings for
-language, theme and map style. There is no account and no backend: it all lives
-in `localStorage`. The **Data** tab exports it as a JSON file and imports one
+language, theme and map style. Light and dark also have a one-click toggle in
+the header of both screens — that choice is about the room you are sitting in,
+not about your account, and behind a modal most people put up with the wrong
+one; «Авто» stays in the settings. There is no account and no backend: it all
+lives in `localStorage`. The **Data** tab exports it as a JSON file and imports one
 back, either replacing what is there or merging it — on a conflict the more
 advanced status wins, and histories interleave by time. That is the whole sync
 story, and it works between browsers without a server.

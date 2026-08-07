@@ -131,6 +131,12 @@ between builds and are not stored in git. The generator lives in
 `scripts/lib/visual.config.ts` controls the look. Changing `seedSalt`
 regenerates everything — a redesign is one string edit, not 500 API calls.
 
+The domain palette is picked against the dark canvas, so the generator takes a
+`scheme`: on `dark` the marks are lighter than the domain colour and sit on a
+darkened slab of it, on `light` they are deepened and the slab becomes a pale
+wash. One palette, two ways of laying it down — the frontend passes the theme
+in force, and files written to disk are always the dark one.
+
 **OpenAI (optional, domains only).** ~40 images, generated with
 `pnpm data:images --openai --only=math,physics` and **committed** to the
 repository. They are stable and there is no reason to pay for them on every

@@ -57,7 +57,7 @@ export default function MobileCourseList({ courses, selectedId, onSelect }: Prop
           <button
             type="button"
             className="sticky top-0 z-10 flex w-full items-center gap-2 border-b border-line
-                       bg-canvas/95 px-4 py-2 text-left backdrop-blur"
+                       on-canvas px-4 py-2 text-left backdrop-blur"
             onClick={() => toggle(level)}
             aria-expanded={!collapsed.has(level)}
           >

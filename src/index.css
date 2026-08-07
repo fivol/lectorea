@@ -129,13 +129,85 @@
     color: var(--c-canvas);
     border-color: transparent;
   }
+  /* A filter that is holding a value: accent border and a wash of the same,
+     because the border alone is a hairline and easy to miss in a row of ten. */
+  .chip-on {
+    color: var(--c-ink);
+    border-color: var(--c-accent);
+    background: color-mix(in srgb, var(--c-accent) 16%, var(--c-surface-2));
+  }
 
   .num {
     @apply font-mono tabular-nums;
   }
 
+  /*
+   * A territory is an odd shape, so the default focus ring — a rectangle round
+   * its bounding box — points at open sea as often as at the land it means.
+   * The border takes the accent instead, which is where the eye already is.
+   */
+  .map-territory:focus {
+    outline: none;
+  }
+  .map-territory:focus-visible .territory-edge {
+    stroke: var(--c-accent);
+    stroke-width: 4;
+  }
+
+  /*
+   * A translucent panel over whatever it floats on.
+   *
+   * Not `bg-surface/70`: every colour in the theme is a bare `var(--c-…)`, and
+   * Tailwind cannot fold an opacity modifier into one of those — it drops the
+   * background entirely. The floating search field and its results list were
+   * rendering with no fill at all, held together by their blur, which is why
+   * they turned to soup the moment the ground behind them had any colour.
+   */
+  .glass {
+    background: color-mix(in srgb, var(--c-surface) 84%, transparent);
+  }
+  .glass-strong {
+    background: color-mix(in srgb, var(--c-surface) 96%, transparent);
+  }
+  /* The same, in the page's own colour — for the sticky headers and badges that
+     need whatever is scrolling past to stop showing through them. */
+  .on-canvas {
+    background: color-mix(in srgb, var(--c-canvas) 90%, transparent);
+  }
+
+  /* The chosen half of a segmented control: a shade of the ink, so it reads on
+     whatever plate the group is sitting on. Same reason as `.glass` for not
+     writing it as `bg-ink/10`. */
+  .seg-on {
+    background: color-mix(in srgb, var(--c-ink) 13%, transparent);
+  }
+  .seg-off:hover {
+    background: color-mix(in srgb, var(--c-ink) 6%, transparent);
+  }
+
   .panel-scroll {
     @apply overflow-y-auto overscroll-contain;
+  }
+
+  /*
+   * A row that scrolls sideways. The bar is hidden because at 10px it costs
+   * more height than the controls it sits under — which is the whole reason
+   * the row scrolls instead of wrapping.
+   */
+  .scroll-x {
+    @apply overflow-x-auto overflow-y-hidden overscroll-x-contain;
+    scrollbar-width: none;
+    /*
+     * The control at the cut fades out instead of being sliced through the
+     * middle of a word — that reads as "there is more this way" rather than as
+     * a rendering fault. Harmless when nothing overflows: the tail of the row
+     * is empty space anyway.
+     */
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  }
+  .scroll-x::-webkit-scrollbar {
+    display: none;
   }
 }
 

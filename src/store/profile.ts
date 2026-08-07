@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useMediaQuery } from '@/lib/hooks';
 import {
   PROFILE_KEY,
   ProfileSchema,
@@ -260,10 +261,34 @@ export const useProfile = create<ProfileStore>((set, get) => {
   };
 });
 
+export type Theme = Profile['settings']['theme'];
+
+/**
+ * The theme actually in force. «Авто» means dark unless the system asks for
+ * light — the palette is designed dark-first, so that is the better guess when
+ * nothing is stated.
+ *
+ * Kept as a function of both inputs so the toggle in the header and the <html>
+ * attribute cannot disagree about what «Авто» currently resolves to.
+ */
+export function resolveTheme(theme: Theme, prefersLight: boolean): 'dark' | 'light' {
+  if (theme !== 'auto') return theme;
+  return prefersLight ? 'light' : 'dark';
+}
+
 /** Applies the theme setting to <html> so CSS variables switch. */
-export function applyTheme(theme: Profile['settings']['theme']): void {
-  const dark =
-    theme === 'dark' ||
-    (theme === 'auto' && !window.matchMedia('(prefers-color-scheme: light)').matches);
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+export function applyTheme(theme: Theme): void {
+  document.documentElement.dataset.theme = resolveTheme(
+    theme,
+    window.matchMedia('(prefers-color-scheme: light)').matches
+  );
+}
+
+/**
+ * The theme in force, for the things CSS variables cannot reach: generated SVG
+ * and colours computed from the domain palette.
+ */
+export function useResolvedTheme(): 'dark' | 'light' {
+  const theme = useProfile((state) => state.profile.settings.theme);
+  return resolveTheme(theme, useMediaQuery('(prefers-color-scheme: light)'));
 }

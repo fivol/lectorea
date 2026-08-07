@@ -96,6 +96,14 @@ Run it after adding a domain or after a batch of new courses makes an area
 outgrow its territory; the generator warns when a territory ends up smaller than
 its share of courses.
 
+**It currently refuses to run.** The shipped `public/map.svg` is not generated
+output: it is a set of territories fitted to the painting in `public/map.png`,
+and it carries a `land` path — the painted coastline the territory layer is
+clipped to — that the generator does not produce. Regenerating would replace it
+with hexagons that no longer match the picture underneath, and nothing in the
+repo could bring it back, so the script stops when it sees that path. `--force`
+overrides, for when the painting is being retired along with it.
+
 ### `pnpm map:preview`, `map:sandbox`, `map:landforms`
 
 A second map generator lives in `shared/mapgen.ts` — territories as a power

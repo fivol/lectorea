@@ -1,4 +1,13 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { createPortal } from 'react-dom';
 import Icon from './Icon';
 
 /**
@@ -30,7 +39,48 @@ type Props = {
   search?: { value: string; onChange: (next: string) => void; placeholder: string };
 };
 
-/** Minimal popover used by every filter control — one implementation, one behaviour. */
+/** Matches `w-60` below — the popover is measured before it is rendered. */
+const POPOVER_WIDTH = 240;
+const EDGE = 8;
+/** Enough of the list to be worth opening downwards for. */
+const ROOM_BELOW = 240;
+
+type Placement = { left?: number; right?: number; top?: number; bottom?: number };
+
+/**
+ * Anchored to the trigger in viewport coordinates, and clamped to the viewport
+ * so a trigger near an edge — the far end of a scrolling filter strip, say —
+ * still opens a popover that is fully on screen.
+ */
+function placeBy(trigger: DOMRect, align: 'left' | 'right'): Placement {
+  const place: Placement = {};
+  const limit = Math.max(EDGE, window.innerWidth - POPOVER_WIDTH - EDGE);
+
+  if (align === 'right') {
+    place.right = Math.min(Math.max(window.innerWidth - trigger.right, EDGE), limit);
+  } else {
+    place.left = Math.min(Math.max(trigger.left, EDGE), limit);
+  }
+
+  const below = window.innerHeight - trigger.bottom;
+  if (below < ROOM_BELOW && trigger.top > below) place.bottom = window.innerHeight - trigger.top + 4;
+  else place.top = trigger.bottom + 4;
+
+  return place;
+}
+
+const samePlace = (a: Placement, b: Placement): boolean =>
+  a.left === b.left && a.right === b.right && a.top === b.top && a.bottom === b.bottom;
+
+/**
+ * Minimal popover used by every filter control — one implementation, one
+ * behaviour.
+ *
+ * The list is portalled to the body rather than positioned inside the trigger's
+ * box, because the filter strips it lives in scroll sideways: an absolutely
+ * positioned child of a scroll container is clipped by it, and a filter menu
+ * cut off after two rows is worse than no menu at all.
+ */
 export default function Dropdown({
   label,
   active,
@@ -40,12 +90,39 @@ export default function Dropdown({
   search,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [place, setPlace] = useState<Placement>({});
+
+  // Before paint, so the popover never shows up in the top-left corner first.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = (): void => {
+      const trigger = ref.current?.getBoundingClientRect();
+      if (!trigger) return;
+      const next = placeBy(trigger, align);
+      setPlace((prev) => (samePlace(prev, next) ? prev : next));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    // Pinned to the viewport, the popover has to be told when anything under it
+    // moves: the strip it is anchored in scrolls sideways, and the panel that
+    // strip lives in scrolls down. Following the trigger beats closing — a
+    // click that first scrolls its own chip into view would close it instantly.
+    document.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      document.removeEventListener('scroll', measure, true);
+    };
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return;
+    const inside = (target: Node | null): boolean =>
+      Boolean(ref.current?.contains(target) || popoverRef.current?.contains(target));
+
     const onPointerDown = (event: PointerEvent): void => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+      if (!inside(event.target as Node)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') setOpen(false);
@@ -60,39 +137,48 @@ export default function Dropdown({
 
   return (
     <div ref={ref} className={`relative ${className}`}>
+      {/* No dot beside the label: the chip already changes colour when it holds
+          a value, and what that value *is* is spelled out in the removable
+          chips below — so the dot repeated a signal twice and crowded the row. */}
       <button
         type="button"
-        className={`chip ${active ? 'border-accent text-ink' : ''}`}
+        className={`chip ${active ? 'chip-on' : ''}`}
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
       >
         {label}
-        {active ? <span className="h-1.5 w-1.5 rounded-full bg-accent" /> : null}
         <Icon name="chevron-down" size={12} />
       </button>
-      {open ? (
-        <div
-          className={`absolute z-40 mt-1 w-60 rounded-lg border border-line bg-surface
-                      shadow-[var(--shadow-panel)] ${align === 'right' ? 'right-0' : 'left-0'}`}
-        >
-          {search ? (
-            <div className="border-b border-line p-2">
-              <input
-                type="search"
-                autoFocus
-                value={search.value}
-                onChange={(event) => search.onChange(event.target.value)}
-                placeholder={search.placeholder}
-                className="w-full rounded border border-line bg-surface-2 px-2 py-1 text-sm
-                           text-ink outline-none placeholder:text-ink-faint focus:border-accent"
-              />
-            </div>
-          ) : null}
-          <div className="panel-scroll max-h-72 p-2">
-            <DropdownContext.Provider value={() => setOpen(false)}>{children}</DropdownContext.Provider>
-          </div>
-        </div>
-      ) : null}
+      {open
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              style={place}
+              className="fixed z-50 w-60 rounded-lg border border-line bg-surface
+                         shadow-[var(--shadow-panel)]"
+            >
+              {search ? (
+                <div className="border-b border-line p-2">
+                  <input
+                    type="search"
+                    autoFocus
+                    value={search.value}
+                    onChange={(event) => search.onChange(event.target.value)}
+                    placeholder={search.placeholder}
+                    className="w-full rounded border border-line bg-surface-2 px-2 py-1 text-sm
+                               text-ink outline-none placeholder:text-ink-faint focus:border-accent"
+                  />
+                </div>
+              ) : null}
+              <div className="panel-scroll max-h-72 p-2">
+                <DropdownContext.Provider value={() => setOpen(false)}>
+                  {children}
+                </DropdownContext.Provider>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

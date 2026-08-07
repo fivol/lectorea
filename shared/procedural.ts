@@ -13,6 +13,9 @@
 
 export type Motif = 'orbits' | 'grid' | 'strata' | 'noise';
 
+/** Which canvas the picture will sit on. Files on disk are always the dark one. */
+export type Scheme = 'dark' | 'light';
+
 export type VisualConfig = {
   palette: 'domain' | 'mono' | 'custom';
   motif: Motif | 'auto';
@@ -20,6 +23,7 @@ export type VisualConfig = {
   strokeWidth: number;
   seedSalt: string;
   customColor?: string;
+  scheme?: Scheme;
 };
 
 export const DEFAULT_VISUAL: VisualConfig = {
@@ -108,16 +112,21 @@ export function shift(hex: string, dh: number, ds: number, dl: number): string {
 
 const MOTIFS: Motif[] = ['orbits', 'grid', 'strata', 'noise'];
 
+/**
+ * Three tones of one hue. `base` draws the lines, `accent` the marks that
+ * should catch the eye, `shade` the quiet third — which way each sits relative
+ * to the domain colour is the scheme's business, not the motif's.
+ */
 type Ctx = {
   rnd: () => number;
   base: string;
-  light: string;
-  dark: string;
+  accent: string;
+  shade: string;
   stroke: number;
   density: number;
 };
 
-function orbits({ rnd, base, light, stroke, density }: Ctx): string {
+function orbits({ rnd, base, accent, stroke, density }: Ctx): string {
   const cx = ART_WIDTH * (0.35 + rnd() * 0.3);
   const cy = ART_HEIGHT * (0.4 + rnd() * 0.25);
   const rings = 3 + Math.round(rnd() * 3 * density * 1.6);
@@ -135,14 +144,14 @@ function orbits({ rnd, base, light, stroke, density }: Ctx): string {
     const px = cx + Math.cos(angle) * rx * Math.cos((rot * Math.PI) / 180);
     const py = cy + Math.sin(angle) * ry;
     parts.push(
-      `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(1.6 + rnd() * 2).toFixed(1)}" fill="${light}" opacity="0.9"/>`
+      `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(1.6 + rnd() * 2).toFixed(1)}" fill="${accent}" opacity="0.9"/>`
     );
   }
-  parts.push(`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.2" fill="${light}"/>`);
+  parts.push(`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.2" fill="${accent}"/>`);
   return parts.join('');
 }
 
-function grid({ rnd, base, light, stroke, density }: Ctx): string {
+function grid({ rnd, base, accent, stroke, density }: Ctx): string {
   const step = 12 + rnd() * 10;
   const rot = -12 + rnd() * 24;
   const parts: string[] = [];
@@ -161,20 +170,20 @@ function grid({ rnd, base, light, stroke, density }: Ctx): string {
     const cx = Math.floor(rnd() * (ART_WIDTH / step)) * step;
     const cy = Math.floor(rnd() * (ART_HEIGHT / step)) * step;
     parts.push(
-      `<rect x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${step.toFixed(1)}" height="${step.toFixed(1)}" fill="${light}" opacity="${(0.18 + rnd() * 0.4).toFixed(2)}"/>`
+      `<rect x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${step.toFixed(1)}" height="${step.toFixed(1)}" fill="${accent}" opacity="${(0.18 + rnd() * 0.4).toFixed(2)}"/>`
     );
   }
   return `<g transform="rotate(${rot.toFixed(1)} ${ART_WIDTH / 2} ${ART_HEIGHT / 2})">${parts.join('')}</g>`;
 }
 
-function strata({ rnd, base, light, dark, density }: Ctx): string {
+function strata({ rnd, base, accent, shade, density }: Ctx): string {
   const parts: string[] = [];
   const bands = Math.round(4 + rnd() * 5 * density * 1.6);
   let y = 0;
   for (let i = 0; i < bands && y < ART_HEIGHT; i++) {
     const h = 4 + rnd() * (ART_HEIGHT / bands);
     const skew = -6 + rnd() * 12;
-    const colour = i % 3 === 0 ? light : i % 3 === 1 ? base : dark;
+    const colour = i % 3 === 0 ? accent : i % 3 === 1 ? base : shade;
     parts.push(
       `<path d="M0 ${y.toFixed(1)} L${ART_WIDTH} ${(y + skew).toFixed(1)} L${ART_WIDTH} ${(y + skew + h).toFixed(1)} L0 ${(y + h).toFixed(1)} Z" ` +
         `fill="${colour}" opacity="${(0.16 + rnd() * 0.34).toFixed(2)}"/>`
@@ -184,7 +193,7 @@ function strata({ rnd, base, light, dark, density }: Ctx): string {
   return parts.join('');
 }
 
-function noise({ rnd, base, light, stroke, density }: Ctx): string {
+function noise({ rnd, base, accent, stroke, density }: Ctx): string {
   const count = Math.round(14 + rnd() * 22 * density * 1.6);
   const parts: string[] = [];
   for (let i = 0; i < count; i++) {
@@ -194,7 +203,7 @@ function noise({ rnd, base, light, stroke, density }: Ctx): string {
     const filled = rnd() > 0.55;
     parts.push(
       filled
-        ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${light}" opacity="${(0.25 + rnd() * 0.5).toFixed(2)}"/>`
+        ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${accent}" opacity="${(0.25 + rnd() * 0.5).toFixed(2)}"/>`
         : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${base}" stroke-width="${stroke}" opacity="${(0.3 + rnd() * 0.4).toFixed(2)}"/>`
     );
   }
@@ -215,7 +224,7 @@ export function courseArt(
   const seed = hashString(`${config.seedSalt}:${id}`);
   const rnd = mulberry32(seed);
 
-  const base =
+  const hue =
     config.palette === 'mono'
       ? '#8AA0C0'
       : config.palette === 'custom'
@@ -225,17 +234,33 @@ export function courseArt(
   const motif: Motif =
     config.motif === 'auto' ? MOTIFS[seed % MOTIFS.length] : config.motif;
 
+  /*
+   * The palette in `domains.yaml` is chosen against the dark canvas: pale,
+   * bright hues laid as glowing marks over a darkened slab of their own colour.
+   * Put that slab on a white card and it turns into grey mush with the marks
+   * barely on it — the very thing lightness was supposed to buy.
+   *
+   * So the light scheme inverts the direction rather than introducing a second
+   * palette to keep in sync: the slab becomes a pale wash of the hue and every
+   * mark is deepened until it reads against it.
+   */
+  const pale = config.scheme === 'light';
+
   const ctx: Ctx = {
     rnd,
-    base,
-    light: shift(base, 6, 0.05, 0.14),
-    dark: shift(base, -8, -0.05, -0.18),
+    base: pale ? shift(hue, 0, 0.1, -0.22) : hue,
+    accent: shift(hue, 6, pale ? 0.16 : 0.05, pale ? -0.14 : 0.14),
+    // Saturation has to rise with every step down in lightness, or the darkest
+    // of the three lands on grey and the card looks like a fault rather than a
+    // picture — which is exactly how the dark-canvas values read on white.
+    shade: shift(hue, -8, pale ? 0.2 : -0.05, pale ? -0.26 : -0.18),
     stroke: config.strokeWidth,
     density: config.density,
   };
 
-  const backdrop =
-    `<rect width="${ART_WIDTH}" height="${ART_HEIGHT}" fill="${shift(base, 0, -0.45, -0.42)}" opacity="0.55"/>`;
+  const backdrop = pale
+    ? `<rect width="${ART_WIDTH}" height="${ART_HEIGHT}" fill="${shift(hue, 0, -0.05, 0.3)}" opacity="0.55"/>`
+    : `<rect width="${ART_WIDTH}" height="${ART_HEIGHT}" fill="${shift(hue, 0, -0.45, -0.42)}" opacity="0.55"/>`;
 
   return {
     viewBox: `0 0 ${ART_WIDTH} ${ART_HEIGHT}`,

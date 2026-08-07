@@ -9,6 +9,7 @@ import { loadSources, reportSourceError } from './lib/sources.js';
  * The result is committed — it is one file and it should be reviewable.
  */
 async function main(): Promise<void> {
+  refuseToClobberHandDrawn();
   const sources = loadSources();
   const courseCounts = new Map<string, number>();
   for (const course of sources.courses) {
@@ -36,6 +37,30 @@ async function main(): Promise<void> {
       console.warn(`  ${s.id}: ${s.cells}/${s.quota} cells`);
     }
   }
+}
+
+/**
+ * The map in `public/` is now a drawing, fitted to `public/map.png` and paired
+ * with it — regenerating over the top would silently replace it with hexagons
+ * that no longer match the painting underneath, and the drawing is not
+ * recoverable from anything in this repo.
+ *
+ * A file carrying the `land` path is that drawing; a generated one has no such
+ * path. `--force` is there for the case where the painting is being retired
+ * along with it.
+ */
+function refuseToClobberHandDrawn(): void {
+  if (process.argv.includes('--force')) return;
+  if (!fs.existsSync(paths.mapSvg)) return;
+  if (!fs.readFileSync(paths.mapSvg, 'utf8').includes('id="land"')) return;
+
+  console.error(
+    'public/map.svg is the drawn map that goes with public/map.png, not generated output.\n' +
+      'Regenerating would replace it with territories that no longer fit the painting.\n' +
+      'Run with --force if that is what you want.'
+  );
+  process.exitCode = 1;
+  process.exit();
 }
 
 main().catch(reportSourceError);

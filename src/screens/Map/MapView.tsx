@@ -2,11 +2,71 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { loadMapSvg } from '@/lib/data';
+import { loadMapSvg, mapImageUrl } from '@/lib/data';
 import { parseMapSvg, type ParsedMap } from '@/lib/map';
 import { useReducedMotion } from '@/lib/hooks';
 import { withAlpha } from '@/lib/format';
+import { shift } from '@shared/procedural';
 import { DomainGlyph } from '@/components/DomainIcon';
+
+/**
+ * Lettering on a painted map, not on the app's canvas: the picture is one fixed
+ * illustration, so its labels keep their own dark ink and white halo in either
+ * theme rather than following the palette off it.
+ */
+const MAP_INK = '#172433';
+const MAP_HALO = '#ffffff';
+
+/**
+ * The painting's own sea, sampled from it.
+ *
+ * The screen behind the map is filled with this, so the ocean runs to the edges
+ * of the window instead of stopping at the bitmap's corners — the map is the
+ * surface of the page here, not a picture placed on it.
+ */
+export const MAP_SEA = '#62b9d1';
+
+/**
+ * The palette the map screen runs on while the sea is the page.
+ *
+ * The sea is one fixed colour in both themes, so everything standing on it has
+ * to be too — near-white lettering over light blue is unreadable, and that is
+ * exactly what the dark theme would put there. These override the theme's own
+ * variables for the duration of that screen, so every button, heading and field
+ * on it keeps working without any of them knowing about the map.
+ */
+export const MAP_SURFACE_VARS = {
+  '--c-canvas': MAP_SEA,
+  // Opaque, so a field or a button is a plate on the water rather than a
+  // tinted pane of it — a translucent white over this blue is still blue.
+  // Not pure white — a hair of the sea in it, so the controls read as part of
+  // this screen instead of holes punched through it.
+  '--c-surface': '#f4fbfd',
+  '--c-surface-2': '#fbfeff',
+  '--c-line': 'rgb(12 40 54 / 0.24)',
+  // All three inks are darker than a theme would normally make them. Against a
+  // mid-light ground the usual «faint» grey lands at about 2.4:1 — a legend
+  // nobody can read is not a quiet legend, it is a missing one. These clear
+  // 4.5:1, which costs some of the spread between the three levels and is the
+  // right way round to spend it.
+  '--c-ink': '#0c1e28',
+  '--c-ink-dim': '#1a3540',
+  '--c-ink-faint': '#26454f',
+  '--c-accent': '#0b6a86',
+  '--shadow-panel': '0 18px 44px rgb(8 42 58 / 0.22)',
+  '--shadow-card': '0 6px 18px rgb(8 42 58 / 0.16)',
+} as React.CSSProperties;
+
+/**
+ * The territory colour, pushed away from its neighbours.
+ *
+ * `domains.yaml` gives every field in a continent a variation on one continent
+ * hue, which is right on a card and useless on a map: fifteen shades of the
+ * same blue, laid over the same washed-out ground, are one blue. Saturating and
+ * darkening the tint spreads them back apart without inventing a second palette
+ * — the field keeps the colour it has everywhere else, just stated properly.
+ */
+const tintOf = (colour: string): string => shift(colour, 0, 0.3, -0.08);
 
 type Props = {
   /** Domains matching the current search; empty means "no query typed". */
@@ -16,7 +76,7 @@ type Props = {
   allowed: Set<string> | null;
 };
 
-type Emphasis = 'full' | 'related' | 'dim';
+type Emphasis = 'full' | 'dim';
 
 /**
  * The first screen is a shop window, so animation is allowed here in a way it
@@ -44,22 +104,30 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
     };
   }, []);
 
-  /** Domains the hovered one draws from, transitively — they stay lit. */
-  const sources = useMemo(() => {
-    const found = new Set<string>();
-    if (!hovered) return found;
-    const queue = [hovered];
-    const seen = new Set([hovered]);
-    while (queue.length) {
-      for (const source of catalog.domainById.get(queue.shift()!)?.dependsOn ?? []) {
-        if (seen.has(source)) continue;
-        seen.add(source);
-        found.add(source);
-        queue.push(source);
-      }
+  /**
+   * Where each continent's name goes: centred over the union of its
+   * territories, clear of the northernmost coast.
+   *
+   * The three continents are the one thing on the map that no territory says
+   * out loud — a reader can see that the land is in three pieces without being
+   * told what the split is for.
+   */
+  const continents = useMemo(() => {
+    const boxes = new Map<string, { x0: number; x1: number; y0: number }>();
+    for (const shape of map?.shapes ?? []) {
+      const box = boxes.get(shape.continent);
+      boxes.set(shape.continent, {
+        x0: Math.min(box?.x0 ?? Infinity, shape.x),
+        x1: Math.max(box?.x1 ?? -Infinity, shape.x + shape.width),
+        y0: Math.min(box?.y0 ?? Infinity, shape.y),
+      });
     }
-    return found;
-  }, [hovered, catalog]);
+    return [...boxes].map(([id, box]) => ({
+      id,
+      cx: (box.x0 + box.x1) / 2,
+      y: box.y0 - 22,
+    }));
+  }, [map]);
 
   if (!map) {
     return (
@@ -82,12 +150,18 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
       ]
     : map.shapes;
 
+  /**
+   * Dimming answers a filter, never a cursor.
+   *
+   * Hovering used to grey out every territory except the one under the pointer
+   * and the ones it draws from — which made moving the mouse across the map
+   * flash three quarters of it on and off, and told you about a dependency
+   * graph nobody had asked to see. Pointing at something is not a question; it
+   * gets a slightly stronger fill and a heavier border on that one territory,
+   * and nothing else on the map moves.
+   */
   const emphasisOf = (domainId: string): Emphasis => {
     if (allowed && !allowed.has(domainId)) return 'dim';
-    if (hovered) {
-      if (domainId === hovered) return 'full';
-      return sources.has(domainId) ? 'related' : 'dim';
-    }
     // Zero results must not black out the whole map — the "nothing found" line
     // says it instead.
     if (searchActive && matched.size) return matched.has(domainId) ? 'full' : 'dim';
@@ -103,93 +177,152 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         aria-label={t('ui.a11y.mapRegion')}
         onPointerLeave={() => setHovered(null)}
       >
-        {ordered.map((shape) => {
-          const domain = catalog.domainById.get(shape.domainId);
-          if (!domain) return null;
+        <defs>
+          <clipPath id="map-land">
+            <path d={map.land} />
+          </clipPath>
+        </defs>
 
-          const emphasis = emphasisOf(domain.id);
-          const isHovered = hovered === domain.id;
-          // Dimming only has to say "not this one" — the territory must stay
-          // readable, otherwise pointing at anything blacks out half the map.
-          const opacity = emphasis === 'full' ? 1 : emphasis === 'related' ? 0.88 : 0.68;
+        {/* The map is a painting; the territories are borders drawn on top of
+            it. Both live in the same viewBox, so they scale together and can
+            never drift apart at some window size. No frame around it and
+            nothing laid over it: the sea behind the page is the same colour as
+            the sea in the picture, so there is no edge left to dress. */}
+        <image
+          href={mapImageUrl}
+          x={0}
+          y={0}
+          width={map.width}
+          height={map.height}
+          preserveAspectRatio="none"
+        />
 
-          return (
-            <g
-              key={shape.shapeId}
-              style={{
-                /**
-                 * The lift used to be an SVG `transform` attribute, which CSS
-                 * transitions do not animate — every hover was a two-pixel jump.
-                 * As a CSS transform it eases, and `fill-box` puts the origin at
-                 * the territory's own centre so it grows in place.
-                 *
-                 * One duration for everything, no per-domain delays: the map
-                 * should settle into a new state as one movement. Staggering the
-                 * fade made half the territories lag the other half by a quarter
-                 * of a second, which read as the map stuttering rather than as
-                 * anything meaningful.
-                 */
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                transform: isHovered && !reducedMotion ? 'scale(1.03)' : 'scale(1)',
-                transition: reducedMotion
-                  ? 'none'
-                  : 'opacity 220ms ease-out, transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
-                opacity,
-                cursor: 'pointer',
-              }}
-              onPointerEnter={() => setHovered(domain.id)}
-              // Leaving a territory has to clear the highlight even when the
-              // pointer is still inside the svg — the gaps between territories
-              // are part of the map, and the dimming used to survive there.
-              // Guarded against the enter/leave pair firing out of order when
-              // moving straight from one territory onto its neighbour.
-              onPointerLeave={() => setHovered((current) => (current === domain.id ? null : current))}
-              onClick={() => navigate(`/courses?domain=${encodeURIComponent(domain.id)}`)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  navigate(`/courses?domain=${encodeURIComponent(domain.id)}`);
-                }
-              }}
-              tabIndex={0}
-              role="link"
-              aria-label={`${t(`domain.${domain.id}.title`)}, ${count(domain.courseCount, 'course')}`}
-            >
-              <path
-                id={shape.shapeId}
-                d={shape.d}
-                fill={withAlpha(domain.color, isHovered ? 0.55 : emphasis === 'full' ? 0.3 : 0.18)}
-                stroke={domain.color}
-                strokeWidth={isHovered ? 2 : domain.bridge ? 1.4 : 1}
-                strokeDasharray={domain.bridge ? '5 4' : undefined}
+        {continents.map((continent) => (
+          <text
+            key={continent.id}
+            x={continent.cx}
+            y={Math.max(continent.y, 26)}
+            textAnchor="middle"
+            fontSize={19}
+            fontWeight={700}
+            fill={MAP_INK}
+            letterSpacing={2.6}
+            opacity={0.72}
+            style={{
+              paintOrder: 'stroke',
+              stroke: MAP_HALO,
+              strokeWidth: 4,
+              strokeLinejoin: 'round',
+              strokeOpacity: 0.85,
+              textTransform: 'uppercase',
+              pointerEvents: 'none',
+            }}
+          >
+            {t(`ui.continent.${continent.id}`)}
+          </text>
+        ))}
+
+        <g>
+          {ordered.map((shape) => {
+            const domain = catalog.domainById.get(shape.domainId);
+            if (!domain) return null;
+
+            const emphasis = emphasisOf(domain.id);
+            const isHovered = hovered === domain.id;
+
+            return (
+              <g
+                key={shape.shapeId}
+                className="map-territory"
                 style={{
-                  // Both states name a shadow so the two interpolate. With
-                  // `undefined` on one side there is nothing to animate from and
-                  // the glow snapped in, which is most of what made the hover
-                  // feel abrupt.
-                  filter: `drop-shadow(0 3px 10px ${withAlpha(
-                    domain.color,
-                    isHovered && !reducedMotion ? 0.45 : 0
-                  )})`,
-                  transition: reducedMotion
-                    ? 'none'
-                    : 'fill 220ms ease-out, stroke-width 220ms ease-out, filter 260ms ease-out',
+                  transition: reducedMotion ? 'none' : 'opacity 220ms ease-out',
+                  cursor: 'pointer',
                 }}
-              />
-              <Label
-                shape={shape}
-                domainId={domain.id}
-                title={t(`domain.${domain.id}.title`)}
-                counter={
-                  domain.courseCount ? count(domain.courseCount, 'course') : t('ui.map.emptyDomain')
+                onPointerEnter={() => setHovered(domain.id)}
+                // Leaving a territory has to clear the highlight even when the
+                // pointer is still inside the svg — the sea is part of the map,
+                // and the dimming used to survive out there. Guarded against the
+                // enter/leave pair firing out of order when moving straight from
+                // one territory onto its neighbour.
+                onPointerLeave={() =>
+                  setHovered((current) => (current === domain.id ? null : current))
                 }
-                showCounter={isHovered}
-                colour={domain.color}
-              />
-            </g>
-          );
-        })}
+                onClick={() => navigate(`/courses?domain=${encodeURIComponent(domain.id)}`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigate(`/courses?domain=${encodeURIComponent(domain.id)}`);
+                  }
+                }}
+                tabIndex={0}
+                role="link"
+                aria-label={`${t(`domain.${domain.id}.title`)}, ${count(domain.courseCount, 'course')}`}
+              >
+                {/*
+                 * Colour over a painting, not instead of it: the fill is
+                 * translucent enough that the terrain underneath still reads,
+                 * and the border is the same colour stated at full strength, so
+                 * a territory is identifiable without pointing at it.
+                 *
+                 * One hairline, not a line with a pale one under it — the map
+                 * is washed out enough that a single stroke holds, and doubled
+                 * strokes turned every border into a two-colour ribbon thicker
+                 * than the small territories it was drawn around.
+                 *
+                 * The territories no longer lift on hover: they used to be
+                 * floating shapes with their own shadow, and scaling one now
+                 * would slide its border off the coastline underneath it.
+                 */}
+                <path
+                  id={shape.shapeId}
+                  className="territory-edge"
+                  d={shape.d}
+                  // The clip goes on the border, not on the whole territory: a
+                  // name that runs a little past its own coast is fine, a name
+                  // sliced in half by the shoreline is not.
+                  clipPath={map.land ? 'url(#map-land)' : undefined}
+                  fill={withAlpha(tintOf(domain.color), isHovered ? 0.62 : 0.46)}
+                  // White, and heavy enough to be a border rather than a seam.
+                  // The territories are strongly coloured now, so a border in
+                  // their own colour was a darker edge of the same field; white
+                  // is the one line that separates any two of them.
+                  stroke={isHovered ? '#ffffff' : 'rgb(255 255 255 / 0.85)'}
+                  strokeWidth={isHovered ? 5 : 3}
+                  strokeDasharray={domain.bridge ? '10 6' : undefined}
+                  strokeLinejoin="round"
+                  style={{
+                    transition: reducedMotion
+                      ? 'none'
+                      : 'fill 220ms ease-out, stroke-width 220ms ease-out',
+                  }}
+                />
+                {/* Ruled out by a filter or a search: the territory washes out
+                    towards the colour of the sea around it rather than being
+                    blacked out. On a pale map a dark veil is the loudest thing
+                    on screen, which is the opposite of what dimming is for. */}
+                {emphasis === 'dim' ? (
+                  <path
+                    d={shape.d}
+                    clipPath={map.land ? 'url(#map-land)' : undefined}
+                    fill={withAlpha(MAP_SEA, 0.62)}
+                    stroke="none"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                ) : null}
+                <Label
+                  shape={shape}
+                  domainId={domain.id}
+                  title={t(`domain.${domain.id}.title`)}
+                  counter={
+                    domain.courseCount ? count(domain.courseCount, 'course') : t('ui.map.emptyDomain')
+                  }
+                  showCounter={isHovered}
+                  faded={emphasis === 'dim'}
+                />
+              </g>
+            );
+          })}
+        </g>
       </svg>
 
       <p className="pointer-events-none absolute bottom-3 left-4 text-xs text-ink-faint">
@@ -205,14 +338,15 @@ function Label({
   title,
   counter,
   showCounter,
-  colour,
+  faded,
 }: {
   shape: { cx: number; cy: number; width: number; height: number };
   domainId: string;
   title: string;
   counter: string;
   showCounter: boolean;
-  colour: string;
+  /** Ruled out by a filter or a search — the veil is over the land, not the name. */
+  faded: boolean;
 }) {
   // Small territories only get a label when pointed at, otherwise the map turns
   // into a wall of overlapping text.
@@ -240,37 +374,48 @@ function Label({
     : shape.cy - size * 0.36;
   const titleY = blockTop + (showGlyph ? glyphSize + gap : 0) + size * 0.72;
 
+  // A halo, not an outline. `strokeLinejoin: round` is the whole trick: the
+  // default miter join throws long spikes off every sharp corner of a glyph,
+  // which is what made the old thick stroke look serrated. On painted ground
+  // the halo has to be opaque — grass and rock show straight through a
+  // translucent one and the name stops being readable at all.
+  const halo = {
+    paintOrder: 'stroke' as const,
+    stroke: MAP_HALO,
+    strokeWidth: 3.2,
+    strokeLinejoin: 'round' as const,
+    strokeLinecap: 'round' as const,
+    strokeOpacity: 0.9,
+  };
+
   return (
-    <g className="pointer-events-none" textAnchor="middle">
+    <g className="pointer-events-none" textAnchor="middle" opacity={faded ? 0.65 : 1}>
+      {/* The same halo the names get, and for the same reason: line art in one
+          dark colour vanishes over a forest or a mountain range. Drawn as a
+          thick pale pass with the ink laid over it. */}
       {showGlyph ? (
-        <DomainGlyph
-          domainId={domainId}
-          x={shape.cx}
-          y={blockTop + glyphSize / 2}
-          size={glyphSize}
-          colour={colour}
-          opacity={0.9}
-          strokeWidth={1.7}
-        />
+        <>
+          <DomainGlyph
+            domainId={domainId}
+            x={shape.cx}
+            y={blockTop + glyphSize / 2}
+            size={glyphSize}
+            colour={MAP_HALO}
+            opacity={0.85}
+            strokeWidth={5}
+          />
+          <DomainGlyph
+            domainId={domainId}
+            x={shape.cx}
+            y={blockTop + glyphSize / 2}
+            size={glyphSize}
+            colour={MAP_INK}
+            opacity={0.85}
+            strokeWidth={2}
+          />
+        </>
       ) : null}
-      <text
-        x={shape.cx}
-        y={titleY}
-        fontSize={size}
-        fontWeight={600}
-        fill="var(--c-ink)"
-        // A halo, not an outline. `strokeLinejoin: round` is the whole trick:
-        // the default miter join throws long spikes off every sharp corner of a
-        // glyph, which is what made the old 3.5px stroke look serrated.
-        style={{
-          paintOrder: 'stroke',
-          stroke: 'var(--c-canvas)',
-          strokeWidth: 2,
-          strokeLinejoin: 'round',
-          strokeLinecap: 'round',
-          strokeOpacity: 0.75,
-        }}
-      >
+      <text x={shape.cx} y={titleY} fontSize={size} fontWeight={700} fill={MAP_INK} style={halo}>
         {title}
       </text>
       {showCounter ? (
@@ -278,15 +423,9 @@ function Label({
           x={shape.cx}
           y={titleY + size + 3}
           fontSize={size * 0.75}
-          fill={colour}
-          style={{
-            paintOrder: 'stroke',
-            stroke: 'var(--c-canvas)',
-            strokeWidth: 2,
-            strokeLinejoin: 'round',
-            strokeLinecap: 'round',
-            strokeOpacity: 0.75,
-          }}
+          fontWeight={600}
+          fill={MAP_INK}
+          style={halo}
         >
           {counter}
         </text>

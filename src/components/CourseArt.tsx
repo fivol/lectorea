@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { courseArt, DEFAULT_VISUAL, ART_HEIGHT, ART_WIDTH } from '@shared/procedural';
+import { useResolvedTheme } from '@/store/profile';
 
 type Props = {
   courseId: string;
@@ -17,7 +18,14 @@ type Props = {
  * `07-images.ts` produces identical markup here for free.
  */
 export default function CourseArt({ courseId, color, className = '', rounded }: Props) {
-  const art = useMemo(() => courseArt(courseId, color, DEFAULT_VISUAL), [courseId, color]);
+  // The picture is drawn in the domain's hue over a wash of it, and which way
+  // both go depends on the card underneath — so the theme is an input, not a
+  // filter applied afterwards.
+  const scheme = useResolvedTheme();
+  const art = useMemo(
+    () => courseArt(courseId, color, { ...DEFAULT_VISUAL, scheme }),
+    [courseId, color, scheme]
+  );
 
   return (
     <svg

@@ -132,7 +132,7 @@ export default function SearchBox({
       <div
         className={
           floating
-            ? 'flex items-center gap-2 rounded-full border border-line bg-surface/70 px-4 py-2.5 shadow-[var(--shadow-panel)] backdrop-blur-xl'
+            ? 'glass flex items-center gap-2 rounded-full border border-line px-4 py-2.5 shadow-[var(--shadow-panel)] backdrop-blur-xl'
             : 'flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5'
         }
       >
@@ -179,8 +179,8 @@ export default function SearchBox({
         <div
           id="search-results"
           role="listbox"
-          className="panel-scroll absolute inset-x-0 top-[calc(100%+8px)] z-40 max-h-[60vh]
-                     rounded-xl border border-line bg-surface/95 p-2 shadow-[var(--shadow-panel)]
+          className="panel-scroll glass-strong absolute inset-x-0 top-[calc(100%+8px)] z-40
+                     max-h-[60vh] rounded-xl border border-line p-2 shadow-[var(--shadow-panel)]
                      backdrop-blur-xl"
         >
           {results.empty ? (

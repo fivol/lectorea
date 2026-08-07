@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { unlocksOf, useCatalog } from '@/lib/catalog';
-import { formatHours, withAlpha } from '@/lib/format';
+import { formatHours, inkOn, withAlpha } from '@/lib/format';
 import { courseHref } from '@/lib/url';
-import { useProfile } from '@/store/profile';
+import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import PathBlock from './PathBlock';
@@ -30,6 +30,7 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
   const cycleStatus = useProfile((state) => state.cycleCourseStatus);
   const toggleFavorite = useProfile((state) => state.toggleCourseFavorite);
   const setEcho = useUi((state) => state.setEcho);
+  const scheme = useResolvedTheme();
 
   /**
    * The echo is set by hovering a link in here and cleared on mouse-out — but
@@ -55,7 +56,7 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
               key={domain.id}
               to={`/courses?domain=${encodeURIComponent(domain.id)}`}
               className="chip"
-              style={{ color: domain.color, borderColor: withAlpha(domain.color, 0.4) }}
+              style={{ color: inkOn(domain.color, scheme), borderColor: withAlpha(domain.color, 0.4) }}
             >
               {t(`domain.${domain.id}.title`)}
             </Link>

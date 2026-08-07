@@ -1,9 +1,10 @@
 import { memo } from 'react';
 import type { BuiltCourse, BuiltDomain } from '@shared/schema';
 import { useT } from '@/i18n';
-import { withAlpha } from '@/lib/format';
+import { inkOn, withAlpha } from '@/lib/format';
 import { CARD_ART_HEIGHT, CARD_HEIGHT, CARD_WIDTH } from '@/lib/layout';
 import { EMPHASIS_OPACITY, type Emphasis } from '@/lib/highlight';
+import { useResolvedTheme } from '@/store/profile';
 import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
 import type { CourseStatus } from '@shared/schema';
@@ -33,7 +34,10 @@ function CourseCardInner({
   onHover,
 }: Props) {
   const { t } = useT();
-  const colour = domain?.color ?? 'var(--c-formal)';
+  const scheme = useResolvedTheme();
+  // The border is the domain's colour at 45 % — pale hues picked for the dark
+  // canvas vanish at that strength on a white card, so it deepens with the theme.
+  const colour = inkOn(domain?.color ?? '#4CC9F0', scheme);
   const opacity = EMPHASIS_OPACITY[emphasis];
   const empty = course.playlistCount === 0;
 
@@ -69,7 +73,7 @@ function CourseCardInner({
       <div className="relative w-full" style={{ height: CARD_ART_HEIGHT }}>
         <CourseArt courseId={course.id} color={colour} className="h-full w-full" />
         {empty ? (
-          <span className="absolute right-1.5 top-1.5 rounded bg-canvas/70 px-1.5 py-0.5 text-[10px] text-ink-faint">
+          <span className="on-canvas absolute right-1.5 top-1.5 rounded px-1.5 py-0.5 text-[10px] text-ink-faint">
             {t('ui.course.noMaterials')}
           </span>
         ) : null}

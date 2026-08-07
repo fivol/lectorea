@@ -9,7 +9,8 @@ import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
 import Icon from '@/components/Icon';
-import MapView from './MapView';
+import ThemeToggle from '@/components/ThemeToggle';
+import MapView, { MAP_SEA, MAP_SURFACE_VARS } from './MapView';
 import BlocksView from './BlocksView';
 
 export default function MapScreen() {
@@ -42,7 +43,16 @@ export default function MapScreen() {
   const showMap = mapView === 'map' && !isMobile;
 
   return (
-    <div className="flex h-full flex-col">
+    /*
+      In map mode the sea is the page, header and footer included — so the whole
+      screen takes the sea's colour and, with it, a palette that works on top of
+      it. Everything on this screen reads its colours from those variables, so
+      none of it needs to know the map is underneath.
+    */
+    <div
+      className="flex h-full flex-col"
+      style={showMap ? { background: MAP_SEA, ...MAP_SURFACE_VARS } : undefined}
+    >
       <header className="relative z-30 flex items-start justify-between gap-4 px-4 pt-4 sm:px-6">
         <div className="flex items-baseline gap-3">
           <h1 className="font-display text-xl tracking-tight">{t('app.title')}</h1>
@@ -51,7 +61,14 @@ export default function MapScreen() {
 
         <div className="flex items-center gap-2">
           {isMobile ? null : (
-            <div className="flex overflow-hidden rounded-lg border border-line" role="group">
+            /* The group carries the plate, not the buttons: with only the
+               active half filled, the other half was a hole showing the water
+               through a white outline. */
+            <div
+              className={`glass-strong flex overflow-hidden rounded-lg border border-line
+                          ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`}
+              role="group"
+            >
               <ViewButton
                 active={mapView === 'map'}
                 onClick={() => setSetting('mapView', 'map')}
@@ -66,9 +83,13 @@ export default function MapScreen() {
               />
             </div>
           )}
+          {/* On the water the controls need to sit on something. A shadow is
+              what makes a white plate read as floating over the sea rather than
+              as a hole cut through it. */}
+          <ThemeToggle className={showMap ? 'shadow-[var(--shadow-card)]' : ''} />
           <button
             type="button"
-            className="btn"
+            className={`btn ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`}
             onClick={openProfile}
             aria-label={t('ui.nav.profile')}
           >
@@ -100,14 +121,24 @@ export default function MapScreen() {
         </div>
         <GlobalFilters className="pointer-events-auto justify-center" />
         {query.trim() && results.empty ? (
-          <p className="pointer-events-auto rounded-full bg-surface/80 px-3 py-1 text-xs text-ink-faint backdrop-blur">
+          <p className="glass pointer-events-auto rounded-full px-3 py-1 text-xs text-ink-faint backdrop-blur">
             {t('ui.search.empty')}
           </p>
         ) : null}
       </div>
 
-      {/* The floating field sits over the map, so the canvas keeps clear of it. */}
-      <main className={`min-h-0 flex-1 overflow-auto ${showMap ? 'pt-16' : ''}`}>
+      {/*
+        The floating field sits over the map, so the canvas keeps clear of it.
+
+        In map mode the whole area is painted the sea's own colour. The picture
+        is 16:9 and the window is not, so without it the map ends in two bands
+        of page background — which reads as a picture pinned to a page rather
+        than as a map you are looking at.
+      */}
+      <main
+        className={`min-h-0 flex-1 overflow-auto ${showMap ? 'pt-16' : ''}`}
+        style={showMap ? { background: MAP_SEA } : undefined}
+      >
         {showMap ? (
           <MapView
             matched={results.matchedDomains}
@@ -146,8 +177,10 @@ function ViewButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors
-                  ${active ? 'bg-surface-2 text-ink' : 'text-ink-faint hover:text-ink'}`}
+      // The selected half is the darker one. On a white plate an even whiter
+      // fill is not a state, and that is what «Карта» looked like.
+      className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors
+                  ${active ? 'seg-on text-ink' : 'seg-off text-ink-faint hover:text-ink'}`}
     >
       <Icon name={icon} size={14} />
       {label}

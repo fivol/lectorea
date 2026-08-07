@@ -28,6 +28,8 @@ export type IconName =
   | 'sliders'
   | 'sort'
   | 'circle'
+  | 'sun'
+  | 'moon'
   | 'warning';
 
 /** One inline sprite instead of an icon package — twenty glyphs is not a dependency. */
@@ -56,6 +58,8 @@ const PATHS: Record<IconName, string> = {
   sliders: 'M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6',
   sort: 'M7 4v16m0 0l-3-3m3 3l3-3M17 20V4m0 0l-3 3m3-3l3 3',
   circle: 'M12 4a8 8 0 100 16 8 8 0 000-16z',
+  sun: 'M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4',
+  moon: 'M21 13a8.5 8.5 0 01-10-10 8.5 8.5 0 1010 10z',
   warning: 'M12 4l9 16H3zM12 10v4m0 3v.5',
 };
 

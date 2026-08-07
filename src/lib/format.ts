@@ -1,3 +1,5 @@
+import { hexToHsl, hslToHex } from '@shared/procedural';
+
 /** Formatting helpers shared across the screens. */
 
 export function hoursFromSeconds(seconds: number): number {
@@ -37,6 +39,21 @@ export function formatDate(iso: string, lang = 'ru'): string {
     month: 'long',
     day: 'numeric',
   }).format(date);
+}
+
+/**
+ * A domain hue, adjusted to the canvas it is drawn on.
+ *
+ * `domains.yaml` holds one colour per domain, picked to glow against the dark
+ * canvas — which makes those same colours nearly invisible as text or a border
+ * on a white one. Rather than keep a second palette in step with the first,
+ * the light scheme deepens the hue it is given: same colour, still recognisable
+ * as the domain's, dark enough to read.
+ */
+export function inkOn(hex: string, scheme: 'dark' | 'light'): string {
+  if (scheme === 'dark') return hex;
+  const { h, s, l } = hexToHsl(hex);
+  return hslToHex({ h, s: Math.min(1, s + 0.08), l: Math.min(l, 0.34) });
 }
 
 /** Mixes a colour with the canvas so a domain hue can fade without alpha stacking. */

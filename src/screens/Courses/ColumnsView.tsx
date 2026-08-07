@@ -125,7 +125,7 @@ export default function ColumnsView({
         {columns.map((column) => (
           <section key={column.level} className="shrink-0">
             <header
-              className="sticky top-0 z-10 mb-3 flex items-baseline gap-2 bg-canvas/85
+              className="on-canvas sticky top-0 z-10 mb-3 flex items-baseline gap-2
                          pb-2 pt-1 backdrop-blur"
             >
               <h2 className="num text-xs font-semibold uppercase tracking-wide text-ink-dim">

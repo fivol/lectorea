@@ -4,6 +4,12 @@
  * The file is parsed rather than injected as markup so the territories can be
  * ordinary React elements with ordinary event handlers, instead of a DOM blob
  * that has to be patched by hand after every render.
+ *
+ * The territories are drawn over `public/map.png` and share its coordinates,
+ * so the file also carries the painted coastline as a path called `land`. It is
+ * not a territory — it is what the territory layer is clipped to, which is the
+ * only thing keeping a border from running out into the sea where the painting
+ * and the generated shapes disagree.
  */
 
 export type MapShape = {
@@ -17,6 +23,9 @@ export type MapShape = {
   /** Rough extent, used to decide whether a label fits. */
   width: number;
   height: number;
+  /** Top-left of that extent — continents are named from the union of these. */
+  x: number;
+  y: number;
 };
 
 export type ParsedMap = {
@@ -24,13 +33,18 @@ export type ParsedMap = {
   width: number;
   height: number;
   shapes: MapShape[];
+  /** The painted coastline, as one path with a ring per landmass. */
+  land: string;
 };
+
+/** The one path in the file that is scenery rather than a territory. */
+const LAND_ID = 'land';
 
 const PATH_RE = /<path\b([^>]*)\/>/g;
 const ATTR_RE = /(\w[\w-]*)="([^"]*)"/g;
 const NUMBER_RE = /-?\d+(?:\.\d+)?/g;
 
-function extentOf(d: string): { width: number; height: number } {
+function extentOf(d: string): { width: number; height: number; x: number; y: number } {
   const numbers = d.match(NUMBER_RE)?.map(Number) ?? [];
   let minX = Infinity;
   let maxX = -Infinity;
@@ -43,8 +57,8 @@ function extentOf(d: string): { width: number; height: number } {
     maxY = Math.max(maxY, numbers[i + 1]);
   }
   return Number.isFinite(minX)
-    ? { width: maxX - minX, height: maxY - minY }
-    : { width: 0, height: 0 };
+    ? { width: maxX - minX, height: maxY - minY, x: minX, y: minY }
+    : { width: 0, height: 0, x: 0, y: 0 };
 }
 
 export function parseMapSvg(text: string): ParsedMap {
@@ -52,12 +66,17 @@ export function parseMapSvg(text: string): ParsedMap {
   const [, , widthRaw, heightRaw] = viewBox.split(/\s+/).map(Number);
 
   const shapes: MapShape[] = [];
+  let land = '';
   for (const match of text.matchAll(PATH_RE)) {
     const attributes: Record<string, string> = {};
     for (const attribute of match[1].matchAll(ATTR_RE)) {
       attributes[attribute[1]] = attribute[2];
     }
     if (!attributes.id || !attributes.d) continue;
+    if (attributes.id === LAND_ID) {
+      land = attributes.d;
+      continue;
+    }
     const extent = extentOf(attributes.d);
     shapes.push({
       shapeId: attributes.id,
@@ -70,5 +89,5 @@ export function parseMapSvg(text: string): ParsedMap {
     });
   }
 
-  return { viewBox, width: widthRaw || 1680, height: heightRaw || 980, shapes };
+  return { viewBox, width: widthRaw || 1680, height: heightRaw || 980, shapes, land };
 }

@@ -7,13 +7,14 @@ import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
 import { courseHref, useCatalogParams } from '@/lib/url';
 import { useIsMobile, useEscape } from '@/lib/hooks';
-import { clamp } from '@/lib/format';
-import { useProfile } from '@/store/profile';
+import { clamp, inkOn } from '@/lib/format';
+import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
 import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
+import ThemeToggle from '@/components/ThemeToggle';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -111,30 +112,9 @@ export default function CoursesScreen() {
           <span className="hidden sm:inline">{t('ui.nav.backToMap')}</span>
         </Link>
 
-        <nav aria-label="breadcrumbs" className="hidden min-w-0 items-center gap-1 text-sm text-ink-faint md:flex">
-          <Link to="/" className="hover:text-ink-dim">
-            {t('ui.nav.breadcrumbRoot')}
-          </Link>
-          {selected ? (
-            <>
-              <span>/</span>
-              <Link
-                to={`/courses?domain=${encodeURIComponent(selected.domains[0])}`}
-                className="hover:text-ink-dim"
-              >
-                {t(`domain.${selected.domains[0]}.title`)}
-              </Link>
-              <span>/</span>
-              <span className="truncate text-ink">{t(`course.${selected.id}.title`)}</span>
-            </>
-          ) : params.domains.length === 1 ? (
-            <>
-              <span>/</span>
-              <span className="text-ink">{t(`domain.${params.domains[0]}.title`)}</span>
-            </>
-          ) : null}
-        </nav>
-
+        {/* No breadcrumb trail: with «Карта» already on the left and the domain
+            filter naming the field it leads to, the path repeated both of them
+            and left the row too loud to read at a glance. */}
         <StageFilter />
         <DomainFilter />
         <ProviderFilter />
@@ -146,6 +126,7 @@ export default function CoursesScreen() {
             results={results}
             className="w-40 sm:w-64"
           />
+          <ThemeToggle />
           <button
             type="button"
             className="btn px-2"
@@ -207,8 +188,13 @@ export default function CoursesScreen() {
             className={selected ? 'min-w-0' : 'min-w-0 flex-1'}
           >
             <div className="flex h-full min-h-0 flex-col">
+              {/* Selecting a course dims most of the screen, and a line that
+                  still explains the columns leaves that unexplained — so the
+                  legend answers the question actually on screen. */}
               <p className="shrink-0 border-b border-line px-5 py-2 text-xs text-ink-faint">
-                {t('ui.column.legend')}
+                {selected
+                  ? t('ui.column.legendSelected', { course: t(`course.${selected.id}.title`) })
+                  : t('ui.column.legend')}
               </p>
               <div className="min-h-0 flex-1">
                 <ColumnsView
@@ -304,6 +290,7 @@ function DomainFilter() {
   const params = useCatalogParams();
   const { t } = useT();
   const summarise = useFilterLabel();
+  const scheme = useResolvedTheme();
   const [query, setQuery] = useState('');
 
   /**
@@ -343,7 +330,7 @@ function DomainFilter() {
             {/* The glyph, not a dot: it is the same mark the territory carries
                 on the map, so the row is recognisable rather than colour-coded
                 — and colour alone is no help to anyone who cannot see it. */}
-            <DomainIcon domainId={domain.id} size={15} style={{ color: domain.color }} />
+            <DomainIcon domainId={domain.id} size={15} style={{ color: inkOn(domain.color, scheme) }} />
             <span className="min-w-0 flex-1 truncate">{t(`domain.${domain.id}.title`)}</span>
             <span className="num shrink-0 text-[11px] text-ink-faint">{domain.courseCount}</span>
           </span>

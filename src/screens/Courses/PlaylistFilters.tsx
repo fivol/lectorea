@@ -41,6 +41,9 @@ export default function PlaylistFilters({
   const facets = facetsOf(playlists);
   const activeCount = activeFilterCount(state);
 
+  /** Unfolds the strip into a wrapped block — scrolling is the default, not the only way. */
+  const [expanded, setExpanded] = useState(false);
+
   // The provider list is the only facet long enough to need finding rather than
   // scanning — a popular course pulls in a couple of dozen channels.
   const [providerQuery, setProviderQuery] = useState('');
@@ -63,162 +66,208 @@ export default function PlaylistFilters({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <Dropdown
-          label={t('ui.filters.lang')}
-          active={state.langs.length > 0}
+      {/*
+        One strip, in the order people actually reach for these: language and
+        university first, the long tail last. Wrapped over four rows it cost more
+        height than the playlists it was filtering, so by default it scrolls
+        sideways and «Все фильтры» unfolds the lot for anyone who would rather
+        see them at once.
+      */}
+      <div className="flex items-start gap-1.5">
+        <div
+          // Two details that are not decoration: `py-1` keeps the strip from
+          // clipping the focus ring of the chips it scrolls, and the children
+          // must refuse to shrink or they wrap their labels onto two lines
+          // instead of running off the end.
+          className={`flex min-w-0 flex-1 items-center gap-1.5 py-1 [&>*]:shrink-0
+                      ${expanded ? 'flex-wrap' : 'scroll-x'}`}
         >
-          {facets.langs.map((lang) => (
-            <CheckRow
-              key={lang}
-              checked={state.langs.includes(lang)}
-              onChange={() => toggle('langs', state.langs, lang)}
-            >
-              {LANG_LABELS[lang] ?? lang}
-            </CheckRow>
-          ))}
-        </Dropdown>
-
-        <Dropdown
-          label={t('ui.filters.provider')}
-          active={state.providers.length > 0}
-          search={{
-            value: providerQuery,
-            onChange: setProviderQuery,
-            placeholder: t('ui.filter.searchProvider'),
-          }}
-        >
-          <Caption>
-            {providerQuery
-              ? t('ui.filter.found', { n: shownProviders.length })
-              : t('ui.filter.popular')}
-          </Caption>
-          {shownProviders.length ? null : (
-            <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
-          )}
-          {shownProviders.map((id) => (
-            <CheckRow
-              key={id}
-              checked={state.providers.includes(id)}
-              onChange={() => toggle('providers', state.providers, id)}
-            >
-              {catalog.providers[id]?.title ?? id}
-            </CheckRow>
-          ))}
-        </Dropdown>
-
-        <Dropdown label={t('ui.filters.providerType')} active={state.providerTypes.length > 0}>
-          {PROVIDER_TYPES.map((type) => (
-            <CheckRow
-              key={type}
-              checked={state.providerTypes.includes(type)}
-              onChange={() => toggle('providerTypes', state.providerTypes, type)}
-            >
-              {t(`ui.filters.providerType.${type}`)}
-            </CheckRow>
-          ))}
-        </Dropdown>
-
-        <Dropdown label={t('ui.filters.lecturer')} active={Boolean(state.lecturer)}>
-          <input
-            type="text"
-            value={state.lecturer}
-            list="lecturer-options"
-            onChange={(event) => onChange({ ...state, lecturer: event.target.value })}
-            placeholder={t('ui.filters.lecturerPlaceholder')}
-            className="w-full rounded border border-line bg-surface-2 px-2 py-1 text-sm outline-none"
-          />
-          <datalist id="lecturer-options">
-            {facets.lecturers.map((name) => (
-              <option key={name} value={name} />
+          <Dropdown
+            label={t('ui.filters.lang')}
+            active={state.langs.length > 0}
+          >
+            {facets.langs.map((lang) => (
+              <CheckRow
+                key={lang}
+                checked={state.langs.includes(lang)}
+                onChange={() => toggle('langs', state.langs, lang)}
+              >
+                {LANG_LABELS[lang] ?? lang}
+              </CheckRow>
             ))}
-          </datalist>
-        </Dropdown>
-
-        {facets.countRange ? (
-          <Dropdown label={t('ui.filters.videoCount')} active={Boolean(state.videoCount)}>
-            <RangeRow
-              min={facets.countRange[0]}
-              max={facets.countRange[1]}
-              value={state.videoCount ?? facets.countRange}
-              onChange={(next) => onChange({ ...state, videoCount: next })}
-            />
           </Dropdown>
-        ) : null}
 
-        <Dropdown label={t('ui.filters.lectureLength')} active={state.lectureLengths.length > 0}>
-          {LECTURE_LENGTHS.map((length) => (
-            <CheckRow
-              key={length}
-              checked={state.lectureLengths.includes(length)}
-              onChange={() => toggle('lectureLengths', state.lectureLengths, length)}
-            >
-              {t(`ui.playlist.length.${length}`)}
-            </CheckRow>
-          ))}
-        </Dropdown>
-
-        <Dropdown label={t('ui.filters.captions')} active={Boolean(state.captions)}>
-          <RadioRow checked={!state.captions} onChange={() => onChange({ ...state, captions: null })}>
-            {t('ui.common.all')}
-          </RadioRow>
-          <RadioRow
-            checked={state.captions === 'any'}
-            onChange={() => onChange({ ...state, captions: 'any' })}
+          <Dropdown
+            label={t('ui.filters.provider')}
+            active={state.providers.length > 0}
+            search={{
+              value: providerQuery,
+              onChange: setProviderQuery,
+              placeholder: t('ui.filter.searchProvider'),
+            }}
           >
-            {t('ui.filters.captions.any')}
-          </RadioRow>
-          <RadioRow
-            checked={state.captions === 'ru'}
-            onChange={() => onChange({ ...state, captions: 'ru' })}
-          >
-            {t('ui.filters.captions.ru')}
-          </RadioRow>
-        </Dropdown>
-
-        <Dropdown label={t('ui.filters.kind')} active={state.kinds.length > 0}>
-          {KINDS.map((kind) => (
-            <CheckRow
-              key={kind}
-              checked={state.kinds.includes(kind)}
-              onChange={() => toggle('kinds', state.kinds, kind)}
-            >
-              {t(`ui.playlist.kind.${kind}`)}
-            </CheckRow>
-          ))}
-        </Dropdown>
-
-        {facets.yearRange ? (
-          <Dropdown label={t('ui.filters.year')} active={Boolean(state.years)}>
-            <RangeRow
-              min={facets.yearRange[0]}
-              max={facets.yearRange[1]}
-              value={state.years ?? facets.yearRange}
-              onChange={(next) => onChange({ ...state, years: next })}
-            />
+            <Caption>
+              {providerQuery
+                ? t('ui.filter.found', { n: shownProviders.length })
+                : t('ui.filter.popular')}
+            </Caption>
+            {shownProviders.length ? null : (
+              <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
+            )}
+            {shownProviders.map((id) => (
+              <CheckRow
+                key={id}
+                checked={state.providers.includes(id)}
+                onChange={() => toggle('providers', state.providers, id)}
+              >
+                {catalog.providers[id]?.title ?? id}
+              </CheckRow>
+            ))}
           </Dropdown>
-        ) : null}
 
-        <Dropdown label={t('ui.filters.mine')} active={state.hideWatched || state.onlyFavorite}>
-          <CheckRow
-            checked={state.fullOnly}
-            onChange={(next) => onChange({ ...state, fullOnly: next })}
-          >
-            {t('ui.filters.completeness')}
-          </CheckRow>
-          <CheckRow
-            checked={state.hideWatched}
-            onChange={(next) => onChange({ ...state, hideWatched: next })}
-          >
-            {t('ui.filters.mine.hideWatched')}
-          </CheckRow>
-          <CheckRow
-            checked={state.onlyFavorite}
-            onChange={(next) => onChange({ ...state, onlyFavorite: next })}
-          >
-            {t('ui.filters.mine.onlyFavorite')}
-          </CheckRow>
-        </Dropdown>
+          <Dropdown label={t('ui.filters.lecturer')} active={Boolean(state.lecturer)}>
+            <input
+              type="text"
+              value={state.lecturer}
+              list="lecturer-options"
+              onChange={(event) => onChange({ ...state, lecturer: event.target.value })}
+              placeholder={t('ui.filters.lecturerPlaceholder')}
+              className="w-full rounded border border-line bg-surface-2 px-2 py-1 text-sm outline-none"
+            />
+            <datalist id="lecturer-options">
+              {facets.lecturers.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </Dropdown>
+
+          <Dropdown label={t('ui.filters.kind')} active={state.kinds.length > 0}>
+            {KINDS.map((kind) => (
+              <CheckRow
+                key={kind}
+                checked={state.kinds.includes(kind)}
+                onChange={() => toggle('kinds', state.kinds, kind)}
+              >
+                {t(`ui.playlist.kind.${kind}`)}
+              </CheckRow>
+            ))}
+          </Dropdown>
+
+          <Dropdown label={t('ui.filters.lectureLength')} active={state.lectureLengths.length > 0}>
+            {LECTURE_LENGTHS.map((length) => (
+              <CheckRow
+                key={length}
+                checked={state.lectureLengths.includes(length)}
+                onChange={() => toggle('lectureLengths', state.lectureLengths, length)}
+              >
+                {t(`ui.playlist.length.${length}`)}
+              </CheckRow>
+            ))}
+          </Dropdown>
+
+          {facets.countRange ? (
+            <Dropdown label={t('ui.filters.videoCount')} active={Boolean(state.videoCount)}>
+              <RangeRow
+                min={facets.countRange[0]}
+                max={facets.countRange[1]}
+                value={state.videoCount ?? facets.countRange}
+                onChange={(next) => onChange({ ...state, videoCount: next })}
+              />
+            </Dropdown>
+          ) : null}
+
+          {facets.yearRange ? (
+            <Dropdown label={t('ui.filters.year')} active={Boolean(state.years)}>
+              <RangeRow
+                min={facets.yearRange[0]}
+                max={facets.yearRange[1]}
+                value={state.years ?? facets.yearRange}
+                onChange={(next) => onChange({ ...state, years: next })}
+              />
+            </Dropdown>
+          ) : null}
+
+          <Dropdown label={t('ui.filters.captions')} active={Boolean(state.captions)}>
+            <RadioRow checked={!state.captions} onChange={() => onChange({ ...state, captions: null })}>
+              {t('ui.common.all')}
+            </RadioRow>
+            <RadioRow
+              checked={state.captions === 'any'}
+              onChange={() => onChange({ ...state, captions: 'any' })}
+            >
+              {t('ui.filters.captions.any')}
+            </RadioRow>
+            <RadioRow
+              checked={state.captions === 'ru'}
+              onChange={() => onChange({ ...state, captions: 'ru' })}
+            >
+              {t('ui.filters.captions.ru')}
+            </RadioRow>
+          </Dropdown>
+
+          <Dropdown label={t('ui.filters.mine')} active={state.hideWatched || state.onlyFavorite}>
+            <CheckRow
+              checked={state.fullOnly}
+              onChange={(next) => onChange({ ...state, fullOnly: next })}
+            >
+              {t('ui.filters.completeness')}
+            </CheckRow>
+            <CheckRow
+              checked={state.hideWatched}
+              onChange={(next) => onChange({ ...state, hideWatched: next })}
+            >
+              {t('ui.filters.mine.hideWatched')}
+            </CheckRow>
+            <CheckRow
+              checked={state.onlyFavorite}
+              onChange={(next) => onChange({ ...state, onlyFavorite: next })}
+            >
+              {t('ui.filters.mine.onlyFavorite')}
+            </CheckRow>
+          </Dropdown>
+
+          <Dropdown label={t('ui.filters.providerType')} active={state.providerTypes.length > 0}>
+            {PROVIDER_TYPES.map((type) => (
+              <CheckRow
+                key={type}
+                checked={state.providerTypes.includes(type)}
+                onChange={() => toggle('providerTypes', state.providerTypes, type)}
+              >
+                {t(`ui.filters.providerType.${type}`)}
+              </CheckRow>
+            ))}
+          </Dropdown>
+        </div>
+
+        {/* An icon, and the same chip shape as the row it ends: a text button
+            here sat on transparent background with a half-cut filter sliding
+            under it. Opaque and square, it reads as the end of the strip. */}
+        <button
+          type="button"
+          className={`chip mt-1 shrink-0 px-2 ${expanded ? 'border-accent text-ink' : ''}`}
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          aria-label={expanded ? t('ui.filters.fewer') : t('ui.filters.showAll')}
+          title={expanded ? t('ui.filters.fewer') : t('ui.filters.showAll')}
+        >
+          <Icon name="sliders" size={14} />
+        </button>
+      </div>
+
+      {/*
+        Sorting is not a filter, and sitting at the end of the same strip it read
+        as one more of them. Its own row keeps the two apart, next to the chips
+        that say what the filters above are currently doing.
+      */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {activeCount > 0 ? (
+          <>
+            <ActiveChips state={state} onChange={onChange} />
+            <button type="button" className="btn-ghost text-xs" onClick={onReset}>
+              {t('ui.filter.resetAll')}
+            </button>
+          </>
+        ) : null}
 
         <Dropdown
           label={
@@ -237,15 +286,6 @@ export default function PlaylistFilters({
           ))}
         </Dropdown>
       </div>
-
-      {activeCount > 0 ? (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <ActiveChips state={state} onChange={onChange} />
-          <button type="button" className="btn-ghost text-xs" onClick={onReset}>
-            {t('ui.filter.resetAll')}
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }
