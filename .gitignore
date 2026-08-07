@@ -21,3 +21,4 @@ data/proposed-courses.yaml
 *.tsbuildinfo
 coverage/
 dev-dist/
+.map-poc/
