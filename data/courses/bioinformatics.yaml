@@ -17,12 +17,15 @@
 
 - id: bioinformatics-intro
   domains: [bioinformatics]
+  stage: bachelor-3
   deps: [molecular-biology, algorithms]
 
 - id: sequence-analysis
   domains: [bioinformatics]
+  stage: bachelor-3
   deps: [bioinformatics-intro, statistics]
 
 - id: structural-bioinformatics
   domains: [bioinformatics]
+  stage: bachelor-3
   deps: [bioinformatics-intro, biochemistry]

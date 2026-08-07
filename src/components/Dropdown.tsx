@@ -1,5 +1,19 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import Icon from './Icon';
+
+/**
+ * Lets a row close the popover it lives in.
+ *
+ * The rule is about what the control means, not about who owns the state: a
+ * single-choice control is finished the moment something is picked, so leaving
+ * it open makes the user close it by hand for no reason. A multi-select is not
+ * finished, so it stays.
+ */
+const DropdownContext = createContext<() => void>(() => {});
+
+export function useCloseDropdown(): () => void {
+  return useContext(DropdownContext);
+}
 
 type Props = {
   label: ReactNode;
@@ -8,10 +22,23 @@ type Props = {
   children: ReactNode;
   align?: 'left' | 'right';
   className?: string;
+  /**
+   * Turns on a filter field above the list. The caller owns the query and does
+   * the filtering — the popover has no idea what its children are, and a list
+   * long enough to need searching always knows how it wants to be matched.
+   */
+  search?: { value: string; onChange: (next: string) => void; placeholder: string };
 };
 
 /** Minimal popover used by every filter control — one implementation, one behaviour. */
-export default function Dropdown({ label, active, children, align = 'left', className = '' }: Props) {
+export default function Dropdown({
+  label,
+  active,
+  children,
+  align = 'left',
+  className = '',
+  search,
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -45,11 +72,25 @@ export default function Dropdown({ label, active, children, align = 'left', clas
       </button>
       {open ? (
         <div
-          className={`panel-scroll absolute z-40 mt-1 max-h-72 w-56 rounded-lg border border-line
-                      bg-surface p-2 shadow-[var(--shadow-panel)]
-                      ${align === 'right' ? 'right-0' : 'left-0'}`}
+          className={`absolute z-40 mt-1 w-60 rounded-lg border border-line bg-surface
+                      shadow-[var(--shadow-panel)] ${align === 'right' ? 'right-0' : 'left-0'}`}
         >
-          {children}
+          {search ? (
+            <div className="border-b border-line p-2">
+              <input
+                type="search"
+                autoFocus
+                value={search.value}
+                onChange={(event) => search.onChange(event.target.value)}
+                placeholder={search.placeholder}
+                className="w-full rounded border border-line bg-surface-2 px-2 py-1 text-sm
+                           text-ink outline-none placeholder:text-ink-faint focus:border-accent"
+              />
+            </div>
+          ) : null}
+          <div className="panel-scroll max-h-72 p-2">
+            <DropdownContext.Provider value={() => setOpen(false)}>{children}</DropdownContext.Provider>
+          </div>
         </div>
       ) : null}
     </div>
@@ -78,6 +119,24 @@ export function CheckRow({
   );
 }
 
+/** A one-shot action inside a popover — "clear all" and the like. Closes on click. */
+export function ActionRow({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  const close = useCloseDropdown();
+  return (
+    <button
+      type="button"
+      className="w-full rounded px-2 py-1 text-left text-xs text-ink-faint hover:bg-surface-2"
+      onClick={() => {
+        onClick();
+        close();
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** One of several mutually exclusive options. Picking one closes the popover. */
 export function RadioRow({
   checked,
   onChange,
@@ -87,10 +146,14 @@ export function RadioRow({
   onChange: () => void;
   children: ReactNode;
 }) {
+  const close = useCloseDropdown();
   return (
     <button
       type="button"
-      onClick={onChange}
+      onClick={() => {
+        onChange();
+        close();
+      }}
       className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm
                   ${checked ? 'bg-surface-2 text-ink' : 'text-ink-dim hover:bg-surface-2'}`}
     >

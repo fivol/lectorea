@@ -4,6 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { withAlpha } from '@/lib/format';
 import Icon from '@/components/Icon';
+import DomainIcon from '@/components/DomainIcon';
 
 type Props = {
   matched: Set<string>;
@@ -71,8 +72,14 @@ function DomainCard({ domain, dimmed }: { domain: BuiltDomain; dimmed: boolean }
         style={{ background: domain.color, opacity: 0.6 }}
       />
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold leading-snug text-ink">
-          {t(`domain.${domain.id}.title`)}
+        <h3 className="flex min-w-0 items-center gap-2.5 text-sm font-semibold leading-snug text-ink">
+          <DomainIcon
+            domainId={domain.id}
+            size={30}
+            strokeWidth={1.5}
+            style={{ color: domain.color }}
+          />
+          <span className="min-w-0">{t(`domain.${domain.id}.title`)}</span>
         </h3>
         {domain.bridge ? (
           <span

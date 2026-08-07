@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
+import { normalize } from '@shared/search';
 import { courseHref, useCatalogParams } from '@/lib/url';
 import { useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp } from '@/lib/format';
@@ -10,7 +11,7 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
-import Dropdown, { CheckRow } from '@/components/Dropdown';
+import Dropdown, { ActionRow, CheckRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -72,6 +73,12 @@ export default function CoursesScreen() {
       requestFocus(id);
     },
     [navigate, params.search, requestFocus]
+  );
+
+  /** Clearing the selection is a navigation, so back still walks the history. */
+  const onDeselect = useCallback(
+    () => navigate(`/courses${params.search}`),
+    [navigate, params.search]
   );
 
   useEscape(Boolean(selected) && isMobile, () => navigate(`/courses${params.search}`));
@@ -139,6 +146,7 @@ export default function CoursesScreen() {
         </nav>
 
         <DomainFilter />
+        <ProviderFilter />
 
         <div className="ml-auto flex min-w-0 items-center gap-2">
           <SearchBox
@@ -200,42 +208,49 @@ export default function CoursesScreen() {
           ) : null}
         </>
       ) : (
+        /* With nothing selected there is nothing to say, so the panel and its
+           splitter are gone entirely and the columns get the whole width. */
         <div ref={splitRef} className="flex min-h-0 flex-1">
-          <div style={{ width: `${splitRatio * 100}%` }} className="min-w-0">
+          <div
+            style={selected ? { width: `${splitRatio * 100}%` } : undefined}
+            className={selected ? 'min-w-0' : 'min-w-0 flex-1'}
+          >
             <ColumnsView
               courses={catalog.courses}
               visible={visibleWithSelection}
               dimmed={dimmedWithPath}
               selectedId={selected?.id ?? null}
               onSelect={onSelect}
+              onDeselect={onDeselect}
             />
           </div>
 
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label={t('ui.a11y.dragSplitter')}
-            tabIndex={0}
-            onPointerDown={() => setDragging(true)}
-            onKeyDown={(event) => {
-              if (event.key === 'ArrowLeft') setSetting('splitRatio', clamp(splitRatio - 0.02, 0.3, 0.8));
-              if (event.key === 'ArrowRight') setSetting('splitRatio', clamp(splitRatio + 0.02, 0.3, 0.8));
-            }}
-            className={`w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent
-                        ${dragging ? 'bg-accent' : ''}`}
-          />
-
-          <aside className="min-w-0 flex-1 border-l border-line bg-surface/40">
-            {selected ? (
-              <CoursePanel
-                course={selected}
-                search={params.search}
-                outsideFilter={pathOutsideFilter}
+          {selected ? (
+            <>
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label={t('ui.a11y.dragSplitter')}
+                tabIndex={0}
+                onPointerDown={() => setDragging(true)}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowLeft') setSetting('splitRatio', clamp(splitRatio - 0.02, 0.3, 0.8));
+                  if (event.key === 'ArrowRight') setSetting('splitRatio', clamp(splitRatio + 0.02, 0.3, 0.8));
+                }}
+                className={`w-1 shrink-0 cursor-col-resize bg-line transition-colors hover:bg-accent
+                            ${dragging ? 'bg-accent' : ''}`}
               />
-            ) : (
-              <EmptyPanel />
-            )}
-          </aside>
+
+              <aside className="min-w-0 flex-1 border-l border-line bg-surface/40">
+                <CoursePanel
+                  course={selected}
+                  search={params.search}
+                  outsideFilter={pathOutsideFilter}
+                  onClose={onDeselect}
+                />
+              </aside>
+            </>
+          ) : null}
         </div>
       )}
     </div>
@@ -253,13 +268,7 @@ function DomainFilter() {
 
   return (
     <Dropdown label={label} active={params.domains.length > 0}>
-      <button
-        type="button"
-        className="mb-1 w-full rounded px-2 py-1 text-left text-xs text-ink-faint hover:bg-surface-2"
-        onClick={() => params.setDomains([])}
-      >
-        {t('ui.filter.domain.all')}
-      </button>
+      <ActionRow onClick={() => params.setDomains([])}>{t('ui.filter.domain.all')}</ActionRow>
       {catalog.domains.map((domain) => (
         <CheckRow
           key={domain.id}
@@ -276,13 +285,58 @@ function DomainFilter() {
   );
 }
 
-function EmptyPanel() {
-  const { t } = useT();
+/**
+ * Picking a university was only reachable by typing into the search box, which
+ * hid it from anyone who did not already know the name they were looking for.
+ * Same URL parameter, same behaviour — just visible.
+ *
+ * Providers with nothing in the catalogue are dropped rather than shown greyed
+ * out: the list is long enough already, and a filter that yields nothing is not
+ * worth a row.
+ */
+function ProviderFilter() {
+  const catalog = useCatalog();
+  const params = useCatalogParams();
+  const { t, count } = useT();
+  const [query, setQuery] = useState('');
+
+  const providers = useMemo(() => {
+    const needle = normalize(query);
+    return Object.values(catalog.providers)
+      .filter((provider) => provider.playlistCount > 0 || params.providers.includes(provider.id))
+      .filter((provider) => !needle || normalize(provider.title).includes(needle))
+      .sort((a, b) => b.playlistCount - a.playlistCount || a.title.localeCompare(b.title));
+  }, [catalog.providers, params.providers, query]);
+
+  const label = params.providers.length
+    ? t('ui.filter.provider.selected', { n: params.providers.length })
+    : t('ui.filter.provider.all');
+
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-      <Icon name="chevron-left" size={20} className="text-ink-faint" />
-      <p className="text-sm text-ink-faint">{t('ui.a11y.selectCourse')}</p>
-      <p className="text-xs text-ink-faint">{t('ui.graph.hint')}</p>
-    </div>
+    <Dropdown
+      label={label}
+      active={params.providers.length > 0}
+      search={{ value: query, onChange: setQuery, placeholder: t('ui.filter.searchProvider') }}
+    >
+      <ActionRow onClick={() => params.setProviders([])}>{t('ui.filter.provider.all')}</ActionRow>
+      {!providers.length ? (
+        <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
+      ) : null}
+      {providers.map((provider) => (
+        <CheckRow
+          key={provider.id}
+          checked={params.providers.includes(provider.id)}
+          onChange={() => params.toggleProvider(provider.id)}
+        >
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="min-w-0 truncate">{provider.title}</span>
+            <span className="num shrink-0 text-[11px] text-ink-faint">
+              {count(provider.playlistCount, 'playlist')}
+            </span>
+          </span>
+        </CheckRow>
+      ))}
+    </Dropdown>
   );
 }
+

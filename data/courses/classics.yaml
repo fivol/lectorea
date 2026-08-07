@@ -17,11 +17,14 @@
 
 - id: latin
   domains: [classics]
+  stage: bachelor-1
 
 - id: ancient-greek
   domains: [classics]
+  stage: bachelor-1
 
 - id: classical-philology
   domains: [classics]
+  stage: bachelor-1
   deps: [latin, ancient-greek]
   related: [ancient-literature]

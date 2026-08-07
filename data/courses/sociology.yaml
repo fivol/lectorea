@@ -17,16 +17,20 @@
 
 - id: sociology-intro
   domains: [sociology]
+  stage: bachelor-1
 
 - id: social-theory
   domains: [sociology]
+  stage: bachelor-1
   deps: [sociology-intro]
   related: [philosophy-intro]
 
 - id: social-research-methods
   domains: [sociology]
+  stage: bachelor-4
   deps: [sociology-intro, statistics]
 
 - id: demography
   domains: [sociology]
+  stage: master-1
   deps: [social-research-methods]

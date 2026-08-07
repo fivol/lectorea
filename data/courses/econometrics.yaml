@@ -17,8 +17,10 @@
 
 - id: econometrics
   domains: [econometrics, economics]
+  stage: bachelor-4
   deps: [statistics, microeconomics]
 
 - id: time-series-econometrics
   domains: [econometrics]
+  stage: master-2
   deps: [econometrics, time-series]

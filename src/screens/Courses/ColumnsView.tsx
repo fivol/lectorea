@@ -14,6 +14,7 @@ type Props = {
   dimmed: Set<string>;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onDeselect: () => void;
 };
 
 /**
@@ -34,7 +35,14 @@ type Props = {
  * pulls a course towards the height of its prerequisites, is visible as
  * alignment instead of as geometry.
  */
-export default function ColumnsView({ courses, visible, dimmed, selectedId, onSelect }: Props) {
+export default function ColumnsView({
+  courses,
+  visible,
+  dimmed,
+  selectedId,
+  onSelect,
+  onDeselect,
+}: Props) {
   const catalog = useCatalog();
   const { t, count } = useT();
   const reducedMotion = useReducedMotion();
@@ -97,6 +105,14 @@ export default function ColumnsView({ courses, visible, dimmed, selectedId, onSe
       className="h-full overflow-auto"
       role="region"
       aria-label={t('ui.a11y.graphRegion')}
+      // Clicking the background drops the selection, the way clicking away from
+      // a shape in any canvas does. Guarded on `[data-course]` so it only fires
+      // for clicks that missed every card.
+      onClick={(event) => {
+        if (!selectedId) return;
+        if ((event.target as HTMLElement).closest('[data-course]')) return;
+        onDeselect();
+      }}
     >
       <div className="flex items-start gap-6 p-5">
         {columns.map((column) => (

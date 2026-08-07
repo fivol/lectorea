@@ -17,26 +17,32 @@
 
 - id: probability
   domains: [probability]
+  stage: bachelor-2
   deps: [calculus-2, combinatorics]
   refs:
     syllabus: https://ocw.mit.edu/courses/6-041-probabilistic-systems-analysis-and-applied-probability-fall-2010/
 
 - id: statistics
   domains: [probability]
+  stage: bachelor-3
   deps: [probability]
 
 - id: random-processes
   domains: [probability]
+  stage: bachelor-3
   deps: [probability, measure-theory]
 
 - id: bayesian-statistics
   domains: [probability]
+  stage: bachelor-3
   deps: [statistics]
 
 - id: time-series
   domains: [probability]
+  stage: bachelor-4
   deps: [statistics, random-processes]
 
 - id: information-theory
   domains: [probability, cs]
+  stage: bachelor-3
   deps: [probability]

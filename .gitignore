@@ -21,3 +21,6 @@ data/proposed-courses.yaml
 *.tsbuildinfo
 coverage/
 dev-dist/
+
+# Agent scratch worktrees.
+.claude/worktrees/

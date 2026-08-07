@@ -17,12 +17,15 @@
 
 - id: music-theory
   domains: [musicology]
+  stage: bachelor-1
 
 - id: music-history
   domains: [musicology]
+  stage: bachelor-1
   deps: [music-theory]
 
 - id: ethnomusicology
   domains: [musicology]
+  stage: bachelor-2
   deps: [music-history]
   related: [cultural-anthropology]

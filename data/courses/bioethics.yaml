@@ -17,4 +17,5 @@
 
 - id: bioethics-intro
   domains: [bioethics]
+  stage: bachelor-2
   deps: [ethics, general-biology]

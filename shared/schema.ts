@@ -43,6 +43,30 @@ export type BuiltDomain = z.infer<typeof BuiltDomainSchema>;
 /* ─────────────────────────────  Courses  ───────────────────────────── */
 
 /**
+ * Where in an education this course normally falls.
+ *
+ * Deliberately not derived from `level`: the two answer different questions.
+ * `level` counts prerequisites inside this catalogue, so "Введение в
+ * социологию" and "Школьная алгебра" both sit at zero while one is a first-year
+ * university course and the other is school. This is a curator's judgement and
+ * lives in the data where it can be argued with.
+ */
+export const Stage = z.enum([
+  'school-8',
+  'school-9',
+  'school-10',
+  'school-11',
+  'bachelor-1',
+  'bachelor-2',
+  'bachelor-3',
+  'bachelor-4',
+  'master-1',
+  'master-2',
+  'phd',
+]);
+export type Stage = z.infer<typeof Stage>;
+
+/**
  * Structure only — no titles, no descriptions, no keywords. Those live in
  * `data/i18n/{lang}.json` under `course.{id}.*`, so that a diff on a course file
  * reads as a change to the graph instead of drowning in reworded prose.
@@ -50,6 +74,7 @@ export type BuiltDomain = z.infer<typeof BuiltDomainSchema>;
 export const CourseSchema = z.object({
   id: z.string(), // 'probability', 'calculus-1'
   domains: z.array(z.string()).min(1), // the first one is primary; it picks the file
+  stage: Stage, // where in an education this normally falls
   deps: z.array(z.string()).default([]),
   soft: z.array(z.string()).default([]),
   related: z.array(z.string()).default([]),
@@ -244,6 +269,23 @@ export const ProfileSchema = z.object({
       })
     )
     .default({}),
+  /**
+   * Playlists that were opened, newest first.
+   *
+   * The title is stored rather than looked up: a playlist can be deleted from
+   * YouTube or drop out of the catalogue, and "what did I watch last week"
+   * should still answer, instead of quietly losing rows.
+   */
+  recent: z
+    .array(
+      z.object({
+        id: z.string(),
+        courseId: z.string(),
+        title: z.string(),
+        at: z.string(),
+      })
+    )
+    .default([]),
   settings: z
     .object({
       lang: z.string().default('ru'),
@@ -259,6 +301,10 @@ export const ProfileSchema = z.object({
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
+export type RecentEntry = Profile['recent'][number];
+
+/** Long enough to cover "what was that lecture last month", short enough to stay in localStorage. */
+export const RECENT_LIMIT = 60;
 
 export const PROFILE_KEY = 'catalog.profile.v1';
 

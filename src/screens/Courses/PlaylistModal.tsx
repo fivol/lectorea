@@ -22,6 +22,15 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
   const toggleWatched = useProfile((state) => state.togglePlaylistWatched);
   const toggleFavorite = useProfile((state) => state.togglePlaylistFavorite);
+  const recordRecent = useProfile((state) => state.recordRecent);
+
+  /**
+   * History is recorded here rather than at the click, so a pasted `?playlist=`
+   * link counts too — opening is opening, however you got here.
+   */
+  useEffect(() => {
+    recordRecent({ id: playlist.id, courseId: playlist.courseId, title: playlist.title });
+  }, [playlist.id, playlist.courseId, playlist.title, recordRecent]);
 
   // The iframe is mounted only after an explicit click: YouTube pulls ~800 KB
   // per embed, and opening a modal to read the lecture list must not cost that.

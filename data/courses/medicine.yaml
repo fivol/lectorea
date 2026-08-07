@@ -17,20 +17,25 @@
 
 - id: anatomy
   domains: [medicine]
+  stage: bachelor-1
   deps: [general-biology]
 
 - id: pathology
   domains: [medicine]
+  stage: bachelor-2
   deps: [physiology, anatomy]
 
 - id: pharmacology
   domains: [medicine]
+  stage: bachelor-2
   deps: [biochemistry, physiology]
 
 - id: immunology
   domains: [medicine, biology]
+  stage: bachelor-2
   deps: [cell-biology, microbiology]
 
 - id: epidemiology
   domains: [medicine]
+  stage: bachelor-3
   deps: [statistics]

@@ -6,6 +6,7 @@ import { loadMapSvg } from '@/lib/data';
 import { parseMapSvg, type ParsedMap } from '@/lib/map';
 import { useReducedMotion } from '@/lib/hooks';
 import { withAlpha } from '@/lib/format';
+import { DomainGlyph } from '@/components/DomainIcon';
 
 type Props = {
   /** Domains matching the current search; empty means "no query typed". */
@@ -100,16 +101,24 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
           // Dimming only has to say "not this one" — the territory must stay
           // readable, otherwise pointing at anything blacks out half the map.
           const opacity = emphasis === 'full' ? 1 : emphasis === 'related' ? 0.88 : 0.68;
-          const lift = isHovered && !reducedMotion ? -2 : 0;
 
           return (
             <g
               key={shape.shapeId}
-              transform={`translate(0 ${lift})`}
               style={{
+                /**
+                 * The lift used to be an SVG `transform` attribute, which CSS
+                 * transitions do not animate — every hover was a two-pixel jump.
+                 * As a CSS transform it eases, and `fill-box` puts the origin at
+                 * the territory's own centre so it grows in place instead of
+                 * sliding towards the map's origin.
+                 */
+                transformBox: 'fill-box',
+                transformOrigin: 'center',
+                transform: isHovered && !reducedMotion ? 'scale(1.04)' : 'scale(1)',
                 transition: reducedMotion
                   ? 'none'
-                  : `opacity 180ms ease-out ${delay}ms, transform 180ms ease-out`,
+                  : `opacity 180ms ease-out ${delay}ms, transform 260ms cubic-bezier(0.16, 1, 0.3, 1)`,
                 opacity,
                 cursor: 'pointer',
               }}
@@ -139,12 +148,15 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                 strokeWidth={isHovered ? 2 : domain.bridge ? 1.4 : 1}
                 strokeDasharray={domain.bridge ? '5 4' : undefined}
                 style={{
-                  filter: isHovered ? `drop-shadow(0 6px 18px ${withAlpha(domain.color, 0.45)})` : undefined,
-                  transition: reducedMotion ? 'none' : 'fill 180ms ease-out, stroke-width 180ms ease-out',
+                  filter: isHovered ? `drop-shadow(0 4px 14px ${withAlpha(domain.color, 0.4)})` : undefined,
+                  transition: reducedMotion
+                    ? 'none'
+                    : 'fill 220ms ease-out, stroke-width 220ms ease-out, filter 220ms ease-out',
                 }}
               />
               <Label
                 shape={shape}
+                domainId={domain.id}
                 title={t(`domain.${domain.id}.title`)}
                 counter={
                   domain.courseCount ? count(domain.courseCount, 'course') : t('ui.map.emptyDomain')
@@ -166,12 +178,14 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
 
 function Label({
   shape,
+  domainId,
   title,
   counter,
   showCounter,
   colour,
 }: {
   shape: { cx: number; cy: number; width: number; height: number };
+  domainId: string;
   title: string;
   counter: string;
   showCounter: boolean;
@@ -184,11 +198,41 @@ function Label({
 
   const size = Math.max(11, Math.min(17, shape.width / 8));
 
+  /**
+   * The glyph carries the territory, so it is sized against the territory
+   * rather than against the text — big enough to be read as the thing the area
+   * *is*, at a glance and from across the map.
+   *
+   * It is drawn only where there is room for the glyph and the name together;
+   * on a cramped territory the name is worth more than the picture.
+   */
+  const glyphSize = Math.max(26, Math.min(76, shape.width / 2.6));
+  const gap = size * 0.45;
+  const showGlyph = shape.height > glyphSize + size * 2.4;
+
+  // Glyph and title are laid out as one block, centred together — otherwise
+  // adding the glyph pushes the whole label off the middle of the territory.
+  const blockTop = showGlyph
+    ? shape.cy - (glyphSize + gap + size * 0.72) / 2
+    : shape.cy - size * 0.36;
+  const titleY = blockTop + (showGlyph ? glyphSize + gap : 0) + size * 0.72;
+
   return (
     <g className="pointer-events-none" textAnchor="middle">
+      {showGlyph ? (
+        <DomainGlyph
+          domainId={domainId}
+          x={shape.cx}
+          y={blockTop + glyphSize / 2}
+          size={glyphSize}
+          colour={colour}
+          opacity={0.9}
+          strokeWidth={1.7}
+        />
+      ) : null}
       <text
         x={shape.cx}
-        y={shape.cy}
+        y={titleY}
         fontSize={size}
         fontWeight={600}
         fill="var(--c-ink)"
@@ -209,7 +253,7 @@ function Label({
       {showCounter ? (
         <text
           x={shape.cx}
-          y={shape.cy + size + 3}
+          y={titleY + size + 3}
           fontSize={size * 0.75}
           fill={colour}
           style={{

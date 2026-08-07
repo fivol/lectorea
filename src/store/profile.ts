@@ -2,8 +2,10 @@ import { create } from 'zustand';
 import {
   PROFILE_KEY,
   ProfileSchema,
+  RECENT_LIMIT,
   type CourseStatus,
   type Profile,
+  type RecentEntry,
 } from '@shared/schema';
 
 /**
@@ -19,6 +21,7 @@ function emptyProfile(): Profile {
     updatedAt: new Date().toISOString(),
     courses: {},
     playlists: {},
+    recent: [],
   });
 }
 
@@ -86,6 +89,9 @@ export type ProfileStore = {
   toggleCourseFavorite: (id: string) => void;
   togglePlaylistWatched: (id: string) => void;
   togglePlaylistFavorite: (id: string) => void;
+  recordRecent: (entry: Omit<RecentEntry, 'at'>) => void;
+  removeRecent: (id: string) => void;
+  clearRecent: () => void;
   setSetting: <K extends keyof Profile['settings']>(
     key: K,
     value: Profile['settings'][K]
@@ -104,6 +110,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
       ...current,
       courses: { ...current.courses },
       playlists: { ...current.playlists },
+      recent: [...current.recent],
       settings: { ...current.settings },
       updatedAt: new Date().toISOString(),
     };
@@ -174,6 +181,25 @@ export const useProfile = create<ProfileStore>((set, get) => {
         };
       }),
 
+    /** Re-opening a playlist moves it to the top rather than adding a duplicate. */
+    recordRecent: (entry) =>
+      update((draft) => {
+        draft.recent = [
+          { ...entry, at: new Date().toISOString() },
+          ...draft.recent.filter((item) => item.id !== entry.id),
+        ].slice(0, RECENT_LIMIT);
+      }),
+
+    removeRecent: (id) =>
+      update((draft) => {
+        draft.recent = draft.recent.filter((item) => item.id !== id);
+      }),
+
+    clearRecent: () =>
+      update((draft) => {
+        draft.recent = [];
+      }),
+
     setSetting: (key, value) =>
       update((draft) => {
         draft.settings = { ...draft.settings, [key]: value };
@@ -211,6 +237,16 @@ export const useProfile = create<ProfileStore>((set, get) => {
               }
             : entry;
         }
+
+        // History interleaves by time and keeps the later visit of a repeat.
+        const byId = new Map(draft.recent.map((item) => [item.id, item]));
+        for (const item of incoming.recent) {
+          const existing = byId.get(item.id);
+          if (!existing || item.at > existing.at) byId.set(item.id, item);
+        }
+        draft.recent = [...byId.values()]
+          .sort((a, b) => b.at.localeCompare(a.at))
+          .slice(0, RECENT_LIMIT);
       }),
 
     resetProfile: () => {

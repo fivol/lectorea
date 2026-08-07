@@ -10,6 +10,7 @@
 - [ ] Anything helpful-but-not-required is in `soft`, not `deps`
 - [ ] Mutual links (logic ↔ philosophy) are in `related`, written on one side only
 - [ ] Each course is in `data/courses/<its first domain>.yaml`
+- [ ] `stage` is what a real curriculum says, not a reading of the computed `level`
 - [ ] Any `minLevel` carries a comment saying why the computed level is wrong
 - [ ] Every new course has `course.<id>.title` and `course.<id>.desc` in `data/i18n/ru.json`
 - [ ] Search keywords added to `data/keywords/ru.json` — abbreviations, slang, transliterations

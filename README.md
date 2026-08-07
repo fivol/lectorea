@@ -33,11 +33,12 @@ pnpm data:seed-dev --wipe # remove them again
 Three screens, and the profile is the thread running through them.
 
 **The map** (`/`) is the way in. Fields of knowledge are drawn as territories,
-sized by how many courses they hold, so the empty outskirts are visible as work
-still to be done. Pick a territory to enter the graph filtered to it, or search —
-the search box matches titles, abbreviations and slang (`теорвер`, `линал`),
-because morphology here is a list of forms, not a stemmer. On a small screen the
-map falls back to a list of blocks; the toggle is in the profile settings.
+sized by how many courses they hold and marked with an icon apiece, so the empty
+outskirts are visible as work still to be done. Pick a territory to enter the
+columns filtered to it, or search — the search box matches titles, abbreviations
+and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
+stemmer. On a small screen the map falls back to a grid of blocks carrying the
+same icons; the toggle is in the profile settings.
 
 **The columns** (`/courses`) are the catalogue proper. Each column is a level —
 the length of the longest chain of prerequisites ending at that course — so
@@ -47,23 +48,29 @@ rest, which answers the same question without a web of arrows over 200 cards.
 Cards of one field stay together vertically, so switching on a domain filter
 lights a stripe rather than a spray.
 
-Clicking a course opens its panel:
+Each card carries the stage a person normally meets that course at — «9 класс»,
+«2 курс», «аспирантура» — which is the question people arrive with, and not the
+same thing as the column number. Selecting a course opens its panel; the × in
+the panel, or a click on empty space, puts the columns back to full width.
 
 - **Path** — everything that has to come first, in order, with an hour estimate
   and how much of it you have already marked done. "Export" copies it to the
   clipboard and downloads it as a Markdown checklist with links.
 - **Playlists** — the concrete recordings of that course, sorted by a bayesian
   rating rather than raw views. Filter by language, provider, lecturer, lecture
-  length, captions, year, completeness; hide what you have watched.
+  length, captions, year, completeness; hide what you have watched. The provider
+  list is searchable, here and in the header filter above the columns.
 - Marking a course cycles it through *nothing → in progress → done*, which is
   what makes "what can I study right now" answerable.
 
-**The profile** is a panel, not a page — it opens over whatever you were looking
-at. Courses and playlists you have marked, plus settings for language, theme and
-map style. There is no account and no backend: it all lives in `localStorage`.
-The **Data** tab exports it as a JSON file and imports one back, either replacing
-what is there or merging it — on a conflict the more advanced status wins. That
-is the whole sync story, and it works between browsers without a server.
+**The profile** is a modal, not a page — it opens over whatever you were looking
+at. Courses and playlists you have marked, a **Недавние** tab holding the
+playlists you have opened (clearable in full or row by row), and settings for
+language, theme and map style. There is no account and no backend: it all lives
+in `localStorage`. The **Data** tab exports it as a JSON file and imports one
+back, either replacing what is there or merging it — on a conflict the more
+advanced status wins, and histories interleave by time. That is the whole sync
+story, and it works between browsers without a server.
 
 Filters, the selected domain and the open playlist live in the URL, so a link
 carries the exact view and the back button behaves.

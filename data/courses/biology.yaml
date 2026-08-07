@@ -17,37 +17,46 @@
 
 - id: general-biology
   domains: [biology]
+  stage: school-10
 
 - id: cell-biology
   domains: [biology]
+  stage: bachelor-1
   deps: [general-biology]
 
 - id: genetics
   domains: [biology]
+  stage: bachelor-2
   deps: [cell-biology]
   soft: [probability]
 
 - id: molecular-biology
   domains: [biology]
+  stage: bachelor-2
   deps: [cell-biology, biochemistry]
 
 - id: evolution
   domains: [biology]
+  stage: bachelor-2
   deps: [genetics]
 
 - id: ecology
   domains: [biology]
+  stage: bachelor-1
   deps: [general-biology]
   soft: [statistics]
 
 - id: physiology
   domains: [biology]
+  stage: bachelor-2
   deps: [cell-biology]
 
 - id: microbiology
   domains: [biology]
+  stage: bachelor-2
   deps: [cell-biology]
 
 - id: neuroscience
   domains: [biology]
+  stage: bachelor-2
   deps: [physiology]

@@ -17,12 +17,15 @@
 
 - id: law-intro
   domains: [law]
+  stage: bachelor-1
 
 - id: constitutional-law
   domains: [law]
+  stage: bachelor-1
   deps: [law-intro]
 
 - id: international-law
   domains: [law]
+  stage: bachelor-1
   deps: [law-intro]
   related: [international-relations]

@@ -17,12 +17,15 @@
 
 - id: religious-studies-intro
   domains: [religion]
+  stage: bachelor-1
 
 - id: biblical-studies
   domains: [religion]
+  stage: bachelor-1
   deps: [religious-studies-intro]
   related: [ancient-history]
 
 - id: history-of-religions
   domains: [religion]
+  stage: bachelor-1
   deps: [religious-studies-intro, ancient-history]

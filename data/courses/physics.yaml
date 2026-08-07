@@ -17,52 +17,65 @@
 
 - id: mechanics
   domains: [physics]
+  stage: bachelor-2
   deps: [calculus-2]
 
 - id: analytical-mechanics
   domains: [physics]
+  stage: bachelor-3
   deps: [mechanics, differential-equations]
 
 - id: oscillations-waves
   domains: [physics]
+  stage: bachelor-3
   deps: [mechanics, differential-equations]
 
 - id: electrodynamics
   domains: [physics]
+  stage: bachelor-3
   deps: [calculus-3, differential-equations]
 
 - id: thermodynamics
   domains: [physics]
+  stage: bachelor-3
   deps: [mechanics, calculus-2]
 
 - id: optics
   domains: [physics]
+  stage: bachelor-4
   deps: [oscillations-waves, electrodynamics]
 
 - id: special-relativity
   domains: [physics]
+  stage: bachelor-4
   deps: [mechanics, electrodynamics]
 
 - id: general-relativity
   domains: [physics]
+  stage: master-2
   deps: [special-relativity, differential-geometry]
 
 - id: quantum-mechanics
   domains: [physics]
+  stage: bachelor-4
   deps: [linear-algebra, oscillations-waves, analytical-mechanics]
 
 - id: statistical-physics
   domains: [physics]
+  stage: master-1
   deps: [thermodynamics, probability, quantum-mechanics]
 
 - id: condensed-matter
   domains: [physics]
+  stage: phd
   deps: [statistical-physics, quantum-mechanics]
 
 - id: quantum-field-theory
   domains: [physics]
+  stage: phd
   deps: [quantum-mechanics, special-relativity]
 
 - id: nuclear-physics
   domains: [physics]
+  stage: master-2
   deps: [quantum-mechanics]

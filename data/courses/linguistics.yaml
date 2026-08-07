@@ -17,33 +17,41 @@
 
 - id: linguistics-intro
   domains: [linguistics]
+  stage: bachelor-1
 
 - id: phonetics
   domains: [linguistics]
+  stage: bachelor-1
   deps: [linguistics-intro]
 
 - id: morphology
   domains: [linguistics]
+  stage: bachelor-1
   deps: [linguistics-intro]
 
 - id: syntax
   domains: [linguistics]
+  stage: bachelor-2
   deps: [morphology]
 
 - id: semantics
   domains: [linguistics]
+  stage: bachelor-3
   deps: [syntax]
   related: [mathematical-logic]
 
 - id: historical-linguistics
   domains: [linguistics]
+  stage: bachelor-2
   deps: [phonetics, morphology]
 
 - id: sociolinguistics
   domains: [linguistics]
+  stage: bachelor-1
   deps: [linguistics-intro]
   related: [sociology-intro]
 
 - id: typology
   domains: [linguistics]
+  stage: bachelor-3
   deps: [syntax, morphology]

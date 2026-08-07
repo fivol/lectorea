@@ -17,23 +17,29 @@
 
 - id: econ-intro
   domains: [economics]
+  stage: bachelor-1
 
 - id: microeconomics
   domains: [economics]
+  stage: bachelor-2
   deps: [econ-intro, calculus-1]
 
 - id: macroeconomics
   domains: [economics]
+  stage: bachelor-3
   deps: [microeconomics]
 
 - id: game-theory
   domains: [economics, math]
+  stage: bachelor-3
   deps: [probability, microeconomics]
 
 - id: finance
   domains: [economics]
+  stage: bachelor-3
   deps: [microeconomics, probability]
 
 - id: behavioral-economics
   domains: [economics]
+  stage: bachelor-3
   deps: [microeconomics, psychology-intro]
