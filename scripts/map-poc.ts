@@ -107,10 +107,10 @@ ${labels}
 
   const worst = [...map.territories].sort((a, b) => Math.abs(b.areaError) - Math.abs(a.areaError));
   const report = [
-    `cells           ${map.metrics.cells}`,
     `mean area error ${(map.metrics.areaError * 100).toFixed(1)}%`,
     `worst           ${(map.metrics.worstAreaError * 100).toFixed(1)}%`,
-    `dep adjacency   ${(map.metrics.adjacencyRate * 100).toFixed(0)}%`,
+    `hexes           ${map.metrics.hexes}`,
+    `min label room  ${map.metrics.smallest.toFixed(0)} px`,
     `landmasses      ${map.coasts.length} (островов ${map.coasts.filter((c) => c.kind === 'island').length})`,
     `bridges         ${map.links.length}`,
     `elapsed         ${map.metrics.elapsedMs} ms`,

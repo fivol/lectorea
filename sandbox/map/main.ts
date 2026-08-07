@@ -34,13 +34,9 @@ const CONTINENT_LABEL: Record<Continent, string> = {
 
 /* ─────────────────────────────────  State  ─────────────────────────────── */
 
-/** Draft trades accuracy for a map that keeps up with a dragged slider. */
-const DRAFT: Partial<MapConfig> = { hexR: 9, solverPasses: 26, restarts: 1 };
-const FINAL: Partial<MapConfig> = { hexR: 5, solverPasses: 55, restarts: 4 };
 
 let config: MapConfig = structuredClone(defaultConfig);
 let landform: LandformConfig = structuredClone(defaultLandformConfig);
-let quality: 'draft' | 'final' = 'final';
 let showTemplate = false;
 let hovered: string | null = null;
 /**
@@ -67,17 +63,13 @@ let input = buildInput();
 // First paint is draft and the final quality follows a tick later: the solver
 // blocks for over a second at full resolution, and a blank page for that long
 // reads as a page that failed to load.
-let result: MapResult = generateMap(input, { ...config, ...DRAFT });
+let result: MapResult = generateMap(input, config);
 
-const effective = (): MapConfig => ({
-  ...config,
-  ...(quality === 'draft' ? DRAFT : FINAL),
-});
 
 /* ─────────────────────────────────  Controls  ──────────────────────────── */
 
 type Slider = {
-  key: keyof MapConfig | `character.${Continent}.aspect` | `land.${keyof LandformConfig}`;
+  key: keyof MapConfig | `land.${keyof LandformConfig}`;
   label: string;
   min: number;
   max: number;
@@ -89,85 +81,37 @@ type Group = { title: string; note?: string; sliders: Slider[] };
 
 const GROUPS: Group[] = [
   {
-    title: 'Композиция',
-    note: 'Размер материка задан суммой курсов — меняется только форма и то, как они стоят.',
+    title: 'Сетка',
+    note: 'Каждая область берёт ровно свою долю гексов по числу курсов и останавливается. Берег — то, что из этого получилось.',
     sliders: [
-      { key: 'landFraction', label: 'Доля суши', min: 0.25, max: 0.7, step: 0.01 },
-      { key: 'strait', label: 'Ширина проливов', min: 10, max: 200, step: 2 },
-      { key: 'coastComplexity', label: 'Изрезанность берега', min: 0, max: 1.4, step: 0.02 },
-      { key: 'character.formal.aspect', label: 'Материк 1: ширина / высота', min: 0.3, max: 2.2, step: 0.02 },
-      { key: 'character.social.aspect', label: 'Материк 2: ширина / высота', min: 0.2, max: 2.2, step: 0.02 },
-      { key: 'character.humanities.aspect', label: 'Материк 3: ширина / высота', min: 0.3, max: 2.2, step: 0.02 },
+      { key: 'hexR', label: 'Размер гекса', min: 8, max: 40, step: 1 },
+      { key: 'landFraction', label: 'Доля суши', min: 0.15, max: 0.7, step: 0.01 },
+      { key: 'strait', label: 'Ширина проливов', min: 20, max: 240, step: 4 },
     ],
   },
   {
-    title: 'Суша: материки, полуострова, острова',
-    note:
-      'Кто где живёт, решает граф зависимостей. Много связей внутри материка — вглубь; ' +
-      'мало — полуостров; тянет к чужому материку — остров в проливе.',
+    title: 'Форма',
+    note: 'Округлость держит области центричными — широкими, но не узкими, чтобы влезала надпись. Скругление правит только кривую в SVG, от жёсткой геометрии до мягкой.',
+    sliders: [
+      { key: 'compactness', label: 'Округлость', min: 0.2, max: 3, step: 0.05 },
+      { key: 'irregularity', label: 'Неровность', min: 0, max: 2, step: 0.05 },
+      { key: 'cornerRadius', label: 'Скругление углов', min: 0, max: 12, step: 0.5 },
+    ],
+  },
+  {
+    title: 'Материки, полуострова, острова',
+    note: 'Кто где живёт, решает граф зависимостей: много связей внутри материка — вглубь; мало — полуостров; тянет к чужому материку — остров.',
     sliders: [
       { key: 'land.islandForeignShare', label: 'Порог «наружу» для острова', min: 0.2, max: 0.9, step: 0.02 },
-      { key: 'land.islandOwnLinks', label: 'Макс. своих связей у острова', min: 0, max: 6, step: 1 },
       { key: 'land.peninsulaOwnLinks', label: 'Макс. своих связей у полуострова', min: 0, max: 4, step: 1 },
       { key: 'land.mainlandCourses', label: 'Курсов, чтобы остаться на материке', min: 2, max: 22, step: 1 },
-      { key: 'land.randomness', label: 'Разброс порогов', min: 0, max: 0.5, step: 0.01 },
-      { key: 'land.declaredWeight', label: 'Вес объявленных связей', min: 0, max: 8, step: 1 },
-      { key: 'land.derivedWeight', label: 'Вес связей из курсов', min: 0, max: 8, step: 1 },
-      { key: 'peninsulaReach', label: 'Вылет полуострова', min: 0, max: 2, step: 0.05 },
-      { key: 'islandGap', label: 'Отступ острова от суши', min: 4, max: 70, step: 1 },
-      { key: 'islandScatter', label: 'Разброс островов', min: 0, max: 260, step: 5 },
-    ],
-  },
-  {
-    title: 'Захват территории',
-    note:
-      'Округлость держит области компактными, направление тянет их в одну сторону, ' +
-      'шум задаёт характер границы. Действует только в органическом режиме.',
-    sliders: [
-      { key: 'roundness', label: 'Округлость', min: 0, max: 1.6, step: 0.02 },
-      { key: 'wander', label: 'Направленность', min: 0, max: 2, step: 0.05 },
-      { key: 'wildness', label: 'Шум рельефа', min: 0, max: 3, step: 0.05 },
-      { key: 'grain', label: 'Размер пятен шума', min: 8, max: 160, step: 2 },
-      { key: 'rebalancePasses', label: 'Проходы выравнивания площадей', min: 0, max: 60, step: 1 },
-    ],
-  },
-  {
-    title: 'Формы областей',
-    note: 'Вытянутость и изгиб действуют в режиме power-диаграммы.',
-    sliders: [
-      { key: 'anisotropy', label: 'Вытянутость', min: 0, max: 1, step: 0.02 },
-      { key: 'warpAmount', label: 'Изгиб', min: 0, max: 90, step: 1 },
-      { key: 'warpScale', label: 'Масштаб изгиба', min: 80, max: 700, step: 10 },
-    ],
-  },
-  {
-    title: 'Границы',
-    note: 'Сглаживание идёт по общему графу, поэтому щель между соседями появиться не может.',
-    sliders: [
-      { key: 'smoothIterations', label: 'Сглаживание', min: 0, max: 40, step: 1 },
-      { key: 'smoothStrength', label: 'Сила сглаживания', min: 0.05, max: 0.95, step: 0.05 },
-      { key: 'coastNoise', label: 'Шум берега', min: 0, max: 12, step: 0.2 },
-      { key: 'inlandNoise', label: 'Шум границ', min: 0, max: 8, step: 0.2 },
-      { key: 'subdivisions', label: 'Дробление рёбер', min: 0, max: 3, step: 1 },
-    ],
-  },
-  {
-    title: 'Точность',
-    note: 'Ниже 40 проходов солвера мелкие области не добирают положенную площадь.',
-    sliders: [
-      { key: 'hexR', label: 'Шаг сетки (px)', min: 3, max: 14, step: 1 },
-      { key: 'solverPasses', label: 'Проходы солвера', min: 8, max: 120, step: 1 },
-      { key: 'solverRate', label: 'Демпфирование', min: 0.15, max: 0.9, step: 0.05 },
-      { key: 'restarts', label: 'Попыток раскладки', min: 1, max: 10, step: 1 },
+      { key: 'peninsulaReach', label: 'Вылет полуострова', min: 0, max: 1, step: 0.05 },
+      { key: 'islandGap', label: 'Отступ острова от суши', min: 6, max: 120, step: 2 },
     ],
   },
 ];
 
 const readKnob = (key: Slider['key']): number => {
-  if (key.startsWith('character.')) {
-    const [, continent] = key.split('.') as [string, Continent];
-    return config.character[continent].aspect;
-  }
   if (key.startsWith('land.')) {
     return (landform as unknown as Record<string, number>)[key.slice(5)];
   }
@@ -175,11 +119,6 @@ const readKnob = (key: Slider['key']): number => {
 };
 
 const writeKnob = (key: Slider['key'], value: number): void => {
-  if (key.startsWith('character.')) {
-    const [, continent] = key.split('.') as [string, Continent];
-    config.character[continent] = { ...config.character[continent], aspect: value };
-    return;
-  }
   if (key.startsWith('land.')) {
     (landform as unknown as Record<string, number>)[key.slice(5)] = value;
     return;
@@ -239,35 +178,6 @@ function buildPanel(): void {
     ])
   );
 
-  const qualityRow = el('div', { class: 'row' }, [el('label', { textContent: 'Качество' })]);
-  const select = el('select', {
-    onchange: (event: Event) => {
-      quality = (event.target as HTMLSelectElement).value as 'draft' | 'final';
-      regenerate();
-    },
-  });
-  select.append(
-    el('option', { value: 'final', textContent: 'Финальное (сетка 5px)' }),
-    el('option', { value: 'draft', textContent: 'Черновое (быстро)' })
-  );
-  select.value = quality;
-  qualityRow.append(select);
-  panel.append(qualityRow);
-
-  const modeRow = el('div', { class: 'row' }, [el('label', { textContent: 'Алгоритм' })]);
-  const mode = el('select', {
-    onchange: (event: Event) => {
-      config.mode = (event.target as HTMLSelectElement).value as MapConfig['mode'];
-      regenerate();
-    },
-  });
-  mode.append(
-    el('option', { value: 'organic', textContent: 'Органический захват' }),
-    el('option', { value: 'power', textContent: 'Power-диаграмма' })
-  );
-  mode.value = config.mode;
-  modeRow.append(mode);
-  panel.append(modeRow);
 
   for (const group of GROUPS) {
     const section = el('section', {}, [el('h2', { textContent: group.title })]);
@@ -286,7 +196,7 @@ function buildPanel(): void {
       input.addEventListener('input', () => {
         writeKnob(slider.key, Number(input.value));
         output.textContent = format(Number(input.value));
-        regenerate('draft');
+        regenerate();
       });
       input.addEventListener('change', () => regenerate());
 
@@ -563,8 +473,8 @@ function paintMetrics(): void {
   metrics.replaceChildren(
     chip('Ошибка площади', `${(m.areaError * 100).toFixed(1)}%`, m.areaError < 0.05 ? 'good' : 'warn'),
     chip('Худшая', `${(m.worstAreaError * 100).toFixed(1)}%`, m.worstAreaError < 0.15 ? 'good' : 'warn'),
-    chip('Связи графа', `${(m.adjacencyRate * 100).toFixed(0)}%`),
-    chip('Ячеек', String(m.cells)),
+    chip('Гексов', String(m.hexes)),
+    chip('Мин. место под надпись', `${m.smallest.toFixed(0)} px`),
     chip('Время', `${m.elapsedMs} мс`),
     chip('Областей', String(result.territories.length)),
     chip('Суша', landformTally())
@@ -575,12 +485,11 @@ function paintMetrics(): void {
 
 let pending = 0;
 
-function regenerate(force?: 'draft'): void {
+function regenerate(): void {
   window.clearTimeout(pending);
   pending = window.setTimeout(() => {
-    const overrides = force === 'draft' ? { ...config, ...DRAFT } : effective();
     input = buildInput();
-    result = generateMap(input, overrides);
+    result = generateMap(input, config);
     paint();
     paintMetrics();
   }, 40);
