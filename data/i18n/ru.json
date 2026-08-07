@@ -57,7 +57,7 @@
   "ui.filter.provider.off": "Снять фильтр",
   "ui.filter.searchProvider": "Найти вуз…",
   "ui.filter.provider.all": "Все вузы",
-  "ui.filter.stage.all": "Любой уровень",
+  "ui.filter.stage.all": "Любая ступень",
   "ui.filter.domain.all": "Все домены",
   "ui.filter.andMore": "и ещё {n}",
   "ui.filter.searchDomain": "Найти область…",
@@ -66,10 +66,11 @@
   "ui.filter.found": "Найдено: {n}",
   "ui.filter.resetAll": "Сбросить всё",
 
-  "ui.column.level": "Уровень {n}",
+  "ui.column.level": "Шаг {n}",
+  "ui.column.legend": "Колонки — порядок изучения: курс можно начинать, когда пройдено всё, что левее",
   "ui.graph.empty": "Под текущими фильтрами курсов нет",
 
-  "ui.course.level": "уровень {n}",
+  "ui.course.level": "шаг {n}",
   "ui.stage.school-8": "8 класс",
   "ui.stage.school-9": "9 класс",
   "ui.stage.school-10": "10 класс",
@@ -216,7 +217,7 @@
   "ui.profile.data.invalid": "Это не похоже на файл профиля",
   "ui.profile.versionBanner": "Профиль сохранён более новой версией сайта. Он не тронут, но не показывается — обновите страницу",
 
-  "ui.mobile.levelGroup": "Уровень {n}",
+  "ui.mobile.levelGroup": "Шаг {n}",
 
   "ui.a11y.closePanel": "Закрыть панель",
   "ui.a11y.dragSplitter": "Изменить ширину панели",
