@@ -54,9 +54,10 @@ lights a stripe rather than a spray.
 
 A domain filter shows that field and nothing else — not even a prerequisite from
 elsewhere, which as a faded card several levels away read as part of the field
-you asked for. Those live in the panel instead: «Что нужно раньше» and «Что
-откроется после» are the same relation read in either direction, so they use the
-same card and sit next to each other, whichever field the neighbour comes from.
+you asked for. Those live in the panel instead: «Требует знания» and «Даст
+понимание курсов» are the same relation read in either direction, so they use
+the same card and sit next to each other, whichever field the neighbour comes
+from, with the full chain below the pair.
 
 Each card carries the stage a person normally meets that course at — «9 класс»,
 «2 курс», «аспирантура» — which is the question people arrive with, and not the

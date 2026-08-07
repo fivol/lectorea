@@ -118,9 +118,9 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
       </section>
 
       {/* The two directions of one relation, so: one card, mirrored headings,
-          and both above the playlist list rather than one of them stranded
-          below it. Read in the order the questions come — what has to be done
-          first, then the full chain, then what it leads to. */}
+          and adjacent — one of them used to be stranded below the playlists.
+          The full chain follows both rather than splitting them, since it is
+          the first one expanded and belongs after the pair, not inside it. */}
       <section className="border-t border-line px-4 py-4">
         <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
         {course.deps.length ? (
@@ -136,8 +136,6 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
         )}
       </section>
 
-      <PathBlock course={course} search={search} outsideFilter={outsideFilter} />
-
       <section className="border-t border-line px-4 py-4">
         <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
         {unlocks.length ? (
@@ -152,6 +150,8 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
           <p className="text-sm text-ink-faint">{t('ui.unlocks.empty')}</p>
         )}
       </section>
+
+      <PathBlock course={course} search={search} outsideFilter={outsideFilter} />
 
       <PlaylistList course={course} />
 
