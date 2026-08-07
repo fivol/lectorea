@@ -210,6 +210,15 @@ async function main(): Promise<void> {
     courseCount: counts.get(domain.id) ?? 0,
   }));
 
+  // Only the three fields the graph is built from. The sandbox recomputes the
+  // graph itself so that the classification knobs are live, and shipping whole
+  // course records for that would be most of the file.
+  const courses = sources.courses.map((course) => ({
+    id: course.id,
+    domains: course.domains,
+    deps: course.deps,
+  }));
+
   const allTitles = JSON.parse(
     fs.readFileSync(path.join('data', 'i18n', 'ru.json'), 'utf8')
   ) as Record<string, string>;
@@ -231,7 +240,7 @@ async function main(): Promise<void> {
   });
   const script = bundle.outputFiles[0].text;
 
-  const payload = JSON.stringify({ domains, titles })
+  const payload = JSON.stringify({ domains, courses, titles })
     // Keep the JSON from closing the surrounding <script> element.
     .replace(/</g, '\\u003c');
 

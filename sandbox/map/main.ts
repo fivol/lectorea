@@ -1,5 +1,11 @@
 import { defaultConfig, generateMap, type MapConfig, type MapResult } from '../../shared/mapgen.js';
-import type { Continent, Domain } from '../../shared/schema.js';
+import {
+  buildDomainGraph,
+  classifyLandforms,
+  defaultLandformConfig,
+  type LandformConfig,
+} from '../../shared/domain-graph.js';
+import type { Continent, Course, Domain } from '../../shared/schema.js';
 
 /**
  * The map sandbox: the generator with its knobs exposed, so the shapes can be
@@ -12,6 +18,7 @@ import type { Continent, Domain } from '../../shared/schema.js';
 
 type Payload = {
   domains: Array<Domain & { courseCount: number }>;
+  courses: Array<Pick<Course, 'id' | 'domains' | 'deps'>>;
   titles: Record<string, string>;
 };
 
@@ -32,13 +39,35 @@ const DRAFT: Partial<MapConfig> = { hexR: 9, solverPasses: 26, restarts: 1 };
 const FINAL: Partial<MapConfig> = { hexR: 5, solverPasses: 55, restarts: 4 };
 
 let config: MapConfig = structuredClone(defaultConfig);
+let landform: LandformConfig = structuredClone(defaultLandformConfig);
 let quality: 'draft' | 'final' = 'final';
 let showTemplate = false;
 let hovered: string | null = null;
+/**
+ * The graph and the landform classification are recomputed with the map, not
+ * cached: their knobs sit in the same panel, and a stale topology under fresh
+ * geometry is the one failure that would be invisible on screen.
+ */
+function buildInput() {
+  const seeded = { ...landform, seed: config.seed };
+  const edges = buildDomainGraph(data.domains, data.courses as Course[], seeded);
+  const topology = classifyLandforms(data.domains, edges, counts, seeded);
+  return {
+    domains: data.domains,
+    courseCounts: counts,
+    landform: new Map([...topology].map(([id, t]) => [id, t.landform])),
+    reaches: new Map([...topology].map(([id, t]) => [id, t.reaches])),
+    edges,
+    topology,
+  };
+}
+
+let input = buildInput();
+
 // First paint is draft and the final quality follows a tick later: the solver
 // blocks for over a second at full resolution, and a blank page for that long
 // reads as a page that failed to load.
-let result: MapResult = generateMap(data.domains, counts, { ...config, ...DRAFT });
+let result: MapResult = generateMap(input, { ...config, ...DRAFT });
 
 const effective = (): MapConfig => ({
   ...config,
@@ -48,7 +77,7 @@ const effective = (): MapConfig => ({
 /* ─────────────────────────────────  Controls  ──────────────────────────── */
 
 type Slider = {
-  key: keyof MapConfig | `character.${Continent}.aspect`;
+  key: keyof MapConfig | `character.${Continent}.aspect` | `land.${keyof LandformConfig}`;
   label: string;
   min: number;
   max: number;
@@ -72,8 +101,39 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    title: 'Суша: материки, полуострова, острова',
+    note:
+      'Кто где живёт, решает граф зависимостей. Много связей внутри материка — вглубь; ' +
+      'мало — полуостров; тянет к чужому материку — остров в проливе.',
+    sliders: [
+      { key: 'land.islandForeignShare', label: 'Порог «наружу» для острова', min: 0.2, max: 0.9, step: 0.02 },
+      { key: 'land.islandOwnLinks', label: 'Макс. своих связей у острова', min: 0, max: 6, step: 1 },
+      { key: 'land.peninsulaOwnLinks', label: 'Макс. своих связей у полуострова', min: 0, max: 4, step: 1 },
+      { key: 'land.mainlandCourses', label: 'Курсов, чтобы остаться на материке', min: 2, max: 22, step: 1 },
+      { key: 'land.randomness', label: 'Разброс порогов', min: 0, max: 0.5, step: 0.01 },
+      { key: 'land.declaredWeight', label: 'Вес объявленных связей', min: 0, max: 8, step: 1 },
+      { key: 'land.derivedWeight', label: 'Вес связей из курсов', min: 0, max: 8, step: 1 },
+      { key: 'peninsulaReach', label: 'Вылет полуострова', min: 0, max: 2, step: 0.05 },
+      { key: 'islandGap', label: 'Отступ острова от суши', min: 4, max: 70, step: 1 },
+      { key: 'islandScatter', label: 'Разброс островов', min: 0, max: 260, step: 5 },
+    ],
+  },
+  {
+    title: 'Захват территории',
+    note:
+      'Округлость держит области компактными, направление тянет их в одну сторону, ' +
+      'шум задаёт характер границы. Действует только в органическом режиме.',
+    sliders: [
+      { key: 'roundness', label: 'Округлость', min: 0, max: 1.6, step: 0.02 },
+      { key: 'wander', label: 'Направленность', min: 0, max: 2, step: 0.05 },
+      { key: 'wildness', label: 'Шум рельефа', min: 0, max: 3, step: 0.05 },
+      { key: 'grain', label: 'Размер пятен шума', min: 8, max: 160, step: 2 },
+      { key: 'rebalancePasses', label: 'Проходы выравнивания площадей', min: 0, max: 60, step: 1 },
+    ],
+  },
+  {
     title: 'Формы областей',
-    note: 'Вытянутость даёт каждой области свои пропорции, изгиб гнёт их все согласованно.',
+    note: 'Вытянутость и изгиб действуют в режиме power-диаграммы.',
     sliders: [
       { key: 'anisotropy', label: 'Вытянутость', min: 0, max: 1, step: 0.02 },
       { key: 'warpAmount', label: 'Изгиб', min: 0, max: 90, step: 1 },
@@ -104,17 +164,24 @@ const GROUPS: Group[] = [
 ];
 
 const readKnob = (key: Slider['key']): number => {
-  if (typeof key === 'string' && key.startsWith('character.')) {
+  if (key.startsWith('character.')) {
     const [, continent] = key.split('.') as [string, Continent];
     return config.character[continent].aspect;
+  }
+  if (key.startsWith('land.')) {
+    return (landform as unknown as Record<string, number>)[key.slice(5)];
   }
   return config[key as keyof MapConfig] as number;
 };
 
 const writeKnob = (key: Slider['key'], value: number): void => {
-  if (typeof key === 'string' && key.startsWith('character.')) {
+  if (key.startsWith('character.')) {
     const [, continent] = key.split('.') as [string, Continent];
     config.character[continent] = { ...config.character[continent], aspect: value };
+    return;
+  }
+  if (key.startsWith('land.')) {
+    (landform as unknown as Record<string, number>)[key.slice(5)] = value;
     return;
   }
   (config as unknown as Record<string, number>)[key as string] = value;
@@ -187,6 +254,21 @@ function buildPanel(): void {
   qualityRow.append(select);
   panel.append(qualityRow);
 
+  const modeRow = el('div', { class: 'row' }, [el('label', { textContent: 'Алгоритм' })]);
+  const mode = el('select', {
+    onchange: (event: Event) => {
+      config.mode = (event.target as HTMLSelectElement).value as MapConfig['mode'];
+      regenerate();
+    },
+  });
+  mode.append(
+    el('option', { value: 'organic', textContent: 'Органический захват' }),
+    el('option', { value: 'power', textContent: 'Power-диаграмма' })
+  );
+  mode.value = config.mode;
+  modeRow.append(mode);
+  panel.append(modeRow);
+
   for (const group of GROUPS) {
     const section = el('section', {}, [el('h2', { textContent: group.title })]);
     if (group.note) section.append(el('p', { class: 'note', textContent: group.note }));
@@ -228,7 +310,7 @@ function buildPanel(): void {
         el('button', { textContent: 'SVG (вектор)', onclick: () => download('map.svg', svgString(false), 'image/svg+xml') }),
         el('button', { textContent: 'PNG (превью)', onclick: () => exportRaster('map.png', false) }),
         el('button', { class: 'accent', textContent: 'Шаблон для нейросети (JPG)', onclick: () => exportRaster('map-template.jpg', true) }),
-        el('button', { textContent: 'Конфиг (JSON)', onclick: () => download('map.config.json', JSON.stringify(config, null, 2), 'application/json') }),
+        el('button', { textContent: 'Конфиг (JSON)', onclick: () => download('map.config.json', JSON.stringify({ map: config, landform }, null, 2), 'application/json') }),
       ]),
       el('label', { class: 'toggle' }, [
         (() => {
@@ -246,6 +328,7 @@ function buildPanel(): void {
         textContent: 'Сбросить настройки',
         onclick: () => {
           config = structuredClone(defaultConfig);
+          landform = structuredClone(defaultLandformConfig);
           buildPanel();
           regenerate();
         },
@@ -308,12 +391,19 @@ function svgMarkup(template: boolean): string {
     .map((c) => `<path d="${c.path}" fill="none" stroke="#fdfbf4" stroke-width="4.5" stroke-linejoin="round"/>`)
     .join('');
 
-  // Dependencies that cross the ocean — where the reference map draws bridges.
+  // Only bridges that touch an island are drawn. Continent-to-continent links
+  // are numerous and run straight over other people's land — as a picture they
+  // are a scribble, while the island ones explain something: why that domain
+  // ended up out there on its own.
+  const offshore = new Set(
+    result.coasts.filter((c) => c.kind === 'island').map((c) => c.id.replace('island:', ''))
+  );
   const links = result.links
+    .filter((l) => offshore.has(l.from) || offshore.has(l.to))
     .map(
       (l) =>
         `<path d="M${l.a.x.toFixed(1)} ${l.a.y.toFixed(1)}L${l.b.x.toFixed(1)} ${l.b.y.toFixed(1)}" ` +
-        `stroke="#f0f6f8" stroke-width="2" stroke-dasharray="7 6" opacity="0.5" fill="none"/>`
+        `stroke="#5d7f92" stroke-width="1.6" stroke-dasharray="6 5" opacity="0.55" fill="none"/>`
     )
     .join('');
 
@@ -455,6 +545,13 @@ function paintLabels(): void {
 
 new ResizeObserver(() => paintLabels()).observe(canvasWrap);
 
+/** How the graph split the world, in the panel's own words. */
+function landformTally(): string {
+  const tally = { mainland: 0, peninsula: 0, island: 0 };
+  for (const entry of input.topology.values()) tally[entry.landform] += 1;
+  return `${tally.mainland} вглубь · ${tally.peninsula} п-ов · ${tally.island} остр.`;
+}
+
 function paintMetrics(): void {
   const m = result.metrics;
   const chip = (label: string, value: string, tone = '') =>
@@ -469,7 +566,8 @@ function paintMetrics(): void {
     chip('Связи графа', `${(m.adjacencyRate * 100).toFixed(0)}%`),
     chip('Ячеек', String(m.cells)),
     chip('Время', `${m.elapsedMs} мс`),
-    chip('Областей', String(result.territories.length))
+    chip('Областей', String(result.territories.length)),
+    chip('Суша', landformTally())
   );
 }
 
@@ -481,7 +579,8 @@ function regenerate(force?: 'draft'): void {
   window.clearTimeout(pending);
   pending = window.setTimeout(() => {
     const overrides = force === 'draft' ? { ...config, ...DRAFT } : effective();
-    result = generateMap(data.domains, counts, overrides);
+    input = buildInput();
+    result = generateMap(input, overrides);
     paint();
     paintMetrics();
   }, 40);

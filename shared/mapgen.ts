@@ -32,6 +32,7 @@
  */
 
 import type { Continent, Domain } from './schema.js';
+import type { Landform } from './domain-graph.js';
 
 const SQRT3 = Math.sqrt(3);
 const TAU = Math.PI * 2;
@@ -59,6 +60,32 @@ export type MapConfig = {
   /** How irregular a coastline is: amplitude of the silhouette's harmonics. */
   coastComplexity: number;
   character: Record<Continent, ContinentCharacter>;
+
+  /** How far a peninsula's lobe reaches out of its continent. */
+  peninsulaReach: number;
+  /** Ocean kept between an island and anything else, in px. */
+  islandGap: number;
+  /** How far an island may drift from the midpoint its links imply. */
+  islandScatter: number;
+
+  /**
+   * How territories are decided.
+   *
+   * `power` solves a weighted diagram: exact areas, calm convex shapes.
+   * `organic` claims hexes one at a time in a wandering direction: coastlines
+   * and borders with real character, areas corrected afterwards.
+   */
+  mode: 'power' | 'organic';
+  /** organic: pull towards the territory's own centre. 0 = tendrils, 1 = discs. */
+  roundness: number;
+  /** organic: how strongly a territory keeps growing the way it was going. */
+  wander: number;
+  /** organic: how much terrain noise steers the claim. */
+  wildness: number;
+  /** organic: size of that noise's features, in px. */
+  grain: number;
+  /** organic: passes of area correction after growth. */
+  rebalancePasses: number;
 
   /** 0 = every territory round; 1 = strongly elongated, each its own way. */
   anisotropy: number;
@@ -92,12 +119,21 @@ export const defaultConfig: MapConfig = {
   hexR: 5,
   landFraction: 0.5,
   strait: 74,
-  coastComplexity: 0.55,
+  coastComplexity: 0.7,
+  peninsulaReach: 1.1,
+  islandGap: 16,
+  islandScatter: 90,
   character: {
     formal: { aspect: 1.15, drift: 0.0 },
     social: { aspect: 0.4, drift: 0.06 },
     humanities: { aspect: 0.78, drift: -0.03 },
   },
+  mode: 'organic',
+  roundness: 0.55,
+  wander: 0.5,
+  wildness: 0.8,
+  grain: 34,
+  rebalancePasses: 24,
   anisotropy: 0.55,
   warpAmount: 34,
   warpScale: 300,
@@ -185,126 +221,299 @@ function makeWarp(config: MapConfig, random: () => number): Warp {
   };
 }
 
-/* ───────────────────────────  Continent silhouettes  ───────────────────── */
+/* ──────────────────────────────  Landmasses  ───────────────────────────── */
 
-export type Silhouette = {
+/**
+ * A piece of land with a coastline of its own: one of the three continents, or
+ * an island out in the strait. Territories are partitioned inside a landmass
+ * and never across one, which is what keeps the ocean an ocean.
+ */
+export type Landmass = {
+  id: string;
+  kind: 'continent' | 'island';
   continent: Continent;
+  /** Domains that live here. An island holds exactly one. */
+  members: string[];
   centre: Point;
   aspect: number;
   radius: (angle: number) => number;
   rx: number;
   ry: number;
+  /** Bearings of the peninsulas, so each one can be seeded inside its own. */
+  lobes: Lobe[];
+};
+
+/** A peninsula: a bump added to the continent's radius at one bearing. */
+type Lobe = { id: string; angle: number; height: number; width: number };
+
+type Shape = {
+  radius: (angle: number) => number;
+  rx: number;
+  ry: number;
+  /** True extent around the centre. A lobe makes the outline lopsided, and
+   *  laying continents out by half-widths alone walks them off the canvas. */
+  bounds: { minX: number; maxX: number; minY: number; maxY: number };
 };
 
 /**
- * A continent is an ellipse of the required area with its radius modulated by a
- * few low harmonics. Low frequencies only — the coastline's fine detail is
- * added later by the border smoother, and doing it in both places reads as
- * noise rather than as a coast.
+ * An ellipse of the required area, its radius modulated by a few low harmonics
+ * and by one bump per peninsula.
+ *
+ * Low frequencies only for the harmonics — the coastline's fine detail is added
+ * later by the border smoother, and doing it in both places reads as noise
+ * rather than as a coast. The bumps are separate and deliberately narrow: that
+ * is the difference between a lumpy continent and one with peninsulas.
+ *
+ * The area is measured numerically and the whole shape rescaled, because both
+ * the harmonics and the bumps change it and no formula survives the bumps.
  */
-function silhouetteFor(
+function shapeFor(
   aspect: number,
   area: number,
   complexity: number,
+  lobes: Lobe[],
   random: () => number
-): { radius: (angle: number) => number; rx: number; ry: number } {
+): Shape {
   const waves = [2, 3, 5].map((frequency) => ({
     frequency,
     amplitude: (complexity * (0.06 + random() * 0.1)) / Math.sqrt(frequency),
     phase: random() * TAU,
   }));
 
-  const shape = (angle: number): number =>
-    1 + waves.reduce((sum, w) => sum + w.amplitude * Math.sin(w.frequency * angle + w.phase), 0);
+  const shape = (angle: number): number => {
+    let r = 1 + waves.reduce((sum, w) => sum + w.amplitude * Math.sin(w.frequency * angle + w.phase), 0);
+    for (const lobe of lobes) {
+      // Shortest angular distance, so a bump at 350° still reaches 10°.
+      let delta = ((angle - lobe.angle + Math.PI) % TAU + TAU) % TAU - Math.PI;
+      delta /= lobe.width;
+      r += lobe.height * Math.exp(-0.5 * delta * delta);
+    }
+    return Math.max(0.15, r);
+  };
 
-  // The wobble changes the enclosed area, so measure and rescale instead of
-  // trusting the ellipse formula — otherwise continents drift off their share.
-  const steps = 720;
+  const steps = 1440;
   let unitArea = 0;
-  let maxX = 0;
-  let maxY = 0;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
   for (let i = 0; i < steps; i++) {
     const a0 = (i / steps) * TAU;
     const a1 = ((i + 1) / steps) * TAU;
-    const p0 = { x: shape(a0) * Math.cos(a0) * Math.sqrt(aspect), y: (shape(a0) * Math.sin(a0)) / Math.sqrt(aspect) };
-    const p1 = { x: shape(a1) * Math.cos(a1) * Math.sqrt(aspect), y: (shape(a1) * Math.sin(a1)) / Math.sqrt(aspect) };
+    const p0 = {
+      x: shape(a0) * Math.cos(a0) * Math.sqrt(aspect),
+      y: (shape(a0) * Math.sin(a0)) / Math.sqrt(aspect),
+    };
+    const p1 = {
+      x: shape(a1) * Math.cos(a1) * Math.sqrt(aspect),
+      y: (shape(a1) * Math.sin(a1)) / Math.sqrt(aspect),
+    };
     unitArea += p0.x * p1.y - p1.x * p0.y;
-    maxX = Math.max(maxX, Math.abs(p0.x));
-    maxY = Math.max(maxY, Math.abs(p0.y));
+    minX = Math.min(minX, p0.x);
+    maxX = Math.max(maxX, p0.x);
+    minY = Math.min(minY, p0.y);
+    maxY = Math.max(maxY, p0.y);
   }
-  unitArea = Math.abs(unitArea) / 2;
+  unitArea = Math.abs(unitArea) / 2 || 1;
 
   const scale = Math.sqrt(area / unitArea);
-  return { radius: (angle) => shape(angle) * scale, rx: maxX * scale, ry: maxY * scale };
+  return {
+    radius: (angle) => shape(angle) * scale,
+    rx: Math.max(Math.abs(minX), Math.abs(maxX)) * scale,
+    ry: Math.max(Math.abs(minY), Math.abs(maxY)) * scale,
+    bounds: {
+      minX: minX * scale,
+      maxX: maxX * scale,
+      minY: minY * scale,
+      maxY: maxY * scale,
+    },
+  };
 }
 
-function inside(s: Silhouette, x: number, y: number): boolean {
-  const dx = (x - s.centre.x) / Math.sqrt(s.aspect);
-  const dy = (y - s.centre.y) * Math.sqrt(s.aspect);
+function inside(mass: Landmass, x: number, y: number): boolean {
+  const dx = (x - mass.centre.x) / Math.sqrt(mass.aspect);
+  const dy = (y - mass.centre.y) * Math.sqrt(mass.aspect);
   const distance = Math.hypot(dx, dy);
   if (distance < 1e-9) return true;
-  return distance <= s.radius(Math.atan2(dy, dx));
+  return distance <= mass.radius(Math.atan2(dy, dx));
 }
 
 /**
- * Places the continents in a row, sized by their share of the courses, then
- * scales the arrangement to the canvas. Scaling once at the end keeps the
- * relative areas exact; clamping each continent on its own would not.
+ * Builds the world: three continents in a row, each carrying its mainland and
+ * its peninsulas, plus one island per domain the graph says belongs offshore.
+ *
+ * Area is shared out by course count across everything at once, so an island
+ * costs its continent exactly the ground it takes away. The continents are laid
+ * out and scaled to the canvas first; islands are then floated into the ocean
+ * that is left, because their whole job is to sit in water the continents did
+ * not claim.
  */
-function layoutContinents(
+function layoutWorld(
   domains: Domain[],
-  counts: Map<string, number>,
+  weightOf: (id: string) => number,
+  landform: (id: string) => Landform,
+  reachesOf: (id: string) => Continent[],
   config: MapConfig,
   random: () => number
-): Silhouette[] {
+): Landmass[] {
   const order: Continent[] = ['formal', 'social', 'humanities'];
-  const present = order.filter((c) => domains.some((d) => d.continent === c));
-
-  const weight = new Map<Continent, number>(
-    present.map((c) => [
-      c,
-      domains
-        .filter((d) => d.continent === c)
-        .reduce((sum, d) => sum + Math.max(1, counts.get(d.id) ?? 0), 0),
-    ])
-  );
-  const total = [...weight.values()].reduce((a, b) => a + b, 0) || 1;
+  const totalWeight = domains.reduce((sum, d) => sum + weightOf(d.id), 0) || 1;
   const landArea = config.width * config.height * config.landFraction;
+  const perWeight = landArea / totalWeight;
 
-  const shapes = present.map((continent) => {
+  const islanders = domains.filter((d) => landform(d.id) === 'island');
+  const present = order.filter((c) =>
+    domains.some((d) => d.continent === c && landform(d.id) !== 'island')
+  );
+
+  /* ── continents ── */
+
+  const cores = present.map((continent) => {
+    const members = domains.filter(
+      (d) => d.continent === continent && landform(d.id) !== 'island'
+    );
+    const weight = members.reduce((sum, d) => sum + weightOf(d.id), 0);
     const character = config.character[continent];
-    const area = (landArea * weight.get(continent)!) / total;
+
+    // One bump per peninsula, spread by the golden angle so two lobes never
+    // land on top of each other, and sized by the domain's share of the coast.
+    const peninsulas = members.filter((d) => landform(d.id) === 'peninsula');
+    const spin = random() * TAU;
+    const lobes: Lobe[] = peninsulas.map((domain, index) => ({
+      id: domain.id,
+      angle: spin + index * 2.399963,
+      height: Math.min(
+        0.75,
+        config.peninsulaReach * Math.sqrt(weightOf(domain.id) / Math.max(1, weight)) * 2.6
+      ),
+      width: 0.36 + 0.3 * Math.sqrt(weightOf(domain.id) / Math.max(1, weight)),
+    }));
+
     return {
       continent,
+      members: members.map((d) => d.id),
       aspect: character.aspect,
-      ...silhouetteFor(character.aspect, area, config.coastComplexity, random),
+      lobes,
+      ...shapeFor(character.aspect, perWeight * weight, config.coastComplexity, lobes, random),
     };
   });
 
-  const spanX = shapes.reduce((sum, s) => sum + s.rx * 2, 0) + config.strait * (shapes.length - 1);
-  const spanY = Math.max(...shapes.map((s) => s.ry * 2));
+  const widthOf = (c: (typeof cores)[number]) => c.bounds.maxX - c.bounds.minX;
+  const spanX = cores.reduce((sum, c) => sum + widthOf(c), 0) + config.strait * (cores.length - 1);
+  const spanY = Math.max(...cores.map((c) => c.bounds.maxY - c.bounds.minY), 1);
   const margin = 30;
   const scale = Math.min((config.width - margin * 2) / spanX, (config.height - margin * 2) / spanY);
 
-  const placed: Silhouette[] = [];
+  const world: Landmass[] = [];
   let cursor = (config.width - spanX * scale) / 2;
-  for (const shape of shapes) {
-    const rx = shape.rx * scale;
-    const ry = shape.ry * scale;
-    placed.push({
-      continent: shape.continent,
-      aspect: shape.aspect,
+  for (const core of cores) {
+    const rx = core.rx * scale;
+    const ry = core.ry * scale;
+    // The centre sits where the outline's own left edge lands on the cursor,
+    // so a continent with a lobe on one side still fits the row it was given.
+    world.push({
+      id: core.continent,
+      kind: 'continent',
+      continent: core.continent,
+      members: core.members,
       centre: {
-        x: cursor + rx,
-        y: config.height / 2 + config.height * config.character[shape.continent].drift,
+        x: cursor - core.bounds.minX * scale,
+        y: config.height / 2 + config.height * config.character[core.continent].drift,
       },
-      radius: (angle) => shape.radius(angle) * scale,
+      aspect: core.aspect,
+      radius: (angle) => core.radius(angle) * scale,
       rx,
       ry,
+      lobes: core.lobes,
     });
-    cursor += rx * 2 + config.strait * scale;
+    cursor += widthOf(core) * scale + config.strait * scale;
   }
-  return placed;
+
+  /* ── islands ── */
+
+  const continentAt = new Map(world.map((m) => [m.continent, m]));
+
+  const islands: Landmass[] = islanders.map((domain, index) => {
+    const local = rng(hash(`${domain.id}#island#${config.seed}`));
+    const shape = shapeFor(
+      0.75 + local() * 0.7,
+      perWeight * weightOf(domain.id) * scale * scale,
+      config.coastComplexity * 0.8,
+      [],
+      local
+    );
+
+    // An island starts where its links average out: between its own continent
+    // and the ones it reaches. That is the claim it exists to make.
+    const pull = [domain.continent, ...reachesOf(domain.id)]
+      .map((c) => continentAt.get(c))
+      .filter((m): m is Landmass => Boolean(m));
+    const start = pull.length
+      ? {
+          x: pull.reduce((sum, m) => sum + m.centre.x, 0) / pull.length,
+          y: pull.reduce((sum, m) => sum + m.centre.y, 0) / pull.length,
+        }
+      : { x: config.width / 2, y: config.height / 2 };
+
+    const spread = config.islandScatter;
+    return {
+      id: `island:${domain.id}`,
+      kind: 'island' as const,
+      continent: domain.continent,
+      members: [domain.id],
+      centre: {
+        x: start.x + (local() * 2 - 1) * spread,
+        y: start.y + (local() * 2 - 1) * spread + index * 0.01,
+      },
+      aspect: 1,
+      radius: shape.radius,
+      rx: shape.rx,
+      ry: shape.ry,
+      lobes: [],
+    };
+  });
+
+  // Float them clear of the land. An island overlapping a continent is not an
+  // island, and two overlapping islands are one island with a strange outline.
+  for (let pass = 0; pass < 260; pass++) {
+    for (const island of islands) {
+      const reach = Math.max(island.rx, island.ry) + config.islandGap;
+
+      for (const mass of world) {
+        const dx = island.centre.x - mass.centre.x;
+        const dy = island.centre.y - mass.centre.y;
+        const angle = Math.atan2(dy / Math.sqrt(mass.aspect), dx * Math.sqrt(mass.aspect));
+        const wanted = mass.radius(angle) + reach;
+        const distance = Math.hypot(dx / Math.sqrt(mass.aspect), dy * Math.sqrt(mass.aspect));
+        if (distance >= wanted) continue;
+        const push = (wanted - distance) * 0.5;
+        const length = Math.hypot(dx, dy) || 1;
+        island.centre.x += (dx / length) * push;
+        island.centre.y += (dy / length) * push;
+      }
+
+      for (const other of islands) {
+        if (other === island) continue;
+        const dx = island.centre.x - other.centre.x;
+        const dy = island.centre.y - other.centre.y;
+        const distance = Math.hypot(dx, dy);
+        const wanted = reach + Math.max(other.rx, other.ry) + config.islandGap;
+        if (distance >= wanted) continue;
+        const length = distance || 1;
+        const push = ((wanted - distance) / length) * 0.3;
+        island.centre.x += dx * push;
+        island.centre.y += dy * push;
+        other.centre.x -= dx * push;
+        other.centre.y -= dy * push;
+      }
+
+      const pad = Math.max(island.rx, island.ry) + 6;
+      island.centre.x = Math.min(config.width - pad, Math.max(pad, island.centre.x));
+      island.centre.y = Math.min(config.height - pad, Math.max(pad, island.centre.y));
+    }
+  }
+
+  return [...world, ...islands];
 }
 
 /* ──────────────────────────────  The hex field  ────────────────────────── */
@@ -317,10 +526,11 @@ type Cell = {
   /** Position in warped space — what the partition actually measures. */
   wx: number;
   wy: number;
-  continent: Continent;
+  /** Which landmass this cell belongs to; territories never cross one. */
+  mass: string;
 };
 
-function buildField(silhouettes: Silhouette[], config: MapConfig, warp: Warp): Cell[] {
+function buildField(world: Landmass[], config: MapConfig, warp: Warp): Cell[] {
   const { hexR } = config;
   const cells: Cell[] = [];
   const rMax = Math.ceil(config.height / (hexR * 1.5)) + 2;
@@ -331,10 +541,10 @@ function buildField(silhouettes: Silhouette[], config: MapConfig, warp: Warp): C
     for (let q = qMin; q <= qMax; q++) {
       const x = hexR * SQRT3 * (q + r / 2);
       const y = hexR * 1.5 * r;
-      const home = silhouettes.find((s) => inside(s, x, y));
+      const home = world.find((mass) => inside(mass, x, y));
       if (!home) continue;
       const w = warp(x, y);
-      cells.push({ q, r, x, y, wx: w.x, wy: w.y, continent: home.continent });
+      cells.push({ q, r, x, y, wx: w.x, wy: w.y, mass: home.id });
     }
   }
   return cells;
@@ -378,17 +588,19 @@ function partition(
   targets: Map<string, number>,
   anchors: Map<string, Point>,
   metrics: Map<string, Metric>,
+  homeOf: Map<string, string>,
   hexArea: number,
   passes: number,
   solverRate: number
 ): Growth {
-  const byContinent = new Map<Continent, Domain[]>();
-  for (const domain of domains) {
-    byContinent.set(domain.continent, [...(byContinent.get(domain.continent) ?? []), domain]);
+  const byMass = new Map<string, Domain[]>();
+  for (const [id, mass] of homeOf) {
+    const domain = domains.find((d) => d.id === id);
+    if (domain) byMass.set(mass, [...(byMass.get(mass) ?? []), domain]);
   }
-  const cellsByContinent = new Map<Continent, Cell[]>();
+  const cellsByMass = new Map<string, Cell[]>();
   for (const cell of field) {
-    cellsByContinent.set(cell.continent, [...(cellsByContinent.get(cell.continent) ?? []), cell]);
+    cellsByMass.set(cell.mass, [...(cellsByMass.get(cell.mass) ?? []), cell]);
   }
 
   const weights = new Map<string, number>(domains.map((d) => [d.id, 0]));
@@ -400,8 +612,8 @@ function partition(
     sizes.clear();
     for (const domain of domains) sizes.set(domain.id, 0);
 
-    for (const [continent, cells] of cellsByContinent) {
-      const here = byContinent.get(continent) ?? [];
+    for (const [mass, cells] of cellsByMass) {
+      const here = byMass.get(mass) ?? [];
       if (!here.length) continue;
       for (const cell of cells) {
         let best: string | null = null;
@@ -530,6 +742,283 @@ function repairIslands(field: Cell[], owner: Map<number, string>, sizes: Map<str
   }
 }
 
+/* ─────────────────────────────  Organic growth  ────────────────────────── */
+
+/** Value noise on an integer lattice — no tables, identical in any language. */
+function lattice(x: number, y: number, seed: number): number {
+  let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(seed, 1442695041)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+function noise2(x: number, y: number, seed: number): number {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const xf = x - xi;
+  const yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf);
+  const v = yf * yf * (3 - 2 * yf);
+  const a = lattice(xi, yi, seed);
+  const b = lattice(xi + 1, yi, seed);
+  const c = lattice(xi, yi + 1, seed);
+  const d = lattice(xi + 1, yi + 1, seed);
+  return (a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v;
+}
+
+/** Two octaves is enough at this scale: one for the shape, one for the edge. */
+function fbm(x: number, y: number, seed: number): number {
+  return noise2(x, y, seed) * 0.67 + noise2(x * 2.3, y * 2.3, seed + 101) * 0.33;
+}
+
+type Plot = {
+  id: string;
+  size: number;
+  /** The seed cell, in warped space. Compactness is measured from here. */
+  origin: Point;
+  heading: number;
+  frontier: Set<number>;
+  noiseSeed: number;
+};
+
+/**
+ * Grows every territory a hex at a time until the land runs out.
+ *
+ * The shape comes from what a territory prefers when it claims: pull towards
+ * its own centre keeps it compact, a slowly turning heading makes it reach in
+ * one direction, and terrain noise gives it an edge that does not look drawn by
+ * a compass. Those three are the knobs; the mix is what makes one map read as a
+ * pie chart and another as a coastline.
+ *
+ * Whose turn it is, though, is not up for negotiation: whoever is furthest
+ * behind its quota goes next. Growth alone still cannot guarantee the areas —
+ * a territory can be walled in before it has had its share — so `rebalance`
+ * settles the accounts afterwards. Letting shape and area fight for the same
+ * rule is what makes hand-rolled versions of this either honest or pretty,
+ * never both.
+ */
+function growOrganic(
+  field: Cell[],
+  domains: Domain[],
+  targets: Map<string, number>,
+  anchors: Map<string, Point>,
+  homeOf: Map<string, string>,
+  hexArea: number,
+  config: MapConfig
+): Growth {
+  const cellAt = new Map<number, Cell>();
+  for (const cell of field) cellAt.set(cellKey(cell.q, cell.r), cell);
+
+  const owner = new Map<number, string>();
+  const plots = new Map<string, Plot>();
+  const grain = Math.max(4, config.grain);
+
+  const targetOf = (id: string) => Math.max(1, targets.get(id) ?? 1);
+  const idealRadius = (id: string) => Math.sqrt((targetOf(id) * hexArea) / Math.PI) || 1;
+
+  const claim = (key: number, plot: Plot): void => {
+    const cell = cellAt.get(key)!;
+    owner.set(key, plot.id);
+    plot.size += 1;
+    plot.frontier.delete(key);
+
+    for (const dir of DIRECTIONS) {
+      const nk = cellKey(cell.q + dir.q, cell.r + dir.r);
+      if (owner.has(nk)) continue;
+      const neighbour = cellAt.get(nk);
+      // A territory never leaves its landmass: the ocean between them is what
+      // makes separate landmasses read as separate.
+      if (!neighbour || neighbour.mass !== cell.mass) continue;
+      plot.frontier.add(nk);
+    }
+  };
+
+  // Seed each domain on the free cell nearest its anchor, largest first so the
+  // big fields get the open ground rather than the leftovers.
+  const order = [...domains].sort((a, b) => targetOf(b.id) - targetOf(a.id));
+  for (const domain of order) {
+    const mass = homeOf.get(domain.id);
+    if (!mass) continue;
+    const anchor = anchors.get(domain.id)!;
+    let best: Cell | null = null;
+    let bestDistance = Infinity;
+    for (const cell of field) {
+      if (cell.mass !== mass) continue;
+      const key = cellKey(cell.q, cell.r);
+      if (owner.has(key)) continue;
+      const d = (cell.wx - anchor.x) ** 2 + (cell.wy - anchor.y) ** 2;
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = cell;
+      }
+    }
+    if (!best) continue;
+    const plot: Plot = {
+      id: domain.id,
+      size: 0,
+      origin: { x: best.wx, y: best.wy },
+      heading: fbm(best.x / grain, best.y / grain, hash(domain.id)) * TAU,
+      frontier: new Set(),
+      noiseSeed: hash(`${domain.id}#${config.seed}`) % 100000,
+    };
+    plots.set(domain.id, plot);
+    claim(cellKey(best.q, best.r), plot);
+  }
+
+  const active = new Set(plots.keys());
+
+  while (active.size) {
+    let chosen: Plot | null = null;
+    let lowest = Infinity;
+    for (const id of active) {
+      const plot = plots.get(id)!;
+      const fill = plot.size / targetOf(id);
+      if (fill < lowest) {
+        lowest = fill;
+        chosen = plot;
+      }
+    }
+    if (!chosen) break;
+
+    // Stale frontier entries are cheaper to drop here than to keep in sync.
+    for (const key of [...chosen.frontier]) if (owner.has(key)) chosen.frontier.delete(key);
+    if (!chosen.frontier.size) {
+      active.delete(chosen.id);
+      continue;
+    }
+
+    // Distance is measured from the seed, which does not move, and never from
+    // the running centroid. A centroid follows whatever the territory just
+    // claimed, so growing a tendril drags the centre after it and *lowers* the
+    // penalty for extending the same tendril — the feedback loop that turns
+    // this whole family of algorithms into a plate of spaghetti.
+    const origin = chosen.origin;
+    const ideal = idealRadius(chosen.id);
+    const cos = Math.cos(chosen.heading);
+    const sin = Math.sin(chosen.heading);
+
+    let pick = -1;
+    let bestScore = -Infinity;
+    for (const key of chosen.frontier) {
+      const cell = cellAt.get(key)!;
+      const dx = cell.wx - origin.x;
+      const dy = cell.wy - origin.y;
+      const distance = Math.hypot(dx, dy) || 1;
+
+      // How much of the cell's ring the territory already holds. Filling a
+      // notch costs nothing; reaching out on a single contact is expensive.
+      let support = 0;
+      for (const dir of DIRECTIONS) {
+        if (owner.get(cellKey(cell.q + dir.q, cell.r + dir.r)) === chosen.id) support += 1;
+      }
+
+      const compact = -((distance / ideal) ** 2);
+      const heading = (dx * cos + dy * sin) / distance;
+      const terrain = fbm(cell.x / grain, cell.y / grain, chosen.noiseSeed) - 0.5;
+
+      const score =
+        config.roundness * (2.4 * compact + 0.7 * support) +
+        config.wander * heading +
+        config.wildness * terrain;
+      if (score > bestScore) {
+        bestScore = score;
+        pick = key;
+      }
+    }
+    if (pick < 0) {
+      active.delete(chosen.id);
+      continue;
+    }
+
+    claim(pick, chosen);
+    // The heading turns slowly and by terrain, not by a dice roll: a territory
+    // that changes its mind every cell just grows in a circle again.
+    chosen.heading +=
+      (fbm(chosen.size * 0.06, chosen.noiseSeed * 0.01, chosen.noiseSeed) - 0.5) * 0.9;
+  }
+
+  const sizes = new Map<string, number>();
+  for (const [id, plot] of plots) sizes.set(id, plot.size);
+
+  rebalance(field, cellAt, owner, sizes, targets, config.rebalancePasses);
+  repairIslands(field, owner, sizes);
+  return { owner, sizes };
+}
+
+/**
+ * Moves border cells from territories that took too much to neighbours that got
+ * too little, until the areas match what the course counts asked for.
+ *
+ * Two guards keep this from undoing the shapes growth just made. A cell is only
+ * given up if its owner stays in one piece without it — the standard simple-
+ * point test, counting how many separate runs of same-owner neighbours surround
+ * it — and only taken if the receiver already holds two of its neighbours, so
+ * nobody grows a one-cell spike into somebody else's land.
+ */
+function rebalance(
+  field: Cell[],
+  cellAt: Map<number, Cell>,
+  owner: Map<number, string>,
+  sizes: Map<string, number>,
+  targets: Map<string, number>,
+  passes: number
+): void {
+  const targetOf = (id: string) => Math.max(1, targets.get(id) ?? 1);
+  const fill = (id: string) => (sizes.get(id) ?? 0) / targetOf(id);
+
+  // A stable order: iteration over a Map follows insertion, which follows the
+  // scan of the field, which would bias every correction to one side.
+  const keys = field.map((cell) => cellKey(cell.q, cell.r)).sort((a, b) => a - b);
+
+  for (let pass = 0; pass < passes; pass++) {
+    let moved = 0;
+
+    for (const key of keys) {
+      const mine = owner.get(key);
+      if (!mine) continue;
+      const cell = cellAt.get(key)!;
+      if (fill(mine) <= 1) continue;
+
+      const ring = DIRECTIONS.map((dir) => owner.get(cellKey(cell.q + dir.q, cell.r + dir.r)));
+
+      // Simple-point test: exactly one run of my own cells around the ring, or
+      // removing this one splits my territory in two.
+      let runs = 0;
+      let ours = 0;
+      for (let i = 0; i < 6; i++) {
+        const here = ring[i] === mine;
+        const before = ring[(i + 5) % 6] === mine;
+        if (here) ours += 1;
+        if (here && !before) runs += 1;
+      }
+      if (runs !== 1 || ours < 2) continue;
+
+      let taker: string | null = null;
+      let takerFill = fill(mine) - 0.02;
+      for (let i = 0; i < 6; i++) {
+        const other = ring[i];
+        if (!other || other === mine) continue;
+        // Two of the receiver's cells must touch it, so the border stays a
+        // border instead of sprouting a finger.
+        const touching = ring.filter((x) => x === other).length;
+        if (touching < 2) continue;
+        const theirs = fill(other);
+        if (theirs < takerFill) {
+          takerFill = theirs;
+          taker = other;
+        }
+      }
+      if (!taker) continue;
+
+      owner.set(key, taker);
+      sizes.set(mine, (sizes.get(mine) ?? 0) - 1);
+      sizes.set(taker, (sizes.get(taker) ?? 0) + 1);
+      moved += 1;
+    }
+
+    if (!moved) break;
+  }
+}
+
 /* ─────────────────────────────  Seed placement  ─────────────────────────── */
 
 /**
@@ -541,29 +1030,46 @@ function repairIslands(field: Cell[], owner: Map<number, string>, sizes: Map<str
 function computeAnchors(
   domains: Domain[],
   targets: Map<string, number>,
-  silhouettes: Silhouette[],
+  world: Landmass[],
+  homeOf: Map<string, string>,
   hexArea: number,
   warp: Warp,
   random: () => number
 ): Map<string, Point> {
   const anchors = new Map<string, Point>();
-  const byId = new Map(domains.map((d) => [d.id, d]));
-  const home = new Map(silhouettes.map((s) => [s.continent, s]));
+  const massById = new Map(world.map((m) => [m.id, m]));
   const radiusOf = (id: string) => Math.sqrt(((targets.get(id) ?? 1) * hexArea) / Math.PI);
+  const homeMass = (id: string) => massById.get(homeOf.get(id) ?? '')!;
 
-  for (const [continent, s] of home) {
-    const list = domains.filter((d) => d.continent === continent);
+  for (const mass of world) {
     const spin = random() * TAU;
-    list.forEach((domain, index) => {
-      // Golden-angle spiral: an even spread that favours no direction, so
-      // restarts differ only by the spin.
-      const t = (index + 0.5) / list.length;
+    const lobeOf = new Map(mass.lobes.map((lobe) => [lobe.id, lobe]));
+
+    mass.members.forEach((id, index) => {
+      const lobe = lobeOf.get(id);
+      if (lobe) {
+        // A peninsula is seeded out in its own lobe. Left in the spiral with
+        // everyone else it stays inland and the lobe falls to whichever
+        // neighbour happens to be nearest — a bulge belonging to nobody.
+        const reach = mass.radius(lobe.angle) * 0.82;
+        anchors.set(
+          id,
+          warp(
+            mass.centre.x + Math.cos(lobe.angle) * reach * Math.sqrt(mass.aspect),
+            mass.centre.y + (Math.sin(lobe.angle) * reach) / Math.sqrt(mass.aspect)
+          )
+        );
+        return;
+      }
+      const t = (index + 0.5) / mass.members.length;
       const angle = spin + index * 2.399963;
-      const p = warp(
-        s.centre.x + Math.cos(angle) * s.rx * 0.6 * Math.sqrt(t),
-        s.centre.y + Math.sin(angle) * s.ry * 0.6 * Math.sqrt(t)
+      anchors.set(
+        id,
+        warp(
+          mass.centre.x + Math.cos(angle) * mass.rx * 0.55 * Math.sqrt(t),
+          mass.centre.y + Math.sin(angle) * mass.ry * 0.55 * Math.sqrt(t)
+        )
       );
-      anchors.set(domain.id, p);
     });
   }
 
@@ -572,8 +1078,11 @@ function computeAnchors(
 
     for (const domain of domains) {
       const own = anchors.get(domain.id)!;
-      const s = home.get(domain.continent)!;
-      const sources = domain.dependsOn.filter((id) => byId.get(id)?.continent === domain.continent);
+      const s = homeMass(domain.id);
+      if (!s) continue;
+      const sources = domain.dependsOn.filter(
+        (id) => homeOf.get(id) === homeOf.get(domain.id)
+      );
       if (sources.length) {
         let sx = 0;
         let sy = 0;
@@ -598,7 +1107,7 @@ function computeAnchors(
 
     for (let i = 0; i < domains.length; i++) {
       for (let j = i + 1; j < domains.length; j++) {
-        if (domains[i].continent !== domains[j].continent) continue;
+        if (homeOf.get(domains[i].id) !== homeOf.get(domains[j].id)) continue;
         const a = anchors.get(domains[i].id)!;
         const b = anchors.get(domains[j].id)!;
         const wanted = (radiusOf(domains[i].id) + radiusOf(domains[j].id)) * 0.85;
@@ -1044,7 +1553,8 @@ function scoreLayout(
   domains: Domain[],
   targets: Map<string, number>,
   growth: Growth,
-  adjacency: Set<string>
+  adjacency: Set<string>,
+  homeOf: Map<string, string>
 ): { score: number; areaError: number; adjacencyRate: number } {
   let areaError = 0;
   for (const domain of domains) {
@@ -1055,10 +1565,12 @@ function scoreLayout(
 
   let wanted = 0;
   let realized = 0;
-  const byId = new Map(domains.map((d) => [d.id, d]));
   for (const domain of domains) {
     for (const source of domain.dependsOn) {
-      if (byId.get(source)?.continent !== domain.continent) continue;
+      // Only pairs that share a landmass can be scored on adjacency: a link to
+      // an island is meant to cross water, and counting it as a miss would push
+      // every restart towards dragging islands back ashore.
+      if (homeOf.get(source) !== homeOf.get(domain.id)) continue;
       wanted += 1;
       const pair = domain.id < source ? `${domain.id}|${source}` : `${source}|${domain.id}`;
       if (adjacency.has(pair)) realized += 1;
@@ -1089,7 +1601,7 @@ export type Territory = {
 
 export type MapResult = {
   territories: Territory[];
-  coasts: Array<{ continent: Continent; path: string }>;
+  coasts: Array<{ id: string; kind: 'continent' | 'island'; continent: Continent; path: string }>;
   /** Straits worth bridging: dependencies that cross from one landmass to another. */
   links: Array<{ from: string; to: string; a: Point; b: Point }>;
   viewBox: string;
@@ -1104,11 +1616,24 @@ export type MapResult = {
   };
 };
 
+export type MapInput = {
+  domains: Domain[];
+  courseCounts: Map<string, number>;
+  /** Where the graph says each domain belongs. Absent = everyone inland. */
+  landform?: Map<string, Landform>;
+  /** Continents an offshore domain links to, so its island sits between them. */
+  reaches?: Map<string, Continent[]>;
+  /** Weighted domain graph, used to place territories beside their relatives. */
+  edges?: Array<{ a: string; b: string; weight: number }>;
+};
+
 export function generateMap(
-  domains: Domain[],
-  courseCounts: Map<string, number>,
+  input: MapInput,
   overrides: Partial<MapConfig> = {}
 ): MapResult {
+  const { domains, courseCounts } = input;
+  const landformOf = (id: string): Landform => input.landform?.get(id) ?? 'mainland';
+  const reachesOf = (id: string): Continent[] => input.reaches?.get(id) ?? [];
   const started = Date.now();
   const config: MapConfig = {
     ...defaultConfig,
@@ -1126,7 +1651,7 @@ export function generateMap(
   let best: {
     growth: Growth;
     field: Cell[];
-    silhouettes: Silhouette[];
+    world: Landmass[];
     targets: Map<string, number>;
     areaError: number;
     adjacencyRate: number;
@@ -1136,46 +1661,60 @@ export function generateMap(
   for (let attempt = 0; attempt < Math.max(1, config.restarts); attempt++) {
     const random = rng(config.seed * 7919 + attempt * 104729);
     const warp = makeWarp(config, random);
-    const silhouettes = layoutContinents(domains, courseCounts, config, random);
-    const field = buildField(silhouettes, config, warp);
+    const world = layoutWorld(domains, weightOf, landformOf, reachesOf, config, random);
+    const field = buildField(world, config, warp);
     if (!field.length) continue;
 
-    // Targets are absolute cell counts. A continent is partitioned completely,
+    const homeOf = new Map<string, string>();
+    for (const mass of world) for (const id of mass.members) homeOf.set(id, mass.id);
+
+    // Targets are absolute cell counts. A landmass is partitioned completely,
     // so a domain's due is its share of the cells that actually exist there;
     // computing it from the ideal ellipse leaves every territory chasing a
     // number the ground cannot supply.
-    const cellsIn = new Map<Continent, number>();
-    for (const cell of field) cellsIn.set(cell.continent, (cellsIn.get(cell.continent) ?? 0) + 1);
-    const weightIn = new Map<Continent, number>();
+    const cellsIn = new Map<string, number>();
+    for (const cell of field) cellsIn.set(cell.mass, (cellsIn.get(cell.mass) ?? 0) + 1);
+    const weightIn = new Map<string, number>();
     for (const domain of domains) {
-      weightIn.set(domain.continent, (weightIn.get(domain.continent) ?? 0) + weightOf(domain.id));
+      const mass = homeOf.get(domain.id);
+      if (!mass) continue;
+      weightIn.set(mass, (weightIn.get(mass) ?? 0) + weightOf(domain.id));
     }
     const targets = new Map<string, number>(
-      domains.map((d) => [
-        d.id,
-        Math.max(
-          1,
-          ((cellsIn.get(d.continent) ?? 0) * weightOf(d.id)) / (weightIn.get(d.continent) || 1)
-        ),
-      ])
+      domains.map((d) => {
+        const mass = homeOf.get(d.id) ?? '';
+        return [
+          d.id,
+          Math.max(1, ((cellsIn.get(mass) ?? 0) * weightOf(d.id)) / (weightIn.get(mass) || 1)),
+        ];
+      })
     );
 
-    const anchors = computeAnchors(domains, targets, silhouettes, hexArea, warp, random);
-    const growth = partition(
+    const anchors = computeAnchors(domains, targets, world, homeOf, hexArea, warp, random);
+    const growth = config.mode === 'organic'
+      ? growOrganic(field, domains, targets, anchors, homeOf, hexArea, config)
+      : partition(
       field,
       domains,
       targets,
       anchors,
       metrics,
+      homeOf,
       hexArea,
       config.solverPasses,
       config.solverRate
     );
-    const result = scoreLayout(domains, targets, growth, adjacencyOf(field, growth.owner));
+    const result = scoreLayout(
+      domains,
+      targets,
+      growth,
+      adjacencyOf(field, growth.owner),
+      homeOf
+    );
 
     if (result.score < bestScore) {
       bestScore = result.score;
-      best = { growth, field, silhouettes, targets, ...result };
+      best = { growth, field, world, targets, ...result };
     }
   }
 
@@ -1218,30 +1757,44 @@ export function generateMap(
     });
   }
 
-  const coasts = best.silhouettes.map((s) => {
-    const ids = new Set(domains.filter((d) => d.continent === s.continent).map((d) => d.id));
+  const coasts = best.world.map((mass) => {
+    const ids = new Set(mass.members);
     const arcs = graph.arcs.filter(
       (arc) =>
         (arc.left === null && arc.right !== null && ids.has(arc.right)) ||
         (arc.right === null && arc.left !== null && ids.has(arc.left))
     );
-    return { continent: s.continent, path: pathFrom(arcs, graph, tolerance) };
+    return {
+      id: mass.id,
+      kind: mass.kind,
+      continent: mass.continent,
+      path: pathFrom(arcs, graph, tolerance),
+    };
   });
 
-  // Dependencies that cross the ocean are where the reference map draws rope
-  // bridges. Emitting them as data keeps that a rendering decision.
-  const byId = new Map(domains.map((d) => [d.id, d]));
+  // Links that cross open water are where the reference map draws rope bridges.
+  // Now that islands exist these are the interesting ones — a bridge to an
+  // island is the picture of why that island is offshore at all. Emitted as
+  // data so that drawing them stays a rendering decision.
+  const finalHome = new Map<string, string>();
+  for (const mass of best.world) for (const id of mass.members) finalHome.set(id, mass.id);
   const anchorOf = new Map(territories.map((t) => [t.id, t.label]));
+  const seen = new Set<string>();
   const links: MapResult['links'] = [];
-  for (const domain of domains) {
-    for (const source of domain.dependsOn) {
-      const other = byId.get(source);
-      if (!other || other.continent === domain.continent) continue;
-      const a = anchorOf.get(domain.id);
-      const b = anchorOf.get(source);
-      if (!a || !b) continue;
-      links.push({ from: domain.id, to: source, a, b });
-    }
+
+  const candidates = input.edges?.length
+    ? input.edges.map((edge) => ({ from: edge.a, to: edge.b, weight: edge.weight }))
+    : domains.flatMap((d) => d.dependsOn.map((to) => ({ from: d.id, to, weight: 1 })));
+
+  for (const edge of candidates) {
+    if (finalHome.get(edge.from) === finalHome.get(edge.to)) continue;
+    const key = edge.from < edge.to ? `${edge.from}|${edge.to}` : `${edge.to}|${edge.from}`;
+    if (seen.has(key)) continue;
+    const a = anchorOf.get(edge.from);
+    const b = anchorOf.get(edge.to);
+    if (!a || !b) continue;
+    seen.add(key);
+    links.push({ from: edge.from, to: edge.to, a, b });
   }
 
   return {
