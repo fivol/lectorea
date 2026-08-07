@@ -14,6 +14,7 @@ import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
 import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
+import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
 import MobileCourseList from './MobileCourseList';
@@ -347,10 +348,10 @@ function DomainFilter() {
           onChange={() => params.toggleDomain(domain.id)}
         >
           <span className="flex items-center gap-2">
-            <span
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ background: domain.color }}
-            />
+            {/* The glyph, not a dot: it is the same mark the territory carries
+                on the map, so the row is recognisable rather than colour-coded
+                — and colour alone is no help to anyone who cannot see it. */}
+            <DomainIcon domainId={domain.id} size={15} style={{ color: domain.color }} />
             <span className="min-w-0 flex-1 truncate">{t(`domain.${domain.id}.title`)}</span>
             <span className="num shrink-0 text-[11px] text-ink-faint">{domain.courseCount}</span>
           </span>

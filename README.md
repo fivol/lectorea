@@ -40,12 +40,13 @@ and slang (`теорвер`, `линал`), because morphology here is a list of
 stemmer. On a small screen the map falls back to a grid of blocks carrying the
 same icons; the toggle is in the profile settings.
 
-**The columns** (`/courses`) are the catalogue proper. Each column is a step —
-the length of the longest chain of prerequisites ending at that course — so
-reading left to right is reading the order things have to be studied in, and a
-line above the columns says exactly that. The word "step" is deliberate: the
-stage filter next to it deals in «класс» and «курс», and both being called
-"уровень" left neither meaning anything. Nothing
+**The columns** (`/courses`) are the catalogue proper. Each column is a
+difficulty — the length of the longest chain of prerequisites ending at that
+course — so reading left to right is reading how much has to come first, and a
+line above the columns says exactly that. Not "уровень": the stage filter beside
+it deals in «класс» and «курс», and both being called the same thing left
+neither meaning anything. Not "шаг" either — that implies finishing a whole
+column before the next, which is never required. Nothing
 is drawn between the cards: pointing at one lights up what it needs and fades the
 rest, which answers the same question without a web of arrows over 200 cards.
 Cards of one field stay together vertically, so switching on a domain filter

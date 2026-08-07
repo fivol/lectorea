@@ -66,11 +66,11 @@
   "ui.filter.found": "Найдено: {n}",
   "ui.filter.resetAll": "Сбросить всё",
 
-  "ui.column.level": "Шаг {n}",
-  "ui.column.legend": "Колонки — порядок изучения: курс можно начинать, когда пройдено всё, что левее",
+  "ui.column.level": "Сложность {n}",
+  "ui.column.legend": "Колонки — по сложности: чем правее курс, тем длиннее цепочка того, что нужно пройти до него",
   "ui.graph.empty": "Под текущими фильтрами курсов нет",
 
-  "ui.course.level": "шаг {n}",
+  "ui.course.level": "сложность {n}",
   "ui.stage.school-8": "8 класс",
   "ui.stage.school-9": "9 класс",
   "ui.stage.school-10": "10 класс",
@@ -217,7 +217,7 @@
   "ui.profile.data.invalid": "Это не похоже на файл профиля",
   "ui.profile.versionBanner": "Профиль сохранён более новой версией сайта. Он не тронут, но не показывается — обновите страницу",
 
-  "ui.mobile.levelGroup": "Шаг {n}",
+  "ui.mobile.levelGroup": "Сложность {n}",
 
   "ui.a11y.closePanel": "Закрыть панель",
   "ui.a11y.dragSplitter": "Изменить ширину панели",
