@@ -25,6 +25,8 @@
     "data:build": "tsx scripts/08-build.ts",
     "data:import": "tsx scripts/09-import-github.ts",
     "data:map": "tsx scripts/10-map.ts",
+    "map:preview": "tsx scripts/map-poc.ts",
+    "map:sandbox": "tsx scripts/map-sandbox.ts",
     "data:seed-dev": "tsx scripts/dev-seed.ts",
     "course:new": "tsx scripts/course-new.ts",
     "check:i18n": "tsx scripts/check-i18n.ts"
