@@ -1,0 +1,86 @@
+name: refresh
+
+# Runs the crawler until the queue drains or the daily quota does. Exhausting
+# the quota is a normal end of the working day, not a failure — the queue lives
+# in cache.db and the next run picks up exactly where this one stopped.
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      discover:
+        description: 'Also crawl channels for new playlists'
+        type: boolean
+        default: false
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Restore crawl cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/cache.db
+          key: cache-db-${{ github.run_id }}
+          restore-keys: cache-db-
+
+      - name: Discover new playlists
+        if: inputs.discover
+        run: pnpm data:discover
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
+      - name: Refresh metadata, videos and liveness
+        run: pnpm data:refresh
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
+      - name: Match playlists to courses
+        run: pnpm data:match
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Save crawl cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data/cache.db
+          key: cache-db-${{ github.run_id }}
+
+      # New high-confidence matches are a content change and go through review
+      # like any other content change.
+      - name: Open a pull request for new matches
+        uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: data/overrides.yaml
+          branch: data/auto-matches
+          title: 'data: new playlist matches'
+          commit-message: 'data: new playlist matches from the nightly crawl'
+          body: |
+            Automatic matches from the nightly crawl.
+
+            Check a sample before merging: a wrong binding puts a playlist under
+            the wrong course, and nobody looks at it again afterwards.
+          labels: data
+          delete-branch: true

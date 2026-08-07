@@ -1,0 +1,25 @@
+# Awesome-lists mined by `09-import-github.ts` for YouTube playlist links.
+#
+# The importer never creates courses. Anything it cannot map to an existing
+# course lands in data/proposed-courses.yaml for a human to add with real
+# `deps` — auto-generated dependencies are a guaranteed way to ruin the graph.
+
+- id: awesome-courses
+  repo: prakhar1989/awesome-courses
+  path: README.md
+
+- id: free-programming-books
+  repo: EbookFoundation/free-programming-books
+  path: books/free-courses-en.md
+
+- id: awesome-math
+  repo: rossant/awesome-math
+  path: README.md
+
+- id: computer-science
+  repo: ossu/computer-science
+  path: README.md
+
+- id: awesome-deep-learning
+  repo: ChristosChristofidis/awesome-deep-learning
+  path: README.md

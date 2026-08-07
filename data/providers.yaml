@@ -1,0 +1,178 @@
+# Universities, platforms and individual lecturers.
+#
+# `title` is a proper name and is never localised.
+# type: university | platform | individual
+
+# ──────────────────────────────  Universities  ─────────────────────────────
+
+- id: mit
+  title: MIT
+  type: university
+  country: US
+  site: https://ocw.mit.edu/
+
+- id: stanford
+  title: Stanford
+  type: university
+  country: US
+  site: https://online.stanford.edu/
+
+- id: berkeley
+  title: UC Berkeley
+  type: university
+  country: US
+  site: https://www.berkeley.edu/
+
+- id: harvard
+  title: Harvard
+  type: university
+  country: US
+  site: https://online-learning.harvard.edu/
+
+- id: yale
+  title: Yale
+  type: university
+  country: US
+  site: https://oyc.yale.edu/
+
+- id: princeton
+  title: Princeton
+  type: university
+  country: US
+
+- id: caltech
+  title: Caltech
+  type: university
+  country: US
+
+- id: oxford
+  title: Oxford
+  type: university
+  country: GB
+
+- id: cambridge
+  title: Cambridge
+  type: university
+  country: GB
+
+- id: msu
+  title: МГУ
+  type: university
+  country: RU
+  site: https://msu.ru/
+
+- id: mipt
+  title: МФТИ
+  type: university
+  country: RU
+  site: https://mipt.ru/
+
+- id: hse
+  title: ВШЭ
+  type: university
+  country: RU
+  site: https://www.hse.ru/
+
+- id: spbu
+  title: СПбГУ
+  type: university
+  country: RU
+
+- id: itmo
+  title: ИТМО
+  type: university
+  country: RU
+
+- id: nsu
+  title: НГУ
+  type: university
+  country: RU
+
+- id: mephi
+  title: МИФИ
+  type: university
+  country: RU
+
+- id: bmstu
+  title: МГТУ им. Баумана
+  type: university
+  country: RU
+
+- id: sms
+  title: Computer Science Center
+  type: university
+  country: RU
+  site: https://compscicenter.ru/
+
+# ────────────────────────────────  Platforms  ──────────────────────────────
+
+- id: coursera
+  title: Coursera
+  type: platform
+  site: https://www.coursera.org/
+
+- id: edx
+  title: edX
+  type: platform
+  site: https://www.edx.org/
+
+- id: stepik
+  title: Stepik
+  type: platform
+  site: https://stepik.org/
+
+- id: lektorium
+  title: Лекториум
+  type: platform
+  country: RU
+  site: https://www.lektorium.tv/
+
+- id: postnauka
+  title: ПостНаука
+  type: platform
+  country: RU
+  site: https://postnauka.org/
+
+- id: khanacademy
+  title: Khan Academy
+  type: platform
+  site: https://www.khanacademy.org/
+
+- id: nptel
+  title: NPTEL
+  type: platform
+  country: IN
+  site: https://nptel.ac.in/
+
+# ───────────────────────────────  Individuals  ─────────────────────────────
+
+- id: 3blue1brown
+  title: 3Blue1Brown
+  type: individual
+  site: https://www.3blue1brown.com/
+
+- id: savvateev
+  title: Алексей Савватеев
+  type: individual
+  country: RU
+
+- id: raygorodsky
+  title: Андрей Райгородский
+  type: individual
+  country: RU
+
+- id: veritasium
+  title: Veritasium
+  type: individual
+
+- id: mathologer
+  title: Mathologer
+  type: individual
+
+- id: statquest
+  title: StatQuest
+  type: individual
+
+- id: unknown
+  title: Прочие каналы
+  type: individual

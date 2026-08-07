@@ -1,0 +1,65 @@
+{
+  "name": "lectorea",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.6.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --noEmit",
+    "data:discover": "tsx scripts/01-discover.ts",
+    "data:playlists": "tsx scripts/02-playlists.ts",
+    "data:videos": "tsx scripts/03-videos.ts",
+    "data:liveness": "tsx scripts/04-liveness.ts",
+    "data:refresh": "tsx scripts/refresh.ts",
+    "data:match": "tsx scripts/05-match.ts",
+    "data:review": "tsx scripts/06-review.ts",
+    "data:images": "tsx scripts/07-images.ts",
+    "data:build": "tsx scripts/08-build.ts",
+    "data:import": "tsx scripts/09-import-github.ts",
+    "data:map": "tsx scripts/10-map.ts",
+    "data:seed-dev": "tsx scripts/dev-seed.ts",
+    "check:i18n": "tsx scripts/check-i18n.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild"
+    ]
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "zod": "^3.23.8",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/dagre": "^0.7.52",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "better-sqlite3": "^11.7.0",
+    "dagre": "^0.8.5",
+    "dotenv": "^16.4.7",
+    "openai": "^4.77.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^3.2.4",
+    "yaml": "^2.6.1"
+  }
+}

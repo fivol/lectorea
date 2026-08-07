@@ -1,0 +1,140 @@
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { BuiltCourse, BuiltDomain } from '@shared/schema';
+import { loadCatalog, type Catalog } from './data';
+import { I18nProvider, useT } from '@/i18n';
+import { useProfile } from '@/store/profile';
+
+const CatalogContext = createContext<Catalog | null>(null);
+
+export function useCatalog(): Catalog {
+  const catalog = useContext(CatalogContext);
+  if (!catalog) throw new Error('useCatalog outside CatalogProvider');
+  return catalog;
+}
+
+export function CatalogProvider({ children }: { children: ReactNode }) {
+  const lang = useProfile((state) => state.profile.settings.lang);
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    loadCatalog(lang)
+      .then((value) => {
+        if (!cancelled) setCatalog(value);
+      })
+      .catch((cause: Error) => {
+        if (!cancelled) setError(cause);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [lang]);
+
+  if (error) return <FatalError error={error} />;
+  if (!catalog) return <Booting />;
+
+  return (
+    <CatalogContext.Provider value={catalog}>
+      <I18nProvider lang={lang} dict={catalog.dict}>
+        {children}
+      </I18nProvider>
+    </CatalogContext.Provider>
+  );
+}
+
+function Booting() {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <div className="flex flex-col items-center gap-3 text-ink-faint">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-line border-t-accent" />
+        <span className="text-sm">Загрузка каталога…</span>
+      </div>
+    </div>
+  );
+}
+
+function FatalError({ error }: { error: Error }) {
+  return (
+    <div className="flex h-full items-center justify-center p-6">
+      <div className="surface max-w-md p-6 text-center">
+        <p className="font-display text-lg">Не удалось загрузить данные</p>
+        <p className="mt-2 text-sm text-ink-dim">
+          Похоже, каталог ещё не собран. Запустите <code className="num">pnpm data:build</code>.
+        </p>
+        <p className="mt-3 text-xs text-ink-faint">{error.message}</p>
+        <button className="btn mt-4" onClick={() => window.location.reload()}>
+          Повторить
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────  Derived lookups  ───────────────────────── */
+
+/** Primary domain of a course — the first one, which gives the card its colour. */
+export function usePrimaryDomain(course: BuiltCourse | undefined): BuiltDomain | undefined {
+  const catalog = useCatalog();
+  return course ? catalog.domainById.get(course.domains[0]) : undefined;
+}
+
+export function useCourseTitle(): (id: string) => string {
+  const { t } = useT();
+  return (id: string) => t(`course.${id}.title`);
+}
+
+export function useDomainTitle(): (id: string) => string {
+  const { t } = useT();
+  return (id: string) => t(`domain.${id}.title`);
+}
+
+/**
+ * Courses that survive the active domain and provider filters.
+ *
+ * External dependencies are deliberately kept: they are dimmed by the caller,
+ * not removed, otherwise arrows run into empty space and it stops being visible
+ * that discrete maths came from the maths territory.
+ */
+export function useFilteredCourses(
+  domainFilter: string[],
+  providerFilter: string[]
+): { visible: Set<string>; dimmed: Set<string> } {
+  const catalog = useCatalog();
+
+  return useMemo(() => {
+    const visible = new Set<string>();
+    const dimmed = new Set<string>();
+    if (!domainFilter.length && !providerFilter.length) {
+      for (const course of catalog.courses) visible.add(course.id);
+      return { visible, dimmed };
+    }
+
+    const providerCourses = providerFilter.length
+      ? new Set(
+          providerFilter.flatMap((id) => catalog.providers[id]?.courseIds ?? [])
+        )
+      : null;
+
+    const inDomain = (course: BuiltCourse): boolean =>
+      !domainFilter.length || course.domains.some((d) => domainFilter.includes(d));
+
+    const core = catalog.courses.filter(
+      (course) => inDomain(course) && (!providerCourses || providerCourses.has(course.id))
+    );
+    for (const course of core) visible.add(course.id);
+
+    // One hop of context around the selection, dimmed rather than hidden.
+    for (const course of core) {
+      for (const neighbour of [...course.deps, ...course.soft, ...course.related]) {
+        if (!visible.has(neighbour)) dimmed.add(neighbour);
+      }
+      for (const step of course.reachDown) {
+        if (!visible.has(step.id)) dimmed.add(step.id);
+      }
+    }
+
+    return { visible, dimmed };
+  }, [catalog, domainFilter, providerFilter]);
+}

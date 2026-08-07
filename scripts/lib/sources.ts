@@ -1,0 +1,173 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { LineCounter, parseDocument, isSeq } from 'yaml';
+import { z } from 'zod';
+import {
+  ChannelSchema,
+  CourseSchema,
+  DomainSchema,
+  OverridesSchema,
+  ProviderSchema,
+  type Channel,
+  type Course,
+  type Domain,
+  type Overrides,
+  type Provider,
+} from '../../shared/schema.js';
+import { paths } from './config.js';
+
+/**
+ * Loading and validating the hand-edited sources.
+ *
+ * Every failure reports file, line and the offending id. A schema error that
+ * only says "expected string" costs ten minutes of grepping in a 900-line YAML.
+ */
+
+export class SourceError extends Error {
+  constructor(
+    message: string,
+    readonly details: string[] = []
+  ) {
+    super(message);
+    this.name = 'SourceError';
+  }
+}
+
+function formatIssues(issues: z.ZodIssue[]): string {
+  return issues
+    .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
+    .join('; ');
+}
+
+/**
+ * Parses a YAML sequence file and validates each item, reporting real line numbers.
+ *
+ * Typed on the schema rather than on a plain `T` so that zod defaults survive:
+ * `deps: z.array(...).default([])` has an optional input and a required output,
+ * and collapsing the two makes every defaulted field optional downstream.
+ */
+export function loadYamlList<S extends z.ZodTypeAny>(file: string, schema: S): Array<z.output<S>> {
+  const text = fs.readFileSync(file, 'utf8');
+  const lineCounter = new LineCounter();
+  const doc = parseDocument(text, { lineCounter });
+  const rel = path.relative(paths.root, file);
+
+  if (doc.errors.length) {
+    throw new SourceError(
+      `${rel}: YAML is not parseable`,
+      doc.errors.map((e) => `line ${lineCounter.linePos(e.pos[0]).line}: ${e.message}`)
+    );
+  }
+
+  const raw = doc.toJS() ?? [];
+  if (!Array.isArray(raw)) {
+    throw new SourceError(`${rel}: expected a list at the top level`);
+  }
+
+  const lineOf = (index: number): number => {
+    const contents = doc.contents;
+    if (!isSeq(contents)) return 0;
+    const node = contents.items[index] as { range?: [number, number, number] } | undefined;
+    return node?.range ? lineCounter.linePos(node.range[0]).line : 0;
+  };
+
+  const problems: string[] = [];
+  const result: Array<z.output<S>> = [];
+
+  raw.forEach((item, index) => {
+    const parsed = schema.safeParse(item);
+    if (parsed.success) {
+      result.push(parsed.data);
+    } else {
+      const id = (item as { id?: string } | null)?.id ?? `#${index}`;
+      problems.push(`${rel}:${lineOf(index)} [${id}] ${formatIssues(parsed.error.issues)}`);
+    }
+  });
+
+  if (problems.length) {
+    throw new SourceError(`${rel}: ${problems.length} invalid entries`, problems);
+  }
+  return result;
+}
+
+export function loadYamlObject<S extends z.ZodTypeAny>(file: string, schema: S): z.output<S> {
+  const rel = path.relative(paths.root, file);
+  if (!fs.existsSync(file)) return schema.parse({});
+
+  const text = fs.readFileSync(file, 'utf8');
+  const lineCounter = new LineCounter();
+  const doc = parseDocument(text, { lineCounter });
+  if (doc.errors.length) {
+    throw new SourceError(
+      `${rel}: YAML is not parseable`,
+      doc.errors.map((e) => `line ${lineCounter.linePos(e.pos[0]).line}: ${e.message}`)
+    );
+  }
+  const parsed = schema.safeParse(doc.toJS() ?? {});
+  if (!parsed.success) {
+    throw new SourceError(`${rel}: invalid`, [formatIssues(parsed.error.issues)]);
+  }
+  return parsed.data;
+}
+
+export function loadJson<S extends z.ZodTypeAny>(file: string, schema: S): z.output<S> {
+  const rel = path.relative(paths.root, file);
+  if (!fs.existsSync(file)) {
+    throw new SourceError(`${rel}: file not found`);
+  }
+  let raw: unknown;
+  try {
+    raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    throw new SourceError(`${rel}: not valid JSON`, [(e as Error).message]);
+  }
+  const parsed = schema.safeParse(raw);
+  if (!parsed.success) {
+    throw new SourceError(`${rel}: invalid`, [formatIssues(parsed.error.issues)]);
+  }
+  return parsed.data;
+}
+
+/** Keyword files are `{ "course.probability": ["теорвер", …] }` plus `_comment`. */
+const KeywordsSchema = z.record(z.string(), z.union([z.string(), z.array(z.string())]));
+const I18nSchema = z.record(z.string(), z.string());
+
+export type Sources = {
+  domains: Domain[];
+  courses: Course[];
+  providers: Provider[];
+  channels: Channel[];
+  overrides: Overrides;
+  i18n: Record<string, string>;
+  keywords: Record<string, string[]>;
+};
+
+export function loadSources(lang = 'ru'): Sources {
+  const domains = loadYamlList(path.join(paths.data, 'domains.yaml'), DomainSchema);
+  const courses = loadYamlList(path.join(paths.data, 'courses.yaml'), CourseSchema);
+  const providers = loadYamlList(path.join(paths.data, 'providers.yaml'), ProviderSchema);
+  const channels = loadYamlList(path.join(paths.data, 'channels.yaml'), ChannelSchema);
+  const overrides = loadYamlObject(path.join(paths.data, 'overrides.yaml'), OverridesSchema);
+  const i18n = loadJson(path.join(paths.i18n, `${lang}.json`), I18nSchema);
+
+  const rawKeywords = loadJson(path.join(paths.keywords, `${lang}.json`), KeywordsSchema);
+  const keywords: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(rawKeywords)) {
+    if (key.startsWith('_')) continue; // `_comment` and friends
+    keywords[key] = Array.isArray(value) ? value : [value];
+  }
+
+  return { domains, courses, providers, channels, overrides, i18n, keywords };
+}
+
+export function reportSourceError(error: unknown): never {
+  if (error instanceof SourceError) {
+    console.error(`\n✗ ${error.message}`);
+    for (const detail of error.details.slice(0, 40)) console.error(`  ${detail}`);
+    if (error.details.length > 40) {
+      console.error(`  …and ${error.details.length - 40} more`);
+    }
+    process.exit(1);
+  }
+  throw error;
+}

@@ -1,0 +1,23 @@
+node_modules/
+dist/
+dist-ssr/
+.DS_Store
+*.local
+
+# Generated on CI from data/ + cache.db — never committed.
+public/data/
+public/images/courses/
+
+# Crawl cache and working memory. Rebuildable by spending quota again.
+data/cache.db
+data/cache.db-shm
+data/cache.db-wal
+data/proposed-courses.yaml
+
+.env
+.env.*
+!.env.example
+
+*.tsbuildinfo
+coverage/
+dev-dist/

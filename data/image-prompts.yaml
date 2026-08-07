@@ -1,0 +1,36 @@
+# Prompt templates for `07-images.ts --openai`.
+#
+# Only domains are generated through the image API: there are ~40 of them, they
+# are stable, and the results are committed to public/images/domains/.
+# Courses use the procedural SVG generator — 500+ images per build through an
+# image API is money on every run and a style that drifts apart.
+#
+# Placeholders: {title}, {desc}, {continent}, {color}
+
+style: >-
+  Abstract geometric illustration, flat vector, dark background #0B0F1A,
+  restrained palette built around {color}, thin precise lines, no text,
+  no letters, no people, no photorealism, centred composition,
+  generous negative space, editorial poster feel.
+
+template: >-
+  {style}
+  Subject: a visual metaphor for the field of knowledge "{title}". {desc}
+
+# Per-domain overrides, when the generic metaphor is not enough.
+overrides:
+  math: >-
+    {style}
+    Subject: nested abstract structures — lattices, spirals and orthogonal
+    axes, suggesting order derived from few axioms.
+  history: >-
+    {style}
+    Subject: stratified horizontal layers like sediment, each layer a
+    different density, suggesting depth of time.
+  linguistics: >-
+    {style}
+    Subject: branching tree structures merging into a wave, suggesting
+    sound turning into structure.
+
+size: '1024x1024'
+format: webp

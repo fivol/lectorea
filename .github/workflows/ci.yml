@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Types
+        run: pnpm typecheck
+
+      - name: Tests — levels, cycles, score, search
+        run: pnpm test
+
+      # Validates the schemas, proves the deps graph is acyclic, checks that
+      # every dependency points at a course that exists. This is the step that
+      # catches markup mistakes the eye cannot see.
+      - name: Data
+        run: pnpm data:build
+
+      - name: Localisation keys
+        run: pnpm check:i18n
+
+      - name: Frontend build
+        run: pnpm build

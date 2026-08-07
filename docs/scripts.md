@@ -1,0 +1,220 @@
+# Scripts
+
+Every script is a `tsx` entry point under `scripts/`, run through a `pnpm`
+alias. They share `scripts/lib/`, read `.env` through `lib/config.ts`, and — for
+everything that touches YouTube — the same SQLite file at `data/cache.db`.
+
+Two of them are needed to work on the interface (`data:build`, `data:seed-dev`).
+The rest exist to fill the catalogue with material and are run on a schedule, not
+per commit.
+
+| Command | Script | Needs | Writes |
+|---|---|---|---|
+| `pnpm data:build` | `08-build.ts` | `data/`, optional `cache.db` | `public/data/` |
+| `pnpm data:seed-dev` | `dev-seed.ts` | — | `cache.db` |
+| `pnpm data:map` | `10-map.ts` | `data/domains.yaml` | `public/map.svg` |
+| `pnpm check:i18n` | `check-i18n.ts` | `data/i18n/`, `src/` | nothing — exits non-zero |
+| `pnpm data:discover` | `01-discover.ts` | API key | `cache.db` |
+| `pnpm data:playlists` | `02-playlists.ts` | API key | `cache.db` |
+| `pnpm data:videos` | `03-videos.ts` | API key | `cache.db` |
+| `pnpm data:liveness` | `04-liveness.ts` | API key | `cache.db` |
+| `pnpm data:refresh` | `refresh.ts` | API key | `cache.db` |
+| `pnpm data:match` | `05-match.ts` | `cache.db` | `cache.db` |
+| `pnpm data:review` | `06-review.ts` | `cache.db` | `data/overrides.yaml` |
+| `pnpm data:images` | `07-images.ts` | — | `public/images/` |
+| `pnpm data:import` | `09-import-github.ts` | network | `data/proposed-courses.yaml` |
+
+## Working on the interface
+
+### `pnpm data:build`
+
+Turns `data/*.yaml` plus whatever is in `cache.db` into the static JSON the
+frontend fetches. Nothing runs before it: `public/data/` is generated and
+gitignored, so a fresh checkout has an empty catalogue until this is run.
+
+It is also the validator — see [README → What the build guarantees](../README.md).
+A schema violation, a cycle, a dangling `deps` target or an unknown domain fails
+the build with the file and line, and CI runs the same command.
+
+`cache.db` is optional. Without it the graph is built with zero playlists, which
+is enough for layout, navigation and styling work.
+
+Reads `DEFAULT_LANG` (default `ru`) to pick which `data/i18n/{lang}.json` and
+`data/keywords/{lang}.json` to bake in.
+
+### `pnpm data:seed-dev`
+
+Inserts ~500 synthetic playlists into `cache.db`, spread across the existing
+courses and titled so they are obviously fake (`[dev]`). The point is to see the
+catalogue full — sorting, filters, the playlist panel, counts on the map —
+without spending a day of YouTube quota on a first crawl.
+
+```bash
+pnpm data:seed-dev          # insert
+pnpm data:build             # then rebuild, seeds only reach the UI through the build
+pnpm data:seed-dev --wipe   # remove every seeded row, leaving real data alone
+```
+
+### `pnpm data:map`
+
+Regenerates `public/map.svg` from `data/domains.yaml` and the course counts per
+domain. Unlike `public/data/`, the map **is committed** — it is one file, it
+changes rarely, and a territory redraw should be visible in a diff.
+
+Run it after adding a domain or after a batch of new courses makes an area
+outgrow its territory; the generator warns when a territory ends up smaller than
+its share of courses.
+
+### `pnpm check:i18n`
+
+Two-way check on localisation: every key the code passes to `t()` must exist in
+`data/i18n/{lang}.json`, and every key in the dictionary must be used somewhere.
+Template keys (`t(\`course.${id}.title\`)`) are matched as wildcards.
+
+Both halves matter. A missing key ships the raw key to the user; an orphaned one
+is dead weight nobody later dares delete. Exits non-zero on either, and CI runs
+it.
+
+## Crawling YouTube
+
+These need `YOUTUBE_API_KEY` in `.env`. They share a 10 000 unit daily quota, and
+all of them stop at `YOUTUBE_QUOTA_CEILING` (default 9500) rather than dying on a
+403. Running out of quota prints `квота исчерпана, продолжу завтра` and **exits
+0** — it is the normal end of a working day, not a failure, and CI stays green.
+
+Every response body is kept verbatim in `raw_responses`, so a parser bug is
+fixed and re-run locally instead of costing another day of quota.
+
+State lives in `cache.db`, including the job queue, so any of these can be killed
+and restarted. See [docs/pipeline.md](pipeline.md) for costs, retry policy and
+refresh periods.
+
+### `pnpm data:discover`
+
+Channels → playlists. Reads `data/channels.yaml`, resolves each channel and lists
+the playlists it owns. Costs 1 unit per channel plus 1 per 50 playlists.
+
+Incremental: a channel is only re-scanned every 30 days. `--force` ignores that
+and re-scans everything — useful right after adding channels in bulk, expensive
+otherwise.
+
+```bash
+pnpm data:discover
+pnpm data:discover --force
+```
+
+Run it roughly monthly, or after editing `data/channels.yaml`.
+
+### `pnpm data:refresh`
+
+The nightly job, and the one to reach for by default. Runs metadata → videos →
+liveness in that order until the queue drains or the quota does.
+
+```bash
+pnpm data:refresh
+```
+
+The three steps are also available separately, which is mostly useful when
+debugging one of them:
+
+- **`pnpm data:playlists`** (`02`) — playlist titles, descriptions and
+  statistics, in batches of 50 per unit. Incremental by `next_refresh_at`, so
+  repeat runs are nearly free.
+- **`pnpm data:videos`** (`03`) — the expensive one. Walks queued playlists,
+  stores their videos, and rolls durations and statistics up onto the playlist.
+  One unit per 50 videos listed, plus one per 50 detailed.
+- **`pnpm data:liveness`** (`04`) — marks playlists that were deleted or went
+  private. A dead playlist is never retried: 404 and 403 are permanent here.
+
+## Matching playlists to courses
+
+### `pnpm data:match`
+
+Decides which course a crawled playlist belongs to. A cascade, cheapest first —
+rules over titles and the synonym dictionary in `data/keywords/{lang}.json`,
+then optionally the LLM, then a human.
+
+```bash
+pnpm data:match          # rules only, free, no network beyond the database
+pnpm data:match --llm    # adds the model pass; needs OPENAI_API_KEY
+```
+
+Anything that lands below confidence 0.75 — including every case where two
+courses claim the same title, which is *declined* rather than guessed — is left
+for `data:review`. Results go into the `matches` table, not into YAML.
+
+Model choice is `OPENAI_CLASSIFY_MODEL` (default `gpt-5-mini`).
+
+### `pnpm data:review`
+
+A local review server on `http://localhost:5174` for everything the automatic
+passes refused to decide. One playlist at a time: the playlist on the left,
+course search and suggestions on the right.
+
+```
+1–9   bind to the numbered suggestion
+n     not a course at all
+→     skip
+```
+
+Decisions are written to `data/overrides.yaml`, which is committed — that file is
+the reviewed record and what goes into the pull request. Override the port with
+`REVIEW_PORT`.
+
+The keyboard-first design is the whole point: the alternative is hand-editing
+YAML by playlist id, which is torture and therefore does not get done.
+
+## Content and imports
+
+### `pnpm data:images`
+
+By default, nothing is called and nothing is paid for: course art is procedural
+SVG generated deterministically from the course id, both here and in the
+frontend, so it never needs storing.
+
+The flag is for domain images only — about 40 of them, generated once and
+committed:
+
+```bash
+pnpm data:images --openai --only=math,physics
+```
+
+`--only=` takes a comma-separated list of domain ids; without it every domain is
+regenerated. Needs `OPENAI_API_KEY`; model is `OPENAI_IMAGE_MODEL` (default
+`gpt-image-1`). Look changes go through `scripts/lib/visual.config.ts` — editing
+`seedSalt` there redraws all procedural art, which is one string instead of 500
+API calls.
+
+### `pnpm data:import`
+
+Pulls YouTube playlist links out of the awesome-lists declared in
+`data/sources.yaml` and queues them for the normal crawl.
+
+Courses are **never** created automatically. Titles that match nothing in
+`courses.yaml` are dropped into `data/proposed-courses.yaml` (gitignored) for a
+human to add by hand with real `deps` taken from a syllabus. Auto-generated
+dependencies would quietly ruin the graph, and the graph is the whole product.
+
+## Order
+
+First run, from an empty checkout:
+
+```bash
+pnpm install
+pnpm data:build            # empty catalogue, valid graph
+pnpm data:seed-dev && pnpm data:build   # or: a full one, with fake playlists
+pnpm dev
+```
+
+First run with real data, spread over two or three days of quota:
+
+```bash
+pnpm data:discover         # channels → playlists
+pnpm data:refresh          # repeat daily until it stops reporting exhausted quota
+pnpm data:match --llm
+pnpm data:review           # decide the leftovers
+pnpm data:build
+```
+
+Afterwards `data:refresh` and `data:match` run nightly on CI, and the only manual
+step is review.

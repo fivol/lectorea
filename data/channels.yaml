@@ -1,0 +1,79 @@
+# Channels to crawl. `01-discover.ts` walks each one and collects its playlists.
+#
+# `id` may be either a canonical channel id (`UC…`) or a handle (`@name`).
+# Handles are resolved once via channels.list?forHandle and cached in cache.db,
+# so the file stays readable and does not need id archaeology to edit.
+#
+# One crawl of a channel costs 1 unit for the channel plus 1 unit per 50 playlists.
+# Adding a channel here is cheap; removing one does not delete already-collected
+# playlists, it only stops refreshing them.
+
+- id: '@mitocw'
+  title: MIT OpenCourseWare
+  providerId: mit
+  lang: en
+
+- id: '@stanfordonline'
+  title: Stanford Online
+  providerId: stanford
+  lang: en
+
+- id: '@YaleCourses'
+  title: YaleCourses
+  providerId: yale
+  lang: en
+
+- id: '@3blue1brown'
+  title: 3Blue1Brown
+  providerId: 3blue1brown
+  lang: en
+
+- id: '@khanacademy'
+  title: Khan Academy
+  providerId: khanacademy
+  lang: en
+
+- id: '@statquest'
+  title: StatQuest with Josh Starmer
+  providerId: statquest
+  lang: en
+
+- id: '@Mathologer'
+  title: Mathologer
+  providerId: mathologer
+  lang: en
+
+- id: '@veritasium'
+  title: Veritasium
+  providerId: veritasium
+  lang: en
+
+- id: '@nptelhrd'
+  title: NPTEL
+  providerId: nptel
+  lang: en
+
+- id: '@hselectures'
+  title: Лекции ВШЭ
+  providerId: hse
+  lang: ru
+
+- id: '@mipt-lectures'
+  title: Лекции МФТИ
+  providerId: mipt
+  lang: ru
+
+- id: '@lektorium'
+  title: Лекториум
+  providerId: lektorium
+  lang: ru
+
+- id: '@postnauka'
+  title: ПостНаука
+  providerId: postnauka
+  lang: ru
+
+- id: '@compscicenter'
+  title: Computer Science Center
+  providerId: sms
+  lang: ru

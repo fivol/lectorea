@@ -1,0 +1,13 @@
+# Hand edits applied on top of the automatic pipeline. Committed to git.
+#
+# matches   : playlistId → courseId, or `null` for "this is not a course".
+#             Written by `06-review.ts`; wins over any rule or LLM guess.
+# playlists : playlistId → fields that override the scraped values.
+#             `hidden: true` removes a playlist from the catalogue entirely.
+# channels  : channelId → providerId, when the channel title is not enough.
+
+matches: {}
+
+playlists: {}
+
+channels: {}

@@ -1,0 +1,266 @@
+# Domains of knowledge — the territories of the map.
+#
+# continent : formal | social | humanities
+# bridge    : true for interdisciplinary domains living in the straits
+# dependsOn : source domains, used for the cascade highlight on hover
+# color     : base of the domain palette; a variation of its continent hue
+# shapeId   : id of the <path> in public/map.svg
+#
+# Titles and descriptions live in data/i18n/{lang}.json under `domain.{id}.title`.
+
+# ───────────────────────────  Formal & natural  ───────────────────────────
+
+- id: math
+  continent: formal
+  color: '#4CC9F0'
+  shapeId: shape-math
+  dependsOn: []
+
+- id: logic
+  continent: formal
+  parent: math
+  color: '#6FD4F5'
+  shapeId: shape-logic
+  dependsOn: [math]
+
+- id: probability
+  continent: formal
+  color: '#2FB6E8'
+  shapeId: shape-probability
+  dependsOn: [math]
+
+- id: cs
+  continent: formal
+  color: '#3AA9E8'
+  shapeId: shape-cs
+  dependsOn: [math, logic]
+
+- id: physics
+  continent: formal
+  color: '#5FB0F2'
+  shapeId: shape-physics
+  dependsOn: [math]
+
+- id: astronomy
+  continent: formal
+  parent: physics
+  color: '#86C6FF'
+  shapeId: shape-astronomy
+  dependsOn: [physics, math]
+
+- id: chemistry
+  continent: formal
+  color: '#45D6D0'
+  shapeId: shape-chemistry
+  dependsOn: [physics, math]
+
+- id: earth-science
+  continent: formal
+  color: '#3FC2B8'
+  shapeId: shape-earth-science
+  dependsOn: [chemistry, physics]
+
+- id: biology
+  continent: formal
+  color: '#55DDB0'
+  shapeId: shape-biology
+  dependsOn: [chemistry]
+
+- id: medicine
+  continent: formal
+  color: '#79E6C4'
+  shapeId: shape-medicine
+  dependsOn: [biology, chemistry]
+
+- id: engineering
+  continent: formal
+  color: '#2E93D6'
+  shapeId: shape-engineering
+  dependsOn: [physics, math]
+
+# Straits of the formal continent
+
+- id: biochemistry
+  continent: formal
+  bridge: true
+  color: '#63E0A0'
+  shapeId: shape-biochemistry
+  dependsOn: [chemistry, biology]
+
+- id: bioinformatics
+  continent: formal
+  bridge: true
+  color: '#6FE6C8'
+  shapeId: shape-bioinformatics
+  dependsOn: [biology, cs, probability]
+
+- id: quantum-chemistry
+  continent: formal
+  bridge: true
+  color: '#52D8E8'
+  shapeId: shape-quantum-chemistry
+  dependsOn: [physics, chemistry]
+
+- id: machine-learning
+  continent: formal
+  bridge: true
+  color: '#7AB8FF'
+  shapeId: shape-machine-learning
+  dependsOn: [cs, probability, math]
+
+# ─────────────────────────────────  Social  ────────────────────────────────
+
+- id: economics
+  continent: social
+  color: '#F4A261'
+  shapeId: shape-economics
+  dependsOn: [math, probability]
+
+- id: sociology
+  continent: social
+  color: '#EFAE84'
+  shapeId: shape-sociology
+  dependsOn: [probability]
+
+- id: political-science
+  continent: social
+  color: '#E8944F'
+  shapeId: shape-political-science
+  dependsOn: [sociology]
+
+- id: psychology
+  continent: social
+  color: '#F7BE96'
+  shapeId: shape-psychology
+  dependsOn: [biology, probability]
+
+- id: anthropology
+  continent: social
+  color: '#E9A472'
+  shapeId: shape-anthropology
+  dependsOn: [sociology]
+
+- id: law
+  continent: social
+  color: '#DB8A4C'
+  shapeId: shape-law
+  dependsOn: [political-science]
+
+- id: management
+  continent: social
+  color: '#FACBA6'
+  shapeId: shape-management
+  dependsOn: [economics, psychology]
+
+- id: human-geography
+  continent: social
+  color: '#EDB78E'
+  shapeId: shape-human-geography
+  dependsOn: [sociology, earth-science]
+
+- id: education
+  continent: social
+  color: '#F6D0B2'
+  shapeId: shape-education
+  dependsOn: [psychology]
+
+# Straits of the social continent
+
+- id: econometrics
+  continent: social
+  bridge: true
+  color: '#F2B36B'
+  shapeId: shape-econometrics
+  dependsOn: [economics, probability]
+
+- id: cognitive-science
+  continent: social
+  bridge: true
+  color: '#F0C08C'
+  shapeId: shape-cognitive-science
+  dependsOn: [psychology, biology, cs]
+
+# ──────────────────────────────  Humanities  ───────────────────────────────
+
+- id: philosophy
+  continent: humanities
+  color: '#C77DFF'
+  shapeId: shape-philosophy
+  dependsOn: [logic]
+
+- id: history
+  continent: humanities
+  color: '#B26AF0'
+  shapeId: shape-history
+  dependsOn: []
+
+- id: linguistics
+  continent: humanities
+  color: '#D28CFF'
+  shapeId: shape-linguistics
+  dependsOn: [logic]
+
+- id: literature
+  continent: humanities
+  color: '#BC79F7'
+  shapeId: shape-literature
+  dependsOn: [linguistics, history]
+
+- id: art-history
+  continent: humanities
+  color: '#DCA0FF'
+  shapeId: shape-art-history
+  dependsOn: [history]
+
+- id: musicology
+  continent: humanities
+  color: '#C489F2'
+  shapeId: shape-musicology
+  dependsOn: [history]
+
+- id: religion
+  continent: humanities
+  color: '#AC6BE4'
+  shapeId: shape-religion
+  dependsOn: [history, philosophy]
+
+- id: archaeology
+  continent: humanities
+  color: '#B67CEE'
+  shapeId: shape-archaeology
+  dependsOn: [history]
+
+- id: classics
+  continent: humanities
+  color: '#D096FF'
+  shapeId: shape-classics
+  dependsOn: [linguistics, history]
+
+- id: film-studies
+  continent: humanities
+  color: '#E0AAFF'
+  shapeId: shape-film-studies
+  dependsOn: [art-history]
+
+# Straits of the humanities continent
+
+- id: computational-linguistics
+  continent: humanities
+  bridge: true
+  color: '#C39BFF'
+  shapeId: shape-computational-linguistics
+  dependsOn: [linguistics, cs, machine-learning]
+
+- id: history-of-science
+  continent: humanities
+  bridge: true
+  color: '#B98CF2'
+  shapeId: shape-history-of-science
+  dependsOn: [history, philosophy, physics]
+
+- id: bioethics
+  continent: humanities
+  bridge: true
+  color: '#CFA0F0'
+  shapeId: shape-bioethics
+  dependsOn: [philosophy, biology, medicine]
