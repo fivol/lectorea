@@ -8,8 +8,8 @@ import { courseHref } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
-import CourseArt from '@/components/CourseArt';
 import PathBlock from './PathBlock';
+import CourseLinkCard from './CourseLinkCard';
 import PlaylistList, { fixDataUrl, suggestPlaylistUrl } from './PlaylistList';
 
 type Props = {
@@ -30,7 +30,6 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
   const cycleStatus = useProfile((state) => state.cycleCourseStatus);
   const toggleFavorite = useProfile((state) => state.toggleCourseFavorite);
   const setEcho = useUi((state) => state.setEcho);
-  const requestFocus = useUi((state) => state.requestFocus);
 
   /**
    * The echo is set by hovering a link in here and cleared on mouse-out — but
@@ -118,53 +117,43 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
         </p>
       </section>
 
-      <PathBlock course={course} search={search} outsideFilter={outsideFilter} />
+      {/* The two directions of one relation, so: one card, mirrored headings,
+          and both above the playlist list rather than one of them stranded
+          below it. Read in the order the questions come — what has to be done
+          first, then the full chain, then what it leads to. */}
+      <section className="border-t border-line px-4 py-4">
+        <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
+        {course.deps.length ? (
+          <ul className="grid gap-1.5 sm:grid-cols-2">
+            {course.deps.map((id) => (
+              <li key={id}>
+                <CourseLinkCard courseId={id} search={search} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-ink-faint">{t('ui.path.empty')}</p>
+        )}
+      </section>
 
-      <PlaylistList course={course} />
+      <PathBlock course={course} search={search} outsideFilter={outsideFilter} />
 
       <section className="border-t border-line px-4 py-4">
         <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
-        {/* Cards rather than chips: these are courses, and a chip reads as a
-            filter you could switch on. The artwork is the same one the columns
-            use, so the link is recognisably the card you would land on. */}
         {unlocks.length ? (
           <ul className="grid gap-1.5 sm:grid-cols-2">
-            {unlocks.map((step) => {
-              const next = catalog.courseById.get(step.id);
-              if (!next) return null;
-              const domain = catalog.domainById.get(next.domains[0]);
-              const colour = domain?.color ?? 'var(--c-formal)';
-              return (
-                <li key={step.id}>
-                  <Link
-                    to={courseHref(step.id, search)}
-                    onMouseEnter={() => setEcho(step.id)}
-                    onMouseLeave={() => setEcho(null)}
-                    onClick={() => requestFocus(step.id)}
-                    className="surface flex items-center gap-2.5 p-2 transition-colors hover:border-accent"
-                  >
-                    <span className="h-10 w-14 shrink-0 overflow-hidden rounded">
-                      <CourseArt courseId={step.id} color={colour} className="h-full w-full" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm text-ink">
-                        {t(`course.${step.id}.title`)}
-                      </span>
-                      <span className="num block truncate text-xs text-ink-faint">
-                        {domain ? t(`domain.${domain.id}.title`) : ''}
-                        {step.behind ? ` · ${t('ui.unlocks.behind', { n: step.behind })}` : ''}
-                      </span>
-                    </span>
-                    <Icon name="chevron-right" size={13} className="shrink-0 text-ink-faint" />
-                  </Link>
-                </li>
-              );
-            })}
+            {unlocks.map((step) => (
+              <li key={step.id}>
+                <CourseLinkCard courseId={step.id} search={search} behind={step.behind} />
+              </li>
+            ))}
           </ul>
         ) : (
           <p className="text-sm text-ink-faint">{t('ui.unlocks.empty')}</p>
         )}
       </section>
+
+      <PlaylistList course={course} />
 
       {course.soft.length || course.related.length ? (
         <section className="border-t border-line px-4 py-4 text-sm">

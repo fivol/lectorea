@@ -18,7 +18,6 @@ import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
 import MobileCourseList from './MobileCourseList';
-import PrerequisiteStrip from './PrerequisiteStrip';
 
 export default function CoursesScreen() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -208,16 +207,9 @@ export default function CoursesScreen() {
             className={selected ? 'min-w-0' : 'min-w-0 flex-1'}
           >
             <div className="flex h-full min-h-0 flex-col">
-              {/* Orientation and answer share one slot: the legend explains why
-                  the cards are in columns at all, and once a course is picked
-                  the question has moved on to what that one needs. */}
-              {selected ? (
-                <PrerequisiteStrip course={selected} onSelect={onSelect} />
-              ) : (
-                <p className="shrink-0 border-b border-line px-5 py-2 text-xs text-ink-faint">
-                  {t('ui.column.legend')}
-                </p>
-              )}
+              <p className="shrink-0 border-b border-line px-5 py-2 text-xs text-ink-faint">
+                {t('ui.column.legend')}
+              </p>
               <div className="min-h-0 flex-1">
                 <ColumnsView
                   courses={catalog.courses}
