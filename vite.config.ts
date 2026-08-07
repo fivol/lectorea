@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'Lectorea',
         short_name: 'Lectorea',
-        description: 'Каталог образовательных плейлистов, разложенный по зависимостям',
+        description: 'Каталог образовательных плейлистов в порядке изучения',
         theme_color: '#0B0F1A',
         background_color: '#0B0F1A',
         display: 'standalone',
