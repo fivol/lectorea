@@ -39,9 +39,15 @@ the search box matches titles, abbreviations and slang (`теорвер`, `ли�
 because morphology here is a list of forms, not a stemmer. On a small screen the
 map falls back to a list of blocks; the toggle is in the profile settings.
 
-**The graph** (`/courses`) is the catalogue proper. Courses run left to right by
-depth, and an edge always points forward — that is a property of the build, not
-of the drawing. Clicking a course opens its panel:
+**The columns** (`/courses`) are the catalogue proper. Each column is a level —
+the length of the longest chain of prerequisites ending at that course — so
+reading left to right is reading the order things have to be studied in. Nothing
+is drawn between the cards: pointing at one lights up what it needs and fades the
+rest, which answers the same question without a web of arrows over 200 cards.
+Cards of one field stay together vertically, so switching on a domain filter
+lights a stripe rather than a spray.
+
+Clicking a course opens its panel:
 
 - **Path** — everything that has to come first, in order, with an hour estimate
   and how much of it you have already marked done. "Export" copies it to the
@@ -69,11 +75,11 @@ carries the exact view and the back button behaves.
 | Build | Vite | |
 | UI | React 18 + TypeScript | |
 | Routing | React Router | URL carries everything: sharing, back button |
-| State | Zustand | context would re-render 500 nodes |
+| State | Zustand | context would re-render every card on every hover |
 | Styles | Tailwind + CSS variables for themes | |
 | Validation | zod, in `shared/schema.ts` | one schema for scripts, build and frontend |
-| Graph layout | dagre — **at build time only** | weight and lag in the browser for a result that never changes |
-| Graph rendering | absolute DOM + one SVG for edges | react-flow at 500 nodes is slow and brings its own UX |
+| Column order | own barycentric pass, **at build time** | dagre cannot express domain bands, and ranks nodes by edge length rather than by level |
+| Course screen | plain scrollable columns of cards | the level carries the meaning; arrows over 200 cards were noise |
 | Scripts | tsx + better-sqlite3 | |
 | Tests | vitest, on the build logic | levels, cycles, score, search normalisation |
 | Deploy | any static host | |
@@ -81,6 +87,7 @@ carries the exact view and the back button behaves.
 Detailed documents:
 
 - [docs/data.md](docs/data.md) — the data model, the files, and how to add content
+- [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota
 - [docs/scripts.md](docs/scripts.md) — every command: what it does, its flags, when to run it
 - [CONTRIBUTING.md](CONTRIBUTING.md) — the rules external edits must follow
@@ -106,29 +113,38 @@ The transitive closure is computed, not stored.
 when:
 
 - a YAML file does not match its zod schema
-- the `deps` graph has a cycle (it prints the nodes involved)
+- the `deps` graph has a cycle (it prints the loop itself, not just the fact)
 - a dependency points at a course that does not exist
 - a course claims a domain that does not exist
+- a course sits in a file other than the one its first domain names
+
+It also warns, with file and line, about markup that still builds but rots the
+graph: a dependency the graph already implies transitively, or a `soft` edge that
+duplicates a hard one.
 
 `level` is computed as the longest `deps` chain ending at a node — never
-assigned by hand. That makes a right-to-left edge impossible by construction,
-and turns the layout itself into a check on the markup.
+assigned by hand. That makes a course placed before its own prerequisite
+impossible by construction, and turns the layout itself into a check on the
+markup.
 
 The price is that depth depends on how courses are sliced: split calculus into
 four parts and all of physics shifts a column to the right. Hence the rule in
 [CONTRIBUTING.md](CONTRIBUTING.md): **one unit = one semester course.**
+
+The whole scheme is in [docs/layout.md](docs/layout.md).
 
 ## Commands
 
 ```bash
 pnpm dev                 # frontend, localhost:5173
 pnpm build               # production build into dist/
-pnpm test                # build logic: levels, cycles, score, search
+pnpm test                # build logic: levels, cycles, column order, score, search
 pnpm typecheck
 
 pnpm data:build          # data/ + cache.db → public/data (run before dev)
 pnpm data:map            # regenerate public/map.svg from domains.yaml
 pnpm data:seed-dev       # synthetic playlists for development
+pnpm course:new          # scaffold a course across its three files
 
 pnpm data:discover       # channels → playlists, monthly
 pnpm data:refresh        # metadata → videos → liveness, nightly

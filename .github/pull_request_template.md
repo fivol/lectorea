@@ -6,12 +6,14 @@
 
 - [ ] One unit = one semester course. No topic-sized entries, no merged year-long blocks
 - [ ] `deps` are **direct only** — if A needs B and B needs C, A does not list C
-- [ ] Dependencies come from a syllabus, not from intuition. Link it in `externalRefs.syllabus`
+- [ ] Dependencies come from a syllabus, not from intuition. Link it in `refs.syllabus`
 - [ ] Anything helpful-but-not-required is in `soft`, not `deps`
 - [ ] Mutual links (logic ↔ philosophy) are in `related`, written on one side only
+- [ ] Each course is in `data/courses/<its first domain>.yaml`
+- [ ] Any `minLevel` carries a comment saying why the computed level is wrong
 - [ ] Every new course has `course.<id>.title` and `course.<id>.desc` in `data/i18n/ru.json`
-- [ ] Search keywords added to `data/keywords/ru.json` if the title alone would not find it
-- [ ] `pnpm data:build && pnpm check:i18n` passes locally
+- [ ] Search keywords added to `data/keywords/ru.json` — abbreviations, slang, transliterations
+- [ ] `pnpm data:build && pnpm check:i18n` passes locally, and its warnings are read
 
 ## Checklist for code changes
 

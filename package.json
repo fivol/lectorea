@@ -26,6 +26,7 @@
     "data:import": "tsx scripts/09-import-github.ts",
     "data:map": "tsx scripts/10-map.ts",
     "data:seed-dev": "tsx scripts/dev-seed.ts",
+    "course:new": "tsx scripts/course-new.ts",
     "check:i18n": "tsx scripts/check-i18n.ts"
   },
   "pnpm": {
@@ -43,14 +44,12 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
-    "@types/dagre": "^0.7.52",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "better-sqlite3": "^11.7.0",
-    "dagre": "^0.8.5",
     "dotenv": "^16.4.7",
     "openai": "^4.77.0",
     "postcss": "^8.4.49",

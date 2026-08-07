@@ -12,9 +12,10 @@ const TABS = ['courses', 'playlists', 'settings', 'data'] as const;
 type Tab = (typeof TABS)[number];
 
 /**
- * An overlay panel, not a sidebar: 320 px does not fit a grid of saved
- * playlists, and the graph should not give up width for a profile that is only
- * open occasionally. Not a URL state either — it is a modal layer, not a place.
+ * A centred modal, not a sidebar: the profile is read in one sitting and closed,
+ * so it should sit in the middle of attention rather than push the catalogue
+ * sideways. Wide, because a grid of saved playlists does not fit in a rail.
+ * Not URL state either — it is a modal layer, not a place.
  */
 export default function ProfilePanel() {
   const open = useUi((state) => state.profileOpen);
@@ -30,7 +31,7 @@ export default function ProfilePanel() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className={`fixed inset-0 z-50 ${isMobile ? '' : 'flex items-center justify-center p-6'}`}>
       <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={close} aria-hidden="true" />
 
       <div
@@ -39,11 +40,12 @@ export default function ProfilePanel() {
         aria-modal="true"
         aria-label={t('ui.profile.title')}
         tabIndex={-1}
-        className={`absolute flex flex-col bg-surface shadow-[var(--shadow-panel)]
+        className={`flex flex-col bg-surface shadow-[var(--shadow-panel)]
                     ${
                       isMobile
-                        ? 'inset-0 animate-slide-in-bottom'
-                        : 'inset-y-0 right-0 w-[min(920px,90vw)] animate-slide-in-right border-l border-line'
+                        ? 'absolute inset-0 animate-slide-in-bottom'
+                        : `relative h-[min(760px,88vh)] w-[min(1120px,92vw)] animate-scale-in
+                           overflow-hidden rounded-2xl border border-line`
                     }`}
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">

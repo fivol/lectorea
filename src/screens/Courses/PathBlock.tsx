@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
-import { useCatalog } from '@/lib/catalog';
+import { pathTo, useCatalog } from '@/lib/catalog';
 import { loadPlaylists } from '@/lib/data';
 import { formatHours } from '@/lib/format';
 import { courseHref } from '@/lib/url';
@@ -18,10 +18,10 @@ type Props = {
 };
 
 /**
- * The path to a course: the full transitive `deps` closure in topological
- * order. Collapsed by default — the summary line carries the number that
- * matters, and the total hours are the most motivating and most sobering
- * figure on the site.
+ * The path to a course: the full transitive `deps` closure, ordered by level,
+ * which is a correct order to study them in. Collapsed by default — the summary
+ * line carries the number that matters, and the total hours are the most
+ * motivating and most sobering figure on the site.
  */
 export default function PathBlock({ course, search, outsideFilter }: Props) {
   const catalog = useCatalog();
@@ -34,17 +34,12 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
   const [hideDone, setHideDone] = useState(false);
   const [exportState, setExportState] = useState<'idle' | 'working' | 'done'>('idle');
 
-  const steps = useMemo(() => {
-    const ids = [...course.reachUp, course.id];
-    return ids
-      .map((id) => catalog.courseById.get(id))
-      .filter((item): item is BuiltCourse => Boolean(item));
-  }, [course, catalog]);
+  const steps = useMemo(() => [...pathTo(catalog, course.id), course], [course, catalog]);
 
   const doneCount = steps.filter((step) => profile.courses[step.id]?.status === 'done').length;
   const totalHours = steps.reduce((sum, step) => sum + step.hours, 0);
 
-  if (!course.reachUp.length) {
+  if (steps.length < 2) {
     return (
       <section className="border-t border-line px-4 py-3">
         <p className="text-sm text-ink-faint">{t('ui.path.empty')}</p>

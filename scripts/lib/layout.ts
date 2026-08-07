@@ -1,163 +1,110 @@
-import dagre from 'dagre';
-import type { Course } from '../../shared/schema.js';
+import type { Course, Domain } from '../../shared/schema.js';
+import { dependantsIndex } from '../../shared/graph.js';
 
 /**
- * Layered layout, computed at build time. The client only reads coordinates —
- * shipping dagre to the browser would cost weight and a layout pass on 500
- * nodes at every page load, for a result that never changes between deploys.
- */
-
-/** Card geometry. The frontend reads the same constants from `src/lib/layout.ts`. */
-export const CARD_WIDTH = 180;
-export const CARD_HEIGHT = 140;
-export const COLUMN_GAP = 110;
-export const ROW_GAP = 28;
-
-export type Point = { x: number; y: number };
-
-export function layoutCourses(
-  courses: Course[],
-  levels: Map<string, number>
-): Map<string, Point> {
-  const g = new dagre.graphlib.Graph({ multigraph: false, compound: false });
-  g.setGraph({
-    rankdir: 'LR',
-    // `longest-path` ranks a node exactly at its longest dependency chain,
-    // which is the same number as `level`. Any other ranker would drift.
-    ranker: 'longest-path',
-    nodesep: ROW_GAP,
-    ranksep: COLUMN_GAP,
-    edgesep: 12,
-    marginx: 80,
-    marginy: 80,
-  });
-  g.setDefaultEdgeLabel(() => ({}));
-
-  for (const course of courses) {
-    g.setNode(course.id, { width: CARD_WIDTH, height: CARD_HEIGHT });
-  }
-  // Only hard dependencies shape the layout: `soft` and `related` would pull
-  // nodes sideways and break the "everything flows left to right" promise.
-  for (const course of courses) {
-    for (const dep of course.deps) g.setEdge(dep, course.id);
-  }
-
-  dagre.layout(g);
-
-  const columnStride = CARD_WIDTH + COLUMN_GAP;
-  const positions = new Map<string, Point>();
-
-  for (const course of courses) {
-    const node = g.node(course.id) as Point | undefined;
-    const level = levels.get(course.id) ?? 0;
-    positions.set(course.id, {
-      // x is derived from `level`, not from dagre: a node with no edges gets
-      // rank 0 from dagre regardless of its level, and columns must line up.
-      x: Math.round(80 + level * columnStride),
-      y: Math.round(node ? node.y - CARD_HEIGHT / 2 : 80),
-    });
-  }
-
-  compact(courses, levels, positions);
-  normaliseTop(positions);
-  return positions;
-}
-
-const ROW_PITCH = CARD_HEIGHT + ROW_GAP;
-
-/**
- * Dagre leaves large vertical gaps it reserves for edge routing, which on this
- * graph produces a canvas six times taller than it is wide — mostly emptiness.
+ * Vertical order of the cards inside each column, computed at build time.
  *
- * The ordering dagre computed is the valuable part (it is what minimises edge
- * crossings), so it is kept: nodes are only re-stacked at a fixed pitch and
- * then nudged towards the average height of their neighbours.
+ * The horizontal axis is not a layout decision at all — the column *is* the
+ * level, and the level comes from the topological sort. All that is left is the
+ * order within a column, and that is what decides whether the screen reads as
+ * tracks of a field or as confetti.
+ *
+ * Not dagre: its default `network-simplex` ranker minimises edge length instead
+ * of producing our levels, so calculus drifts right towards whatever consumes
+ * it. `longest-path` fixes the ranking but still cannot express domain bands,
+ * which are the whole point here. This is ~80 lines and answers to nobody.
  */
-function compact(
+
+export type Column = { level: number; count: number };
+
+export type LayoutResult = {
+  /** courseId → position inside its column. */
+  row: Map<string, number>;
+  columns: Column[];
+};
+
+const SWEEPS = 4;
+
+export function layoutColumns(
   courses: Course[],
   levels: Map<string, number>,
-  positions: Map<string, Point>
-): void {
-  const columns = new Map<number, string[]>();
-  for (const course of courses) {
-    const level = levels.get(course.id) ?? 0;
-    columns.set(level, [...(columns.get(level) ?? []), course.id]);
-  }
+  domains: Domain[]
+): LayoutResult {
+  const bandOf = new Map(domains.map((domain) => [domain.id, domain.bandOrder]));
+  const dependants = dependantsIndex(courses);
 
-  const neighbours = new Map<string, { up: string[]; down: string[] }>();
-  for (const course of courses) neighbours.set(course.id, { up: [], down: [] });
+  type Node = {
+    id: string;
+    band: number;
+    deps: string[];
+    dependants: string[];
+    row: number;
+    bary: number;
+  };
+
+  const nodes = new Map<string, Node>();
+  const columns = new Map<number, Node[]>();
+
   for (const course of courses) {
-    for (const dep of course.deps) {
-      neighbours.get(course.id)!.up.push(dep);
-      neighbours.get(dep)?.down.push(course.id);
-    }
+    const node: Node = {
+      id: course.id,
+      // An unknown domain is caught earlier as an error; the fallback only
+      // keeps this function total.
+      band: bandOf.get(course.domains[0]) ?? Number.MAX_SAFE_INTEGER,
+      deps: course.deps,
+      dependants: dependants.get(course.id) ?? [],
+      row: 0,
+      bary: 0,
+    };
+    nodes.set(course.id, node);
+    const level = levels.get(course.id) ?? 0;
+    columns.set(level, [...(columns.get(level) ?? []), node]);
   }
 
   const order = [...columns.keys()].sort((a, b) => a - b);
 
-  // Stack every column at a fixed pitch, in dagre's order. The height of the
-  // canvas is now exactly what the busiest column needs and nothing more.
+  // Seed: band order, then source order. Without a deterministic seed the
+  // barycentric passes converge to a different answer on every build.
   for (const level of order) {
-    const ids = columns
-      .get(level)!
-      .sort((a, b) => positions.get(a)!.y - positions.get(b)!.y);
-    columns.set(level, ids);
-    ids.forEach((id, index) => {
-      positions.get(id)!.y = (index - (ids.length - 1) / 2) * ROW_PITCH;
+    const column = columns.get(level)!;
+    column.sort((a, b) => a.band - b.band);
+    column.forEach((node, index) => {
+      node.row = index;
     });
   }
 
   /**
-   * Then slide whole columns — never individual cards — towards the average
-   * height of what they connect to. Moving cards individually is what let the
-   * columns spread out again and undid the compaction; moving the column as a
-   * unit improves the edge angles at zero cost in height.
+   * Barycentric ordering: each card slides towards the average row of what it
+   * connects to in the neighbouring column. Sweeping forwards then backwards a
+   * few times drops the visual scatter sharply and then stops improving — four
+   * passes is where it flattens out.
+   *
+   * `band` stays the primary sort key, so the barycentre only ever reorders
+   * cards *within* a domain's band. That costs some tidiness in exchange for the
+   * domain filter lighting up a contiguous stripe instead of a spray of cards,
+   * and the filter is used constantly while precise neighbour order is not.
    */
-  for (let pass = 0; pass < 12; pass++) {
-    const sweep = pass % 2 === 0 ? order : [...order].reverse();
-    const side: 'up' | 'down' = pass % 2 === 0 ? 'up' : 'down';
-
-    for (const level of sweep) {
-      const ids = columns.get(level)!;
-      let drift = 0;
-      let counted = 0;
-
-      for (const id of ids) {
-        const related = neighbours.get(id)![side];
-        if (!related.length) continue;
-        const mean =
-          related.reduce((sum, other) => sum + (positions.get(other)?.y ?? 0), 0) /
-          related.length;
-        drift += mean - positions.get(id)!.y;
-        counted += 1;
-      }
-      if (!counted) continue;
-
-      const shift = (drift / counted) * 0.5;
-      for (const id of ids) positions.get(id)!.y += shift;
+  const reorder = (column: Node[], side: 'deps' | 'dependants'): void => {
+    for (const node of column) {
+      const neighbours = node[side];
+      const rows = neighbours
+        .map((id) => nodes.get(id)?.row)
+        .filter((row): row is number => row !== undefined);
+      node.bary = rows.length ? rows.reduce((a, b) => a + b, 0) / rows.length : node.row;
     }
+    column.sort((a, b) => a.band - b.band || a.bary - b.bary || a.id.localeCompare(b.id));
+    column.forEach((node, index) => {
+      node.row = index;
+    });
+  };
+
+  for (let sweep = 0; sweep < SWEEPS; sweep++) {
+    for (const level of order) reorder(columns.get(level)!, 'deps');
+    for (const level of [...order].reverse()) reorder(columns.get(level)!, 'dependants');
   }
 
-  for (const position of positions.values()) position.y = Math.round(position.y);
-}
-
-/** Dagre can produce negative coordinates; shift everything into the positive quadrant. */
-function normaliseTop(positions: Map<string, Point>): void {
-  let minY = Infinity;
-  for (const p of positions.values()) minY = Math.min(minY, p.y);
-  if (!Number.isFinite(minY) || minY >= 0) return;
-  for (const p of positions.values()) p.y -= minY - 80;
-}
-
-export function graphBounds(positions: Map<string, Point>): {
-  width: number;
-  height: number;
-} {
-  let maxX = 0;
-  let maxY = 0;
-  for (const p of positions.values()) {
-    maxX = Math.max(maxX, p.x + CARD_WIDTH);
-    maxY = Math.max(maxY, p.y + CARD_HEIGHT);
-  }
-  return { width: maxX + 80, height: maxY + 80 };
+  return {
+    row: new Map([...nodes.values()].map((node) => [node.id, node.row])),
+    columns: order.map((level) => ({ level, count: columns.get(level)!.length })),
+  };
 }

@@ -5,7 +5,7 @@ title: 'Плейлист для курса: '
 labels: playlist
 ---
 
-**Курс:** `<id из data/courses.yaml>`
+**Курс:** `<id из data/courses/>`
 
 **Ссылка на плейлист:**
 

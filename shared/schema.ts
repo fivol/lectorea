@@ -23,6 +23,12 @@ export const DomainSchema = z.object({
   shapeId: z.string(), // id of the <path> in map.svg
   dependsOn: z.array(z.string()).default([]), // source domains (for highlighting)
   image: z.string().optional(), // path to a generated image
+  /**
+   * Vertical order of the domain's band in the course columns, fundamental at
+   * the top. Written by hand: derived from anything else it would drift between
+   * builds and shuffle the whole screen on an unrelated edit.
+   */
+  bandOrder: z.number().int(),
 });
 export type Domain = z.infer<typeof DomainSchema>;
 
@@ -36,13 +42,25 @@ export type BuiltDomain = z.infer<typeof BuiltDomainSchema>;
 
 /* ─────────────────────────────  Courses  ───────────────────────────── */
 
+/**
+ * Structure only — no titles, no descriptions, no keywords. Those live in
+ * `data/i18n/{lang}.json` under `course.{id}.*`, so that a diff on a course file
+ * reads as a change to the graph instead of drowning in reworded prose.
+ */
 export const CourseSchema = z.object({
   id: z.string(), // 'probability', 'calculus-1'
-  domains: z.array(z.string()).min(1), // the first one is primary
+  domains: z.array(z.string()).min(1), // the first one is primary; it picks the file
   deps: z.array(z.string()).default([]),
   soft: z.array(z.string()).default([]),
   related: z.array(z.string()).default([]),
-  externalRefs: z
+  /**
+   * Manual floor under the computed level, for courses with no formal
+   * prerequisites that column zero would misrepresent — art history does not
+   * belong next to school algebra. Rare, and always with a comment saying why:
+   * every use is an admission of a dependency that exists but is not written.
+   */
+  minLevel: z.number().int().min(0).optional(),
+  refs: z
     .object({
       // Where the dependency markup came from. Reviewers check these.
       syllabus: z.string().url().optional(),
@@ -51,21 +69,16 @@ export const CourseSchema = z.object({
 });
 export type Course = z.infer<typeof CourseSchema>;
 
-/** One step of `reachDown`: a course this one unlocks, plus how much sits behind it. */
-export const ReachDownStepSchema = z.object({
-  id: z.string(),
-  /** How many further courses become reachable through this one. */
-  behind: z.number(),
-});
-
+/**
+ * Transitive closures are deliberately absent: `level` already guarantees
+ * `level(dep) < level(course)`, so the client walks `deps` and sorts by level in
+ * five lines. Shipping the closures would cost ~100 KB for that.
+ */
 export const BuiltCourseSchema = CourseSchema.extend({
-  level: z.number(), // longest `deps` chain ending here, computed globally
-  x: z.number(),
-  y: z.number(),
+  level: z.number(), // column: longest `deps` chain ending here, computed globally
+  row: z.number(), // position inside the column, from the barycentric ordering
   playlistCount: z.number(),
   hours: z.number(), // median totalSeconds of the course playlists, in hours
-  reachUp: z.array(z.string()), // transitive `deps` closure, topologically ordered
-  reachDown: z.array(ReachDownStepSchema), // first step forward + counter
 });
 export type BuiltCourse = z.infer<typeof BuiltCourseSchema>;
 

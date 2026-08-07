@@ -10,8 +10,8 @@ import { reportSourceError } from './lib/sources.js';
 /**
  * Pulls YouTube playlist links out of awesome-lists.
  *
- * Courses that are not in courses.yaml are never created automatically — the
- * script drops suggestions into data/proposed-courses.yaml, where a human adds
+ * Courses that are not already in data/courses/ are never created automatically —
+ * the script drops suggestions into data/proposed-courses.yaml, where a human adds
  * them by hand with real `deps`. Auto-generated dependencies are a guaranteed
  * way to ruin the graph, and the graph is the whole product.
  */
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
 
 /**
  * Titles that mention nothing already in the catalogue are worth a human look;
- * they land here rather than being invented into courses.yaml.
+ * they land here rather than being invented into data/courses/.
  */
 function writeProposals(found: Map<string, Found>): void {
   const file = path.join(paths.data, 'proposed-courses.yaml');
@@ -117,7 +117,7 @@ function writeProposals(found: Map<string, Found>): void {
   const proposals = {
     generatedAt: nowIso(),
     note:
-      'Suggestions from awesome-lists. Add real courses to courses.yaml by hand, ' +
+      'Suggestions from awesome-lists. Add real courses with `pnpm course:new`, ' +
       'with dependencies taken from a syllabus. Nothing here is used by the build.',
     playlists: Object.fromEntries(
       [...found.values()].map((item) => [item.playlistId, { title: item.title, source: item.source }])

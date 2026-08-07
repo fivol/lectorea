@@ -97,7 +97,9 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
           const emphasis = emphasisOf(domain.id);
           const isHovered = hovered === domain.id;
           const delay = reducedMotion ? 0 : (sources.get(domain.id) ?? 0) * 80;
-          const opacity = emphasis === 'full' ? 1 : emphasis === 'related' ? 0.72 : 0.4;
+          // Dimming only has to say "not this one" — the territory must stay
+          // readable, otherwise pointing at anything blacks out half the map.
+          const opacity = emphasis === 'full' ? 1 : emphasis === 'related' ? 0.88 : 0.68;
           const lift = isHovered && !reducedMotion ? -2 : 0;
 
           return (
@@ -112,6 +114,12 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                 cursor: 'pointer',
               }}
               onPointerEnter={() => setHovered(domain.id)}
+              // Leaving a territory has to clear the highlight even when the
+              // pointer is still inside the svg — the gaps between territories
+              // are part of the map, and the dimming used to survive there.
+              // Guarded against the enter/leave pair firing out of order when
+              // moving straight from one territory onto its neighbour.
+              onPointerLeave={() => setHovered((current) => (current === domain.id ? null : current))}
               onClick={() => navigate(`/courses?domain=${encodeURIComponent(domain.id)}`)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -184,12 +192,35 @@ function Label({
         fontSize={size}
         fontWeight={600}
         fill="var(--c-ink)"
-        style={{ paintOrder: 'stroke', stroke: 'var(--c-canvas)', strokeWidth: 3.5 }}
+        // A halo, not an outline. `strokeLinejoin: round` is the whole trick:
+        // the default miter join throws long spikes off every sharp corner of a
+        // glyph, which is what made the old 3.5px stroke look serrated.
+        style={{
+          paintOrder: 'stroke',
+          stroke: 'var(--c-canvas)',
+          strokeWidth: 2,
+          strokeLinejoin: 'round',
+          strokeLinecap: 'round',
+          strokeOpacity: 0.75,
+        }}
       >
         {title}
       </text>
       {showCounter ? (
-        <text x={shape.cx} y={shape.cy + size + 3} fontSize={size * 0.75} fill={colour}>
+        <text
+          x={shape.cx}
+          y={shape.cy + size + 3}
+          fontSize={size * 0.75}
+          fill={colour}
+          style={{
+            paintOrder: 'stroke',
+            stroke: 'var(--c-canvas)',
+            strokeWidth: 2,
+            strokeLinejoin: 'round',
+            strokeLinecap: 'round',
+            strokeOpacity: 0.75,
+          }}
+        >
           {counter}
         </text>
       ) : null}

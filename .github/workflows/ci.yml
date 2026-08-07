@@ -25,16 +25,17 @@ jobs:
       - name: Types
         run: pnpm typecheck
 
-      - name: Tests — levels, cycles, score, search
+      - name: Tests — levels, cycles, column order, score, search
         run: pnpm test
 
       # Validates the schemas, proves the deps graph is acyclic, checks that
-      # every dependency points at a course that exists. This is the step that
-      # catches markup mistakes the eye cannot see.
+      # every dependency points at a course that exists and that each course
+      # sits in the file its first domain names. This is the step that catches
+      # markup mistakes the eye cannot see.
       - name: Data
         run: pnpm data:build
 
-      - name: Localisation keys
+      - name: Localisation keys and course text
         run: pnpm check:i18n
 
       - name: Frontend build

@@ -16,15 +16,14 @@ import {
 import { normalize } from '../shared/search.js';
 import { ensureDir, nowIso, paths } from './lib/config.js';
 import {
-  assertAcyclic,
-  computeLevels,
-  computeReachDown,
-  computeReachUp,
+  buildLevels,
+  findGraphWarnings,
   GraphError,
   symmetrizeRelated,
+  validateFilePlacement,
   validateReferences,
 } from './lib/graph.js';
-import { graphBounds, layoutCourses } from './lib/layout.js';
+import { layoutColumns } from './lib/layout.js';
 import { bayesianScore, engagementOf, meanEngagement, median, scoreToPercent } from './lib/score.js';
 import { loadSources, reportSourceError, SourceError, type Sources } from './lib/sources.js';
 import { dbExists, openDb, type MatchRow, type PlaylistRow, type VideoRow, type ChannelRow } from './lib/db.js';
@@ -69,24 +68,23 @@ async function main(): Promise<void> {
   }
 
   symmetrizeRelated(sources.courses);
-  validateReferences(sources.courses, domainIds);
+  validateFilePlacement(sources.courses, sources.courseFiles);
+  validateReferences(sources.courses, domainIds, sources.courseLocations);
 
-  // 2. Cycles -------------------------------------------------------------
-  assertAcyclic(sources.courses);
-  console.log('· deps graph is acyclic');
-
-  // 3. Levels and reachability -------------------------------------------
-  const levels = computeLevels(sources.courses);
-  const reachUp = computeReachUp(sources.courses);
-  const reachDown = computeReachDown(sources.courses);
+  // 2. Levels, order and cycles — one pass of Kahn's algorithm -------------
+  const { order, level: levels } = buildLevels(sources.courses);
   const maxLevel = Math.max(...levels.values());
-  console.log(`· levels computed, deepest chain is ${maxLevel + 1} courses long`);
+  console.log(`· deps graph is acyclic, deepest chain is ${maxLevel + 1} courses long`);
 
-  // 4. Layout -------------------------------------------------------------
-  const positions = layoutCourses(sources.courses, levels);
-  const bounds = graphBounds(positions);
+  // Not errors: markup that still builds but rots the graph if left alone.
+  const warnings = findGraphWarnings(sources.courses, sources.courseLocations);
+  for (const warning of warnings.slice(0, 20)) console.warn(`  ! ${warning}`);
+  if (warnings.length > 20) console.warn(`  ! …and ${warnings.length - 20} more`);
 
-  // 5. Playlists ----------------------------------------------------------
+  // 3. Column order -------------------------------------------------------
+  const layout = layoutColumns(sources.courses, levels, sources.domains);
+
+  // 4. Playlists ----------------------------------------------------------
   const assembled = assemblePlaylists(sources);
   console.log(
     assembled.total
@@ -94,21 +92,21 @@ async function main(): Promise<void> {
       : '· no cache.db (or no matched playlists) — building the graph without playlists'
   );
 
-  // 6. Aggregates ---------------------------------------------------------
-  const courses: BuiltCourse[] = sources.courses.map((course) => {
-    const playlists = assembled.playlistsByCourse.get(course.id) ?? [];
-    const position = positions.get(course.id)!;
+  // 5. Aggregates ---------------------------------------------------------
+  // Written in topological order, which is also a sane reading order for the
+  // file and lets the client trust that a dependency always appears earlier.
+  const byId = new Map(sources.courses.map((course) => [course.id, course]));
+  const courses: BuiltCourse[] = order.map((id) => {
+    const course = byId.get(id)!;
+    const playlists = assembled.playlistsByCourse.get(id) ?? [];
     return BuiltCourseSchema.parse({
       ...course,
-      level: levels.get(course.id) ?? 0,
-      x: position.x,
-      y: position.y,
+      level: levels.get(id) ?? 0,
+      row: layout.row.get(id) ?? 0,
       playlistCount: playlists.length,
       hours: playlists.length
         ? Math.round((median(playlists.map((p) => p.totalSeconds)) / 3600) * 10) / 10
         : 0,
-      reachUp: reachUp.get(course.id) ?? [],
-      reachDown: reachDown.get(course.id) ?? [],
     });
   });
 
@@ -126,19 +124,19 @@ async function main(): Promise<void> {
 
   const providers = buildProviders(sources, assembled, coursesById);
 
-  // 7. Search index -------------------------------------------------------
+  // 6. Search index -------------------------------------------------------
   const searchIndex = buildSearchIndex(sources, courses, domains, providers, assembled);
   console.log(`· search index: ${searchIndex.length} entries`);
 
-  // 8. Write --------------------------------------------------------------
+  // 7. Write --------------------------------------------------------------
   ensureDir(paths.outData);
   ensureDir(paths.outPlaylists);
   ensureDir(path.join(paths.outData, 'i18n'));
 
   writeJson(path.join(paths.outData, 'domains.json'), domains);
   writeJson(path.join(paths.outData, 'courses.json'), {
-    bounds,
     maxLevel,
+    columns: layout.columns,
     courses,
   });
   writeJson(path.join(paths.outData, 'providers.json'), providers);
@@ -153,7 +151,7 @@ async function main(): Promise<void> {
     writeJson(path.join(paths.outPlaylists, `${courseId}.json`), playlists);
   }
 
-  // 9. Meta ---------------------------------------------------------------
+  // 8. Meta ---------------------------------------------------------------
   const withMaterials = courses.filter((c) => c.playlistCount > 0).length;
   const meta: Meta = {
     version: BUILD_VERSION,

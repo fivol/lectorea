@@ -34,27 +34,53 @@ part of the topological sort, which is what keeps the cycle check alive and able
 to catch real mistakes in the natural sciences.
 
 Dependencies come from **syllabi**, not from intuition. MIT OCW and Berkeley
-state them explicitly. Put the link in `externalRefs.syllabus` so a reviewer can
-check it in one click.
+state them explicitly. Put the link in `refs.syllabus` so a reviewer can check it
+in one click.
 
 ```yaml
 - id: probability
-  domains: [probability]          # the first domain is primary; it gives the card its colour
+  domains: [probability]          # the first domain is primary: colour, and which file this is in
   deps: [calculus-2, combinatorics]
   soft: []
   related: []
-  externalRefs:
+  refs:
     syllabus: https://ocw.mit.edu/courses/6-041-…/
 ```
 
+`minLevel` is available as a manual floor under the computed level, for a course
+with no formal prerequisites that column zero would misrepresent — history of art
+does not belong beside school algebra. Use it rarely, and always with a comment
+saying why: each one is an admission of a dependency that exists but is not
+written down.
+
+## Which file a course goes in
+
+`data/courses/<first domain>.yaml`. That is the entire rule, and CI enforces it.
+
+Bioinformatics declares `domains: [bioinformatics, cs, biology]` and therefore
+lives in `bioinformatics.yaml`. Placement is storage only — it has no effect on
+the graph — and a file with three courses in it is fine.
+
 ## Adding a course
 
-1. Add the entry to `data/courses.yaml`
-2. Add `course.<id>.title` and `course.<id>.desc` to `data/i18n/ru.json`
-3. Add search keywords to `data/keywords/ru.json` if the title alone would not
-   find it — abbreviations, slang, transliterations (`теорвер`, `линал`,
-   `диффуры`). Morphology is solved here by listing forms, not by a stemmer
-4. Run `pnpm data:build && pnpm check:i18n`
+```bash
+pnpm course:new probability --domain=math --deps=calculus-2,combinatorics
+```
+
+That writes the graph entry and reserves the text and keyword keys. Then fill in
+by hand:
+
+1. `course.<id>.title` and `course.<id>.desc` in `data/i18n/ru.json` — the
+   description is one line, the sentence that would appear under the title
+2. keywords in `data/keywords/ru.json` — abbreviations, slang, transliterations
+   (`теорвер`, `линал`, `диффуры`). Morphology is solved here by listing forms,
+   not by a stemmer on the client
+3. `pnpm check:i18n && pnpm data:build`
+
+`check:i18n` fails while the description is empty or the keyword list is bare.
+That is on purpose: a course with no description shows a placeholder, and a
+course with no keywords can only be found by someone who already knows its exact
+title — both are invisible failures otherwise.
 
 An empty course — one with no playlists yet — is welcome. Empty courses are not
 hidden: they show the structure of the field, and the empty outskirts on the map
@@ -65,6 +91,12 @@ are visible as work to be done.
 Domains are territories on the map. After editing `data/domains.yaml`, run
 `pnpm data:map` to regenerate `public/map.svg` and commit both. The generator
 warns when a territory ends up smaller than its share of courses.
+
+A domain also needs a `bandOrder`: its vertical position in the course columns,
+fundamental at the top and applied at the bottom. Pick a number between its
+neighbours — the existing ones are spaced by ten so there is always room. It is
+written by hand rather than derived so that the whole screen does not reshuffle
+when something unrelated changes.
 
 ## Adding a playlist
 
@@ -78,16 +110,22 @@ to `data/overrides.yaml`. That file is committed and is the reviewed record.
 ## What CI checks
 
 - every YAML file matches its zod schema, with file and line on failure
-- the `deps` graph is acyclic — the node list is printed if it is not
+- the `deps` graph is acyclic — the loop itself is printed if it is not
 - every `deps`, `soft` and `related` target exists
 - every course claims a domain that exists
+- every course is in the file its first domain names
+- every course has a title, a description and at least one search keyword
 - every i18n key used in code is present, and every key present is used
 - types and tests pass
+
+It also **warns**, without failing, when a dependency is already implied
+transitively, or when a `soft` edge duplicates a hard one. Read them: that is the
+graph telling you it is growing over.
 
 ## What CI cannot check
 
 - whether a unit really is one semester course
 - whether a dependency is real or merely plausible
-- whether a dependency is direct or transitive
+- whether a `minLevel` is justified or is papering over missing markup
 
 That is what review is for. When in doubt, link the syllabus.

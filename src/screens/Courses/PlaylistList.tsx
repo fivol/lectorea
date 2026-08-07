@@ -147,8 +147,13 @@ export function suggestPlaylistUrl(courseId: string): string {
   return `https://github.com/lectorea/lectorea/issues/new?title=${title}&body=${body}&labels=playlist`;
 }
 
-export function fixDataUrl(courseId: string): string {
-  return `https://github.com/lectorea/lectorea/blob/main/data/courses.yaml#:~:text=${encodeURIComponent(
+/**
+ * Straight to the course entry on GitHub. Courses are stored one file per area,
+ * named after the primary domain — which is exactly why that rule is worth
+ * enforcing: it makes the file derivable instead of something to look up.
+ */
+export function fixDataUrl(courseId: string, primaryDomain: string): string {
+  return `https://github.com/lectorea/lectorea/blob/main/data/courses/${primaryDomain}.yaml#:~:text=${encodeURIComponent(
     `id: ${courseId}`
   )}`;
 }

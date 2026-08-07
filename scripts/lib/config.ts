@@ -8,6 +8,7 @@ export const ROOT = path.resolve(here, '../..');
 export const paths = {
   root: ROOT,
   data: path.join(ROOT, 'data'),
+  courses: path.join(ROOT, 'data/courses'),
   i18n: path.join(ROOT, 'data/i18n'),
   keywords: path.join(ROOT, 'data/keywords'),
   cacheDb: path.join(ROOT, 'data/cache.db'),

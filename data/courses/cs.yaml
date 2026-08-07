@@ -1,0 +1,79 @@
+# Courses whose primary domain is `cs`.
+#
+# ONE UNIT = ONE SEMESTER COURSE. Splitting a course into topics shifts every
+# level to the right and ruins the layout for everyone else. See CONTRIBUTING.md.
+#
+# The file is chosen by the FIRST entry of `domains` — that is the only rule for
+# where a course lives, and CI enforces it. Placement is storage, nothing else:
+# it has no effect on the graph.
+#
+# domains  : the first one is primary — it gives the card its colour and this file
+# deps     : hard prerequisites. Direct only, never transitive
+# soft     : helpful but not required, excluded from the path
+# related  : mutual links, excluded from the topological sort
+# minLevel : manual floor under the computed level. Rare, always with a comment
+#
+# Titles and descriptions live in data/i18n/{lang}.json under `course.{id}.*`.
+
+- id: programming-intro
+  domains: [cs]
+
+- id: data-structures
+  domains: [cs]
+  deps: [programming-intro, discrete-math]
+
+- id: algorithms
+  domains: [cs]
+  deps: [data-structures]
+  refs:
+    syllabus: https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/
+
+- id: computer-architecture
+  domains: [cs]
+  deps: [programming-intro]
+
+- id: operating-systems
+  domains: [cs]
+  deps: [computer-architecture, algorithms]
+
+- id: networks
+  domains: [cs]
+  deps: [operating-systems]
+
+- id: databases
+  domains: [cs]
+  deps: [algorithms]
+
+- id: theory-of-computation
+  domains: [cs, logic]
+  deps: [discrete-math, mathematical-logic]
+
+- id: compilers
+  domains: [cs]
+  deps: [algorithms, theory-of-computation]
+
+- id: distributed-systems
+  domains: [cs]
+  deps: [networks, operating-systems]
+
+- id: cryptography
+  domains: [cs]
+  deps: [number-theory, algorithms]
+
+- id: computer-graphics
+  domains: [cs]
+  deps: [linear-algebra, algorithms]
+
+- id: functional-programming
+  domains: [cs]
+  deps: [programming-intro]
+  soft: [category-theory]
+
+- id: software-engineering
+  domains: [cs]
+  deps: [programming-intro]
+  soft: [databases]
+
+- id: computer-security
+  domains: [cs]
+  deps: [networks, cryptography]

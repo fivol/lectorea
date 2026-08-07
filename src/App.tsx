@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CatalogProvider } from '@/lib/catalog';
 import { applyTheme, useProfile } from '@/store/profile';
 import MapScreen from '@/screens/Map/MapScreen';
-import GraphScreen from '@/screens/Graph/GraphScreen';
+import CoursesScreen from '@/screens/Courses/CoursesScreen';
 import ProfilePanel from '@/screens/Profile/ProfilePanel';
 import VersionBanner from '@/components/VersionBanner';
 
@@ -24,8 +24,8 @@ export default function App() {
       <VersionBanner />
       <Routes>
         <Route path="/" element={<MapScreen />} />
-        <Route path="/courses" element={<GraphScreen />} />
-        <Route path="/courses/:courseId" element={<GraphScreen />} />
+        <Route path="/courses" element={<CoursesScreen />} />
+        <Route path="/courses/:courseId" element={<CoursesScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ProfilePanel />

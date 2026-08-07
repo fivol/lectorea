@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
-import { useCatalog } from '@/lib/catalog';
+import { pathTo, useCatalog } from '@/lib/catalog';
 import { formatHours } from '@/lib/format';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
@@ -88,16 +88,17 @@ function GoalCard({ course }: { course: BuiltCourse }) {
   const profile = useProfile((state) => state.profile);
   const open = useCourseNavigation();
 
-  const steps = [...course.reachUp, course.id];
-  const doneIds = steps.filter((id) => profile.courses[id]?.status === 'done');
+  const steps = [...pathTo(catalog, course.id), course];
+  const doneIds = steps.filter((step) => profile.courses[step.id]?.status === 'done');
   const percent = Math.round((doneIds.length / steps.length) * 100);
   const remainingHours = steps
-    .filter((id) => profile.courses[id]?.status !== 'done')
-    .reduce((sum, id) => sum + (catalog.courseById.get(id)?.hours ?? 0), 0);
+    .filter((step) => profile.courses[step.id]?.status !== 'done')
+    .reduce((sum, step) => sum + step.hours, 0);
 
-  // "Continue" goes to the first unfinished course in topological order — the
-  // one that can actually be started right now.
-  const nextId = steps.find((id) => profile.courses[id]?.status !== 'done') ?? course.id;
+  // "Continue" goes to the first unfinished course by level — the one that can
+  // actually be started right now.
+  const nextId =
+    steps.find((step) => profile.courses[step.id]?.status !== 'done')?.id ?? course.id;
   const domain = catalog.domainById.get(course.domains[0]);
 
   return (

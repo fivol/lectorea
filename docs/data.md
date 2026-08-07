@@ -4,8 +4,12 @@
 
 ```
 data/
-  domains.yaml           areas, continents, links, shapes
-  courses.yaml           the course graph
+  domains.yaml           areas, continents, links, shapes, band order
+  courses/
+    math.yaml            the course graph, one file per area
+    physics.yaml
+    bioinformatics.yaml
+    …                    39 files, one per domain
   providers.yaml         universities, platforms, individuals
   channels.yaml          channels to crawl
   sources.yaml           awesome-lists to import from
@@ -18,12 +22,53 @@ data/
 YAML rather than JSON for sources: comments, readable diffs, less syntactic
 noise when editing by hand.
 
+## Why courses are split across files
+
+Playlists are JSONL — thousands of them, written by scripts, never read by eye.
+Courses are the opposite: a few hundred, hand-curated, reviewed line by line.
+One flat file made every pull request touch the same lines, and a JSONL line per
+course would have been unreadable and uncommentable.
+
+So: **one file per area**, and the file is decided by the **first entry of
+`domains`**. Bioinformatics declares `domains: [bioinformatics, cs, biology]`
+and lives in `bioinformatics.yaml`.
+
+That rule is the whole point — "where does this course go?" has exactly one
+answer, and `pnpm data:build` fails if a course is filed anywhere else. Placement
+is storage and nothing more: it has no effect on the graph, and a file with three
+courses in it is fine.
+
+## What a course file holds
+
+```yaml
+- id: probability
+  domains: [probability]
+  deps: [calculus-2, combinatorics]
+  soft: [measure-theory]        # dashed, excluded from the path
+  refs:
+    syllabus: https://ocw.mit.edu/courses/6-041/
+
+- id: art-history-intro
+  domains: [art-history]
+  minLevel: 1                   # no formal prerequisites, but column 0 lies
+```
+
+No titles, no descriptions, no keywords — only structure. That is deliberate: a
+diff on a course file should read as a change to the graph, not drown in
+reworded prose.
+
+`minLevel` is a manual floor under the computed level, for courses that have no
+formal prerequisites but do not belong next to school algebra. Use it rarely and
+always with a comment: every one is an admission of a dependency that exists but
+is not written down. Several of them in one area means that area is badly marked
+up.
+
 ## Generated — in `.gitignore`, built on CI
 
 ```
 public/data/
   domains.json           ~39 records
-  courses.json           graph + coordinates
+  courses.json           the graph, plus level and row per course
   providers.json         for the global provider filter
   search-index.json
   playlists/
@@ -52,12 +97,18 @@ On a course:
 
 | Field | How |
 |---|---|
-| `level` | length of the longest `deps` chain ending here, globally |
-| `x`, `y` | dagre layout; `x` is derived from `level` so columns line up |
+| `level` | length of the longest `deps` chain ending here, globally — the column |
+| `row` | position inside the column, from the barycentric ordering |
 | `playlistCount` | number of live playlists |
 | `hours` | median `totalSeconds` across the course's playlists |
-| `reachUp` | transitive `deps` closure, in topological order |
-| `reachDown` | first step forward only, each with a counter of what is behind it |
+
+Transitive closures are **not** shipped. `level(dep) < level(course)` holds by
+construction, so the client walks `deps` and sorts by level to get a valid study
+order — five lines instead of ~100 KB of JSON in every page load. The same goes
+for "what opens up next": it is the reverse `deps` index, built once on load.
+
+`courses.json` also carries `columns` (`{level, count}` per column) and
+`maxLevel`.
 
 On a playlist:
 
@@ -106,13 +157,34 @@ channels:                     # channelId → providerId
 `06-review.ts` writes the `matches` section. The file is committed — it is the
 reviewed record and what goes into the pull request.
 
-## Localisation
+## Localisation and course text
 
 Every user-facing string is in `data/i18n/{lang}.json`; the code holds keys only.
 Not localised: playlist and channel titles (they come from YouTube as they are),
 lecturer names, ids.
 
-Search keywords are a separate file: they are long, only the search needs them,
-and they should not be shipped alongside the interface strings.
+Course text is keyed off the course id by convention — the course files
+themselves carry no prose:
 
-`pnpm check:i18n` fails when a key is used but missing, or present but unused.
+```json
+// data/i18n/ru.json
+"course.probability.title": "Теория вероятностей",
+"course.probability.desc":  "Случайные величины, распределения, предельные теоремы"
+```
+
+```json
+// data/keywords/ru.json
+"course.probability": ["теорвер", "теория вероятностей", "вероятность", "probability"]
+```
+
+Search keywords are a separate file: they are long, only the search needs them,
+and they should not be shipped alongside the interface strings. Morphology is
+solved here by listing forms, not by a stemmer on the client.
+
+The price is that adding a course touches three files. `pnpm course:new` does the
+clerical part — see [docs/scripts.md](scripts.md).
+
+`pnpm check:i18n` fails when a key is used but missing, present but unused, or
+left empty, and when a course has no keywords at all. The last two matter most:
+without them, half the catalogue quietly ends up with no description and no way
+to find it.

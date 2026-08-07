@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { BuiltCourse, BuiltDomain } from '@shared/schema';
+import { upstreamOf } from '@shared/graph';
 import { loadCatalog, type Catalog } from './data';
 import { I18nProvider, useT } from '@/i18n';
 import { useProfile } from '@/store/profile';
@@ -72,6 +73,35 @@ function FatalError({ error }: { error: Error }) {
   );
 }
 
+/* ─────────────────────────────  Graph queries  ─────────────────────────── */
+
+/**
+ * Everything that has to be studied before a course, in order.
+ *
+ * The build guarantees `level(dep) < level(course)`, so sorting the closure by
+ * level *is* a correct study order — no topological sort on the client. `row`
+ * only breaks ties, so the list does not reshuffle between renders.
+ */
+export function pathTo(catalog: Catalog, courseId: string): BuiltCourse[] {
+  return [...upstreamOf(catalog.courseById, courseId)]
+    .map((id) => catalog.courseById.get(id))
+    .filter((course): course is BuiltCourse => Boolean(course))
+    .sort((a, b) => a.level - b.level || a.row - b.row);
+}
+
+export type Unlock = { id: string; behind: number };
+
+/**
+ * What a course opens up: the immediate dependants only, each carrying a count
+ * of what sits further behind it. The full forward closure would be a wall of
+ * chips nobody reads.
+ */
+export function unlocksOf(catalog: Catalog, courseId: string): Unlock[] {
+  return (catalog.dependants.get(courseId) ?? [])
+    .map((id) => ({ id, behind: catalog.behind.get(id) ?? 0 }))
+    .sort((a, b) => b.behind - a.behind || a.id.localeCompare(b.id));
+}
+
 /* ─────────────────────────────  Derived lookups  ───────────────────────── */
 
 /** Primary domain of a course — the first one, which gives the card its colour. */
@@ -93,9 +123,9 @@ export function useDomainTitle(): (id: string) => string {
 /**
  * Courses that survive the active domain and provider filters.
  *
- * External dependencies are deliberately kept: they are dimmed by the caller,
- * not removed, otherwise arrows run into empty space and it stops being visible
- * that discrete maths came from the maths territory.
+ * Neighbours one hop out are deliberately kept: they are dimmed by the caller,
+ * not removed, so it stays visible that discrete maths came in from the maths
+ * territory rather than appearing from nowhere.
  */
 export function useFilteredCourses(
   domainFilter: string[],
@@ -130,8 +160,8 @@ export function useFilteredCourses(
       for (const neighbour of [...course.deps, ...course.soft, ...course.related]) {
         if (!visible.has(neighbour)) dimmed.add(neighbour);
       }
-      for (const step of course.reachDown) {
-        if (!visible.has(step.id)) dimmed.add(step.id);
+      for (const dependant of catalog.dependants.get(course.id) ?? []) {
+        if (!visible.has(dependant)) dimmed.add(dependant);
       }
     }
 

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { upstreamOf } from '@shared/graph';
 import { useCatalog } from './catalog';
 
 /**
@@ -56,8 +57,10 @@ export function useHighlight(
     const downstream = new Set<string>();
 
     if (showFullChain) {
-      for (const id of course.reachUp) if (!direct.has(id)) transitive.add(id);
-      for (const step of course.reachDown) downstream.add(step.id);
+      for (const id of upstreamOf(catalog.courseById, focusId)) {
+        if (!direct.has(id)) transitive.add(id);
+      }
+      for (const id of catalog.dependants.get(focusId) ?? []) downstream.add(id);
     }
 
     // Distance in dependency hops, for the right-to-left cascade.

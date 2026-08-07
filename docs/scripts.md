@@ -12,8 +12,9 @@ per commit.
 |---|---|---|---|
 | `pnpm data:build` | `08-build.ts` | `data/`, optional `cache.db` | `public/data/` |
 | `pnpm data:seed-dev` | `dev-seed.ts` | — | `cache.db` |
+| `pnpm course:new` | `course-new.ts` | `data/` | `data/courses/`, `i18n/`, `keywords/` |
 | `pnpm data:map` | `10-map.ts` | `data/domains.yaml` | `public/map.svg` |
-| `pnpm check:i18n` | `check-i18n.ts` | `data/i18n/`, `src/` | nothing — exits non-zero |
+| `pnpm check:i18n` | `check-i18n.ts` | `data/i18n/`, `data/keywords/`, `src/` | nothing — exits non-zero |
 | `pnpm data:discover` | `01-discover.ts` | API key | `cache.db` |
 | `pnpm data:playlists` | `02-playlists.ts` | API key | `cache.db` |
 | `pnpm data:videos` | `03-videos.ts` | API key | `cache.db` |
@@ -28,13 +29,17 @@ per commit.
 
 ### `pnpm data:build`
 
-Turns `data/*.yaml` plus whatever is in `cache.db` into the static JSON the
-frontend fetches. Nothing runs before it: `public/data/` is generated and
-gitignored, so a fresh checkout has an empty catalogue until this is run.
+Turns `data/` plus whatever is in `cache.db` into the static JSON the frontend
+fetches. Nothing runs before it: `public/data/` is generated and gitignored, so a
+fresh checkout has an empty catalogue until this is run.
 
 It is also the validator — see [README → What the build guarantees](../README.md).
-A schema violation, a cycle, a dangling `deps` target or an unknown domain fails
-the build with the file and line, and CI runs the same command.
+A schema violation, a cycle, a dangling `deps` target, an unknown domain or a
+course in the wrong file fails the build with the file and line, and CI runs the
+same command. Redundant edges are reported as warnings and do not fail it.
+
+The levels and the column order are computed here too;
+[docs/layout.md](layout.md) explains how.
 
 `cache.db` is optional. Without it the graph is built with zero playlists, which
 is enough for layout, navigation and styling work.
@@ -55,6 +60,29 @@ pnpm data:build             # then rebuild, seeds only reach the UI through the 
 pnpm data:seed-dev --wipe   # remove every seeded row, leaving real data alone
 ```
 
+### `pnpm course:new`
+
+Adding a course means touching three files — the graph entry, the texts and the
+search keywords — because the course files deliberately carry no prose. This does
+the clerical part.
+
+```bash
+pnpm course:new probability --domain=math --deps=calculus-2,combinatorics
+pnpm course:new topology --domain=math,cs --soft=real-analysis --title="Топология"
+```
+
+`--domain=` is required and its **first** entry decides the file the course lands
+in (`data/courses/math.yaml`). `--deps=` and `--soft=` take comma-separated
+course ids, all of which must already exist. `--title=` is optional and seeds the
+title plus a first keyword.
+
+It refuses unknown domains, unknown dependencies and duplicate ids, and it
+appends to the JSON files as text rather than reserialising them — keywords keep
+one array per line, which is what makes their diffs reviewable.
+
+The description is left empty on purpose, so `pnpm check:i18n` keeps failing
+until somebody writes it.
+
 ### `pnpm data:map`
 
 Regenerates `public/map.svg` from `data/domains.yaml` and the course counts per
@@ -72,8 +100,14 @@ Two-way check on localisation: every key the code passes to `t()` must exist in
 Template keys (`t(\`course.${id}.title\`)`) are matched as wildcards.
 
 Both halves matter. A missing key ships the raw key to the user; an orphaned one
-is dead weight nobody later dares delete. Exits non-zero on either, and CI runs
-it.
+is dead weight nobody later dares delete.
+
+It also gates content, since the course files hold no prose at all: every course
+needs a non-empty `title` and `desc`, and at least one entry in
+`data/keywords/{lang}.json`. An empty string counts as missing — it passes a
+presence check and then renders as nothing.
+
+Exits non-zero on any of it, and CI runs it.
 
 ## Crawling YouTube
 
@@ -191,7 +225,7 @@ Pulls YouTube playlist links out of the awesome-lists declared in
 `data/sources.yaml` and queues them for the normal crawl.
 
 Courses are **never** created automatically. Titles that match nothing in
-`courses.yaml` are dropped into `data/proposed-courses.yaml` (gitignored) for a
+`data/courses/` are dropped into `data/proposed-courses.yaml` (gitignored) for a
 human to add by hand with real `deps` taken from a syllabus. Auto-generated
 dependencies would quietly ruin the graph, and the graph is the whole product.
 

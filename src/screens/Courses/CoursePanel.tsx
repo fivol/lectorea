@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
-import { useCatalog } from '@/lib/catalog';
+import { unlocksOf, useCatalog } from '@/lib/catalog';
 import { formatHours, withAlpha } from '@/lib/format';
 import { courseHref } from '@/lib/url';
 import { useProfile } from '@/store/profile';
@@ -31,6 +31,8 @@ export default function CoursePanel({ course, search, outsideFilter = 0 }: Props
   const domains = course.domains
     .map((id) => catalog.domainById.get(id))
     .filter((domain): domain is NonNullable<typeof domain> => Boolean(domain));
+
+  const unlocks = unlocksOf(catalog, course.id);
 
   return (
     <div className="panel-scroll h-full">
@@ -90,9 +92,9 @@ export default function CoursePanel({ course, search, outsideFilter = 0 }: Props
 
       <section className="border-t border-line px-4 py-4">
         <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
-        {course.reachDown.length ? (
+        {unlocks.length ? (
           <div className="flex flex-wrap gap-1.5">
-            {course.reachDown.map((step) => {
+            {unlocks.map((step) => {
               const next = catalog.courseById.get(step.id);
               if (!next) return null;
               const domain = catalog.domainById.get(next.domains[0]);
@@ -157,7 +159,7 @@ export default function CoursePanel({ course, search, outsideFilter = 0 }: Props
 
       <footer className="flex flex-wrap gap-3 border-t border-line px-4 py-3 text-xs text-ink-faint">
         <a
-          href={fixDataUrl(course.id)}
+          href={fixDataUrl(course.id, course.domains[0])}
           target="_blank"
           rel="noreferrer noopener"
           className="hover:text-ink-dim"

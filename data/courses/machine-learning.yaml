@@ -1,0 +1,36 @@
+# Courses whose primary domain is `machine-learning`.
+#
+# ONE UNIT = ONE SEMESTER COURSE. Splitting a course into topics shifts every
+# level to the right and ruins the layout for everyone else. See CONTRIBUTING.md.
+#
+# The file is chosen by the FIRST entry of `domains` — that is the only rule for
+# where a course lives, and CI enforces it. Placement is storage, nothing else:
+# it has no effect on the graph.
+#
+# domains  : the first one is primary — it gives the card its colour and this file
+# deps     : hard prerequisites. Direct only, never transitive
+# soft     : helpful but not required, excluded from the path
+# related  : mutual links, excluded from the topological sort
+# minLevel : manual floor under the computed level. Rare, always with a comment
+#
+# Titles and descriptions live in data/i18n/{lang}.json under `course.{id}.*`.
+
+- id: ml-intro
+  domains: [machine-learning]
+  deps: [linear-algebra, probability, programming-intro]
+
+- id: deep-learning
+  domains: [machine-learning]
+  deps: [ml-intro, optimization]
+
+- id: nlp
+  domains: [machine-learning]
+  deps: [deep-learning]
+
+- id: computer-vision
+  domains: [machine-learning]
+  deps: [deep-learning, signal-processing]
+
+- id: reinforcement-learning
+  domains: [machine-learning]
+  deps: [ml-intro, random-processes]

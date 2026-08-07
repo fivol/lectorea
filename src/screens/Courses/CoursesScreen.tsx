@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { useCatalog, useFilteredCourses } from '@/lib/catalog';
+import { pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { courseHref, useCatalogParams } from '@/lib/url';
 import { useIsMobile, useEscape } from '@/lib/hooks';
@@ -12,11 +12,11 @@ import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
 import Dropdown, { CheckRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
-import GraphCanvas from './GraphCanvas';
+import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
 import MobileCourseList from './MobileCourseList';
 
-export default function GraphScreen() {
+export default function CoursesScreen() {
   const { courseId } = useParams<{ courseId: string }>();
   const catalog = useCatalog();
   const navigate = useNavigate();
@@ -35,23 +35,28 @@ export default function GraphScreen() {
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
   const { visible, dimmed } = useFilteredCourses(params.domains, params.providers);
 
+  const path = useMemo(
+    () => (selected ? pathTo(catalog, selected.id) : []),
+    [catalog, selected]
+  );
+
   /**
    * The path punches through the domain filter: when a prerequisite of the
-   * selected course falls outside the filter it still shows up, dimmed, instead
-   * of the arrow running into nothing.
+   * selected course falls outside the filter it still shows up, dimmed, rather
+   * than the plan referring to a course that is nowhere on screen.
    */
   const dimmedWithPath = useMemo(() => {
     if (!selected) return dimmed;
     const next = new Set(dimmed);
-    for (const id of selected.reachUp) if (!visible.has(id)) next.add(id);
+    for (const step of path) if (!visible.has(step.id)) next.add(step.id);
     next.delete(selected.id);
     return next;
-  }, [dimmed, visible, selected]);
+  }, [dimmed, visible, selected, path]);
 
   /** Courses the path needs but the filter excludes — the panel says so. */
   const pathOutsideFilter = useMemo(
-    () => (selected ? selected.reachUp.filter((id) => !visible.has(id)).length : 0),
-    [selected, visible]
+    () => path.filter((step) => !visible.has(step.id)).length,
+    [path, visible]
   );
 
   const visibleWithSelection = useMemo(() => {
@@ -197,7 +202,7 @@ export default function GraphScreen() {
       ) : (
         <div ref={splitRef} className="flex min-h-0 flex-1">
           <div style={{ width: `${splitRatio * 100}%` }} className="min-w-0">
-            <GraphCanvas
+            <ColumnsView
               courses={catalog.courses}
               visible={visibleWithSelection}
               dimmed={dimmedWithPath}

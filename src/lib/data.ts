@@ -6,6 +6,7 @@ import type {
   Meta,
   SearchEntry,
 } from '@shared/schema';
+import { dependantsIndex, forwardClosureSizes } from '@shared/graph';
 import type { Dictionary } from '@/i18n';
 
 /**
@@ -17,9 +18,11 @@ import type { Dictionary } from '@/i18n';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
+export type Column = { level: number; count: number };
+
 export type CoursesFile = {
-  bounds: { width: number; height: number };
   maxLevel: number;
+  columns: Column[];
   courses: BuiltCourse[];
 };
 
@@ -28,8 +31,13 @@ export type Catalog = {
   domainById: Map<string, BuiltDomain>;
   courses: BuiltCourse[];
   courseById: Map<string, BuiltCourse>;
-  bounds: { width: number; height: number };
+  /** Column descriptors, ascending by level. The screen renders one each. */
+  columns: Column[];
   maxLevel: number;
+  /** courseId → the courses that list it in `deps`. */
+  dependants: Map<string, string[]>;
+  /** courseId → how many courses open up behind it, transitively. */
+  behind: Map<string, number>;
   providers: Record<string, BuiltProvider>;
   search: SearchEntry[];
   meta: Meta;
@@ -54,13 +62,21 @@ export async function loadCatalog(lang: string): Promise<Catalog> {
     getJson<Dictionary>(`i18n/${lang}.json`),
   ]);
 
+  // Transitive closures are not shipped — they would be ~100 KB of JSON for
+  // something that is two walks over 200 nodes here. `courses` arrives in
+  // topological order, which is exactly what `forwardClosureSizes` needs.
+  const courses = coursesFile.courses;
+  const order = courses.map((course) => course.id);
+
   return {
     domains,
     domainById: new Map(domains.map((d) => [d.id, d])),
-    courses: coursesFile.courses,
-    courseById: new Map(coursesFile.courses.map((c) => [c.id, c])),
-    bounds: coursesFile.bounds,
+    courses,
+    courseById: new Map(courses.map((c) => [c.id, c])),
+    columns: coursesFile.columns,
     maxLevel: coursesFile.maxLevel,
+    dependants: dependantsIndex(courses),
+    behind: forwardClosureSizes(courses, order),
     providers,
     search,
     meta,

@@ -14,6 +14,7 @@
   continent: formal
   color: '#4CC9F0'
   shapeId: shape-math
+  bandOrder: 10
   dependsOn: []
 
 - id: logic
@@ -21,24 +22,28 @@
   parent: math
   color: '#6FD4F5'
   shapeId: shape-logic
+  bandOrder: 20
   dependsOn: [math]
 
 - id: probability
   continent: formal
   color: '#2FB6E8'
   shapeId: shape-probability
+  bandOrder: 30
   dependsOn: [math]
 
 - id: cs
   continent: formal
   color: '#3AA9E8'
   shapeId: shape-cs
+  bandOrder: 40
   dependsOn: [math, logic]
 
 - id: physics
   continent: formal
   color: '#5FB0F2'
   shapeId: shape-physics
+  bandOrder: 60
   dependsOn: [math]
 
 - id: astronomy
@@ -46,36 +51,42 @@
   parent: physics
   color: '#86C6FF'
   shapeId: shape-astronomy
+  bandOrder: 70
   dependsOn: [physics, math]
 
 - id: chemistry
   continent: formal
   color: '#45D6D0'
   shapeId: shape-chemistry
+  bandOrder: 80
   dependsOn: [physics, math]
 
 - id: earth-science
   continent: formal
   color: '#3FC2B8'
   shapeId: shape-earth-science
+  bandOrder: 100
   dependsOn: [chemistry, physics]
 
 - id: biology
   continent: formal
   color: '#55DDB0'
   shapeId: shape-biology
+  bandOrder: 110
   dependsOn: [chemistry]
 
 - id: medicine
   continent: formal
   color: '#79E6C4'
   shapeId: shape-medicine
+  bandOrder: 140
   dependsOn: [biology, chemistry]
 
 - id: engineering
   continent: formal
   color: '#2E93D6'
   shapeId: shape-engineering
+  bandOrder: 150
   dependsOn: [physics, math]
 
 # Straits of the formal continent
@@ -85,6 +96,7 @@
   bridge: true
   color: '#63E0A0'
   shapeId: shape-biochemistry
+  bandOrder: 120
   dependsOn: [chemistry, biology]
 
 - id: bioinformatics
@@ -92,6 +104,7 @@
   bridge: true
   color: '#6FE6C8'
   shapeId: shape-bioinformatics
+  bandOrder: 130
   dependsOn: [biology, cs, probability]
 
 - id: quantum-chemistry
@@ -99,6 +112,7 @@
   bridge: true
   color: '#52D8E8'
   shapeId: shape-quantum-chemistry
+  bandOrder: 90
   dependsOn: [physics, chemistry]
 
 - id: machine-learning
@@ -106,6 +120,7 @@
   bridge: true
   color: '#7AB8FF'
   shapeId: shape-machine-learning
+  bandOrder: 50
   dependsOn: [cs, probability, math]
 
 # ─────────────────────────────────  Social  ────────────────────────────────
@@ -114,54 +129,63 @@
   continent: social
   color: '#F4A261'
   shapeId: shape-economics
+  bandOrder: 160
   dependsOn: [math, probability]
 
 - id: sociology
   continent: social
   color: '#EFAE84'
   shapeId: shape-sociology
+  bandOrder: 180
   dependsOn: [probability]
 
 - id: political-science
   continent: social
   color: '#E8944F'
   shapeId: shape-political-science
+  bandOrder: 190
   dependsOn: [sociology]
 
 - id: psychology
   continent: social
   color: '#F7BE96'
   shapeId: shape-psychology
+  bandOrder: 210
   dependsOn: [biology, probability]
 
 - id: anthropology
   continent: social
   color: '#E9A472'
   shapeId: shape-anthropology
+  bandOrder: 230
   dependsOn: [sociology]
 
 - id: law
   continent: social
   color: '#DB8A4C'
   shapeId: shape-law
+  bandOrder: 200
   dependsOn: [political-science]
 
 - id: management
   continent: social
   color: '#FACBA6'
   shapeId: shape-management
+  bandOrder: 250
   dependsOn: [economics, psychology]
 
 - id: human-geography
   continent: social
   color: '#EDB78E'
   shapeId: shape-human-geography
+  bandOrder: 240
   dependsOn: [sociology, earth-science]
 
 - id: education
   continent: social
   color: '#F6D0B2'
   shapeId: shape-education
+  bandOrder: 260
   dependsOn: [psychology]
 
 # Straits of the social continent
@@ -171,6 +195,7 @@
   bridge: true
   color: '#F2B36B'
   shapeId: shape-econometrics
+  bandOrder: 170
   dependsOn: [economics, probability]
 
 - id: cognitive-science
@@ -178,6 +203,7 @@
   bridge: true
   color: '#F0C08C'
   shapeId: shape-cognitive-science
+  bandOrder: 220
   dependsOn: [psychology, biology, cs]
 
 # ──────────────────────────────  Humanities  ───────────────────────────────
@@ -186,60 +212,70 @@
   continent: humanities
   color: '#C77DFF'
   shapeId: shape-philosophy
+  bandOrder: 270
   dependsOn: [logic]
 
 - id: history
   continent: humanities
   color: '#B26AF0'
   shapeId: shape-history
+  bandOrder: 280
   dependsOn: []
 
 - id: linguistics
   continent: humanities
   color: '#D28CFF'
   shapeId: shape-linguistics
+  bandOrder: 330
   dependsOn: [logic]
 
 - id: literature
   continent: humanities
   color: '#BC79F7'
   shapeId: shape-literature
+  bandOrder: 350
   dependsOn: [linguistics, history]
 
 - id: art-history
   continent: humanities
   color: '#DCA0FF'
   shapeId: shape-art-history
+  bandOrder: 360
   dependsOn: [history]
 
 - id: musicology
   continent: humanities
   color: '#C489F2'
   shapeId: shape-musicology
+  bandOrder: 370
   dependsOn: [history]
 
 - id: religion
   continent: humanities
   color: '#AC6BE4'
   shapeId: shape-religion
+  bandOrder: 320
   dependsOn: [history, philosophy]
 
 - id: archaeology
   continent: humanities
   color: '#B67CEE'
   shapeId: shape-archaeology
+  bandOrder: 300
   dependsOn: [history]
 
 - id: classics
   continent: humanities
   color: '#D096FF'
   shapeId: shape-classics
+  bandOrder: 310
   dependsOn: [linguistics, history]
 
 - id: film-studies
   continent: humanities
   color: '#E0AAFF'
   shapeId: shape-film-studies
+  bandOrder: 380
   dependsOn: [art-history]
 
 # Straits of the humanities continent
@@ -249,6 +285,7 @@
   bridge: true
   color: '#C39BFF'
   shapeId: shape-computational-linguistics
+  bandOrder: 340
   dependsOn: [linguistics, cs, machine-learning]
 
 - id: history-of-science
@@ -256,6 +293,7 @@
   bridge: true
   color: '#B98CF2'
   shapeId: shape-history-of-science
+  bandOrder: 290
   dependsOn: [history, philosophy, physics]
 
 - id: bioethics
@@ -263,4 +301,5 @@
   bridge: true
   color: '#CFA0F0'
   shapeId: shape-bioethics
+  bandOrder: 390
   dependsOn: [philosophy, biology, medicine]

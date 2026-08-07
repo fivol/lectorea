@@ -1,0 +1,33 @@
+# Courses whose primary domain is `art-history`.
+#
+# ONE UNIT = ONE SEMESTER COURSE. Splitting a course into topics shifts every
+# level to the right and ruins the layout for everyone else. See CONTRIBUTING.md.
+#
+# The file is chosen by the FIRST entry of `domains` — that is the only rule for
+# where a course lives, and CI enforces it. Placement is storage, nothing else:
+# it has no effect on the graph.
+#
+# domains  : the first one is primary — it gives the card its colour and this file
+# deps     : hard prerequisites. Direct only, never transitive
+# soft     : helpful but not required, excluded from the path
+# related  : mutual links, excluded from the topological sort
+# minLevel : manual floor under the computed level. Rare, always with a comment
+#
+# Titles and descriptions live in data/i18n/{lang}.json under `course.{id}.*`.
+
+- id: art-history-intro
+  domains: [art-history]
+
+- id: ancient-art
+  domains: [art-history]
+  deps: [art-history-intro]
+  related: [archaeology-intro]
+
+- id: renaissance-art
+  domains: [art-history]
+  deps: [art-history-intro]
+  related: [medieval-history]
+
+- id: modern-art
+  domains: [art-history]
+  deps: [art-history-intro]

@@ -46,7 +46,13 @@ function formatIssues(issues: z.ZodIssue[]): string {
  * `deps: z.array(...).default([])` has an optional input and a required output,
  * and collapsing the two makes every defaulted field optional downstream.
  */
-export function loadYamlList<S extends z.ZodTypeAny>(file: string, schema: S): Array<z.output<S>> {
+export type Located<T> = { value: T; file: string; line: number };
+
+/** Parses a YAML sequence file and validates each item, keeping its real line. */
+export function loadYamlListLocated<S extends z.ZodTypeAny>(
+  file: string,
+  schema: S
+): Array<Located<z.output<S>>> {
   const text = fs.readFileSync(file, 'utf8');
   const lineCounter = new LineCounter();
   const doc = parseDocument(text, { lineCounter });
@@ -72,12 +78,12 @@ export function loadYamlList<S extends z.ZodTypeAny>(file: string, schema: S): A
   };
 
   const problems: string[] = [];
-  const result: Array<z.output<S>> = [];
+  const result: Array<Located<z.output<S>>> = [];
 
   raw.forEach((item, index) => {
     const parsed = schema.safeParse(item);
     if (parsed.success) {
-      result.push(parsed.data);
+      result.push({ value: parsed.data, file: rel, line: lineOf(index) });
     } else {
       const id = (item as { id?: string } | null)?.id ?? `#${index}`;
       problems.push(`${rel}:${lineOf(index)} [${id}] ${formatIssues(parsed.error.issues)}`);
@@ -88,6 +94,10 @@ export function loadYamlList<S extends z.ZodTypeAny>(file: string, schema: S): A
     throw new SourceError(`${rel}: ${problems.length} invalid entries`, problems);
   }
   return result;
+}
+
+export function loadYamlList<S extends z.ZodTypeAny>(file: string, schema: S): Array<z.output<S>> {
+  return loadYamlListLocated(file, schema).map((entry) => entry.value);
 }
 
 export function loadYamlObject<S extends z.ZodTypeAny>(file: string, schema: S): z.output<S> {
@@ -132,9 +142,64 @@ export function loadJson<S extends z.ZodTypeAny>(file: string, schema: S): z.out
 const KeywordsSchema = z.record(z.string(), z.union([z.string(), z.array(z.string())]));
 const I18nSchema = z.record(z.string(), z.string());
 
+/**
+ * Courses are split one file per area, named after the course's first domain.
+ *
+ * The split is only storage — it changes nothing about the graph. What it buys
+ * is merge behaviour: two people editing maths and biology never touch the same
+ * file, and a file stays short enough to read end to end.
+ */
+export function loadCourseFiles(): {
+  courses: Course[];
+  /** courseId → `data/courses/math.yaml:44`, for error messages. */
+  locations: Map<string, string>;
+  /** courseId → `math.yaml`, for the placement check. */
+  fileOf: Map<string, string>;
+} {
+  if (!fs.existsSync(paths.courses)) {
+    throw new SourceError('data/courses/ not found', [
+      'Courses live one file per area, e.g. data/courses/math.yaml. See docs/data.md.',
+    ]);
+  }
+
+  const files = fs
+    .readdirSync(paths.courses)
+    .filter((name) => name.endsWith('.yaml'))
+    .sort(); // alphabetical, so the build is reproducible
+
+  if (!files.length) {
+    throw new SourceError('data/courses/ has no .yaml files');
+  }
+
+  const courses: Course[] = [];
+  const locations = new Map<string, string>();
+  const fileOf = new Map<string, string>();
+  const duplicates: string[] = [];
+
+  for (const name of files) {
+    for (const entry of loadYamlListLocated(path.join(paths.courses, name), CourseSchema)) {
+      if (fileOf.has(entry.value.id)) {
+        duplicates.push(`[${entry.value.id}] in both ${fileOf.get(entry.value.id)} and ${name}`);
+        continue;
+      }
+      courses.push(entry.value);
+      locations.set(entry.value.id, `${entry.file}:${entry.line}`);
+      fileOf.set(entry.value.id, name);
+    }
+  }
+
+  if (duplicates.length) {
+    throw new SourceError(`Duplicate course ids (${duplicates.length})`, duplicates);
+  }
+
+  return { courses, locations, fileOf };
+}
+
 export type Sources = {
   domains: Domain[];
   courses: Course[];
+  courseLocations: Map<string, string>;
+  courseFiles: Map<string, string>;
   providers: Provider[];
   channels: Channel[];
   overrides: Overrides;
@@ -144,7 +209,7 @@ export type Sources = {
 
 export function loadSources(lang = 'ru'): Sources {
   const domains = loadYamlList(path.join(paths.data, 'domains.yaml'), DomainSchema);
-  const courses = loadYamlList(path.join(paths.data, 'courses.yaml'), CourseSchema);
+  const { courses, locations, fileOf } = loadCourseFiles();
   const providers = loadYamlList(path.join(paths.data, 'providers.yaml'), ProviderSchema);
   const channels = loadYamlList(path.join(paths.data, 'channels.yaml'), ChannelSchema);
   const overrides = loadYamlObject(path.join(paths.data, 'overrides.yaml'), OverridesSchema);
@@ -157,7 +222,17 @@ export function loadSources(lang = 'ru'): Sources {
     keywords[key] = Array.isArray(value) ? value : [value];
   }
 
-  return { domains, courses, providers, channels, overrides, i18n, keywords };
+  return {
+    domains,
+    courses,
+    courseLocations: locations,
+    courseFiles: fileOf,
+    providers,
+    channels,
+    overrides,
+    i18n,
+    keywords,
+  };
 }
 
 export function reportSourceError(error: unknown): never {
