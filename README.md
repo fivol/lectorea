@@ -40,29 +40,33 @@ and slang (`теорвер`, `линал`), because morphology here is a list of
 stemmer. On a small screen the map falls back to a grid of blocks carrying the
 same icons; the toggle is in the profile settings.
 
-**The columns** (`/courses`) are the catalogue proper. Each column is a
-difficulty — the length of the longest chain of prerequisites ending at that
-course — so reading left to right is reading how much has to come first, and a
-line above the columns says exactly that. Not "уровень": the stage filter beside
-it deals in «класс» and «курс», and both being called the same thing left
-neither meaning anything. Not "шаг" either — that implies finishing a whole
-column before the next, which is never required. Nothing
-is drawn between the cards: pointing at one lights up what it needs and fades the
-rest, which answers the same question without a web of arrows over 200 cards.
-Cards of one field stay together vertically, so switching on a domain filter
-lights a stripe rather than a spray.
+**The columns** (`/courses`) are the catalogue proper. A column is «сложность
+N» — the length of the longest chain of prerequisites ending at that course — so
+reading left to right is reading how much has to come first, and a line above
+the columns says exactly that. Nothing is drawn between the cards: pointing at
+one lights up what it needs and fades the rest, which answers the same question
+without a web of arrows over 200 cards. Cards of one field stay together
+vertically, so switching on a domain filter lights a stripe rather than a spray.
+
+Three filters sit in the header. **Ступень** caps the catalogue at a school year
+or a university one — pick «11 класс» and everything past it disappears, in
+every field and in the next session too, because it says something about the
+reader rather than about the view. **Область** and **Вуз** are per-view and
+searchable, and both name what is selected instead of counting it.
 
 A domain filter shows that field and nothing else — not even a prerequisite from
-elsewhere, which as a faded card several levels away read as part of the field
+elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead: «Требует знания» and «Даст
 понимание курсов» are the same relation read in either direction, so they use
 the same card and sit next to each other, whichever field the neighbour comes
 from, with the full chain below the pair.
 
-Each card carries the stage a person normally meets that course at — «9 класс»,
-«2 курс», «аспирантура» — which is the question people arrive with, and not the
-same thing as the column number. Selecting a course opens its panel; the × in
-the panel, or a click on empty space, puts the columns back to full width.
+Each card carries its one-line description and the stage a person normally meets
+that course at — «9 класс», «2 курс», «аспирантура». That is the question people
+arrive with, and it is not the same as the column: «Введение в социологию» and
+«Школьная алгебра» share a column while one is a first-year university course
+and the other is school. Selecting a course opens its panel; the × in the panel,
+or a click on empty space, puts the columns back to full width.
 
 - **Path** — everything that has to come first, in order, with an hour estimate
   and how much of it you have already marked done. "Export" copies it to the
@@ -83,8 +87,10 @@ back, either replacing what is there or merging it — on a conflict the more
 advanced status wins, and histories interleave by time. That is the whole sync
 story, and it works between browsers without a server.
 
-Filters, the selected domain and the open playlist live in the URL, so a link
-carries the exact view and the back button behaves.
+The domain and provider filters, the selected course and the open playlist all
+live in the URL, so a link carries the exact view and the back button behaves.
+The stage cap and the display settings do not — they belong to the reader, not
+to the view being shared, and stay in `localStorage`.
 
 ## How it is put together
 
@@ -97,9 +103,9 @@ carries the exact view and the back button behaves.
 | Styles | Tailwind + CSS variables for themes | |
 | Validation | zod, in `shared/schema.ts` | one schema for scripts, build and frontend |
 | Column order | own barycentric pass, **at build time** | dagre cannot express domain bands, and ranks nodes by edge length rather than by level |
-| Course screen | plain scrollable columns of cards | the level carries the meaning; arrows over 200 cards were noise |
+| Course screen | plain scrollable columns of cards | the column carries the meaning; arrows over 200 cards were noise |
 | Scripts | tsx + better-sqlite3 | |
-| Tests | vitest, on the build logic | levels, cycles, score, search normalisation |
+| Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain |
 | Deploy | any static host | |
 
 Detailed documents:
@@ -163,6 +169,8 @@ pnpm data:build          # data/ + cache.db → public/data (run before dev)
 pnpm data:map            # regenerate public/map.svg from domains.yaml
 pnpm data:seed-dev       # synthetic playlists for development
 pnpm course:new          # scaffold a course across its three files
+pnpm map:preview         # next-generation map into .map-poc/ (not wired to the build)
+pnpm map:sandbox         # the same generator with sliders, one HTML file
 
 pnpm data:discover       # channels → playlists, monthly
 pnpm data:refresh        # metadata → videos → liveness, nightly

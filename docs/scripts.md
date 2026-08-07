@@ -14,6 +14,9 @@ per commit.
 | `pnpm data:seed-dev` | `dev-seed.ts` | — | `cache.db` |
 | `pnpm course:new` | `course-new.ts` | `data/` | `data/courses/`, `i18n/`, `keywords/` |
 | `pnpm data:map` | `10-map.ts` | `data/domains.yaml` | `public/map.svg` |
+| `pnpm map:preview` | `map-poc.ts` | `data/` | `.map-poc/` |
+| `pnpm map:landforms` | `map-landforms.ts` | `data/` | nothing — prints a table |
+| `pnpm map:sandbox` | `map-sandbox.ts` | `data/` | `.map-poc/sandbox.html` |
 | `pnpm check:i18n` | `check-i18n.ts` | `data/i18n/`, `data/keywords/`, `src/` | nothing — exits non-zero |
 | `pnpm data:discover` | `01-discover.ts` | API key | `cache.db` |
 | `pnpm data:playlists` | `02-playlists.ts` | API key | `cache.db` |
@@ -92,6 +95,30 @@ changes rarely, and a territory redraw should be visible in a diff.
 Run it after adding a domain or after a batch of new courses makes an area
 outgrow its territory; the generator warns when a territory ends up smaller than
 its share of courses.
+
+### `pnpm map:preview`, `map:sandbox`, `map:landforms`
+
+A second map generator lives in `shared/mapgen.ts` — territories as a power
+diagram, sized to their course counts, with one shared border graph. It is a
+**preview**: `pnpm data:map` still ships `public/map.svg` from the older
+generator, and nothing in the build depends on this one yet.
+
+```bash
+pnpm map:preview                 # SVG + a metrics report into .map-poc/
+pnpm map:preview --hexR=4        # any numeric MapConfig field can be set by flag
+pnpm map:sandbox                 # one self-contained HTML file with sliders
+pnpm map:landforms               # which domain became an island, and why
+```
+
+`map:preview` exists so the numbers can be diffed between runs from a terminal;
+`map:sandbox` is the same generator with controls, bundled into a single file
+that opens straight from disk. Output goes to `.map-poc/`, which is gitignored —
+override with `MAP_POC_OUT` and `MAP_SANDBOX_OUT`.
+
+`map:landforms` prints a table instead of a picture. Whether a domain comes out
+as a mainland, a peninsula or an island is the one part of the map that changes
+what it *claims* rather than how it looks, and «философия стала островом» should
+be checkable without squinting at a coastline.
 
 ### `pnpm check:i18n`
 

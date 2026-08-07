@@ -14,17 +14,32 @@ scripts/
   10-map.ts            regenerate public/map.svg
   refresh.ts           the nightly job: 02 → 03 → 04
   dev-seed.ts          synthetic playlists for development
+  course-new.ts        scaffold a course across its three files
+  check-i18n.ts        localisation and course-text gate
+  map-poc.ts           preview of the next map generator
+  map-sandbox.ts       the same, bundled as one HTML file with sliders
   lib/
-    youtube.ts   API wrapper with quota accounting
-    db.ts        sqlite
-    queue.ts     job queue
-    tasks.ts     the individual steps
-    graph.ts     levels, cycles, reachability
-    score.ts     bayesian rating
-    layout.ts    dagre + compaction
-    mapgen.ts    the territory map generator
-    openai.ts    optional
+    youtube.ts        API wrapper with quota accounting
+    db.ts             sqlite
+    queue.ts          job queue
+    tasks.ts          the individual steps
+    sources.ts        load and validate data/, with file and line
+    graph.ts          build-time checks over shared/graph.ts
+    classify.ts       language, lecturer, kind, completeness from a title
+    score.ts          bayesian rating
+    layout.ts         column order: barycentric sweeps and domain bands
+    mapgen.ts         the territory map generator behind `data:map`
+    visual.config.ts  the look of the procedural course art
+    openai.ts         optional
     config.ts
+
+shared/            imported by both the build and the browser
+  schema.ts        every shape that crosses a boundary
+  graph.ts         Kahn's algorithm, cycles, closures
+  search.ts        normalisation and scoring
+  procedural.ts    course artwork
+  mapgen.ts        the power-diagram map generator (preview only)
+  domain-graph.ts  landform classification for that generator
 ```
 
 ## Quota

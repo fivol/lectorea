@@ -7,6 +7,12 @@ sits*, so this document is about how that position is decided.
 Everything here happens at build time. The client receives `level` and `row` and
 renders ordinary scrollable layout.
 
+`level` is what the code calls it; the interface says «сложность». The word
+"уровень" was taken by the stage filter, which deals in «класс» and «курс», and
+"шаг" implied you must finish a whole column before the next, which is never
+required. `stage` and `level` are separate fields answering separate questions —
+see [docs/data.md](data.md).
+
 ## The level is the column
 
 ```
@@ -110,6 +116,11 @@ structure with nothing drawn between the cards.
 When a filter hides part of a column the remainder collapses upward. Rows stop
 lining up globally, and that is the right behaviour: a column holding three cards
 spread across forty empty slots reads as a broken page, not as a filtered one.
+
+A filter hides rather than fades, and nothing outside it is kept as context — not
+even a prerequisite. A foreign card sitting several columns from anything that
+referred to it read as part of the field you asked for. The panel answers that
+question instead, in «Требует знания» and «Даст понимание курсов».
 
 ## Why not dagre
 
