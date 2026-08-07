@@ -6,6 +6,7 @@ import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/
 import { useEscape, useFocusTrap, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
+import Tooltip from '@/components/Tooltip';
 import { QualityDot } from './PlaylistRow';
 
 type Props = {
@@ -56,7 +57,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="fade-only absolute inset-0 animate-fade-in bg-overlay backdrop-blur-sm"
         onClick={close}
         aria-hidden="true"
       />
@@ -67,8 +68,9 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
         aria-modal="true"
         aria-label={playlist.title}
         tabIndex={-1}
-        className={`relative flex flex-col overflow-hidden bg-surface shadow-[var(--shadow-panel)]
-                    ${isMobile ? 'h-full w-full' : 'max-h-[88vh] w-[min(1080px,92vw)] rounded-2xl border border-line'}`}
+        className={`relative flex animate-scale-in flex-col overflow-hidden bg-surface
+                    shadow-[var(--shadow-modal)]
+                    ${isMobile ? 'h-full w-full' : 'max-h-[88vh] w-[min(1080px,92vw)] rounded-pop border border-line'}`}
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
           <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">
@@ -135,8 +137,9 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                     <button
                       type="button"
                       onClick={() => setPlaying(video.id)}
-                      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-surface-2
-                                  ${playing === video.id ? 'bg-surface-2 text-ink' : 'text-ink-dim'}`}
+                      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm
+                                  transition-colors duration-fast ease-out hover:bg-surface-2
+                                  ${playing === video.id ? 'bg-accent-soft text-ink' : 'text-ink-dim'}`}
                     >
                       <span className="num w-6 shrink-0 text-right text-xs text-ink-faint">
                         {index + 1}.
@@ -194,11 +197,13 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                 label={t('ui.playlist.views')}
                 value={formatCompact(playlist.stats.views, lang)}
                 fraction={1}
+                hint={t('ui.playlist.relativeHint')}
               />
               <StatBar
                 label={t('ui.playlist.likes')}
                 value={formatCompact(playlist.stats.likes, lang)}
                 fraction={playlist.stats.views ? playlist.stats.likes / playlist.stats.views * 12 : 0}
+                hint={t('ui.playlist.relativeHint')}
               />
               <StatBar
                 label={t('ui.playlist.comments')}
@@ -206,6 +211,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                 fraction={
                   playlist.stats.views ? (playlist.stats.comments / playlist.stats.views) * 60 : 0
                 }
+                hint={t('ui.playlist.relativeHint')}
               />
               <div className="flex items-center justify-between pt-1 text-xs text-ink-faint">
                 <span>{t('ui.playlist.score')}</span>
@@ -258,23 +264,32 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   );
 }
 
+/**
+ * A metric as a bar. The bar is a relative scale — likes and comments are
+ * shown against what a playlist of this size usually gets, not against the raw
+ * number — so it has to say so, or it reads as a percentage of something.
+ */
 function StatBar({
   label,
   value,
   fraction,
+  hint,
 }: {
   label: string;
   value: string;
   fraction: number;
+  hint: string;
 }) {
   const width = Math.max(4, Math.min(100, fraction * 100));
   return (
-    <div className="flex items-center gap-2">
-      <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-surface-2">
-        <span className="block h-full rounded-full bg-formal" style={{ width: `${width}%` }} />
-      </span>
-      <span className="flex-1 text-xs text-ink-faint">{label}</span>
-      <span className="num text-xs text-ink-dim">{value}</span>
-    </div>
+    <Tooltip content={hint}>
+      <div className="flex cursor-help items-center gap-2">
+        <span className="h-1 w-20 shrink-0 overflow-hidden rounded-full bg-surface-2">
+          <span className="block h-full rounded-full bg-formal" style={{ width: `${width}%` }} />
+        </span>
+        <span className="flex-1 text-xs text-ink-faint">{label}</span>
+        <span className="num text-xs text-ink-dim">{value}</span>
+      </div>
+    </Tooltip>
   );
 }

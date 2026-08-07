@@ -52,8 +52,12 @@ export const MAP_SURFACE_VARS = {
   '--c-ink': '#0c1e28',
   '--c-ink-dim': '#1a3540',
   '--c-ink-faint': '#26454f',
+  '--c-line-strong': 'rgb(12 40 54 / 0.42)',
   '--c-accent': '#0b6a86',
-  '--shadow-panel': '0 18px 44px rgb(8 42 58 / 0.22)',
+  // The one screen where a shadow does real work in either theme: the sea is
+  // light, so a plate on it needs the lift the dark theme normally forgoes.
+  '--shadow-modal': '0 18px 44px rgb(8 42 58 / 0.22)',
+  '--shadow-pop': '0 12px 30px rgb(8 42 58 / 0.2)',
   '--shadow-card': '0 6px 18px rgb(8 42 58 / 0.16)',
 } as React.CSSProperties;
 

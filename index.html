@@ -3,12 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0B0F1A" />
+    <meta name="theme-color" content="#0B0F17" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F6F8FB" media="(prefers-color-scheme: light)" />
     <meta
       name="description"
       content="Каталог образовательных YouTube-плейлистов в порядке изучения: что нужно знать до каждого курса и что можно начинать прямо сейчас."
     />
     <title>Lectorea — каталог курсов в порядке изучения</title>
+
+    <!--
+      Shared links. Courses and playlists already have their own URLs, but this
+      is a static single-page app: there is no server to fill a per-course card
+      in, and a crawler that does not run JavaScript sees only this. So the tags
+      describe the catalogue, which is at least true of every URL in it.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lectorea" />
+    <meta property="og:title" content="Lectorea — каталог курсов в порядке изучения" />
+    <meta
+      property="og:description"
+      content="Образовательные YouTube-плейлисты, выстроенные в порядке изучения: что нужно знать до каждого курса и что он открывает дальше."
+    />
+    <meta property="og:image" content="/map.png" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

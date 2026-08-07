@@ -109,5 +109,9 @@ export const EMPHASIS_OPACITY: Record<Emphasis, number> = {
   transitive: 1,
   soft: 0.75,
   related: 0.75,
-  muted: 0.22,
+  // Dimmed, not erased. At 0.22 the rest of the map became unreadable, which
+  // turns "this is not part of your chain" into "this no longer exists" — and
+  // these cards are still focusable, still clickable, still the thing someone
+  // is about to compare against. Desaturating carries the rest of the message.
+  muted: 0.45,
 };

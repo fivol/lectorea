@@ -105,7 +105,7 @@ export default function MobileCourseList({ courses, selectedId, onSelect }: Prop
                       ) : null}
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
-                      {favorite ? <Icon name="star-filled" size={12} className="text-social" /> : null}
+                      {favorite ? <Icon name="star-filled" size={12} className="text-warning" /> : null}
                       {status === 'done' ? <Icon name="check" size={12} className="text-accent" /> : null}
                       <span className="num text-xs text-ink-faint">
                         {course.playlistCount || t('ui.course.noMaterials')}

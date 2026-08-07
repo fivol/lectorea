@@ -88,6 +88,35 @@ export function useScrollLock(active: boolean): void {
   }, [active]);
 }
 
+/**
+ * Whether an element is actually cutting its text off.
+ *
+ * A tooltip repeating a title that is fully visible is noise, so the ones that
+ * exist to rescue a clipped name have to know whether anything was clipped.
+ * Re-measured on resize and whenever `deps` change, because both the text and
+ * the width it has to fit in move — the panel is draggable.
+ */
+export function useIsTruncated<T extends HTMLElement>(
+  deps: unknown[] = []
+): [React.RefObject<T>, boolean] {
+  const ref = useRef<T>(null);
+  const [truncated, setTruncated] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = (): void =>
+      setTruncated(node.scrollHeight > node.clientHeight + 1 || node.scrollWidth > node.clientWidth + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  return [ref, truncated];
+}
+
 export function useDebounced<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {

@@ -6,6 +6,7 @@ import MapScreen from '@/screens/Map/MapScreen';
 import CoursesScreen from '@/screens/Courses/CoursesScreen';
 import ProfilePanel from '@/screens/Profile/ProfilePanel';
 import VersionBanner from '@/components/VersionBanner';
+import Shortcuts from '@/components/Shortcuts';
 
 export default function App() {
   const theme = useProfile((state) => state.profile.settings.theme);
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ProfilePanel />
+      <Shortcuts />
     </CatalogProvider>
   );
 }

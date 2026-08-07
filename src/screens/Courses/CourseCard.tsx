@@ -7,6 +7,7 @@ import { EMPHASIS_OPACITY, type Emphasis } from '@/lib/highlight';
 import { useResolvedTheme } from '@/store/profile';
 import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
+import Tooltip from '@/components/Tooltip';
 import type { CourseStatus } from '@shared/schema';
 
 type Props = {
@@ -16,6 +17,10 @@ type Props = {
   /** Cascade delay in ms — zero when reduced motion is requested. */
   delay: number;
   selected: boolean;
+  /** In the chain of the selected course: a weaker relative of `selected`. */
+  inPath: boolean;
+  /** Set for one pulse after the card has been scrolled to. */
+  pulsing: boolean;
   status: CourseStatus | null;
   favorite: boolean;
   onSelect: (id: string) => void;
@@ -28,6 +33,8 @@ function CourseCardInner({
   emphasis,
   delay,
   selected,
+  inPath,
+  pulsing,
   status,
   favorite,
   onSelect,
@@ -39,10 +46,10 @@ function CourseCardInner({
   // canvas vanish at that strength on a white card, so it deepens with the theme.
   const colour = inkOn(domain?.color ?? '#4CC9F0', scheme);
   const opacity = EMPHASIS_OPACITY[emphasis];
+  const muted = emphasis === 'muted';
   const empty = course.playlistCount === 0;
 
-  const accent =
-    emphasis === 'downstream' ? 'var(--c-accent)' : colour;
+  const accent = emphasis === 'downstream' ? 'var(--c-accent)' : colour;
 
   return (
     <button
@@ -53,29 +60,57 @@ function CourseCardInner({
       onPointerLeave={() => onHover(null)}
       onFocus={() => onHover(course.id)}
       onBlur={() => onHover(null)}
+      // `aria-current`, not `aria-selected`: the latter is only valid inside a
+      // listbox or a grid, and turning a card full of interactive detail into
+      // an `option` would cost more than the attribute name is worth. Both say
+      // "this is the one" to a screen reader.
       aria-current={selected ? 'true' : undefined}
-      className={`relative shrink-0 overflow-hidden rounded-lg border text-left
-                  transition-[opacity,transform,box-shadow] duration-200 ease-out
+      className={`relative shrink-0 overflow-hidden rounded-card border text-left
+                  transition-[opacity,transform,box-shadow,filter,background-color]
+                  duration-base ease-inout
                   hover:z-10 hover:scale-[1.03] hover:shadow-[var(--shadow-card)]
                   motion-reduce:hover:scale-100
+                  ${pulsing ? 'focus-pulse' : ''}
                   ${selected ? 'z-10' : ''}`}
       style={{
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
         opacity,
+        // Colour is the loudest thing on a card; draining it says "not in this
+        // chain" without having to take the card's legibility with it.
+        filter: muted ? 'grayscale(0.6)' : undefined,
         transitionDelay: `${delay}ms`,
-        background: 'var(--c-surface)',
-        borderColor: selected ? accent : withAlpha(accent, emphasis === 'muted' ? 0.2 : 0.45),
+        // In-path cards carry a wash of the accent — present, clearly weaker
+        // than the ring on the selected card, and readable in both themes.
+        background: inPath && !selected ? 'var(--c-accent-soft)' : 'var(--c-surface)',
+        borderColor: selected
+          ? accent
+          : inPath
+            ? 'var(--c-accent)'
+            : withAlpha(accent, muted ? 0.2 : 0.45),
         borderWidth: selected ? 2 : 1,
         boxShadow: selected ? `0 0 0 3px ${withAlpha(accent, 0.2)}, var(--shadow-card)` : undefined,
       }}
     >
       <div className="relative w-full" style={{ height: CARD_ART_HEIGHT }}>
         <CourseArt courseId={course.id} color={colour} className="h-full w-full" />
-        {empty ? (
-          <span className="on-canvas absolute right-1.5 top-1.5 rounded px-1.5 py-0.5 text-[10px] text-ink-faint">
-            {t('ui.course.noMaterials')}
+        {/* Done is a property of the picture, not of the metadata row: it has to
+            survive being read at a glance across a column of forty cards. */}
+        {status === 'done' ? (
+          <span
+            className="mark-pop absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center
+                       rounded-full bg-accent text-canvas"
+            title={t('ui.course.done')}
+          >
+            <Icon name="check" size={12} />
           </span>
+        ) : null}
+        {empty ? (
+          <Tooltip content={t('ui.course.noMaterialsHint')}>
+            <span className="on-canvas absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 text-[10px] text-ink-faint">
+              {t('ui.course.noMaterials')}
+            </span>
+          </Tooltip>
         ) : null}
       </div>
 
@@ -97,8 +132,7 @@ function CourseCardInner({
               people arrive with. */}
           <span className="flex min-w-0 items-center gap-1 text-ink-faint">
             <span className="num truncate text-[11px]">{t(`ui.stage.${course.stage}`)}</span>
-            {favorite ? <Icon name="star-filled" size={12} className="text-social" /> : null}
-            {status === 'done' ? <Icon name="check" size={12} className="text-accent" /> : null}
+            {favorite ? <Icon name="star-filled" size={12} className="text-warning" /> : null}
             {status === 'in_progress' ? (
               <Icon name="half" size={12} className="text-formal" />
             ) : null}

@@ -3,45 +3,118 @@
 @tailwind utilities;
 
 /*
+ * The design system, as custom properties.
+ *
+ * Every colour, radius, shadow, duration and easing in the product is named
+ * here and nowhere else; components reference the names, never the values. The
+ * names keep the `--c-` prefix the codebase already uses — the map screen swaps
+ * the whole palette out at runtime by overriding these same variables, which
+ * only works while there is exactly one set of them.
+ *
  * Dark is the primary mode: the graph is stared at for a long time, and a light
  * canvas with a hundred cards on it is tiring. Light mode exists and is honest,
  * but the palette is designed dark-first.
  */
 :root,
 :root[data-theme='dark'] {
-  --c-canvas: #0b0f1a;
-  --c-surface: #141b2d;
-  --c-surface-2: #1c2540;
-  --c-line: #26304a;
-  --c-ink: #e8edf7;
-  --c-ink-dim: #a2adc4;
-  --c-ink-faint: #67718a;
-  --c-formal: #4cc9f0;
-  --c-social: #f4a261;
-  --c-humanities: #c77dff;
-  --c-accent: #b7e4c7;
-  --c-danger: #ff7a7a;
-  --shadow-panel: 0 24px 60px rgb(0 0 0 / 0.5);
-  --shadow-card: 0 6px 20px rgb(0 0 0 / 0.35);
+  /* Base */
+  --c-canvas: #0b0f17;
+  --c-surface: #111726;
+  --c-surface-2: #1a2233;
+  --c-overlay: rgb(0 0 0 / 0.6);
+  --c-line: #243044;
+  --c-line-strong: #334155;
+  --c-ink: #e6ebf2;
+  --c-ink-dim: #8b98ac;
+  --c-ink-faint: #5b6b82;
+
+  /* Continents, accent and status. Each continent is an accent plus a soft
+     wash of itself; in dark the wash is the accent at low alpha, because a
+     mixed pastel over a near-black surface turns to mud. */
+  --c-formal: #60a5fa;
+  --c-formal-soft: rgb(96 165 250 / 0.12);
+  --c-social: #f0a35e;
+  --c-social-soft: rgb(240 163 94 / 0.12);
+  --c-humanities: #b583ea;
+  --c-humanities-soft: rgb(181 131 234 / 0.12);
+  --c-accent: #34c98a;
+  --c-accent-soft: rgb(52 201 138 / 0.14);
+  --c-warning: #f59e0b;
+  --c-danger: #f87171;
+
+  /*
+   * Shadows are a light-mode device. On a dark canvas a drop shadow is a
+   * darker smudge on something already dark, so depth comes from `--c-surface`
+   * against `--c-surface-2` and from borders instead. What survives is the
+   * modal — and just enough under a portalled popover, which lands on whatever
+   * happens to be beneath it and cannot rely on a border alone to lift off it.
+   */
+  --shadow-card: none;
+  --shadow-pop: 0 8px 24px rgb(0 0 0 / 0.45);
+  --shadow-modal: 0 16px 48px rgb(0 0 0 / 0.5);
+
   color-scheme: dark;
 }
 
 :root[data-theme='light'] {
-  --c-canvas: #f6f7fb;
+  --c-canvas: #f6f8fb;
   --c-surface: #ffffff;
-  --c-surface-2: #eef1f8;
-  --c-line: #d8deea;
-  --c-ink: #131a2a;
-  --c-ink-dim: #4d5872;
-  --c-ink-faint: #8a94ac;
-  --c-formal: #1d8fb8;
-  --c-social: #c96f26;
-  --c-humanities: #8b3ecf;
-  --c-accent: #2f8f5b;
-  --c-danger: #c53030;
-  --shadow-panel: 0 24px 60px rgb(20 30 60 / 0.16);
-  --shadow-card: 0 4px 14px rgb(20 30 60 / 0.1);
+  --c-surface-2: #eef2f7;
+  --c-overlay: rgb(15 23 42 / 0.45);
+  --c-line: #e2e8f0;
+  --c-line-strong: #cbd5e1;
+  --c-ink: #1e293b;
+  --c-ink-dim: #64748b;
+  --c-ink-faint: #94a3b8;
+
+  --c-formal: #3b82f6;
+  --c-formal-soft: #eaf2fe;
+  --c-social: #ea8a3c;
+  --c-social-soft: #fdf1e6;
+  --c-humanities: #9b5de0;
+  --c-humanities-soft: #f4ecfc;
+  --c-accent: #22a06b;
+  --c-accent-soft: #e7f6ef;
+  --c-warning: #d97706;
+  --c-danger: #dc2626;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-pop: 0 8px 24px rgb(15 23 42 / 0.12);
+  --shadow-modal: 0 16px 48px rgb(15 23 42 / 0.18);
+
   color-scheme: light;
+}
+
+/*
+ * Geometry and motion, theme-independent.
+ *
+ * The spacing scale is Tailwind's own (1 = 4px), listed here so the set the
+ * design uses is written down rather than inferred from whatever was typed.
+ * Radii and durations are referenced by name from tailwind.config.js, so
+ * `duration-base` and `rounded-card` resolve to these and reduced motion can
+ * neutralise the whole system by redefining three variables.
+ */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+
+  /* sm: chips and inputs · md: cards and list rows · lg: panels, modals, popovers */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --dur-fast: 140ms; /* hovers, small state changes */
+  --dur-base: 220ms; /* panels, dropdowns, dimming */
+  --dur-slow: 320ms; /* modals, theme change */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* entering */
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0); /* leaving */
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1); /* morphing between states */
 }
 
 @layer base {
@@ -54,6 +127,11 @@
   body {
     @apply bg-canvas text-ink font-sans antialiased;
     overscroll-behavior: none;
+    /* Theme change is a single slow cross-fade of every themed property.
+       Images are left alone — a picture fading through grey is a glitch. */
+    transition:
+      background-color var(--dur-slow) var(--ease-inout),
+      color var(--dur-slow) var(--ease-inout);
   }
 
   h1,
@@ -94,15 +172,16 @@
 
 @layer components {
   .surface {
-    @apply bg-surface border border-line rounded-xl;
+    @apply bg-surface border border-line rounded-card;
   }
 
   .btn {
-    @apply inline-flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5
-           text-sm text-ink transition-colors duration-150;
+    @apply inline-flex items-center gap-2 rounded-chip border border-line bg-surface-2 px-3 py-1.5
+           text-sm text-ink transition-colors duration-fast ease-out;
   }
   .btn:hover:not(:disabled) {
     background: color-mix(in srgb, var(--c-surface-2) 70%, var(--c-ink) 8%);
+    border-color: var(--c-line-strong);
   }
   .btn:disabled {
     @apply opacity-40 cursor-not-allowed;
@@ -113,12 +192,20 @@
     border-color: transparent;
     font-weight: 600;
   }
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--c-accent) 92%, #000);
+    border-color: transparent;
+  }
+  .btn-primary:active:not(:disabled) {
+    background: color-mix(in srgb, var(--c-accent) 88%, #000);
+  }
   .btn-ghost {
     @apply border-transparent bg-transparent text-ink-dim;
   }
   .btn-ghost:hover {
-    @apply text-ink;
+    @apply text-ink underline;
     background: var(--c-surface-2);
+    border-color: transparent;
   }
 
   .chip {
@@ -139,6 +226,12 @@
 
   .num {
     @apply font-mono tabular-nums;
+  }
+
+  /* Small uppercase mono label: «СЛОЖНОСТЬ 4», the group headings in the search
+     suggestions, the captions over a popover's list. */
+  .mono-label {
+    @apply font-mono text-mono-label uppercase text-ink-faint;
   }
 
   /*
@@ -190,6 +283,23 @@
   }
 
   /*
+   * A finger-sized target.
+   *
+   * Only on the icon-only controls — navigation, close, toggle — where the
+   * glyph is the whole button and 24px is genuinely hard to hit. The dense
+   * filter chips are left alone on purpose: they are separated from each other
+   * and from everything else, and 44px each would turn a strip of ten into a
+   * wall taller than the list it filters.
+   */
+  @media (pointer: coarse) {
+    .tap {
+      min-height: 44px;
+      min-width: 44px;
+      justify-content: center;
+    }
+  }
+
+  /*
    * A row that scrolls sideways. The bar is hidden because at 10px it costs
    * more height than the controls it sits under — which is the whole reason
    * the row scrolls instead of wrapping.
@@ -209,6 +319,59 @@
   .scroll-x::-webkit-scrollbar {
     display: none;
   }
+
+  /*
+   * A block that opens and closes without anyone having to know its height.
+   * `0fr → 1fr` on a grid row animates to the content's natural size, which
+   * `height: auto` cannot do and a hard-coded max-height only fakes.
+   */
+  .collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--dur-base) var(--ease-inout);
+  }
+  .collapse[data-open='true'] {
+    grid-template-rows: 1fr;
+  }
+  /*
+   * The content stays mounted so the row has something to animate to, which
+   * would otherwise leave a closed block full of tabbable links. `visibility`
+   * takes it out of the accessibility tree and the tab order, and because it
+   * transitions as a step it flips on at the start of opening and off only at
+   * the end of closing — the animation is never played on an empty box.
+   */
+  .collapse > * {
+    overflow: hidden;
+    min-height: 0;
+    visibility: hidden;
+    transition: visibility var(--dur-base) var(--ease-inout);
+  }
+  .collapse[data-open='true'] > * {
+    visibility: visible;
+  }
+
+  /*
+   * Loading placeholder. Fixed to the size of the thing that will replace it,
+   * so nothing on the page moves when the data lands.
+   */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--c-surface-2) 0%,
+      color-mix(in srgb, var(--c-surface-2) 60%, var(--c-line)) 50%,
+      var(--c-surface-2) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  /* The matched characters in a search suggestion. A fuzzy hit with nothing
+     marked reads as a bug — «ав» finding «Савватеев» has to show why. */
+  mark {
+    background: transparent;
+    color: var(--c-accent);
+    font-weight: 700;
+  }
 }
 
 /*
@@ -226,17 +389,91 @@
 }
 
 .cascade {
-  animation: cascade-in 240ms ease-out both;
+  animation: cascade-in var(--dur-base) var(--ease-out) both;
+}
+
+/* A course scrolled to from search or from the path list: one ring pulse, so
+   the eye lands on the card the scroll was for rather than hunting the middle
+   of the viewport for what changed. */
+@keyframes focus-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--c-accent);
+  }
+  40% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--c-accent) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.focus-pulse {
+  animation: focus-pulse 600ms var(--ease-out) 1;
+}
+
+/* Ticking something off should feel like it landed. */
+@keyframes mark-pop {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.mark-pop {
+  animation: mark-pop 260ms var(--ease-out) both;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* The prerequisite curves draw themselves in, following the cascade. */
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: var(--dash);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /*
+   * Everything the design system times goes to zero at the source, so a
+   * component that asked for `duration-base` needs no second rule. The blanket
+   * below catches the rest — keyframes, and the handful of literal durations.
+   */
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  /* A plain cross-fade is the one motion that still helps here: it says a layer
+     appeared without moving anything. Kept short, as the spec allows. */
+  .fade-only {
+    transition-duration: 120ms !important;
+  }
+
   .cascade {
     animation: none;
   }

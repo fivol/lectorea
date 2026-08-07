@@ -89,6 +89,66 @@ export function queryVariants(raw: string): string[] {
   return variants;
 }
 
+/**
+ * Normalises while remembering where every character came from.
+ *
+ * `normalize` collapses runs of whitespace and trims, so an index into its
+ * output does not point at the same character in the input. Highlighting needs
+ * that mapping — otherwise the marked span drifts by however many separators
+ * came before it.
+ */
+function normalizeWithMap(input: string): { text: string; source: number[] } {
+  const out: string[] = [];
+  const source: number[] = [];
+  let pendingSpace = false;
+
+  for (let i = 0; i < input.length; i++) {
+    const raw = input[i].toLowerCase().replace(/ё/g, 'е');
+    const isSeparator = !/[\p{L}\p{N}+-]/u.test(raw);
+    if (isSeparator) {
+      // Leading separators produce nothing; interior ones collapse to one space.
+      if (out.length) pendingSpace = true;
+      continue;
+    }
+    if (pendingSpace) {
+      out.push(' ');
+      source.push(i);
+      pendingSpace = false;
+    }
+    out.push(raw);
+    source.push(i);
+  }
+
+  return { text: out.join(''), source };
+}
+
+/**
+ * Where a query matches inside a name, as ranges over the original string.
+ *
+ * A fuzzy-looking hit with nothing marked reads as a bug: «ав» finding
+ * «Савватеев» has to be able to show why. The query is tried in the same order
+ * of trust as the search itself, so a transliterated or layout-swapped hit
+ * highlights the characters it actually matched.
+ */
+export function matchRanges(name: string, raw: string): Array<[number, number]> {
+  const { text, source } = normalizeWithMap(name);
+  if (!text) return [];
+
+  for (const variant of queryVariants(raw)) {
+    if (!variant) continue;
+    const ranges: Array<[number, number]> = [];
+    let at = text.indexOf(variant);
+    while (at !== -1) {
+      const start = source[at];
+      const end = source[at + variant.length - 1] + 1;
+      ranges.push([start, end]);
+      at = text.indexOf(variant, at + variant.length);
+    }
+    if (ranges.length) return ranges;
+  }
+  return [];
+}
+
 /* ───────────────────────────────  Matching  ────────────────────────────── */
 
 /** Type order in the output: playlists last — there are many and they are noisy. */

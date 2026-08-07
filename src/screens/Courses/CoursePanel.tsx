@@ -79,7 +79,7 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
           ) : null}
         </div>
 
-        <h2 className="font-display text-xl leading-tight">{t(`course.${course.id}.title`)}</h2>
+        <h2 className="font-display text-h1">{t(`course.${course.id}.title`)}</h2>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
           <button
@@ -111,7 +111,7 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
       </header>
 
       <section className="px-4 pb-4">
-        <p className="text-sm leading-relaxed text-ink-dim">
+        <p className="text-body text-ink-dim">
           {has(`course.${course.id}.desc`)
             ? t(`course.${course.id}.desc`)
             : t('ui.course.description.missing')}

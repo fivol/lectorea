@@ -5,6 +5,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import Dropdown, { Caption, CheckRow, RadioRow, RangeRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
+import Tooltip from '@/components/Tooltip';
 import {
   activeFilterCount,
   facetsOf,
@@ -284,6 +285,15 @@ export default function PlaylistFilters({
               {t(`ui.sort.${key}`)}
             </RadioRow>
           ))}
+          {/* «Рейтинг» is the default order, so the question of what a rating is
+              belongs here as much as it does on the number in each row. */}
+          <Tooltip content={t('ui.playlist.scoreTooltip')} side="bottom">
+            <p className="mt-1 flex cursor-help items-center gap-1.5 border-t border-line px-2 pt-2
+                          text-[11px] text-ink-faint">
+              <Icon name="help" size={12} />
+              {t('ui.playlist.scoreHow')}
+            </p>
+          </Tooltip>
         </Dropdown>
       </div>
     </div>
@@ -400,7 +410,10 @@ function ActiveChips({
   return (
     <>
       {chips.map((chip) => (
-        <span key={chip.key} className="chip">
+        /* No transition on the neighbours: flex moves them the instant one is
+           removed, and a list that slides closed under the cursor makes the
+           next × land somewhere else. Only the chip itself animates. */
+        <span key={chip.key} className="chip animate-scale-in">
           {chip.label}
           <button type="button" onClick={chip.clear} aria-label={`${t('ui.common.reset')} ${chip.label}`}>
             <Icon name="close" size={11} />

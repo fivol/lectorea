@@ -33,20 +33,31 @@ export default function ProfilePanel() {
 
   return (
     <div className={`fixed inset-0 z-50 ${isMobile ? '' : 'flex items-center justify-center p-6'}`}>
-      <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={close} aria-hidden="true" />
+      <div
+        className="fade-only absolute inset-0 animate-fade-in bg-overlay"
+        onClick={close}
+        aria-hidden="true"
+      />
 
+      {/*
+        Height follows the content. A profile holding one goal used to be a
+        card at the top of a window-tall white rectangle, which reads as a page
+        that failed to load rather than as a profile with one thing in it. The
+        floor keeps the tab strip from looking cut off; the ceiling keeps a long
+        list scrolling inside the modal rather than off the screen.
+      */}
       <div
         ref={trapRef}
         role="dialog"
         aria-modal="true"
         aria-label={t('ui.profile.title')}
         tabIndex={-1}
-        className={`flex flex-col bg-surface shadow-[var(--shadow-panel)]
+        className={`flex flex-col bg-surface shadow-[var(--shadow-modal)]
                     ${
                       isMobile
                         ? 'absolute inset-0 animate-slide-in-bottom'
-                        : `relative h-[min(760px,88vh)] w-[min(1120px,92vw)] animate-scale-in
-                           overflow-hidden rounded-2xl border border-line`
+                        : `relative max-h-[88vh] min-h-[320px] w-[min(1120px,92vw)] animate-scale-in
+                           overflow-hidden rounded-pop border border-line`
                     }`}
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
@@ -70,6 +81,7 @@ export default function ProfilePanel() {
               aria-selected={tab === item}
               onClick={() => setTab(item)}
               className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors
+                          duration-fast ease-out
                           ${
                             tab === item
                               ? 'border-accent text-ink'

@@ -8,6 +8,7 @@ import { formatHours, hoursFromSeconds } from '@/lib/format';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
+import EmptyState from '@/components/EmptyState';
 
 type GroupBy = 'course' | 'provider';
 
@@ -66,7 +67,13 @@ export default function PlaylistsTab() {
   }, [loaded, groupBy]);
 
   if (!wantedIds.length) {
-    return <p className="p-8 text-center text-sm text-ink-faint">{t('ui.profile.emptyPlaylists')}</p>;
+    return (
+      <EmptyState
+        icon="star"
+        text={t('ui.profile.emptyPlaylists')}
+        action={{ label: t('ui.profile.toMap'), onClick: () => { closeProfile(); navigate('/'); } }}
+      />
+    );
   }
 
   const openCourse = (courseId: string, playlistId?: string): void => {

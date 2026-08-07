@@ -47,12 +47,22 @@ same icons; the toggle is in the profile settings.
 **The columns** (`/courses`) are the catalogue proper. A column is «сложность
 N» — the length of the longest chain of prerequisites ending at that course — so
 reading left to right is reading how much has to come first, and a line above
-the columns says exactly that. Nothing is drawn between the cards: pointing at
-one lights up what it needs and fades the rest, which answers the same question
-without a web of arrows over 200 cards. Select a course and that line changes to
-say so — half the screen has just dimmed, and the legend explaining the columns
-would leave the reason for it unsaid. Cards of one field stay together
+the columns says exactly that. Pointing at a card lights up what it needs and
+fades the rest; selecting one also draws the curves along that chain, and only
+that chain — over 200 cards they were a web of noise, but over the six or seven
+of one path they answer what the columns cannot, which of the cards on the left
+this one actually needs. Select a course and the line above changes to say so —
+half the screen has just dimmed, and the legend explaining the columns would
+leave the reason for it unsaid; the **?** beside it opens the full legend, which
+also appears by itself on a first visit. Cards of one field stay together
 vertically, so switching on a domain filter lights a stripe rather than a spray.
+
+The columns scroll sideways and say so: the edges fade where there is more, and
+stop fading at the ends. Opening the panel brings the selected card back into
+view rather than letting it disappear under it.
+
+`/` is the search, `t` the theme, `m` swaps map and columns, `Esc` closes the
+top layer, and `?` lists all of them.
 
 Three filters sit in the header. **Ступень** caps the catalogue at a school year
 or a university one — pick «11 класс» and everything past it disappears, in
@@ -115,13 +125,15 @@ to the view being shared, and stay in `localStorage`.
 | Styles | Tailwind + CSS variables for themes | |
 | Validation | zod, in `shared/schema.ts` | one schema for scripts, build and frontend |
 | Column order | own barycentric pass, **at build time** | dagre cannot express domain bands, and ranks nodes by edge length rather than by level |
-| Course screen | plain scrollable columns of cards | the column carries the meaning; arrows over 200 cards were noise |
+| Course screen | plain scrollable columns of cards | the column carries the meaning; arrows are drawn for the selected chain only, because over 200 cards they were noise |
+| Design tokens | CSS variables, surfaced through Tailwind | one palette the map screen can swap wholesale at runtime — see [docs/design-system.md](docs/design-system.md) |
 | Scripts | tsx + better-sqlite3 | |
 | Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain |
 | Deploy | any static host | |
 
 Detailed documents:
 
+- [docs/design-system.md](docs/design-system.md) — the tokens: colour, type, space, motion, and what the shared components are for
 - [docs/data.md](docs/data.md) — the data model, the files, and how to add content
 - [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota

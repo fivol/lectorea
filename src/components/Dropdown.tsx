@@ -153,9 +153,9 @@ export default function Dropdown({
         ? createPortal(
             <div
               ref={popoverRef}
-              style={place}
-              className="fixed z-50 w-60 rounded-lg border border-line bg-surface
-                         shadow-[var(--shadow-panel)]"
+              style={{ ...place, transformOrigin: place.bottom ? 'bottom' : 'top' }}
+              className="fixed z-50 w-60 animate-pop-in rounded-pop border border-line bg-surface
+                         shadow-[var(--shadow-pop)]"
             >
               {search ? (
                 <div className="border-b border-line p-2">
@@ -213,9 +213,7 @@ export function CheckRow({
  * looking at, and that typing narrows them rather than starting a search.
  */
 export function Caption({ children }: { children: ReactNode }) {
-  return (
-    <p className="px-2 pb-1 pt-0.5 text-[11px] uppercase tracking-wide text-ink-faint">{children}</p>
-  );
+  return <p className="mono-label px-2 pb-1 pt-0.5">{children}</p>;
 }
 
 /** A one-shot action inside a popover — "clear all" and the like. Closes on click. */

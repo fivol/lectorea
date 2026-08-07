@@ -19,6 +19,7 @@ export default function MapScreen() {
   const params = useCatalogParams();
   const isMobile = useIsMobile();
   const openProfile = useUi((state) => state.openProfile);
+  const [scrolled, setScrolled] = useState(false);
 
   const mapView = useProfile((state) => state.profile.settings.mapView);
   const setSetting = useProfile((state) => state.setSetting);
@@ -41,6 +42,7 @@ export default function MapScreen() {
   }, [catalog, params.providers]);
 
   const showMap = mapView === 'map' && !isMobile;
+  const compact = !showMap && scrolled;
 
   return (
     /*
@@ -53,10 +55,27 @@ export default function MapScreen() {
       className="flex h-full flex-col"
       style={showMap ? { background: MAP_SEA, ...MAP_SURFACE_VARS } : undefined}
     >
-      <header className="relative z-30 flex items-start justify-between gap-4 px-4 pt-4 sm:px-6">
+      {/*
+        The header is chrome, not content — it never scrolls away. What it does
+        do on the blocks list is shrink once there is something above the fold,
+        and take a shadow, so the row reads as sitting over the grid rather than
+        floating in the same plane as it.
+      */}
+      <header
+        className={`relative z-30 flex items-start justify-between gap-4 px-4 transition-all
+                    duration-base ease-out sm:px-6
+                    ${compact ? 'on-canvas pb-2 pt-2 shadow-[var(--shadow-card)] backdrop-blur' : 'pt-4'}`}
+      >
         <div className="flex items-baseline gap-3">
-          <h1 className="font-display text-xl tracking-tight">{t('app.title')}</h1>
-          <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
+          <h1
+            className={`font-display tracking-tight transition-all duration-base ease-out
+                        ${compact ? 'text-base' : 'text-xl'}`}
+          >
+            {t('app.title')}
+          </h1>
+          {compact ? null : (
+            <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -86,10 +105,10 @@ export default function MapScreen() {
           {/* On the water the controls need to sit on something. A shadow is
               what makes a white plate read as floating over the sea rather than
               as a hole cut through it. */}
-          <ThemeToggle className={showMap ? 'shadow-[var(--shadow-card)]' : ''} />
+          <ThemeToggle className={`tap ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`} />
           <button
             type="button"
-            className={`btn ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`}
+            className={`btn tap ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`}
             onClick={openProfile}
             aria-label={t('ui.nav.profile')}
           >
@@ -138,6 +157,7 @@ export default function MapScreen() {
       <main
         className={`min-h-0 flex-1 overflow-auto ${showMap ? 'pt-16' : ''}`}
         style={showMap ? { background: MAP_SEA } : undefined}
+        onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 8)}
       >
         {showMap ? (
           <MapView

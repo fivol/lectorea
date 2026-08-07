@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/format';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
+import EmptyState from '@/components/EmptyState';
 
 /**
  * Playlists that were opened, newest first.
@@ -28,7 +29,13 @@ export default function RecentTab() {
   const [confirming, setConfirming] = useState(false);
 
   if (!recent.length) {
-    return <p className="p-6 text-center text-sm text-ink-faint">{t('ui.recent.empty')}</p>;
+    return (
+      <EmptyState
+        icon="play"
+        text={t('ui.recent.empty')}
+        action={{ label: t('ui.profile.toMap'), onClick: () => { closeProfile(); navigate('/'); } }}
+      />
+    );
   }
 
   const open = (courseId: string, playlistId: string): void => {

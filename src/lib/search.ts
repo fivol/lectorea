@@ -37,7 +37,21 @@ export function useSearchResults(query: string): SearchResults {
   return useMemo(() => {
     if (!query.trim()) return EMPTY;
 
-    const hits = searchEntries(catalog.search, query);
+    /*
+     * A row that leads nowhere is worse than one row fewer. «Алексей Савватеев
+     * — 0 плейлистов» is a name matching an index the catalogue no longer has
+     * anything behind: selecting it switches on a filter that empties the list.
+     * Courses and playlists are always reachable, so only the two facets that
+     * can go empty are checked.
+     */
+    const reachable = ({ entry }: Scored): boolean => {
+      if (entry.t === 'v') return (catalog.providers[entry.id]?.playlistCount ?? 0) > 0;
+      if (entry.t === 'l') return (entry.s ?? 0) > 0;
+      if (entry.t === 'd') return (catalog.domainById.get(entry.id)?.courseCount ?? 0) > 0;
+      return true;
+    };
+
+    const hits = searchEntries(catalog.search, query).filter(reachable);
     const sections = groupBySection(hits, PER_SECTION);
     const flat = sections.flatMap((section) => section.items.map((item) => item.entry));
 

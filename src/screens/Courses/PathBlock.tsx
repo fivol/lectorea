@@ -9,6 +9,7 @@ import { courseHref } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
+import ProgressBar from '@/components/ProgressBar';
 
 type Props = {
   course: BuiltCourse;
@@ -38,6 +39,9 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
 
   const doneCount = steps.filter((step) => profile.courses[step.id]?.status === 'done').length;
   const totalHours = steps.reduce((sum, step) => sum + step.hours, 0);
+  const remainingHours = steps
+    .filter((step) => profile.courses[step.id]?.status !== 'done')
+    .reduce((sum, step) => sum + step.hours, 0);
 
   if (steps.length < 2) {
     return (
@@ -88,11 +92,17 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
     <section className="border-t border-line">
       <button
         type="button"
-        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-surface-2"
+        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm
+                   transition-colors duration-fast ease-out hover:bg-surface-2"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
       >
-        <Icon name={open ? 'chevron-down' : 'chevron-right'} size={14} className="text-ink-faint" />
+        <Icon
+          name="chevron-right"
+          size={14}
+          className={`text-ink-faint transition-transform duration-fast ease-out
+                      ${open ? 'rotate-90' : ''}`}
+        />
         <span className="font-medium">{t('ui.path.title')}:</span>
         <span className="num text-ink-dim">
           {t('ui.path.summary', {
@@ -103,7 +113,20 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
         </span>
       </button>
 
-      {open ? (
+      {/* The bar is outside the collapse: how much of the path is done is the
+          one thing worth knowing without opening anything. */}
+      <div className="px-4 pb-3">
+        <ProgressBar
+          done={doneCount}
+          total={steps.length}
+          label={t('ui.profile.progress', { done: doneCount, total: steps.length })}
+        />
+        <p className="num mt-1 text-[11px] text-ink-faint">
+          {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
+        </p>
+      </div>
+
+      <div className="collapse" data-open={open}>
         <div className="px-4 pb-4">
           <div className="mb-2 flex items-center justify-between gap-2">
             <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-faint">
@@ -172,7 +195,7 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
             })}
           </ol>
         </div>
-      ) : null}
+      </div>
     </section>
   );
 }

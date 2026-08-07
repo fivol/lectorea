@@ -6,6 +6,7 @@ import { useCatalog } from '@/lib/catalog';
 import { useCatalogParams } from '@/lib/url';
 import type { SearchResults } from '@/lib/search';
 import Icon from './Icon';
+import MarkedText from './MarkedText';
 
 type Props = {
   query: string;
@@ -132,8 +133,8 @@ export default function SearchBox({
       <div
         className={
           floating
-            ? 'glass flex items-center gap-2 rounded-full border border-line px-4 py-2.5 shadow-[var(--shadow-panel)] backdrop-blur-xl'
-            : 'flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5'
+            ? 'glass flex items-center gap-2 rounded-full border border-line px-4 py-2.5 shadow-[var(--shadow-pop)] backdrop-blur-xl'
+            : 'flex items-center gap-2 rounded-chip border border-line bg-surface-2 px-3 py-1.5'
         }
       >
         <Icon name="search" className="text-ink-faint" />
@@ -180,15 +181,15 @@ export default function SearchBox({
           id="search-results"
           role="listbox"
           className="panel-scroll glass-strong absolute inset-x-0 top-[calc(100%+8px)] z-40
-                     max-h-[60vh] rounded-xl border border-line p-2 shadow-[var(--shadow-panel)]
-                     backdrop-blur-xl"
+                     max-h-[60vh] origin-top animate-pop-in rounded-pop border border-line p-2
+                     shadow-[var(--shadow-pop)] backdrop-blur-xl"
         >
           {results.empty ? (
             <p className="px-3 py-4 text-center text-sm text-ink-faint">{t('ui.search.empty')}</p>
           ) : (
             results.sections.map((section) => (
               <section key={section.type} className="mb-1 last:mb-0">
-                <h3 className="px-3 pb-1 pt-2 text-[11px] uppercase tracking-wide text-ink-faint">
+                <h3 className="mono-label px-3 pb-1 pt-2">
                   {t(`ui.search.section.${section.type}`)}
                 </h3>
                 {section.items.map(({ entry }) => {
@@ -206,7 +207,9 @@ export default function SearchBox({
                                   ${isActive ? 'bg-surface-2 text-ink' : 'text-ink-dim'}`}
                     >
                       <SectionMark type={entry.t} />
-                      <span className="min-w-0 flex-1 truncate">{entry.n}</span>
+                      <span className="min-w-0 flex-1 truncate">
+                        <MarkedText text={entry.n} query={results.query} />
+                      </span>
                       <Secondary entry={entry} catalog={catalog} />
                     </button>
                   );

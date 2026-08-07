@@ -8,6 +8,8 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
+import EmptyState from '@/components/EmptyState';
+import ProgressBar from '@/components/ProgressBar';
 
 /**
  * A favourited course is a goal — there is no third entity and no third icon.
@@ -17,6 +19,13 @@ export default function CoursesTab() {
   const catalog = useCatalog();
   const { t } = useT();
   const profile = useProfile((state) => state.profile);
+  const navigate = useNavigate();
+  const closeProfile = useUi((state) => state.closeProfile);
+
+  const toMap = (): void => {
+    closeProfile();
+    navigate('/');
+  };
 
   const groups = useMemo(() => {
     const inProgress: BuiltCourse[] = [];
@@ -35,7 +44,13 @@ export default function CoursesTab() {
 
   const empty = !groups.inProgress.length && !groups.done.length && !groups.goals.length;
   if (empty) {
-    return <p className="p-8 text-center text-sm text-ink-faint">{t('ui.profile.empty')}</p>;
+    return (
+      <EmptyState
+        icon="star"
+        text={t('ui.profile.empty')}
+        action={{ label: t('ui.profile.toMap'), onClick: toMap }}
+      />
+    );
   }
 
   return (
@@ -50,7 +65,15 @@ export default function CoursesTab() {
             ))}
           </div>
         </section>
-      ) : null}
+      ) : (
+        /* Progress with no goal is a set of ticks with nothing to add up to,
+           so the tab says what turns them into one. */
+        <EmptyState
+          icon="star"
+          text={t('ui.profile.noGoal')}
+          action={{ label: t('ui.profile.toMap'), onClick: toMap }}
+        />
+      )}
 
       {(['in_progress', 'done'] as const).map((status) => {
         const list = status === 'in_progress' ? groups.inProgress : groups.done;
@@ -90,7 +113,6 @@ function GoalCard({ course }: { course: BuiltCourse }) {
 
   const steps = [...pathTo(catalog, course.id), course];
   const doneIds = steps.filter((step) => profile.courses[step.id]?.status === 'done');
-  const percent = Math.round((doneIds.length / steps.length) * 100);
   const remainingHours = steps
     .filter((step) => profile.courses[step.id]?.status !== 'done')
     .reduce((sum, step) => sum + step.hours, 0);
@@ -116,24 +138,21 @@ function GoalCard({ course }: { course: BuiltCourse }) {
           {domain ? t(`domain.${domain.id}.title`) : ''} · {t('ui.course.level', { n: course.level + 1 })}
         </p>
 
-        <div className="mt-2 flex items-center gap-2">
-          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-            <span
-              className="block h-full rounded-full bg-accent transition-[width] duration-300"
-              style={{ width: `${percent}%` }}
-            />
-          </span>
-          <span className="num shrink-0 text-xs text-ink-dim">
-            {t('ui.profile.progress', { done: doneIds.length, total: steps.length })}
-          </span>
-        </div>
+        <ProgressBar
+          className="mt-2"
+          done={doneIds.length}
+          total={steps.length}
+          label={t('ui.profile.progress', { done: doneIds.length, total: steps.length })}
+        />
 
         <p className="num mt-1 text-xs text-ink-faint">
           {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
         </p>
 
+        {/* One verb for the path, in both of its states — «Изучать» in the
+            panel is about a single course's status and stays there. */}
         <button type="button" className="btn mt-2 text-xs" onClick={() => open(nextId)}>
-          {t('ui.profile.continue')}
+          {doneIds.length ? t('ui.profile.continuePath') : t('ui.profile.startPath')}
           <Icon name="chevron-right" size={12} />
         </button>
       </div>

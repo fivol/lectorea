@@ -1,0 +1,180 @@
+# The design system
+
+Every colour, size, radius, shadow and duration in the product is named once, in
+`src/index.css`, and referenced by name everywhere else. Components never carry
+a raw value.
+
+The names are read in two places: `tailwind.config.js` maps them onto utility
+classes (`bg-surface`, `text-ink-dim`, `duration-base`, `rounded-card`), and a
+handful of places read the variables directly where a class cannot reach — an
+SVG stroke, a `color-mix`, an inline style computed from data.
+
+That indirection is not decoration. The map screen repaints the entire palette
+for one route by overriding the same variables on a wrapper (`MAP_SURFACE_VARS`
+in `src/screens/Map/MapView.tsx`), and every button, field and legend on it
+keeps working without knowing the map is underneath. Only one set of names can
+support that.
+
+## Colour
+
+Dark is the primary mode. The graph is looked at for a long time, and a light
+canvas with a hundred cards on it is tiring; light mode is honest but second.
+
+| Token | Tailwind | Light | Dark | Used for |
+|---|---|---|---|---|
+| `--c-canvas` | `canvas` | `#F6F8FB` | `#0B0F17` | the page |
+| `--c-surface` | `surface` | `#FFFFFF` | `#111726` | cards, panels, modals |
+| `--c-surface-2` | `surface-2` | `#EEF2F7` | `#1A2233` | nested surfaces: fields, chips, row hover |
+| `--c-overlay` | `overlay` | `rgb(15 23 42 / .45)` | `rgb(0 0 0 / .6)` | behind a modal |
+| `--c-line` | `line` | `#E2E8F0` | `#243044` | borders, dividers |
+| `--c-line-strong` | `line-strong` | `#CBD5E1` | `#334155` | a control under the pointer |
+| `--c-ink` | `ink` | `#1E293B` | `#E6EBF2` | headings and body |
+| `--c-ink-dim` | `ink-dim` | `#64748B` | `#8B98AC` | descriptions, metadata |
+| `--c-ink-faint` | `ink-faint` | `#94A3B8` | `#5B6B82` | placeholders, disabled |
+
+Colour is never decoration. It means one of five things:
+
+| Token | Tailwind | Light | Dark | Meaning |
+|---|---|---|---|---|
+| `--c-formal` | `formal` | `#3B82F6` | `#60A5FA` | the formal and natural continent |
+| `--c-social` | `social` | `#EA8A3C` | `#F0A35E` | the social continent |
+| `--c-humanities` | `humanities` | `#9B5DE0` | `#B583EA` | the humanities continent |
+| `--c-accent` | `accent` | `#22A06B` | `#34C98A` | selection, progress, success |
+| `--c-warning` | `warning` | `#D97706` | `#F59E0B` | middling quality, a favourite star |
+| `--c-danger` | `danger` | `#DC2626` | `#F87171` | destructive |
+
+Each continent also has a `-soft` wash — `--c-accent-soft`, `--c-formal-soft`
+and so on — for a card that is *in* something rather than *selected*. In light
+these are pale tints; in dark they are the accent at low alpha, because a mixed
+pastel over a near-black surface turns to mud.
+
+Colour is never the only carrier. Quality is a coloured dot **and** a number,
+a continent is named by its heading, and a card in the selected chain has a
+border and a position in the path list as well as a wash.
+
+### The domain hues
+
+`data/domains.yaml` gives each field its own colour, a variation on its
+continent's. Those are picked against the dark canvas, which makes several of
+them unreadable as text on a white card — so anything that prints a domain
+colour as *text* runs it through `inkOn()` (`src/lib/format.ts`), which deepens
+the hue until it clears 4.5:1 without introducing a second palette to keep in
+step. Shapes — the stripe on a card, a territory, a glyph — use the raw hue,
+where 3:1 is the bar.
+
+## Type
+
+| Tailwind | Size / leading | Weight | Used for |
+|---|---|---|---|
+| `text-h1` | 28 / 34 | 700 | the course name in the panel, a modal title |
+| `text-h2` | 22 / 28 | 700 | continent headings |
+| `text-h3` | 16 / 22 | 600 | card titles |
+| `text-body` | 14 / 21 | 400 | descriptions |
+| `text-caption` | 13 / 18 | 400 | secondary lines, tooltips |
+| `text-mono` | 13 / 18 | 500 | numeric metadata |
+| `text-mono-label` | 12 / 16, +.06em, uppercase | 600 | «СЛОЖНОСТЬ 4», group headings |
+
+Three families: **Unbounded** for display (`font-display`, and `h1`/`h2` get it
+automatically), **Onest** for text, **JetBrains Mono** for anything numeric.
+
+Every number goes mono. Counts, difficulty, hours, timings, playlist metadata —
+`.num` sets the family and tabular figures together, so a digit changing does
+not shift the ones beside it. `.mono-label` is the small uppercase variant.
+
+## Space, radius, depth
+
+Spacing is Tailwind's scale (`1` = 4px); the set the design uses is
+`4 / 8 / 12 / 16 / 20 / 24 / 32 / 48`, mirrored as `--space-1…8` for the rare
+raw value. Card padding is 16, the course panel 20, modals 24.
+
+| Token | Tailwind | Value | Used on |
+|---|---|---|---|
+| `--radius-sm` | `rounded-chip` | 8px | chips, inputs, buttons |
+| `--radius-md` | `rounded-card` | 12px | cards, playlist rows |
+| `--radius-lg` | `rounded-pop` | 16px | panels, modals, popovers |
+
+Shadows are a light-mode device: `--shadow-card`, `--shadow-pop` (dropdowns,
+tooltips, the floating search field) and `--shadow-modal`. In dark, depth comes
+from `--c-surface` against `--c-surface-2` and from borders instead —
+`--shadow-card` is `none` there, and only the modal and the portalled popover
+keep one, because a popover lands on whatever happens to be beneath it and a
+border alone will not lift it off.
+
+Keyboard focus is `2px solid var(--c-accent)` with a 2px offset, on everything
+interactive including cards. It is set once, on `:focus-visible` in the base
+layer, so nothing has to remember it.
+
+## Motion
+
+Two durations do most of the work, three easings shape them.
+
+```css
+--dur-fast: 140ms;   /* hovers, small state changes */
+--dur-base: 220ms;   /* panels, dropdowns, dimming */
+--dur-slow: 320ms;   /* modals, theme change */
+--ease-out:   cubic-bezier(0.16, 1, 0.3, 1);   /* entering */
+--ease-in:    cubic-bezier(0.7, 0, 0.84, 0);   /* leaving */
+--ease-inout: cubic-bezier(0.65, 0, 0.35, 1);  /* morphing */
+```
+
+Tailwind's `duration-fast|base|slow` and `ease-out|in|inout` point at those
+variables rather than at literals, which is what makes reduced motion a
+three-line rule: `prefers-reduced-motion: reduce` sets all three durations to
+zero and the whole product goes still. A plain cross-fade is the one exception —
+`.fade-only` keeps 120ms, because a layer appearing without moving anything is
+help rather than motion.
+
+The named animations: `animate-fade-in` (overlays), `animate-scale-in` (modals),
+`animate-pop-in` (dropdowns, growing from the edge they are anchored to),
+`animate-slide-in-right` (the tablet drawer), `animate-slide-in-bottom` (the
+phone sheet). Plus four one-shots in `index.css`: `.cascade` for the chain
+lighting up, `.focus-pulse` for a card that was just scrolled to, `.mark-pop`
+for something being ticked off, and `shimmer` behind `.skeleton`.
+
+Selecting a course is the one signature effect. The chain lights up right to
+left at 30ms a step, and the prerequisite curves draw themselves in behind it.
+
+## Components worth knowing about
+
+- **`Tooltip`** — the explained state. Portalled, 400ms in and nothing on the
+  way out, opens on keyboard focus, closes on Escape. Use it instead of `title`
+  for anything a reader has to *understand* rather than merely identify.
+- **`EmptyState`** — icon, one line, and the click that would fill it. An empty
+  panel is indistinguishable from a broken one.
+- **`ProgressBar`** — grows from zero the first time it is on screen.
+- **`MarkedText`** — a search hit with the matched characters in `<mark>`.
+- **`.collapse`** — a block that opens on `grid-template-rows: 0fr → 1fr`,
+  animating to the content's real height. Its content stays mounted, so
+  `visibility` takes the closed state out of the tab order.
+- **`.skeleton`** — a loading placeholder at the exact size of what replaces it.
+- **`.tap`** — a 44×44 minimum on coarse pointers, for icon-only controls. Dense
+  chip strips are deliberately left out: they are well separated, and 44px each
+  would make the filter row taller than the list it filters.
+
+## Layout
+
+Breakpoints: `<768` phone, `768–1200` tablet, `>1200` desktop
+(`useIsMobile` / `useIsDesktop` in `src/lib/hooks.ts`).
+
+The course panel takes a different form at each: a **draggable split** on
+desktop, a **420px drawer** over the columns on tablet — half of 1024px is
+neither a readable panel nor a usable map — and a **bottom sheet** on a phone,
+where the columns themselves become a vertical list grouped by difficulty.
+
+## Deliberate departures from the written spec
+
+Three, each for a reason that outlived the spec:
+
+- **Token names keep the `--c-` prefix** rather than becoming `--bg-page`,
+  `--text-primary` and so on. The values are the specified ones; only the
+  identifiers differ. The map screen swaps the palette at runtime by overriding
+  these names, and the Tailwind layer above them is already the vocabulary
+  components are written in — a rename would have been churn across every file
+  for no change a reader could see.
+- **The domain hues span more than ±20° of their continent.** Reining them in
+  is a data change to `data/domains.yaml` that repaints the generated map, and
+  that is a decision about how the map should look rather than a token cleanup.
+- **`aria-current`, not `aria-selected`, marks the chosen course.**
+  `aria-selected` is only valid inside a listbox or a grid, and turning a card
+  full of interactive detail into an `option` would cost more than the attribute
+  name is worth.

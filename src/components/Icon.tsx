@@ -30,7 +30,9 @@ export type IconName =
   | 'circle'
   | 'sun'
   | 'moon'
-  | 'warning';
+  | 'warning'
+  | 'bridge'
+  | 'help';
 
 /** One inline sprite instead of an icon package — twenty glyphs is not a dependency. */
 const PATHS: Record<IconName, string> = {
@@ -61,6 +63,10 @@ const PATHS: Record<IconName, string> = {
   sun: 'M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4',
   moon: 'M21 13a8.5 8.5 0 01-10-10 8.5 8.5 0 1010 10z',
   warning: 'M12 4l9 16H3zM12 10v4m0 3v.5',
+  // Two banks and a span between them — an interdisciplinary field is the
+  // crossing, which is a thing an hourglass never managed to say.
+  bridge: 'M3 14h18M4 14V9M20 14V9M8 14a4 4 0 018 0M7 14v5M17 14v5',
+  help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.6 9.4a2.5 2.5 0 114 2.4c-.9.6-1.6 1-1.6 2.2m0 3v.4',
 };
 
 const FILLED: IconName[] = ['star-filled', 'play', 'half', 'grid'];

@@ -45,13 +45,36 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * The first screen, before its data exists.
+ *
+ * The shape of what is coming rather than a spinner in the middle of nothing:
+ * the grid lands in the space already reserved for it, so the page does not
+ * jump the moment the catalogue arrives.
+ */
 function Booting() {
   return (
-    <div className="flex h-full items-center justify-center">
-      <div className="flex flex-col items-center gap-3 text-ink-faint">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-line border-t-accent" />
-        <span className="text-sm">Загрузка каталога…</span>
-      </div>
+    <div className="mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6" aria-busy="true">
+      <span className="sr-only">Загрузка каталога…</span>
+      {[0, 1].map((section) => (
+        <div key={section} className="mb-10">
+          <div className="skeleton mb-2 h-6 w-56 rounded" />
+          <div className="skeleton mb-4 h-3 w-full max-w-2xl rounded" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div key={index} className="surface flex flex-col gap-2 p-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="skeleton h-[30px] w-[30px] shrink-0 rounded" />
+                  <span className="skeleton h-4 flex-1 rounded" />
+                </div>
+                <span className="skeleton h-3 w-full rounded" />
+                <span className="skeleton h-3 w-2/3 rounded" />
+                <span className="skeleton mt-1 h-3 w-20 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

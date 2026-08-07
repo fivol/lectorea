@@ -6,7 +6,7 @@ import { useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
 import { courseHref, useCatalogParams } from '@/lib/url';
-import { useIsMobile, useEscape } from '@/lib/hooks';
+import { useIsDesktop, useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp, inkOn } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
@@ -18,6 +18,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
+import LegendPopover from './LegendPopover';
 import MobileCourseList from './MobileCourseList';
 
 export default function CoursesScreen() {
@@ -27,6 +28,7 @@ export default function CoursesScreen() {
   const params = useCatalogParams();
   const { t } = useT();
   const isMobile = useIsMobile();
+  const isDesktop = useIsDesktop();
 
   const openProfile = useUi((state) => state.openProfile);
   const requestFocus = useUi((state) => state.requestFocus);
@@ -72,7 +74,16 @@ export default function CoursesScreen() {
     [navigate, params.search]
   );
 
-  useEscape(Boolean(selected) && isMobile, () => navigate(`/courses${params.search}`));
+  /**
+   * How the panel is shown, by width. Desktop splits the screen and lets the
+   * ratio be dragged; a tablet is too narrow for that — half of 1024px is
+   * neither a readable panel nor a usable map — so it gets a drawer instead.
+   */
+  const split = Boolean(selected) && isDesktop;
+  const drawer = Boolean(selected) && !isMobile && !isDesktop;
+
+  // Escape backs out of the panel at every width, not only on the phone.
+  useEscape(Boolean(selected), () => navigate(`/courses${params.search}`));
 
   /* ─────────────────────────────  Splitter  ───────────────────────────── */
 
@@ -105,7 +116,7 @@ export default function CoursesScreen() {
       <header className="z-30 flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-3 py-2">
         <Link
           to="/"
-          className="btn-ghost flex items-center gap-1.5 rounded px-2 py-1 text-sm"
+          className="btn-ghost tap flex items-center gap-1.5 rounded px-2 py-1 text-sm"
           aria-label={t('ui.nav.backToMap')}
         >
           <Icon name="arrow-left" size={14} />
@@ -126,10 +137,10 @@ export default function CoursesScreen() {
             results={results}
             className="w-40 sm:w-64"
           />
-          <ThemeToggle />
+          <ThemeToggle className="tap" />
           <button
             type="button"
-            className="btn px-2"
+            className="btn tap px-2"
             onClick={openProfile}
             aria-label={t('ui.nav.profile')}
           >
@@ -152,7 +163,7 @@ export default function CoursesScreen() {
           {selected ? (
             <div className="fixed inset-0 z-40 flex flex-col">
               <div
-                className="flex-1 bg-black/50"
+                className="fade-only flex-1 animate-fade-in bg-overlay"
                 onClick={() => navigate(`/courses${params.search}`)}
                 aria-hidden="true"
               />
@@ -161,7 +172,7 @@ export default function CoursesScreen() {
                   <span className="h-1 w-10 rounded-full bg-line" aria-hidden="true" />
                   <button
                     type="button"
-                    className="btn-ghost rounded p-1"
+                    className="btn-ghost tap rounded p-1"
                     onClick={() => navigate(`/courses${params.search}`)}
                     aria-label={t('ui.common.close')}
                   >
@@ -182,20 +193,25 @@ export default function CoursesScreen() {
       ) : (
         /* With nothing selected there is nothing to say, so the panel and its
            splitter are gone entirely and the columns get the whole width. */
-        <div ref={splitRef} className="flex min-h-0 flex-1">
+        <div ref={splitRef} className="relative flex min-h-0 flex-1">
           <div
-            style={selected ? { width: `${splitRatio * 100}%` } : undefined}
-            className={selected ? 'min-w-0' : 'min-w-0 flex-1'}
+            style={split ? { width: `${splitRatio * 100}%` } : undefined}
+            className={split ? 'min-w-0' : 'min-w-0 flex-1'}
           >
             <div className="flex h-full min-h-0 flex-col">
               {/* Selecting a course dims most of the screen, and a line that
                   still explains the columns leaves that unexplained — so the
                   legend answers the question actually on screen. */}
-              <p className="shrink-0 border-b border-line px-5 py-2 text-xs text-ink-faint">
-                {selected
-                  ? t('ui.column.legendSelected', { course: t(`course.${selected.id}.title`) })
-                  : t('ui.column.legend')}
-              </p>
+              {/* A div, not a p: the legend popover it anchors is a dialog. */}
+              <div className="relative z-20 flex shrink-0 items-center gap-2 border-b border-line
+                              px-5 py-2 text-xs text-ink-faint">
+                <span className="min-w-0 flex-1">
+                  {selected
+                    ? t('ui.column.legendSelected', { course: t(`course.${selected.id}.title`) })
+                    : t('ui.column.legend')}
+                </span>
+                <LegendPopover />
+              </div>
               <div className="min-h-0 flex-1">
                 <ColumnsView
                   courses={catalog.courses}
@@ -208,7 +224,7 @@ export default function CoursesScreen() {
             </div>
           </div>
 
-          {selected ? (
+          {split ? (
             <>
               <div
                 role="separator"
@@ -226,7 +242,33 @@ export default function CoursesScreen() {
 
               <aside className="min-w-0 flex-1 border-l border-line bg-surface/40">
                 <CoursePanel
-                  course={selected}
+                  course={selected!}
+                  search={params.search}
+                  outsideFilter={pathOutsideFilter}
+                  onClose={onDeselect}
+                />
+              </aside>
+            </>
+          ) : null}
+
+          {/*
+            On a tablet the split leaves both halves too narrow to be either a
+            map or a panel, so the panel comes over the top instead and the
+            columns keep their full width underneath.
+          */}
+          {drawer ? (
+            <>
+              <div
+                className="fade-only absolute inset-0 z-40 animate-fade-in bg-overlay"
+                onClick={onDeselect}
+                aria-hidden="true"
+              />
+              <aside
+                className="absolute inset-y-0 right-0 z-40 w-[420px] max-w-full animate-slide-in-right
+                           overflow-hidden border-l border-line bg-surface shadow-[var(--shadow-modal)]"
+              >
+                <CoursePanel
+                  course={selected!}
                   search={params.search}
                   outsideFilter={pathOutsideFilter}
                   onClose={onDeselect}
