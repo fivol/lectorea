@@ -17,6 +17,7 @@ import Icon from '@/components/Icon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
 import MobileCourseList from './MobileCourseList';
+import PrerequisiteStrip from './PrerequisiteStrip';
 
 export default function CoursesScreen() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -36,25 +37,12 @@ export default function CoursesScreen() {
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
-  const { visible, dimmed } = useFilteredCourses(params.domains, params.providers, maxStage);
+  const visible = useFilteredCourses(params.domains, params.providers, maxStage);
 
   const path = useMemo(
     () => (selected ? pathTo(catalog, selected.id) : []),
     [catalog, selected]
   );
-
-  /**
-   * The path punches through the domain filter: when a prerequisite of the
-   * selected course falls outside the filter it still shows up, dimmed, rather
-   * than the plan referring to a course that is nowhere on screen.
-   */
-  const dimmedWithPath = useMemo(() => {
-    if (!selected) return dimmed;
-    const next = new Set(dimmed);
-    for (const step of path) if (!visible.has(step.id)) next.add(step.id);
-    next.delete(selected.id);
-    return next;
-  }, [dimmed, visible, selected, path]);
 
   /** Courses the path needs but the filter excludes — the panel says so. */
   const pathOutsideFilter = useMemo(
@@ -218,14 +206,18 @@ export default function CoursesScreen() {
             style={selected ? { width: `${splitRatio * 100}%` } : undefined}
             className={selected ? 'min-w-0' : 'min-w-0 flex-1'}
           >
-            <ColumnsView
-              courses={catalog.courses}
-              visible={visibleWithSelection}
-              dimmed={dimmedWithPath}
-              selectedId={selected?.id ?? null}
-              onSelect={onSelect}
-              onDeselect={onDeselect}
-            />
+            <div className="flex h-full min-h-0 flex-col">
+              {selected ? <PrerequisiteStrip course={selected} onSelect={onSelect} /> : null}
+              <div className="min-h-0 flex-1">
+                <ColumnsView
+                  courses={catalog.courses}
+                  visible={visibleWithSelection}
+                  selectedId={selected?.id ?? null}
+                  onSelect={onSelect}
+                  onDeselect={onDeselect}
+                />
+              </div>
+            </div>
           </div>
 
           {selected ? (

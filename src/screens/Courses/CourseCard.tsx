@@ -17,7 +17,6 @@ type Props = {
   selected: boolean;
   status: CourseStatus | null;
   favorite: boolean;
-  dimmedByFilter: boolean;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
 };
@@ -30,13 +29,12 @@ function CourseCardInner({
   selected,
   status,
   favorite,
-  dimmedByFilter,
   onSelect,
   onHover,
 }: Props) {
   const { t } = useT();
   const colour = domain?.color ?? 'var(--c-formal)';
-  const opacity = EMPHASIS_OPACITY[emphasis] * (dimmedByFilter ? 0.55 : 1);
+  const opacity = EMPHASIS_OPACITY[emphasis];
   const empty = course.playlistCount === 0;
 
   const accent =

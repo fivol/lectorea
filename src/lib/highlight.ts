@@ -111,8 +111,3 @@ export const EMPHASIS_OPACITY: Record<Emphasis, number> = {
   related: 0.75,
   muted: 0.22,
 };
-
-/** True when the course takes part in the current highlight at all. */
-export function isLit(emphasis: Emphasis): boolean {
-  return emphasis !== 'muted';
-}

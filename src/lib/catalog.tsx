@@ -121,71 +121,34 @@ export function useDomainTitle(): (id: string) => string {
 }
 
 /**
- * Courses that survive the active domain and provider filters.
+ * Courses that survive the active domain, provider and stage filters.
  *
- * Neighbours one hop out are deliberately kept: they are dimmed by the caller,
- * not removed, so it stays visible that discrete maths came in from the maths
- * territory rather than appearing from nowhere.
+ * A filter means a filter: nothing from outside it is kept as context, not even
+ * a prerequisite. Faded foreign cards scattered down the columns read as part of
+ * the field you asked for while sitting several levels away from anything that
+ * referred to them. Prerequisites are answered where the question is actually
+ * asked — in the strip above the columns, and in the panel.
  */
 export function useFilteredCourses(
   domainFilter: string[],
   providerFilter: string[],
   maxStage: Stage | null = null
-): { visible: Set<string>; dimmed: Set<string> } {
+): Set<string> {
   const catalog = useCatalog();
 
   return useMemo(() => {
-    const visible = new Set<string>();
-    const dimmed = new Set<string>();
-
-    /**
-     * The stage cap is a hard cut, not a dimming: someone who says they are in
-     * year 11 is saying a doctorate course is not context they want, so showing
-     * it faded would be answering a question they did not ask.
-     */
-    const capped = maxStage
-      ? catalog.courses.filter((course) => stageRank(course.stage) <= stageRank(maxStage))
-      : catalog.courses;
-    const withinCap = new Set(capped.map((course) => course.id));
-
-    if (!domainFilter.length && !providerFilter.length) {
-      for (const course of capped) visible.add(course.id);
-      return { visible, dimmed };
-    }
-
     const providerCourses = providerFilter.length
-      ? new Set(
-          providerFilter.flatMap((id) => catalog.providers[id]?.courseIds ?? [])
-        )
+      ? new Set(providerFilter.flatMap((id) => catalog.providers[id]?.courseIds ?? []))
       : null;
 
     const inDomain = (course: BuiltCourse): boolean =>
       !domainFilter.length || course.domains.some((d) => domainFilter.includes(d));
 
-    const core = capped.filter(
-      (course) => inDomain(course) && (!providerCourses || providerCourses.has(course.id))
+    return new Set(
+      catalog.courses
+        .filter((course) => !maxStage || stageRank(course.stage) <= stageRank(maxStage))
+        .filter((course) => inDomain(course) && (!providerCourses || providerCourses.has(course.id)))
+        .map((course) => course.id)
     );
-    for (const course of core) visible.add(course.id);
-
-    /**
-     * One hop *upstream* as context, dimmed rather than hidden: what the
-     * domain's own courses need in order to be started.
-     *
-     * Dependants are deliberately not included. Robotics needs linear algebra,
-     * but that says nothing about mathematics — pulling it in put an
-     * engineering course into the maths view, four columns from anything that
-     * referred to it. The arrow only points one way for this purpose: a filter
-     * on a field answers "what do I need for this", not "who else uses it".
-     *
-     * `related` is out for the same reason — it is a lateral link, not
-     * something the course rests on.
-     */
-    for (const course of core) {
-      for (const neighbour of [...course.deps, ...course.soft]) {
-        if (!visible.has(neighbour) && withinCap.has(neighbour)) dimmed.add(neighbour);
-      }
-    }
-
-    return { visible, dimmed };
   }, [catalog, domainFilter, providerFilter, maxStage]);
 }

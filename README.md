@@ -48,6 +48,11 @@ rest, which answers the same question without a web of arrows over 200 cards.
 Cards of one field stay together vertically, so switching on a domain filter
 lights a stripe rather than a spray.
 
+A domain filter shows that field and nothing else — not even a prerequisite from
+elsewhere, which as a faded card several levels away read as part of the field
+you asked for. Instead, selecting a course puts its **direct prerequisites** in a
+band above the columns, whichever field they come from, one click each.
+
 Each card carries the stage a person normally meets that course at — «9 класс»,
 «2 курс», «аспирантура» — which is the question people arrive with, and not the
 same thing as the column number. Selecting a course opens its panel; the × in

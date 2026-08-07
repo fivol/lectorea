@@ -3,7 +3,7 @@ import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useReducedMotion } from '@/lib/hooks';
-import { isLit, useHighlight } from '@/lib/highlight';
+import { useHighlight } from '@/lib/highlight';
 import { useUi } from '@/store/ui';
 import { useProfile } from '@/store/profile';
 import CourseCard from './CourseCard';
@@ -11,7 +11,6 @@ import CourseCard from './CourseCard';
 type Props = {
   courses: BuiltCourse[];
   visible: Set<string>;
-  dimmed: Set<string>;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDeselect: () => void;
@@ -38,7 +37,6 @@ type Props = {
 export default function ColumnsView({
   courses,
   visible,
-  dimmed,
   selectedId,
   onSelect,
   onDeselect,
@@ -63,9 +61,7 @@ export default function ColumnsView({
    * spread over forty empty slots reads as a broken page.
    */
   const columns = useMemo(() => {
-    const shown = courses.filter(
-      (course) => visible.has(course.id) || dimmed.has(course.id)
-    );
+    const shown = courses.filter((course) => visible.has(course.id));
     const buckets = new Map<number, BuiltCourse[]>();
     for (const course of shown) {
       buckets.set(course.level, [...(buckets.get(course.level) ?? []), course]);
@@ -76,7 +72,7 @@ export default function ColumnsView({
         level,
         courses: list.sort((a, b) => a.row - b.row),
       }));
-  }, [courses, visible, dimmed]);
+  }, [courses, visible]);
 
   const total = columns.reduce((sum, column) => sum + column.courses.length, 0);
 
@@ -151,14 +147,6 @@ export default function ColumnsView({
                       selected={course.id === selectedId}
                       status={profile.courses[course.id]?.status ?? null}
                       favorite={profile.courses[course.id]?.favorite ?? false}
-                      /**
-                       * A prerequisite outside the domain filter is dimmed as
-                       * context — but once it is part of the chain being shown,
-                       * dimming it a second time is what made a maths course
-                       * permanently pale under a physics filter. Being in the
-                       * chain wins.
-                       */
-                      dimmedByFilter={dimmed.has(course.id) && !(highlight.active && isLit(emphasis))}
                       onSelect={onSelect}
                       onHover={setHovered}
                     />
