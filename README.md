@@ -210,9 +210,9 @@ pnpm data:seed-dev       # synthetic playlists for development
 pnpm course:new          # scaffold a course across its three files
 pnpm map:preview         # the map generator into .map-poc/, with a metrics report
 pnpm map:sandbox         # the same generator with sliders, one HTML file
-pnpm map:import <svg>    # a sandbox export → public/map.svg
 pnpm tiles:view          # the hex tile collection as one HTML page
 pnpm tiles:build         # generate and export that collection into .tiles/
+pnpm map:import <svg>    # a sandbox export → public/map.svg
 
 pnpm data:discover       # channels → playlists, monthly
 pnpm data:refresh        # metadata → videos → liveness, nightly

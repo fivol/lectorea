@@ -32,22 +32,35 @@ import {
  *
  * It draws from the same registry the exporter reads, so nothing here is a
  * picture of the collection — it *is* the collection, at whatever size the
- * slider says. Which is also the claim being checked: a tile that only works at
- * one size is a bug, and the slider is how it shows up.
+ * slider says. Two things it exists to check: that a piece still reads at the
+ * size the real map uses, and that land relief survives being drawn over any
+ * territory colour, which is what the backdrop swatches are for.
  */
 
 /* ─────────────────────────────────  State  ─────────────────────────────── */
 
-type Background = 'paper' | 'land' | 'water' | 'ink';
+/** The map's own hex radius — `defaultConfig.hexR` in `shared/mapgen.ts`. */
+const MAP_HEX = 16;
+
+type Backdrop = { id: string; label: string; colour: string };
+
+/** Territory hues taken off the real map, plus the neutral two. */
+const BACKDROPS: Backdrop[] = [
+  { id: 'green', label: 'Область · зелёная', colour: '#7ece9d' },
+  { id: 'violet', label: 'Область · синяя', colour: '#8b8ce2' },
+  { id: 'pink', label: 'Область · розовая', colour: '#e07cb9' },
+  { id: 'teal', label: 'Область · бирюзовая', colour: '#7fd7cb' },
+  { id: 'paper', label: 'Бумага', colour: '#f6f1e6' },
+  { id: 'ink', label: 'Тёмный', colour: '#1b232b' },
+];
 
 const state = {
-  size: 76,
+  size: 64,
   variant: 0,
   seed: 1,
   grid: false,
   seams: false,
-  under: true,
-  background: 'paper' as Background,
+  backdrop: BACKDROPS[0],
   groups: new Set<TileGroup>(GROUPS.map((group) => group.id)),
 };
 
@@ -77,38 +90,45 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-/** An SVG document dropped straight into the page. */
-function figure(markup: string, className = 'plate'): HTMLElement {
+/** An SVG document dropped straight into the page, on the chosen backdrop. */
+function figure(markup: string, over: 'land' | 'water', className = 'plate'): HTMLElement {
   const box = el('div', { class: className });
+  // Water carries its own colour; land shows whatever the territory is.
+  box.style.background = over === 'water' ? '#2b3a44' : state.backdrop.colour;
   box.innerHTML = markup;
   return box;
 }
 
 const SEAM_COLOUR: Record<Meets, string> = {
-  water: '#3aa0d8',
-  land: '#8fbf5a',
-  shore: '#e0a34a',
-  channel: '#4fc3d9',
+  water: '#2f9bd6',
+  land: '#77c04f',
+  channel: '#3fc8e0',
   ridge: '#b07be0',
-  canopy: '#4fbf85',
+  scarp: '#e0a34a',
+  current: '#4fd6c0',
 };
 
 const SEAM_LABEL: Record<Meets, string> = {
   water: 'вода',
   land: 'суша',
-  shore: 'берег',
   channel: 'русло',
   ridge: 'гребень',
-  canopy: 'лес',
+  scarp: 'обрыв',
+  current: 'течение',
 };
 
 /** The seams of a placed tile, drawn along the hex edges they occupy. */
-function seamMarkup(tile: Tile, placement: Omit<Placement, 'tile'>, at: { x: number; y: number }, size: number): string {
+function seamMarkup(
+  tile: Tile,
+  placement: Omit<Placement, 'tile'>,
+  at: { x: number; y: number },
+  size: number
+): string {
   if (!state.seams) return '';
   return placedSeams(tile, placement)
     .flatMap((seam) =>
-      seam.edges.map((edge) => {
-        const [a, b] = edgeCorners(edge, size * 0.88);
+      seam.edges.map((index) => {
+        const [a, b] = edgeCorners(index, size * 0.88);
         return (
           `<path d="M${round(at.x + a.x)} ${round(at.y + a.y)}L${round(at.x + b.x)} ${round(at.y + b.y)}" ` +
           `stroke="${SEAM_COLOUR[seam.meets]}" stroke-width="${round(size * 0.07)}" ` +
@@ -121,16 +141,17 @@ function seamMarkup(tile: Tile, placement: Omit<Placement, 'tile'>, at: { x: num
 
 /* ────────────────────────────────  Gallery  ────────────────────────────── */
 
-/** One tile in a hex, on the ground it is meant to be laid on. */
+/** One tile in a hex, on the sea if it belongs there and on nothing if not. */
 function tilePlate(tile: Tile, variant: number, size: number): string {
-  const under = state.under && tile.on ? findTile(tile.on) : undefined;
   const width = (HEX_W + tile.bleed * 2) * size;
   const height = (2 + tile.bleed * 2) * size;
   const at = { x: 0, y: 0 };
+  const sea =
+    tile.over === 'water' && tile.layer !== 'plate' ? findTile('water-plain') : undefined;
 
   const draw = options();
   const layers = [
-    under ? placementMarkup(under, { variant }, at, size, draw) : '',
+    sea ? placementMarkup(sea, { variant }, at, size, draw) : '',
     placementMarkup(tile, { variant }, at, size, draw),
     state.grid ? gridMarkup([{ q: 0, r: 0, stack: [] }], size) : '',
     seamMarkup(tile, { variant }, at, size),
@@ -147,7 +168,7 @@ function tilePlate(tile: Tile, variant: number, size: number): string {
 
 const KIND_LABEL = { solo: 'самостоятельная', part: 'часть' } as const;
 const LAYER_LABEL = {
-  ground: 'основа',
+  plate: 'заливка',
   surface: 'поверхность',
   relief: 'рельеф',
   overlay: 'метка',
@@ -159,8 +180,8 @@ function tileCard(tile: Tile): HTMLElement {
   const badges = el('div', { class: 'badges' }, [
     el('span', { class: `badge ${tile.kind}`, textContent: KIND_LABEL[tile.kind] }),
     el('span', { class: 'badge', textContent: LAYER_LABEL[tile.layer] }),
+    el('span', { class: 'badge', textContent: tile.over === 'water' ? 'на воде' : 'на суше' }),
     ...(tile.upright ? [el('span', { class: 'badge warn', textContent: 'не вращать' })] : []),
-    ...(tile.clip ? [] : [el('span', { class: 'badge', textContent: 'за клетку' })]),
   ]);
 
   const facts: Array<Node | string> = [el('p', { class: 'use', textContent: tile.use })];
@@ -169,7 +190,9 @@ function tileCard(tile: Tile): HTMLElement {
     facts.push(
       el('p', { class: 'seam' }, [
         el('i', { style: `background:${SEAM_COLOUR[seam.meets]}` }),
-        `${SEAM_LABEL[seam.meets]} · грани ${seam.edges.map((edge) => `${edge} ${EDGE_NAMES[edge]}`).join(', ')}`,
+        `${SEAM_LABEL[seam.meets]} · грани ${seam.edges
+          .map((index) => `${index} ${EDGE_NAMES[index]}`)
+          .join(', ')}`,
       ])
     );
   }
@@ -180,17 +203,16 @@ function tileCard(tile: Tile): HTMLElement {
     );
   }
 
-  if (tile.on) {
-    const ground = findTile(tile.on);
-    facts.push(el('p', { class: 'opt', textContent: `кладётся на: ${ground?.title ?? tile.on}` }));
-  }
-
   const save = el('button', { class: 'save', title: 'Скачать SVG', textContent: '⤓' });
   save.addEventListener('click', () =>
-    download(`${tile.id}-${variant}.svg`, tileSvg(tile, { variant }, { seed: seedOf(), size: 160 }), 'image/svg+xml')
+    download(
+      `${tile.id}-${variant}.svg`,
+      tileSvg(tile, { variant }, { seed: seedOf(), size: 160 }),
+      'image/svg+xml'
+    )
   );
 
-  const plate = figure(tilePlate(tile, variant, state.size));
+  const plate = figure(tilePlate(tile, variant, state.size), tile.over);
   plate.addEventListener('click', () => {
     state.variant = (state.variant + 1) % 6;
     paint();
@@ -211,74 +233,81 @@ function tileCard(tile: Tile): HTMLElement {
 
 /* ────────────────────────────────  Objects  ────────────────────────────── */
 
-function assemblyCard(assembly: Assembly): HTMLElement {
-  const size = state.size;
+function assemblySvgFor(assembly: Assembly, size: number, overlays: boolean): string {
   const box = assemblyBox(assembly, findTile, size);
-  const overlay =
-    (state.grid ? gridMarkup(assembly.cells, size) : '') +
-    (state.seams
-      ? assembly.cells
-          .flatMap((cell) => {
-            const centre = centreOf(cell.q, cell.r, size);
-            return cell.stack.map((placement) => {
-              const tile = findTile(placement.tile);
-              return tile ? seamMarkup(tile, placement, centre, size) : '';
-            });
-          })
-          .join('')
-      : '');
-
   const draw = options();
-  const markup =
+  const overlay = !overlays
+    ? ''
+    : (state.grid ? gridMarkup(assembly.cells, size) : '') +
+      (state.seams
+        ? assembly.cells
+            .flatMap((cell) => {
+              const centre = centreOf(cell.q, cell.r, size);
+              return cell.stack.map((placement) => {
+                const tile = findTile(placement.tile);
+                return tile ? seamMarkup(tile, placement, centre, size) : '';
+              });
+            })
+            .join('')
+        : '');
+
+  return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${round(box.x)} ${round(box.y)} ` +
     `${round(box.width)} ${round(box.height)}" width="${round(box.width)}" height="${round(box.height)}">` +
     hexClipDefs(draw.clipId) +
     assemblyMarkup(assembly, findTile, size, draw) +
     overlay +
-    `</svg>`;
+    `</svg>`
+  );
+}
 
+function assemblyCard(assembly: Assembly): HTMLElement {
   // The recipe, in the same words it is stored in — the point of the section is
   // that the object is a list of cells, not a picture.
   const recipe = el('table', { class: 'recipe' }, [
-    el('tbody', {}, assembly.cells.map((cell) =>
-      el('tr', {}, [
-        el('td', { class: 'axial', textContent: `${cell.q},${cell.r}` }),
-        el(
-          'td',
-          {},
-          sortStack(cell.stack, findTile).map((placement) => {
-            const bits = [findTile(placement.tile)?.title ?? placement.tile];
-            if (placement.rotate) bits.push(`↻${placement.rotate}`);
-            if (placement.flip) bits.push('⇋');
-            if (placement.opts) bits.push(Object.values(placement.opts).join('/'));
-            return el('span', { class: 'chip-mini', textContent: bits.join(' ') });
-          })
-        ),
-      ])
-    )),
+    el(
+      'tbody',
+      {},
+      assembly.cells.map((cell) =>
+        el('tr', {}, [
+          el('td', { class: 'axial', textContent: `${cell.q},${cell.r}` }),
+          el(
+            'td',
+            {},
+            sortStack(cell.stack, findTile).map((placement) => {
+              const bits = [findTile(placement.tile)?.title ?? placement.tile];
+              if (placement.rotate) bits.push(`↻${placement.rotate}`);
+              if (placement.flip) bits.push('⇋');
+              if (placement.opts) bits.push(Object.values(placement.opts).join('/'));
+              return el('span', { class: 'chip-mini', textContent: bits.join(' ') });
+            })
+          ),
+        ])
+      )
+    ),
   ]);
 
   const save = el('button', { class: 'save', title: 'Скачать SVG', textContent: '⤓' });
-  save.addEventListener('click', () => {
-    const big = assemblyBox(assembly, findTile, 96);
-    download(
-      `${assembly.id}.svg`,
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${round(big.x)} ${round(big.y)} ` +
-        `${round(big.width)} ${round(big.height)}">${hexClipDefs()}` +
-        assemblyMarkup(assembly, findTile, 96, { seed: seedOf() }) +
-        `</svg>`,
-      'image/svg+xml'
-    );
-  });
+  save.addEventListener('click', () =>
+    download(`${assembly.id}.svg`, assemblySvgFor(assembly, 96, false), 'image/svg+xml')
+  );
+
+  // The second picture is the argument: at the map's own hex radius a piece has
+  // about 30 px to say what it is, and anything finer than that is mud.
+  const actual = el('figure', { class: 'actual' }, [
+    figure(assemblySvgFor(assembly, MAP_HEX, false), assembly.over, 'plate small'),
+    el('figcaption', { textContent: `как на карте · ${MAP_HEX} px` }),
+  ]);
 
   return el('article', { class: 'card wide' }, [
-    figure(markup, 'plate stage-plate'),
+    figure(assemblySvgFor(assembly, state.size, true), assembly.over, 'plate stage-plate'),
     el('header', {}, [
       el('h3', { textContent: assembly.title }),
       el('code', { textContent: `${assembly.cells.length} кл.` }),
       save,
     ]),
     el('p', { class: 'use', textContent: assembly.note }),
+    actual,
     el('details', {}, [el('summary', { textContent: 'Из чего собрано' }), recipe]),
   ]);
 }
@@ -290,15 +319,14 @@ function assemblyCard(assembly: Assembly): HTMLElement {
  * in the collection draws a finished cell, they are stacked into one.
  */
 const STACK_DEMO: Placement[] = [
-  { tile: 'grass-plain' },
-  { tile: 'grass-tufts' },
-  { tile: 'flowers' },
-  { tile: 'hill' },
-  { tile: 'tree' },
+  { tile: 'water-plain' },
+  { tile: 'shallows' },
+  { tile: 'reef' },
+  { tile: 'skerries' },
 ];
 
 function stackStrip(): HTMLElement {
-  const size = Math.min(state.size, 96);
+  const size = Math.min(state.size, 88);
   const steps = STACK_DEMO.map((_, index) => {
     const stack = STACK_DEMO.slice(0, index + 1);
     const bleed = Math.max(0, ...stack.map((placement) => findTile(placement.tile)?.bleed ?? 0));
@@ -313,7 +341,7 @@ function stackStrip(): HTMLElement {
       `</svg>`;
     const tile = findTile(STACK_DEMO[index].tile);
     return el('figure', { class: 'step' }, [
-      figure(markup),
+      figure(markup, 'water'),
       el('figcaption', { textContent: `+ ${tile?.title ?? STACK_DEMO[index].tile}` }),
     ]);
   });
@@ -331,8 +359,8 @@ function buildPanel(): HTMLElement {
       el('h1', { textContent: 'Коллекция плиток' }),
       el('p', {
         textContent:
-          `${counts.tiles} плиток · ${counts.variants} вариантов · ${counts.assemblies} объекта. ` +
-          'Всё нарисовано в единичном гексагоне и масштабируется, а не подбирается по размеру.',
+          `${counts.tiles} плиток · ${counts.variants} вариантов · ${counts.assemblies} объектов. ` +
+          'Суша не закрашивается: рельеф — это свет и тень поверх цвета области. Цвет есть только у воды.',
       }),
     ])
   );
@@ -341,23 +369,62 @@ function buildPanel(): HTMLElement {
     el('h2', { textContent: 'Размер' }),
     el('p', {
       class: 'note',
-      textContent: 'Один и тот же файл на любую клетку — толщина линий едет вместе с ним.',
+      textContent: `Один файл на любую клетку. На карте радиус гекса ${MAP_HEX} px — проверять надо там.`,
     }),
   ]);
   const sizeOut = el('output', { textContent: `${state.size} px` });
-  const sizeInput = el('input', { type: 'range', min: '20', max: '160', step: '2', value: String(state.size) });
+  const sizeInput = el('input', {
+    type: 'range',
+    min: '12',
+    max: '140',
+    step: '2',
+    value: String(state.size),
+  });
   sizeInput.addEventListener('input', () => {
     state.size = Number(sizeInput.value);
     sizeOut.textContent = `${state.size} px`;
+    schedule();
+  });
+  const asMap = el('button', { textContent: `Как на карте · ${MAP_HEX} px` });
+  asMap.addEventListener('click', () => {
+    state.size = MAP_HEX;
+    sizeInput.value = String(MAP_HEX);
+    sizeOut.textContent = `${MAP_HEX} px`;
     schedule();
   });
   sizes.append(
     el('div', { class: 'knob' }, [
       el('div', { class: 'knob-head' }, [el('label', { textContent: 'Радиус гекса' }), sizeOut]),
       sizeInput,
-    ])
+    ]),
+    el('div', { class: 'buttons' }, [asMap])
   );
   panel.append(sizes);
+
+  const backdrop = el('section', {}, [
+    el('h2', { textContent: 'Под плиткой' }),
+    el('p', {
+      class: 'note',
+      textContent: 'Цвет области, поверх которой всё рисуется. Рельеф обязан читаться на любом.',
+    }),
+  ]);
+  const swatches = el('div', { class: 'swatches' });
+  for (const option of BACKDROPS) {
+    const button = el('button', {
+      class: `swatch${option.id === state.backdrop.id ? ' on' : ''}`,
+      style: `background:${option.colour}`,
+      title: option.label,
+    });
+    button.addEventListener('click', () => {
+      state.backdrop = option;
+      for (const other of Array.from(swatches.children)) other.classList.remove('on');
+      button.classList.add('on');
+      schedule();
+    });
+    swatches.append(button);
+  }
+  backdrop.append(swatches);
+  panel.append(backdrop);
 
   const rolls = el('section', {}, [
     el('h2', { textContent: 'Розыгрыш' }),
@@ -366,43 +433,25 @@ function buildPanel(): HTMLElement {
       textContent: 'Вариант — соседняя картинка той же плитки. Сид пересоздаёт всю коллекцию.',
     }),
   ]);
-  rolls.append(stepper('Вариант', () => state.variant, (value) => (state.variant = ((value % 6) + 6) % 6)));
   rolls.append(
+    stepper('Вариант', () => state.variant, (value) => (state.variant = ((value % 6) + 6) % 6)),
     stepper('Сид', () => state.seed, (value) => (state.seed = Math.max(1, Math.min(9, value))))
   );
   panel.append(rolls);
 
   const show = el('section', {}, [el('h2', { textContent: 'Показывать' })]);
   show.append(
-    toggle('Подложку', () => state.under, (value) => (state.under = value)),
     toggle('Сетку гексов', () => state.grid, (value) => (state.grid = value)),
-    toggle('Швы', () => state.seams, (value) => (state.seams = value))
-  );
-  const legend = el('div', { class: 'legend' },
-    (Object.keys(SEAM_LABEL) as Meets[]).map((meets) =>
-      el('span', {}, [el('i', { style: `background:${SEAM_COLOUR[meets]}` }), SEAM_LABEL[meets]])
+    toggle('Швы', () => state.seams, (value) => (state.seams = value)),
+    el(
+      'div',
+      { class: 'legend' },
+      (Object.keys(SEAM_LABEL) as Meets[]).map((meets) =>
+        el('span', {}, [el('i', { style: `background:${SEAM_COLOUR[meets]}` }), SEAM_LABEL[meets]])
+      )
     )
   );
-  show.append(legend);
   panel.append(show);
-
-  const backdrop = el('section', {}, [el('h2', { textContent: 'Фон' })]);
-  const select = el('select');
-  for (const [value, label] of [
-    ['paper', 'Бумага'],
-    ['land', 'Суша'],
-    ['water', 'Вода'],
-    ['ink', 'Тёмный'],
-  ] as Array<[Background, string]>) {
-    select.append(el('option', { value, textContent: label }));
-  }
-  select.value = state.background;
-  select.addEventListener('change', () => {
-    state.background = select.value as Background;
-    document.body.dataset.bg = state.background;
-  });
-  backdrop.append(select);
-  panel.append(backdrop);
 
   const filters = el('section', {}, [
     el('h2', { textContent: 'Группы' }),
@@ -429,20 +478,24 @@ function buildPanel(): HTMLElement {
       textContent: 'То же, что пишет pnpm tiles:build — генератор один на оба пути.',
     }),
   ]);
-  const buttons = el('div', { class: 'buttons' });
-  buttons.append(
-    action('collection.json', () =>
-      download(
-        'collection.json',
-        JSON.stringify(buildManifest({ seed: seedOf(), previewSize: state.size }), null, 2),
-        'application/json'
-      )
-    ),
-    action('sprite.svg', () =>
-      download('sprite.svg', spriteSvg(visibleTiles(), { seed: seedOf(), size: 96 }), 'image/svg+xml')
-    )
+  exports.append(
+    el('div', { class: 'buttons' }, [
+      action('collection.json', () =>
+        download(
+          'collection.json',
+          JSON.stringify(buildManifest({ seed: seedOf(), previewSize: state.size }), null, 2),
+          'application/json'
+        )
+      ),
+      action('sprite.svg', () =>
+        download(
+          'sprite.svg',
+          spriteSvg(visibleTiles(), { seed: seedOf(), size: 96 }),
+          'image/svg+xml'
+        )
+      ),
+    ])
   );
-  exports.append(buttons);
   panel.append(exports);
 
   return panel;
@@ -518,7 +571,7 @@ function paint(): void {
   stage.append(
     section(
       'Стопка',
-      'На одну клетку кладётся несколько плиток. Порядок задаёт слой: основа, поверхность, рельеф, метка.',
+      'На одну клетку кладётся несколько плиток. Порядок задаёт слой: заливка, поверхность, рельеф, метка.',
       stackStrip()
     )
   );
@@ -527,7 +580,9 @@ function paint(): void {
     if (!state.groups.has(group.id)) continue;
     const members = tiles.filter((tile) => tile.group === group.id);
     if (!members.length) continue;
-    stage.append(section(group.title, group.note, el('div', { class: 'grid' }, members.map(tileCard))));
+    stage.append(
+      section(group.title, group.note, el('div', { class: 'grid' }, members.map(tileCard)))
+    );
   }
 }
 
@@ -539,5 +594,4 @@ function schedule(): void {
 
 const app = document.getElementById('app')!;
 app.append(buildPanel(), stage);
-document.body.dataset.bg = state.background;
 paint();

@@ -3,12 +3,12 @@
  *
  * Each one is a plain list of cells, so it survives the trip through JSON — a
  * consumer holding the tiles and this recipe can rebuild the object without
- * knowing anything about how any of it was drawn. That is the point of storing
- * the assembly rather than a finished picture of it.
+ * knowing anything about how it was drawn. That is the point of storing the
+ * assembly rather than a finished picture of it.
  *
- * The two rings are computed rather than typed out, because the arithmetic is
- * the explanation: a ring cell only has to turn its water arc towards — or away
- * from — the middle, and the same coast piece then serves a lake and an island.
+ * The island ring is computed rather than typed out, because the arithmetic is
+ * the explanation: a ring cell only has to turn its water arc away from the
+ * middle, and one coast piece then covers the whole outline.
  */
 
 import { DIRECTIONS, rotateEdge } from '../hex.js';
@@ -35,114 +35,122 @@ export const assemblies: Assembly[] = [
   {
     id: 'mountain-range',
     title: 'Хребет',
+    over: 'land',
     note:
       'Пять клеток в ряд. Куски стыкуются по гребню на середине западной и восточной грани, ' +
       'поэтому ряд можно удлинять склонами сколько угодно. Западный конец — то же окончание, ' +
-      'что и восточный, только отражённое: рельефу нельзя вращаться, у него есть верх.',
+      'что и восточный, только отражённое: рельефу нельзя вращаться, у него есть верх. ' +
+      'Ни одна клетка не закрашена — под хребтом виден цвет области.',
     cells: [
-      at(-2, 0, 'grass-plain', 'pebbles', { tile: 'mountain-foot', flip: true }, 'pines'),
-      at(-1, 0, 'rock-plain', { tile: 'mountain-slope', variant: 1 }),
-      at(0, 0, 'rock-plain', { tile: 'mountain-peak', opts: { cap: 'snow' } }),
-      at(1, 0, 'rock-plain', { tile: 'mountain-slope', flip: true, variant: 2 }),
-      at(2, 0, 'grass-plain', 'pebbles', 'mountain-foot'),
+      at(-2, 0, { tile: 'mountain-foot', flip: true }),
+      at(-1, 0, { tile: 'mountain-slope', variant: 1 }),
+      at(0, 0, { tile: 'mountain-peak', opts: { cap: 'snow' } }),
+      at(1, 0, { tile: 'mountain-slope', flip: true, variant: 2 }),
+      at(2, 0, 'mountain-foot'),
     ],
   },
 
   {
-    id: 'lake',
-    title: 'Озеро',
+    id: 'highlands',
+    title: 'Нагорье',
+    over: 'land',
     note:
-      'Гладь в середине, шесть «Поворотов берега» вокруг. Каждый повёрнут так, чтобы вода ' +
-      'смотрела внутрь, и линия берега сходится в общих углах — отдельной плитки на озеро не нужно.',
+      'Внутренность материка без единой капли воды: плато с обрывом, каньон вдоль него, ' +
+      'холмы по краям и вулкан как заметная точка. Плато и каньон стыкуются по востоку ' +
+      'и западу — из них набирается полоса любой длины.',
     cells: [
-      at(0, 0, { tile: 'lake-water', opts: { water: 'lake' } }),
-      ...ring(
-        (direction) => ({
-          tile: 'coast-corner',
-          // The water faces back the way we came.
-          rotate: turnTo(1, rotateEdge(direction, 3)),
-          opts: { water: 'lake', land: 'grass' },
-          variant: direction,
-        }),
-        // Reeds only where the water ends up at the bottom of the cell.
-        { 4: ['reeds'], 5: ['reeds'] }
-      ),
-    ],
-  },
-
-  {
-    id: 'island',
-    title: 'Остров',
-    note:
-      'То же кольцо, вывернутое наизнанку: вода смотрит наружу, поэтому берётся «Мыс» — ' +
-      'три водные грани из шести. Внутри остаётся одна клетка суши, на которой и стоит всё живое.',
-    cells: [
-      at(0, 0, 'grass-plain', 'grass-tufts', 'hill', 'tree'),
-      ...ring(
-        (direction) => ({
-          tile: 'coast-cape',
-          // Canonical arc is centred on edge 2; the outward arc on `direction`.
-          rotate: turnTo(2, direction),
-          opts: { water: 'sea', land: 'grass' },
-          variant: direction,
-        }),
-        { 1: ['reeds'], 2: ['pebbles'] }
-      ),
+      at(-1, 0, 'hills'),
+      at(0, 0, 'plateau'),
+      at(1, 0, { tile: 'plateau', variant: 2 }),
+      at(0, 1, 'canyon'),
+      at(1, 1, { tile: 'canyon', variant: 1 }),
+      at(2, 1, { tile: 'hills', variant: 3 }),
+      at(1, -1, 'volcano'),
+      at(2, -1, 'crags'),
     ],
   },
 
   {
     id: 'river-run',
     title: 'Река до моря',
+    over: 'land',
     note:
-      'Исток в камнях, два прямых участка, излучина и устье. Русло выходит из клетки строго ' +
-      'через середину грани и одной ширины у всех кусков — поэтому повороты набираются из двух ' +
-      'плиток, а не из отдельной картинки на каждый изгиб.',
+      'Исток в горах, прямой участок, излучина и устье. Русло выходит из клетки строго ' +
+      'через середину грани и одной ширины у всех кусков — поэтому повороты набираются ' +
+      'из двух плиток, а не из отдельной картинки на каждый изгиб.',
     cells: [
-      at(0, 0, 'rock-plain', 'pebbles', 'river-spring'),
-      at(1, 0, 'grass-plain', 'grass-tufts', 'river-straight'),
-      at(2, 0, 'grass-plain', { tile: 'river-bend', rotate: 1 }),
-      at(2, 1, 'grass-plain', 'grass-tufts', { tile: 'river-straight', rotate: 1 }),
-      at(2, 2, { tile: 'river-mouth', rotate: 1, opts: { water: 'sea', land: 'grass' } }, 'reeds'),
-      at(2, 3, 'sea-plain', 'ripples'),
-      at(1, 3, 'sea-plain', 'swell'),
+      at(0, 0, 'crags', 'river-spring'),
+      at(1, 0, 'river-straight'),
+      at(2, 0, { tile: 'river-bend', rotate: 1 }),
+      at(2, 1, { tile: 'river-straight', rotate: 1 }),
+      at(2, 2, { tile: 'river-mouth', rotate: 1 }),
+      at(2, 3, 'water-plain', 'swell'),
+      at(1, 3, 'water-plain', 'shallows'),
+    ],
+  },
+
+  {
+    id: 'island',
+    title: 'Остров',
+    over: 'land',
+    note:
+      'Шесть «Мысов» вокруг одной клетки суши: каждый повёрнут так, чтобы вода смотрела ' +
+      'наружу, и линия берега сходится в общих углах. Отдельной плитки на остров не нужно — ' +
+      'и середина остаётся цветом области, на ней стоит рельеф.',
+    cells: [
+      at(0, 0, 'hills'),
+      ...ring(
+        (direction) => ({
+          tile: 'coast-cape',
+          // Canonical arc is centred on edge 2; the outward arc on `direction`.
+          rotate: turnTo(2, direction),
+          variant: direction,
+        }),
+        { 1: ['skerries'], 4: ['shallows'] }
+      ),
     ],
   },
 
   {
     id: 'bay',
     title: 'Залив',
+    over: 'land',
     note:
-      'Ряд берега с двумя бухтами подряд. Все четыре клетки — один и тот же шов, вода за двумя ' +
-      'южными гранями; разница только в том, куда выгнута линия.',
+      'Ряд берега: пляж, две бухты подряд и обрыв там, где к морю выходят скалы. Все клетки — ' +
+      'один и тот же шов, вода за двумя южными гранями; разница только в том, куда выгнута ' +
+      'линия и чем она обрывается.',
     cells: [
-      at(0, 0, { tile: 'coast-shore', opts: { land: 'grass' } }, 'pebbles'),
-      at(1, 0, { tile: 'coast-cove', opts: { land: 'grass' } }, 'reeds'),
-      at(2, 0, { tile: 'coast-cove', opts: { land: 'grass' }, variant: 2 }, 'reeds'),
-      at(3, 0, { tile: 'coast-shore', opts: { land: 'grass' }, variant: 3 }),
-      at(-1, 1, 'sea-plain', 'swell'),
-      at(0, 1, 'sea-plain', 'ripples'),
-      at(1, 1, 'sea-plain', 'ripples'),
-      at(2, 1, 'sea-plain', 'swell'),
-      at(3, 1, 'sea-plain', 'ripples'),
-      at(0, -1, 'grass-plain', 'forest-dense'),
-      at(1, -1, 'grass-plain', 'grass-tufts', 'forest-grove'),
-      at(2, -1, 'grass-plain', 'flowers'),
-      at(3, -1, 'grass-plain', 'grass-tufts', 'hill'),
+      at(0, 0, 'coast-shore'),
+      at(1, 0, 'coast-cove'),
+      at(2, 0, { tile: 'coast-cove', variant: 2 }),
+      at(3, 0, 'coast-cliff'),
+      at(3, -1, 'crags'),
+      at(2, -1, { tile: 'hills', variant: 1 }),
+      at(-1, 1, 'water-plain', 'swell'),
+      at(0, 1, 'water-plain', 'shallows'),
+      at(1, 1, 'water-plain', 'shallows', 'reef'),
+      at(2, 1, 'water-plain', { tile: 'swell', variant: 3 }),
+      at(3, 1, 'water-plain', 'skerries'),
     ],
   },
 
   {
-    id: 'grove',
-    title: 'Опушка',
+    id: 'open-sea',
+    title: 'Открытое море',
+    over: 'water',
     note:
-      'Ни одного шва: четыре клетки, собранные только наложением. Земля, поверх неё узор, ' +
-      'поверх узора лес — так из шести плиток получается вид, которого ни одна из них не содержит.',
+      'То, из чего состоит бо́льшая часть карты островов. Течение тянется через клетки по ' +
+      'тем же правилам, что русло реки, и обходит водоворот; глубина и отмель дают дну ' +
+      'форму, риф и островки — опасность.',
     cells: [
-      at(0, 0, 'soil-plain', 'furrows', 'grass-tufts'),
-      at(1, 0, 'grass-plain', 'forest-dense'),
-      at(0, 1, 'grass-plain', 'grass-tufts', 'forest-grove'),
-      at(1, 1, 'grass-plain', 'flowers', 'tree'),
+      at(0, 0, 'water-plain', 'deep', { tile: 'current-straight' }),
+      at(1, 0, 'water-plain', { tile: 'current-bend', rotate: 1 }),
+      at(1, 1, 'water-plain', { tile: 'current-straight', rotate: 1 }),
+      at(2, 0, 'water-plain', 'whirlpool'),
+      at(0, 1, 'water-plain', 'shallows', 'reef'),
+      at(-1, 1, 'water-plain', 'skerries'),
+      at(0, -1, 'water-plain', 'swell'),
+      at(1, -1, 'water-plain', 'ice-floes'),
     ],
   },
 ];

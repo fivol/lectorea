@@ -29,7 +29,6 @@ const CSS = String.raw`
   --warn: #a4632a;
   --field: #f2f5f9;
   --radius: 10px;
-  --plate: #f6f1e6;
 }
 :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
@@ -53,9 +52,6 @@ body {
   color: var(--ink);
   font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-body[data-bg="land"]  { --plate: #8ab765; }
-body[data-bg="water"] { --plate: #4c8fb4; }
-body[data-bg="ink"]   { --plate: #1b232b; }
 
 #app {
   display: grid;
@@ -144,7 +140,6 @@ select { width: 100%; }
 .card .save { margin-left: auto; padding: 2px 8px; line-height: 1.2; }
 
 .plate {
-  background: var(--plate);
   border-radius: 8px;
   overflow: hidden;
   display: grid;
@@ -154,6 +149,21 @@ select { width: 100%; }
 }
 .plate svg { display: block; max-width: 100%; height: auto; }
 .stage-plate { cursor: default; }
+.plate.small { padding: 4px; }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.swatch {
+  width: 30px;
+  height: 24px;
+  padding: 0;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12);
+}
+.swatch.on { border-color: var(--accent); }
+
+.actual { margin: 10px 0 0; display: flex; align-items: center; gap: 10px; }
+.actual figcaption { font-size: 11.5px; color: var(--ink-faint); }
 
 .badges { display: flex; flex-wrap: wrap; gap: 5px; }
 .badge {

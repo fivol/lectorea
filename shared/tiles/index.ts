@@ -11,30 +11,21 @@
 
 import { corner, DIRECTIONS, EDGE_NAMES, hexPath, HEX_H, HEX_R, HEX_W, round } from './hex.js';
 import { terrain, type Palette } from './ink.js';
-import { groundTiles } from './atlas/ground.js';
-import { surfaceTiles } from './atlas/surface.js';
-import { coastTiles } from './atlas/coast.js';
 import { reliefTiles } from './atlas/relief.js';
+import { coastTiles } from './atlas/coast.js';
 import { hydroTiles } from './atlas/hydro.js';
-import { floraTiles } from './atlas/flora.js';
+import { waterTiles } from './atlas/water.js';
 import { assemblies } from './atlas/assemblies.js';
 import { assemblyBox, assemblySvg, SEED_SALT, tileBody } from './render.js';
-import type { Assembly, Tile, TileGroup } from './types.js';
+import type { Assembly, Over, Tile, TileGroup } from './types.js';
 
 export * from './hex.js';
 export * from './types.js';
 export * from './render.js';
-export { terrain, WATERS, GROUNDS, type Palette } from './ink.js';
+export { terrain, WATERS, type Palette } from './ink.js';
 export { assemblies };
 
-export const tiles: Tile[] = [
-  ...groundTiles,
-  ...surfaceTiles,
-  ...coastTiles,
-  ...reliefTiles,
-  ...hydroTiles,
-  ...floraTiles,
-];
+export const tiles: Tile[] = [...reliefTiles, ...coastTiles, ...hydroTiles, ...waterTiles];
 
 const index = new Map(tiles.map((tile) => [tile.id, tile]));
 
@@ -43,27 +34,27 @@ export const findTile = (id: string): Tile | undefined => index.get(id);
 /** Shelf order for the viewer and the exported folders. */
 export const GROUPS: Array<{ id: TileGroup; title: string; note: string }> = [
   {
-    id: 'ground',
-    title: 'Основа',
-    note: 'Непрозрачная заливка клетки. Ровно одна на гексагон.',
-  },
-  {
-    id: 'surface',
-    title: 'Поверхность',
-    note: 'Узор поверх основы. Сколько угодно на клетку.',
+    id: 'relief',
+    title: 'Рельеф',
+    note:
+      'Форма земли: свет и тень поверх цвета области, ничего не закрашивая. ' +
+      'Выходит за клетку вверх и не вращается — только отражается.',
   },
   {
     id: 'coast',
     title: 'Берег',
-    note: 'Шов между сушей и водой. Стыкуется по углам гексагона.',
+    note: 'Шов между сушей и водой — единственное место, где вода на суше. Стыкуется по углам.',
   },
   {
-    id: 'relief',
-    title: 'Рельеф',
-    note: 'Объём. Выходит за клетку вверх, не вращается — только отражается.',
+    id: 'hydro',
+    title: 'Реки',
+    note: 'Русло через клетки и устье. Линия, а не поле: цвет области видно насквозь.',
   },
-  { id: 'hydro', title: 'Вода', note: 'Русло и то, во что оно впадает.' },
-  { id: 'flora', title: 'Растительность', note: 'Что растёт на основе.' },
+  {
+    id: 'water',
+    title: 'Море',
+    note: 'Открытая вода и то, что на ней: отмель, глубина, риф, течение, водоворот.',
+  },
 ];
 
 export const tilesOf = (group: TileGroup): Tile[] => tiles.filter((tile) => tile.group === group);
@@ -80,7 +71,7 @@ export type ManifestTile = {
   tags: string[];
   seams: Array<{ edges: number[]; meets: string }>;
   options: Record<string, { values: string[]; fallback: string; note: string }>;
-  on: string | null;
+  over: Over;
   bleed: number;
   clip: boolean;
   upright: boolean;
@@ -155,7 +146,7 @@ export function buildManifest(options: ManifestOptions = {}): Manifest {
         'Если clip = true, оберните body во внутренний <g clip-path> с hex.clipPath — ' +
         'обрезка обязана считаться уже в масштабированной системе координат.',
       stack:
-        'На одну клетку кладётся несколько плиток. Порядок снизу вверх: ground, surface, ' +
+        'На одну клетку кладётся несколько плиток. Порядок снизу вверх: plate, surface, ' +
         'relief, overlay; внутри слоя — порядок в стопке.',
       transform:
         'Сначала отражение (scale(-1 1)), потом поворот на rotate × 60°. Грани швов ' +
@@ -163,7 +154,9 @@ export function buildManifest(options: ManifestOptions = {}): Manifest {
       seams:
         'seams говорит, какие грани плитка пересекает и что обязано быть с той стороны. ' +
         'kind = part без соседей по швам не читается.',
-      on: 'on — основа, на которую кусок обычно кладут. Совет, а не запрет.',
+      over:
+        'over = land | water. На суше клетка уже покрашена цветом области, поэтому наземные ' +
+        'куски рисуют свет и тень, а не заливку. Заливку имеет только вода.',
     },
     groups: GROUPS,
     tiles: tiles.map((tile) => ({
@@ -181,7 +174,7 @@ export function buildManifest(options: ManifestOptions = {}): Manifest {
           { values: [...option.values], fallback: option.fallback, note: option.note },
         ])
       ),
-      on: tile.on,
+      over: tile.over,
       bleed: tile.bleed,
       clip: tile.clip,
       upright: tile.upright,

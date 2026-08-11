@@ -1,14 +1,18 @@
 /**
- * The pen: the terrain palette, the randomness, and the few marks that more
- * than one tile draws.
+ * The pen: the palette, the randomness, and the marks more than one tile draws.
  *
- * Everything here works in the unit hex of `hex.ts`, so a "small stone" is
- * 0.08 of a cell rather than a number of pixels.
+ * Only water has a colour of its own. Land does not: on this map a hex belongs
+ * to a territory, and the territory's colour is the data — paint an opaque
+ * ground over it and the map stops saying anything. So relief is *light and
+ * shade*, not pigment: a white face at low opacity and a cool dark one read as
+ * a mountain over green, purple or pink alike.
+ *
+ * Everything works in the unit hex of `hex.ts`, so a ridge is 0.6 of a cell
+ * rather than a number of pixels.
  *
  * The generator is a private copy of mulberry32 rather than an import, which is
  * what `mapgen.ts`, `domain-graph.ts` and `procedural.ts` each do too: it is
- * eight lines, and a shared one would tie four unrelated modules to the same
- * file for nothing.
+ * eight lines, and a shared one would tie four unrelated modules together.
  */
 
 import { inside, round, type Point } from './hex.js';
@@ -16,80 +20,47 @@ import { inside, round, type Point } from './hex.js';
 /* ─────────────────────────────────  Colour  ────────────────────────────── */
 
 export type Palette = {
-  soil: string;
-  soilDeep: string;
-  soilPale: string;
-  grass: string;
-  grassDeep: string;
-  grassPale: string;
-  sand: string;
-  sandDeep: string;
-  rock: string;
-  rockDeep: string;
-  rockPale: string;
-  snow: string;
+  /** The sea, as the app paints it. Override to match a different map. */
   sea: string;
   seaDeep: string;
-  seaPale: string;
-  lake: string;
+  seaShallow: string;
   foam: string;
-  wood: string;
-  leaf: string;
-  leafDeep: string;
-  pine: string;
-  bloomA: string;
-  bloomB: string;
+  ice: string;
+  reef: string;
+  river: string;
+  /** The relief trio. Neutral on purpose — they go over any territory hue. */
+  light: string;
+  shade: string;
   ink: string;
+  snow: string;
+  sand: string;
 };
 
-/**
- * One palette for the whole collection, so pieces drawn months apart still
- * belong to the same map. Warm, slightly desaturated: the tiles have to sit
- * under labels and route lines without shouting over them.
- */
 export const terrain: Palette = {
-  soil: '#c8a578',
-  soilDeep: '#a3814f',
-  soilPale: '#ddc79c',
-  grass: '#8ab765',
-  grassDeep: '#5d8c45',
-  grassPale: '#aed187',
-  sand: '#e7d4a6',
-  sandDeep: '#ccb17f',
-  rock: '#9aa2a8',
-  rockDeep: '#6c747b',
-  rockPale: '#c4cace',
-  snow: '#f3f7fa',
-  sea: '#4c8fb4',
-  seaDeep: '#2e6b90',
-  seaPale: '#7fb5d3',
-  lake: '#5fa9cb',
-  foam: '#dff0f7',
-  wood: '#7a5a3c',
-  leaf: '#5f9a52',
-  leafDeep: '#3f7440',
-  pine: '#3c6b4a',
-  bloomA: '#e2746a',
-  bloomB: '#efc453',
-  ink: '#3b4a52',
+  sea: '#6a9cb8',
+  seaDeep: '#4a7d9c',
+  seaShallow: '#95c2d6',
+  foam: '#e9f4f9',
+  ice: '#dcebf3',
+  reef: '#6fae9f',
+  river: '#7fb6d2',
+  light: '#ffffff',
+  shade: '#10303f',
+  ink: '#0d2431',
+  snow: '#ffffff',
+  sand: '#e6d6b2',
 };
 
-/** Named water bodies, so a coast can be told which one it borders. */
-export const WATERS = ['sea', 'lake', 'shallow'] as const;
-/** Named grounds, so a coast can be told what the land behind it is. */
-export const GROUNDS = ['grass', 'soil', 'sand', 'rock'] as const;
+/** Named water bodies, so a piece can be told which one it borders. */
+export const WATERS = ['sea', 'shallow', 'deep'] as const;
 
-export function waterColours(ink: Palette, name: string): { body: string; deep: string; pale: string } {
-  if (name === 'lake') return { body: ink.lake, deep: ink.sea, pale: ink.foam };
-  if (name === 'shallow') return { body: ink.seaPale, deep: ink.sea, pale: ink.foam };
-  return { body: ink.sea, deep: ink.seaDeep, pale: ink.seaPale };
-}
-
-export function groundColours(ink: Palette, name: string): { body: string; deep: string; pale: string } {
-  if (name === 'soil') return { body: ink.soil, deep: ink.soilDeep, pale: ink.soilPale };
-  if (name === 'sand') return { body: ink.sand, deep: ink.sandDeep, pale: ink.soilPale };
-  if (name === 'rock') return { body: ink.rock, deep: ink.rockDeep, pale: ink.rockPale };
-  return { body: ink.grass, deep: ink.grassDeep, pale: ink.grassPale };
+export function waterColours(
+  ink: Palette,
+  name: string
+): { body: string; deep: string; pale: string } {
+  if (name === 'shallow') return { body: ink.seaShallow, deep: ink.sea, pale: ink.foam };
+  if (name === 'deep') return { body: ink.seaDeep, deep: ink.ink, pale: ink.sea };
+  return { body: ink.sea, deep: ink.seaDeep, pale: ink.seaShallow };
 }
 
 /* ──────────────────────────────  Determinism  ──────────────────────────── */
@@ -130,7 +101,7 @@ const mid = (a: Point, b: Point): Point => ({ x: (a.x + b.x) / 2, y: (a.y + b.y)
  *
  * Quadratics anchored on the midpoints rather than a spline: it never
  * overshoots, which matters because these shapes are cut off at the hex edge
- * and an overshoot would show up as a notch between two neighbouring cells.
+ * and an overshoot shows up as a notch between two neighbouring cells.
  */
 export function smooth(points: Point[], closed: boolean): string {
   if (points.length < 3) return `M${points.map(p).join('L')}`;
@@ -152,7 +123,7 @@ export function smooth(points: Point[], closed: boolean): string {
   return parts.join('');
 }
 
-/** A closed, irregular round shape — a patch of soil, a stone, a treetop. */
+/** A closed, irregular round shape — a shoal, a floe, a hilltop. */
 export function blob(
   rnd: () => number,
   cx: number,
@@ -212,66 +183,24 @@ export function spot(rnd: () => number, spread = 0.92): Point {
 
 /* ──────────────────────────────────  Marks  ────────────────────────────── */
 
-/** A blade cluster. Three strokes is the least that still reads as grass. */
-export function tuft(rnd: () => number, x: number, y: number, size: number, colour: string): string {
-  const blades: string[] = [];
-  for (let i = -1; i <= 1; i++) {
-    const lean = i * size * 0.5 + (rnd() - 0.5) * size * 0.3;
-    blades.push(
-      `M${round(x)} ${round(y)}q${round(lean * 0.5)} ${round(-size * 0.6)} ${round(lean)} ${round(-size)}`
-    );
-  }
-  return (
-    `<path d="${blades.join('')}" fill="none" stroke="${colour}" ` +
-    `stroke-width="${round(size * 0.22)}" stroke-linecap="round" opacity="0.85"/>`
-  );
-}
+/** A lit face. The sun is in the north-west for the whole collection. */
+export const lit = (d: string, ink: Palette, opacity = 0.32): string =>
+  `<path d="${d}" fill="${ink.light}" opacity="${opacity}"/>`;
 
-/** A conifer: trunk plus two stacked skirts. */
-export function conifer(x: number, y: number, size: number, ink: Palette): string {
-  const w = size * 0.52;
-  return (
-    `<path d="M${round(x)} ${round(y)}v${round(-size * 0.22)}" stroke="${ink.wood}" ` +
-    `stroke-width="${round(size * 0.14)}" stroke-linecap="round"/>` +
-    `<path d="M${round(x)} ${round(y - size)}L${round(x + w * 0.72)} ${round(y - size * 0.45)}` +
-    `L${round(x - w * 0.72)} ${round(y - size * 0.45)}Z" fill="${ink.pine}"/>` +
-    `<path d="M${round(x)} ${round(y - size * 0.62)}L${round(x + w)} ${round(y - size * 0.18)}` +
-    `L${round(x - w)} ${round(y - size * 0.18)}Z" fill="${ink.leafDeep}"/>`
-  );
-}
+/** A shaded face. */
+export const dim = (d: string, ink: Palette, opacity = 0.22): string =>
+  `<path d="${d}" fill="${ink.shade}" opacity="${opacity}"/>`;
 
-/** A broadleaf: trunk plus a lopsided crown with one lit side. */
-export function broadleaf(
-  rnd: () => number,
-  x: number,
-  y: number,
-  size: number,
-  ink: Palette
-): string {
-  const cy = y - size * 0.66;
-  return (
-    `<path d="M${round(x)} ${round(y)}v${round(-size * 0.4)}" stroke="${ink.wood}" ` +
-    `stroke-width="${round(size * 0.15)}" stroke-linecap="round"/>` +
-    `<path d="${blob(rnd, x, cy, size * 0.46, 0.3, 8)}" fill="${ink.leafDeep}"/>` +
-    `<path d="${blob(rnd, x - size * 0.1, cy - size * 0.1, size * 0.3, 0.3, 7)}" fill="${ink.leaf}"/>`
-  );
-}
-
-/** A stone with a lit top, so the flat map still reads as having a sun. */
-export function stone(
-  rnd: () => number,
-  x: number,
-  y: number,
-  size: number,
-  ink: Palette
-): string {
-  return (
-    `<path d="${blob(rnd, x, y, size, 0.4, 6)}" fill="${ink.rockDeep}"/>` +
-    `<path d="${blob(rnd, x - size * 0.14, y - size * 0.2, size * 0.6, 0.4, 6)}" fill="${ink.rockPale}" opacity="0.9"/>`
-  );
-}
+/** A drawn edge — a ridge crest, a scarp, the lip of a crater. */
+export const edge = (d: string, ink: Palette, width = 0.035, opacity = 0.35): string =>
+  `<path d="${d}" fill="none" stroke="${ink.ink}" stroke-width="${round(width)}" ` +
+  `stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"/>`;
 
 /** A full-bleed fill. Flat tiles are clipped to the hex, so it may overrun. */
-export function field(colour: string): string {
-  return `<rect x="-1.1" y="-1.1" width="2.2" height="2.2" fill="${colour}"/>`;
+export function field(colour: string, opacity = 1): string {
+  return (
+    `<rect x="-1.1" y="-1.1" width="2.2" height="2.2" fill="${colour}"` +
+    (opacity === 1 ? '' : ` opacity="${opacity}"`) +
+    `/>`
+  );
 }
