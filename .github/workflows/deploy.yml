@@ -5,6 +5,32 @@ name: deploy
 on:
   push:
     branches: [main]
+    # Listed as what to skip rather than what to catch: forgetting an entry
+    # here costs one redundant deploy, while forgetting one in a `paths` list
+    # would silently stop publishing real changes. Everything not named below
+    # — data, sources, the scripts that build the catalogue, build config —
+    # can change what the site shows.
+    paths-ignore:
+      - 'docs/**'
+      - 'tests/**'
+      - 'sandbox/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - '.env.example'
+      - '.gitignore'
+      - 'vitest.config.ts'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/pull_request_template.md'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/refresh.yml'
+
+  # The nightly crawl updates cache.db without touching the repository, so
+  # fresher metadata, video counts and liveness would otherwise sit in the
+  # cache until somebody happened to push something.
+  workflow_run:
+    workflows: [refresh]
+    types: [completed]
+
   workflow_dispatch:
 
 concurrency:
@@ -13,6 +39,9 @@ concurrency:
 
 jobs:
   build:
+    # A crawl that died has nothing new to publish, and republishing on its
+    # schedule would only churn the site.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
