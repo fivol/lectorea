@@ -43,6 +43,15 @@ export type MapShape = {
   /** Width of the territory at that point: how long a line of it can be. */
   span: number;
   d: string;
+  /**
+   * The same outline as the file wrote it, before the ground was laid back.
+   *
+   * The one thing downstream that needs the plan rather than the view: the
+   * territory's hexes. The grid is regular in the plan and squashed on the
+   * screen, so the cells are worked out there and projected afterwards — the
+   * same order everything else in `shared/tiles` follows.
+   */
+  plan: string;
   /** Bounding box — what the label placer treats as occupied ground. */
   width: number;
   height: number;
@@ -134,6 +143,7 @@ export function parseMapSvg(text: string): ParsedMap {
       headroom: room * GROUND,
       span: Number(attributes['data-span'] ?? 0),
       d,
+      plan: attributes.d,
       ...extentOf(d),
     });
   }

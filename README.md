@@ -41,7 +41,11 @@ colours, the lettering and the sea painted by the app, so the whole map follows
 the light and dark themes. It is a plan on disk and a view on screen — the app
 lays the ground back a little and stands the continents in the water as slabs
 with a cliff at the coast, which is the same projection the tile collection
-draws in ([docs/tiles.md](docs/tiles.md)). Pick a territory to enter the
+draws in ([docs/tiles.md](docs/tiles.md)). The ground inside a territory comes
+from that collection: ranges, forest, plateau, sand, laid on the map's own
+hexes, with a table saying which field stands on which — and the grid read back
+off the outlines rather than stored, so a redrawn map keeps its terrain. Pick a
+territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
 stemmer. It opens on focus rather than on the first keystroke, and before
@@ -151,7 +155,7 @@ to the view being shared, and stay in `localStorage`.
 | Course screen | plain scrollable columns of cards | the column carries the meaning; arrows are drawn for the selected chain only, because over 200 cards they were noise |
 | Design tokens | CSS variables, surfaced through Tailwind | one palette the map screen can swap wholesale at runtime — see [docs/design-system.md](docs/design-system.md) |
 | Scripts | tsx + better-sqlite3 | |
-| Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain |
+| Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain, one terrain per domain |
 | Deploy | any static host | |
 
 Detailed documents:
@@ -161,7 +165,7 @@ Detailed documents:
 - [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota
 - [docs/scripts.md](docs/scripts.md) — every command: what it does, its flags, when to run it
-- [docs/tiles.md](docs/tiles.md) — the hex tile collection: the angle everything is seen at, what a piece is, how pieces join, how to export them
+- [docs/tiles.md](docs/tiles.md) — the hex tile collection: the angle everything is seen at, what a piece is, how pieces join, what each territory of the map is made of, how to export them
 - [CONTRIBUTING.md](CONTRIBUTING.md) — the rules external edits must follow
 
 ## The two entities

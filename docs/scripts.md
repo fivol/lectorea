@@ -220,13 +220,17 @@ pnpm tiles:build --only=coast,water --formats=svg --size=128 --seed=v2
 ```
 
 `tiles:build` writes four things: `collection.json` (every piece in unit-hex
-coordinates, plus the geometry, the joining rules and the object recipes),
-`svg/` (one file per picture), `objects/` (each assembled object) and
-`sprite.svg`. `tiles:view` bundles the same generator with controls into
-`.tiles/collection.html`, which opens straight from disk. Output is gitignored;
-override with `TILES_OUT` and `TILES_VIEW_OUT`.
+coordinates, plus the geometry, the joining rules, the object recipes and the
+terrain table the map fills its territories from), `svg/` (one file per
+picture), `objects/` (each assembled object) and `sprite.svg`. `tiles:view`
+bundles the same generator with controls into `.tiles/collection.html`, which
+opens straight from disk. Output is gitignored; override with `TILES_OUT` and
+`TILES_VIEW_OUT`.
 
-Neither is wired into the build. Full documentation: [docs/tiles.md](tiles.md).
+Neither is wired into the build, and neither needs to be: the map screen imports
+the generator from `shared/tiles/` and draws the ground of every territory
+itself. These two exist for consumers outside the repository. Full
+documentation: [docs/tiles.md](tiles.md).
 
 ### `pnpm check:i18n`
 

@@ -11,9 +11,11 @@ pnpm tiles:build     # generate and export the collection into .tiles/
 ```
 
 Code lives in `shared/tiles/`; the viewer's page in `sandbox/tiles/`; the two
-commands in `scripts/tiles-build.ts` and `scripts/tiles-view.ts`. Nothing in the
-frontend depends on it yet — like `pnpm map:preview`, it is a workshop, not a
-build step.
+commands in `scripts/tiles-build.ts` and `scripts/tiles-view.ts`. The map screen
+imports the same generator and lays it on `public/map.svg` — see
+[On the map](#on-the-map) for what each field is made of and how the pieces find
+their cells. The two commands stay a workshop: they export the collection for
+anybody outside this repository, and nothing in the build runs them.
 
 ## The angle
 
@@ -191,6 +193,108 @@ Six ship — a range, an inland highland, a river reaching the sea, an island, a
 bay and a stretch of open sea — and between them they exercise every joining
 rule above.
 
+## On the map
+
+The map screen fills every territory with the collection: `shared/tiles/
+terrain.ts` says what a field is made of, `shared/tiles/fill.ts` works out which
+hexes it owns and what goes on them, and `src/screens/Map/ground.ts` is the
+thirty lines that ask.
+
+### Where the cells come from
+
+Nowhere. `public/map.svg` carries outlines and nothing else — no cells, no grid,
+not even the radius it was laid out at — and it is reimported from a sandbox
+export every time the map is redrawn. So the grid is **read back off the
+geometry** by `hexGridOf`, once, when the file loads. Three facts do it:
+
+- a hexagon's edge is exactly its circumradius, so the distance between two
+  corners in a row along an outline *is* the radius — the median over the whole
+  file, which the current map answers as 19 with four hundredths of scatter;
+- every corner then lies on a lattice `√3/2·r` across and `r/2` down, which pins
+  the phase, and every corner has to be on it or the file is not a hex map;
+- the phase leaves six candidate origins, five of which put "cell centres" on
+  corners or on edge midpoints — settled by measuring, since a real centre is a
+  whole radius from the nearest corner and a false one is half that.
+
+If the file ever stops answering, `hexGridOf` returns `null` and the map draws
+no ground at all. A plain coloured map is a fine map; tiles landing half a cell
+off the grid are not.
+
+Storing the cells in a file instead would be the same mistake as storing the
+polygons: the next import moves every one of them, and nothing says so.
+
+### What each field is made of
+
+`shared/tiles/terrain.ts` is the correspondence, and it is keyed on **the
+domain** — never on the polygon, its position or its size:
+
+```ts
+math: 'peaks',          // the range everything else on the continent stands on
+'earth-science': 'canyons',
+literature: 'forest',
+```
+
+A redraw is then free: mathematics is mountainous wherever the mountains end up.
+A domain the table has not caught up with falls back to its continent
+(`TERRAIN_BY_CONTINENT`), so a new field is on the map the day it is added —
+and `tests/terrain.test.ts` fails until the table names it. A domain that has
+gone leaves a stale line, which the same test names.
+
+A terrain is a recipe rather than a picture:
+
+```ts
+{
+  id: 'peaks',
+  cover: 0.4,                                  // of the cells no run took
+  chain: { share: 0.42, min: 2, max: 5,        // runs laid west to east
+           head: { tile: 'mountain-foot' },
+           body: { tile: 'mountain-slope' },
+           crown: { tile: 'mountain-peak', opts: { cap: 'snow' } },
+           tail: { tile: 'mountain-foot' } },
+  scatter: [{ tile: 'crags', weight: 3 }, { tile: 'hills', weight: 2 }],
+}
+```
+
+`chain` is where the seams earn their keep: five mountain tiles scattered about
+are five mountains, and the same five in a row are a range. Runs go west to
+east because that is the axis the ridge and scarp pieces join on, and the ends
+are mirrored rather than turned — relief has a top. Everything a run did not
+take is drawn from `scatter` by weight, `once` marking a landmark that may
+appear at most one to a territory. A terrain quiet enough to come out empty
+still gets one piece on its middle cell: an empty territory between full ones
+reads as one whose ground failed to load.
+
+Every placement is seeded on the domain and the cell, so a field grows the same
+ground on every render and on every machine, and losing a cell to a redrawn
+border does not reshuffle the rest of it.
+
+### Where it is drawn
+
+Cell centres have to be `INSET` — half a radius — inside the outline, because
+relief stands up out of its cell and leans north; a piece on a cell whose centre
+is a hair inside hangs over the neighbour, or over the sea. Where nothing is
+that far in, the sliver keeps its cells anyway.
+
+On the screen the ground is one layer, painted after the coastlines and before
+the lettering, with `pointer-events: none` so a territory still answers the
+pointer through it. North to south, both between territories and within one: a
+piece standing on a southern cell has to be painted over its northern
+neighbour. Over the shoreline rather than under it, because a mountain on the
+northernmost cell of a coast hides the water beyond it — the shore there is the
+far edge, not the near one. A territory ruled out by a filter keeps a quarter of
+its relief: the ground is the shape of the field, and a field that empties
+itself reads as one that has lost its data.
+
+Nothing on this layer is painted, only lit and shaded, which is the collection's
+first rule and the reason it can go over thirty-nine different hues.
+
+### Changing what a field is made of
+
+Edit one line in `TERRAIN_BY_DOMAIN`. A new terrain is an entry in `TERRAINS`
+built from land pieces — the test checks that every tile it names exists, is a
+land piece, and that a `chain` body actually joins along the east and west
+edges. Nothing needs regenerating: the app renders the collection from source.
+
 ## Sizes and colours
 
 Tiles are authored in a **unit hex**: circumradius 1, centred on the origin,
@@ -249,7 +353,9 @@ What comes out:
 - **`collection.json`** — the manifest. Metadata for every tile, each variant's
   drawing in unit-hex coordinates, the hex geometry, the clip path, the edge
   numbering, a `view` block with the projection and the slab, the object
-  recipes, and a `howToUse` block spelling out the placement rules. `--only`
+  recipes, the `terrains` block — the recipes and the domain table the app fills
+  its territories from — and a `howToUse` block spelling out the placement
+  rules. `--only`
   narrows the loose files, never the manifest or the objects: either of those,
   cut down to one group, would point at tiles it no longer carries.
 - **`svg/<group>/<id>-<variant>.svg`** — one standalone file per picture.

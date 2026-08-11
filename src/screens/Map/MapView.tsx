@@ -7,6 +7,8 @@ import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
 import { useReducedMotion } from '@/lib/hooks';
 import { DomainGlyph } from '@/components/DomainIcon';
 import { SLAB } from '@shared/view';
+import { hexPath } from '@shared/tiles';
+import { groundOf, HEX_CLIP } from './ground';
 
 /**
  * The map's own colours live in `index.css` next to every other theme colour —
@@ -86,6 +88,16 @@ const CLIFF = Array.from(
   { length: CLIFF_STEPS },
   (_, index) => (DEPTH * (CLIFF_STEPS - 1 - index)) / CLIFF_STEPS
 );
+
+/**
+ * How much of its relief a territory keeps when a filter rules it out.
+ *
+ * Not none: the ground is the shape of the field, and a field that empties
+ * itself reads as one that has lost its data rather than as one that is out of
+ * the current answer. Not much, either — the veil over it is what says «not
+ * this one», and relief at full strength is louder than the veil.
+ */
+const GROUND_DIM = 0.28;
 
 /**
  * The continent titles: the largest lettering on the map, and the one set
@@ -178,6 +190,13 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         }),
     [map, t]
   );
+
+  /**
+   * What each field is made of — mountains, forest, sand — laid on the map's
+   * own hexes. A pass over every territory, so it is done once per map and
+   * never again: nothing about it answers a pointer or a filter.
+   */
+  const ground = useMemo(() => (map ? groundOf(map.shapes) : []), [map]);
 
   /**
    * The whole lettering layout, recomputed only when the map or the language
@@ -283,6 +302,13 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
           >
             <feGaussianBlur stdDeviation={SHORE_BLUR} />
           </filter>
+
+          {/* The cell a flat tile is cut to. Written in the collection's unit
+              hex rather than in map units: the clip is resolved inside the
+              placement's own transform, where one radius is one cell. */}
+          <clipPath id={HEX_CLIP}>
+            <path d={hexPath(1.001)} />
+          </clipPath>
         </defs>
 
         {/* The water brightening as it shallows towards every shore, all of it
@@ -430,6 +456,26 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
             style={{ stroke: 'var(--map-coast)', pointerEvents: 'none' }}
           />
         ))}
+
+        {/*
+          What the fields are made of, on the map's own hexes: ranges, forest,
+          plateau, sand. Over the shoreline rather than under it, because a
+          mountain standing on the northernmost cell of a coast hides the water
+          beyond it — the shore there is the far edge, not the near one.
+
+          Light and shade only, never a fill: the colour under a piece of relief
+          is the territory's, and on this map that colour is the data.
+        */}
+        <g className="pointer-events-none" aria-hidden="true">
+          {ground.map((patch) => (
+            <g
+              key={patch.domainId}
+              opacity={emphasisOf(patch.domainId) === 'dim' ? GROUND_DIM : 1}
+              style={{ transition: reducedMotion ? 'none' : 'opacity 220ms ease-out' }}
+              dangerouslySetInnerHTML={{ __html: patch.markup }}
+            />
+          ))}
+        </g>
 
         {/*
           Every name on the map, in one layer over the whole drawing.

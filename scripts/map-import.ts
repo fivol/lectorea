@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ensureDir, paths } from './lib/config.js';
 import { loadSources, reportSourceError, SourceError } from './lib/sources.js';
+import { insideRing, ringOf, signedDistance, type Point } from '../shared/polygon.js';
 import type { Continent, Domain } from '../shared/schema.js';
 
 /**
@@ -25,8 +26,6 @@ import type { Continent, Domain } from '../shared/schema.js';
  */
 
 const USAGE = "usage: pnpm map:import <sandbox-export.svg>";
-
-type Point = { x: number; y: number };
 
 /* ──────────────────────────────  Reading  ──────────────────────────────── */
 
@@ -59,89 +58,20 @@ const isCoast = (path: RawPath): boolean =>
 /* ─────────────────────────────  Geometry  ──────────────────────────────── */
 
 /**
- * Flattens one closed outline into a polygon.
+ * The outline as a polygon, in this script's terms.
  *
- * The sandbox writes absolute `M`/`L`/`Q`/`Z` only — the quadratics are the
- * rounded hex corners — so this handles that subset and nothing else, and says
- * so loudly if a future export brings anything wider.
+ * `ringOf` handles the absolute `M`/`L`/`Q`/`Z` the sandbox writes — the
+ * quadratics are the rounded hex corners — and refuses anything wider. A
+ * refusal here is a bad export rather than a bug, so it is reported as one.
  */
-function flatten(d: string, steps = 4): Point[] {
-  const points: Point[] = [];
-  const tokens = d.match(/[MLQZ]|-?\d+(?:\.\d+)?/g) ?? [];
-  let cursor: Point = { x: 0, y: 0 };
-  let index = 0;
-
-  const number = (): number => {
-    const value = Number(tokens[index++]);
-    if (!Number.isFinite(value)) throw new SourceError(`malformed path data near "${tokens[index - 1]}"`);
-    return value;
-  };
-
-  while (index < tokens.length) {
-    const command = tokens[index++];
-    switch (command) {
-      case 'M':
-      case 'L': {
-        cursor = { x: number(), y: number() };
-        points.push(cursor);
-        break;
-      }
-      case 'Q': {
-        const cx = number();
-        const cy = number();
-        const to = { x: number(), y: number() };
-        for (let step = 1; step <= steps; step++) {
-          const t = step / steps;
-          const u = 1 - t;
-          points.push({
-            x: u * u * cursor.x + 2 * u * t * cx + t * t * to.x,
-            y: u * u * cursor.y + 2 * u * t * cy + t * t * to.y,
-          });
-        }
-        cursor = to;
-        break;
-      }
-      case 'Z':
-        break;
-      default:
-        throw new SourceError(`unsupported path command "${command}" in the export`);
-    }
+function flatten(d: string): Point[] {
+  try {
+    return ringOf(d);
+  } catch (error) {
+    throw new SourceError(
+      `${error instanceof Error ? error.message : String(error)} in the export`
+    );
   }
-  return points;
-}
-
-function distanceToSegment(point: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const lengthSquared = dx * dx + dy * dy;
-  const t = lengthSquared
-    ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared))
-    : 0;
-  return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
-}
-
-function isInside(point: Point, ring: Point[]): boolean {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i];
-    const b = ring[j];
-    if (
-      a.y > point.y !== b.y > point.y &&
-      point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x
-    ) {
-      inside = !inside;
-    }
-  }
-  return inside;
-}
-
-/** Distance to the outline, negative outside the polygon. */
-function signedDistance(point: Point, ring: Point[]): number {
-  let nearest = Infinity;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    nearest = Math.min(nearest, distanceToSegment(point, ring[i], ring[j]));
-  }
-  return isInside(point, ring) ? nearest : -nearest;
 }
 
 /**
@@ -245,7 +175,7 @@ function describeLandmasses(
 ): Landmass[] {
   const described = coasts.map((coast) => {
     const ring = flatten(coast.d);
-    const held = territories.filter((territory) => isInside(territory.label, ring));
+    const held = territories.filter((territory) => insideRing(territory.label, ring));
     const tally = new Map<Continent, number>();
     for (const territory of held) {
       tally.set(territory.domain.continent, (tally.get(territory.domain.continent) ?? 0) + 1);
