@@ -15,6 +15,7 @@ on:
       - 'tests/**'
       - 'sandbox/**'
       - 'README.md'
+      - 'README.ru.md'
       - 'CONTRIBUTING.md'
       - '.env.example'
       - '.gitignore'
