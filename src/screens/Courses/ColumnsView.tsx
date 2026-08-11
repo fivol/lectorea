@@ -59,6 +59,18 @@ export default function ColumnsView({
 
   const profile = useProfile((state) => state.profile);
   const highlight = useHighlight(selectedId, hoveredId ?? echoId);
+  /**
+   * The same reading of the graph with the pointer taken out of it — what the
+   * curves are drawn from.
+   *
+   * Hover is allowed to repaint the cards, because that is a glance and it ends
+   * when the pointer moves on. It is not allowed to touch the lines: they are
+   * drawn, and a drawing that erases and redraws itself every time the pointer
+   * crosses a card is a strobe. Keeping this separate is also what keeps its
+   * identity stable across a hover, so the curves are not remounted and do not
+   * play their draw-in again.
+   */
+  const pinnedChain = useHighlight(selectedId, null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: true, end: true });
@@ -88,16 +100,15 @@ export default function ColumnsView({
   /**
    * The edges of the chain, as pairs of course ids.
    *
-   * Only while a selection is pinned: on hover the highlight is a glance, and a
-   * set of curves that appears and vanishes as the pointer crosses the screen is
-   * strobing, not explaining.
+   * A selection's, and nothing else's — pointing at a card asks a question of
+   * the cards, not of the curves already on screen.
    */
   const links = useMemo<Link[]>(() => {
-    if (!highlight.active || !highlight.pinned) return [];
+    if (!pinnedChain.active) return [];
     const chain = new Set<string>();
     for (const column of columns) {
       for (const course of column.courses) {
-        const emphasis = highlight.emphasisOf(course.id);
+        const emphasis = pinnedChain.emphasisOf(course.id);
         if (emphasis !== 'soft' && emphasis !== 'related' && emphasis !== 'muted') {
           chain.add(course.id);
         }
@@ -106,11 +117,11 @@ export default function ColumnsView({
     const out: Link[] = [];
     for (const id of chain) {
       for (const dep of catalog.courseById.get(id)?.deps ?? []) {
-        if (chain.has(dep)) out.push({ from: dep, to: id, depth: highlight.depthOf(dep) });
+        if (chain.has(dep)) out.push({ from: dep, to: id, depth: pinnedChain.depthOf(dep) });
       }
     }
     return out.sort((a, b) => a.depth - b.depth);
-  }, [highlight, columns, catalog]);
+  }, [pinnedChain, columns, catalog]);
 
   /**
    * A card that unmounts under the cursor — a filter change, a domain switch —
