@@ -6,6 +6,7 @@ import { loadMapSvg } from '@/lib/data';
 import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
 import { useReducedMotion } from '@/lib/hooks';
 import { DomainGlyph } from '@/components/DomainIcon';
+import { useResolvedTheme } from '@/store/profile';
 import { SLAB } from '@shared/view';
 import { hexPath } from '@shared/tiles';
 import { groundOf, HEX_CLIP } from './ground';
@@ -90,14 +91,23 @@ const CLIFF = Array.from(
 );
 
 /**
- * How much of its relief a territory keeps when a filter rules it out.
+ * How strongly the ground inside a territory is drawn, and how strongly the
+ * water outside them all.
  *
- * Not none: the ground is the shape of the field, and a field that empties
- * itself reads as one that has lost its data rather than as one that is out of
- * the current answer. Not much, either — the veil over it is what says «not
- * this one», and relief at full strength is louder than the veil.
+ * Well under half. The relief is scenery: what a reader is here to find is a
+ * field's name and its colour, and both are read *through* whatever is drawn on
+ * the ground under them. At full strength a range under a name turns the name
+ * into a word on a mountain — the halo saves the letters and the reading is
+ * still slower. The sea is quieter still, because the names that stand in it
+ * have nothing but their own halo behind them.
+ *
+ * Dimmed, a territory keeps a trace: the ground is the shape of the field, and
+ * a field that empties itself reads as one that has lost its data rather than
+ * as one that is out of the current answer.
  */
-const GROUND_DIM = 0.28;
+const GROUND_INK = 0.5;
+const GROUND_DIM = 0.16;
+const OCEAN_INK = 0.42;
 
 /**
  * The continent titles: the largest lettering on the map, and the one set
@@ -134,6 +144,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   const navigate = useNavigate();
   const { t, count } = useT();
   const reducedMotion = useReducedMotion();
+  const scheme = useResolvedTheme();
 
   const [map, setMap] = useState<ParsedMap | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -192,11 +203,17 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   );
 
   /**
-   * What each field is made of — mountains, forest, sand — laid on the map's
-   * own hexes. A pass over every territory, so it is done once per map and
-   * never again: nothing about it answers a pointer or a filter.
+   * What each field is made of — mountains, forest, sand — and what the water
+   * between them does. A pass over the whole map, so it is done once and never
+   * again: nothing about it answers a pointer or a filter.
+   *
+   * The theme is in it because the sea has a colour and that colour follows the
+   * light and the dark; the land does not, and is redrawn identically.
    */
-  const ground = useMemo(() => (map ? groundOf(map.shapes) : []), [map]);
+  const ground = useMemo(
+    () => (map ? groundOf(map, scheme) : { fields: [], ocean: '' }),
+    [map, scheme]
+  );
 
   /**
    * The whole lettering layout, recomputed only when the map or the language
@@ -310,6 +327,29 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
             <path d={hexPath(1.001)} />
           </clipPath>
         </defs>
+
+        {/*
+          The sea itself, in the collection's own pieces: shoals and reefs and
+          rocks where the bottom comes up near a coast, swell and the odd
+          current out in the open.
+
+          Drawn past the edges of the map on every side. The drawing is fitted
+          into the window, so on most windows there is viewport left over above
+          and below it — and an svg clips to its viewport rather than to its
+          viewBox, so the water carries on out into the bands instead of
+          stopping at a rectangle nobody drew.
+
+          At the foot of the cliffs, like the shallows below: the surface of the
+          sea is where the land stands *in* it, not where the ground on top of
+          the land is.
+        */}
+        <g
+          className="pointer-events-none"
+          aria-hidden="true"
+          opacity={OCEAN_INK}
+          transform={`translate(0 ${DEPTH})`}
+          dangerouslySetInnerHTML={{ __html: ground.ocean }}
+        />
 
         {/* The water brightening as it shallows towards every shore, all of it
             in one pass and under all of the land. It belongs to the surface of
@@ -467,10 +507,10 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
           is the territory's, and on this map that colour is the data.
         */}
         <g className="pointer-events-none" aria-hidden="true">
-          {ground.map((patch) => (
+          {ground.fields.map((patch) => (
             <g
               key={patch.domainId}
-              opacity={emphasisOf(patch.domainId) === 'dim' ? GROUND_DIM : 1}
+              opacity={emphasisOf(patch.domainId) === 'dim' ? GROUND_DIM : GROUND_INK}
               style={{ transition: reducedMotion ? 'none' : 'opacity 220ms ease-out' }}
               dangerouslySetInnerHTML={{ __html: patch.markup }}
             />

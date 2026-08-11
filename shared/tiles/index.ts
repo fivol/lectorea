@@ -30,6 +30,7 @@ import { waterTiles } from './atlas/water.js';
 import { assemblies } from './atlas/assemblies.js';
 import { assemblyBox, assemblySvg, SEED_SALT, tileBody } from './render.js';
 import {
+  OCEAN,
   TERRAINS,
   TERRAIN_BY_CONTINENT,
   TERRAIN_BY_DOMAIN,
@@ -140,6 +141,8 @@ export type Manifest = {
     recipes: Terrain[];
     byDomain: Record<string, string>;
     byContinent: Record<string, string>;
+    /** The water: what goes near a coast, what goes out in the open. */
+    ocean: typeof OCEAN;
   };
 };
 
@@ -251,6 +254,7 @@ export function buildManifest(options: ManifestOptions = {}): Manifest {
       recipes: TERRAINS,
       byDomain: TERRAIN_BY_DOMAIN,
       byContinent: TERRAIN_BY_CONTINENT,
+      ocean: OCEAN,
     },
     assemblies: assemblies.map((assembly) => ({
       ...assembly,

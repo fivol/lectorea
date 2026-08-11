@@ -42,9 +42,11 @@ the light and dark themes. It is a plan on disk and a view on screen — the app
 lays the ground back a little and stands the continents in the water as slabs
 with a cliff at the coast, which is the same projection the tile collection
 draws in ([docs/tiles.md](docs/tiles.md)). The ground inside a territory comes
-from that collection: ranges, forest, plateau, sand, laid on the map's own
-hexes, with a table saying which field stands on which — and the grid read back
-off the outlines rather than stored, so a redrawn map keeps its terrain. Pick a
+from that collection, and so does the water around them: ranges, forest,
+plateau and sand on the land, shoals and reefs by the coasts, swell out to the
+edges of the window — laid on the map's own hexes, with a table saying which
+field stands on which, and the grid read back off the outlines rather than
+stored, so a redrawn map keeps its terrain. Pick a
 territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a

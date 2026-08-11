@@ -195,10 +195,10 @@ rule above.
 
 ## On the map
 
-The map screen fills every territory with the collection: `shared/tiles/
-terrain.ts` says what a field is made of, `shared/tiles/fill.ts` works out which
-hexes it owns and what goes on them, and `src/screens/Map/ground.ts` is the
-thirty lines that ask.
+The map screen fills every territory with the collection, and the sea around
+them: `shared/tiles/terrain.ts` says what a field is made of, `shared/tiles/
+fill.ts` works out which hexes it owns and what goes on them, and
+`src/screens/Map/ground.ts` is the hundred lines that ask.
 
 ### Where the cells come from
 
@@ -268,6 +268,34 @@ Every placement is seeded on the domain and the cell, so a field grows the same
 ground on every render and on every machine, and losing a cell to a redrawn
 border does not reshuffle the rest of it.
 
+### The sea
+
+`OCEAN`, in the same file, is the water: two bands rather than one recipe,
+because water says different things at different distances from a coast. Within
+`OCEAN.shore` radii of a coastline it explains the edge — shoals, a reef, rocks
+breaking the surface. Beyond it there is nothing to explain, and swell is
+enough to say the surface is water rather than paper. `oceanCells` finds them:
+every cell of the area that is inside no coastline and not right up against
+one, each carrying its distance from land.
+
+Two things keep that cheap over the thousands of cells it covers. A cell more
+than a few radii from every landmass's *bounding box* needs no polygon test at
+all, and the distance is only computed accurately up to a horizon — past that
+the only question is "open sea?" and the answer is yes.
+
+No plate. `water-plain` is an opaque cell of the collection's own blue, and the
+app paints its own sea in a colour that follows the theme; everything laid out
+there is a mark on top of that. Which is also why the sea takes a palette and
+the land does not — `SEA` in `src/screens/Map/ground.ts` has one set of blues
+per theme, in TypeScript for the reason `useResolvedTheme` exists at all:
+generated markup cannot reach a CSS variable.
+
+The water is drawn past the edges of the map on every side. The drawing is
+fitted into the window with `meet`, so on most windows there is viewport left
+over above and below it — and an svg clips to its viewport rather than to its
+viewBox, so the sea carries on out into those bands instead of stopping at a
+rectangle nobody drew.
+
 ### Where it is drawn
 
 Cell centres have to be `INSET` — half a radius — inside the outline, because
@@ -275,18 +303,28 @@ relief stands up out of its cell and leans north; a piece on a cell whose centre
 is a hair inside hangs over the neighbour, or over the sea. Where nothing is
 that far in, the sliver keeps its cells anyway.
 
-On the screen the ground is one layer, painted after the coastlines and before
-the lettering, with `pointer-events: none` so a territory still answers the
-pointer through it. North to south, both between territories and within one: a
-piece standing on a southern cell has to be painted over its northern
-neighbour. Over the shoreline rather than under it, because a mountain on the
-northernmost cell of a coast hides the water beyond it — the shore there is the
-far edge, not the near one. A territory ruled out by a filter keeps a quarter of
-its relief: the ground is the shape of the field, and a field that empties
-itself reads as one that has lost its data.
+The map's layers, bottom to top: the sea's own marks, the shallows glowing
+around every shore, the landmasses as slabs, the territories, the coastline,
+the ground inside the territories, the lettering. Everything from the
+collection carries `pointer-events: none`, so a territory still answers the
+pointer through whatever is drawn on it.
 
-Nothing on this layer is painted, only lit and shaded, which is the collection's
-first rule and the reason it can go over thirty-nine different hues.
+North to south, both between territories and within one: a piece standing on a
+southern cell has to be painted over its northern neighbour. Over the shoreline
+rather than under it, because a mountain on the northernmost cell of a coast
+hides the water beyond it — the shore there is the far edge, not the near one.
+
+And all of it well under half opacity (`GROUND_INK`, `OCEAN_INK` in
+`MapView.tsx`). The relief is scenery: what a reader is here for is a field's
+name and its colour, and both are read *through* whatever is drawn under them.
+At full strength a range under a name turns the name into a word on a mountain
+— the halo saves the letters and the reading is still slower. A territory ruled
+out by a filter keeps only a trace, because the ground is the shape of the
+field and a field that empties itself reads as one that has lost its data.
+
+Nothing on the land layer is painted, only lit and shaded, which is the
+collection's first rule and the reason it can go over thirty-nine different
+hues.
 
 ### Changing what a field is made of
 

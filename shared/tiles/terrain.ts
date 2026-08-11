@@ -192,6 +192,56 @@ const index = new Map(TERRAINS.map((terrain) => [terrain.id, terrain]));
 
 export const findTerrain = (id: string): Terrain | undefined => index.get(id);
 
+/* ─────────────────────────────────  The sea  ────────────────────────────── */
+
+/**
+ * Everything that is not a territory, in two bands.
+ *
+ * The sea is the largest thing on the map and the emptiest, so it is the one
+ * place where the density has to be argued down rather than up: the reader is
+ * looking for a field of knowledge, and every mark out here is competing with
+ * the names of the islands too small to write on.
+ *
+ * Two bands rather than one recipe, because water says different things at
+ * different distances from a coast. Near land it explains the edge — where the
+ * bottom comes up, where a reef is, where the rocks break the surface. Out in
+ * the open there is nothing to explain, and swell is enough to say the surface
+ * is water rather than paper.
+ *
+ * No plate: the app paints its own sea, in a colour that follows the theme, and
+ * these are marks laid on top of it. `shore` is in hex radii.
+ */
+export const OCEAN: { shore: number; near: Terrain; open: Terrain } = {
+  shore: 2.4,
+  near: {
+    id: 'shore-water',
+    title: 'Прибрежная вода',
+    note: 'Отмели, рифы и камни у берега — там, где дно поднимается.',
+    cover: 0.34,
+    scatter: [
+      { tile: 'shallows', weight: 5 },
+      { tile: 'reef', weight: 2 },
+      { tile: 'skerries', weight: 2 },
+      { tile: 'swell', weight: 2 },
+    ],
+  },
+  open: {
+    id: 'open-water',
+    title: 'Открытое море',
+    note: 'Зыбь, редкая глубина и одно течение на несколько клеток.',
+    cover: 0.15,
+    // Rare on purpose: a share is per free cell, and the open sea has thousands
+    // of them. This is a dozen streaks across the whole map.
+    chain: { share: 0.004, min: 3, max: 6, body: { tile: 'current-straight' } },
+    scatter: [
+      { tile: 'swell', weight: 7 },
+      { tile: 'deep', weight: 3 },
+      { tile: 'skerries', weight: 1 },
+      { tile: 'whirlpool', weight: 1, once: true },
+    ],
+  },
+};
+
 /* ───────────────────────────  The correspondence  ───────────────────────── */
 
 /**

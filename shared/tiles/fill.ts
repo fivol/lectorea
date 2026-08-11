@@ -208,6 +208,69 @@ export function cellsIn(ring: Point[], grid: HexGrid, inset: number = INSET): Ax
   return inside.length ? inside : collect(0);
 }
 
+/* ────────────────────────────  Cells of the sea  ────────────────────────── */
+
+/**
+ * Beyond this many radii from a coastline nothing about the shore matters, so
+ * the exact distance is not worth computing: the cell is open sea.
+ */
+const HORIZON = 5;
+
+/** Distance from a point to a box, zero inside it. */
+function toBox(point: Point, box: { x: number; y: number; width: number; height: number }): number {
+  const dx = Math.max(box.x - point.x, 0, point.x - (box.x + box.width));
+  const dy = Math.max(box.y - point.y, 0, point.y - (box.y + box.height));
+  return Math.hypot(dx, dy);
+}
+
+/**
+ * Every cell of water in an area, with how far from land each one is.
+ *
+ * `depth` is in hex radii and only accurate near a coast — past the horizon it
+ * is reported as the horizon, because the only question out there is "open
+ * sea?" and the answer is yes. That cut-off is also what makes this cheap: a
+ * cell more than a few radii from every landmass's *box* needs no polygon test
+ * at all, and on this map most of the water is exactly that.
+ *
+ * `clearance` keeps the water off the shore, in radii: the coastline is drawn
+ * heavily and the land stands on a cliff, so a shoal drawn right up against it
+ * lands on the wall rather than in the water.
+ */
+export function oceanCells(
+  area: { x: number; y: number; width: number; height: number },
+  coasts: Point[][],
+  grid: HexGrid,
+  clearance = 1
+): Array<Axial & { depth: number }> {
+  const boxes = coasts.map(boxOf);
+  const horizon = HORIZON * grid.r;
+  const first = snap({ x: area.x, y: area.y }, grid);
+  const last = snap({ x: area.x + area.width, y: area.y + area.height }, grid);
+  const from = Math.floor((area.x - grid.x) / ((HEX_W / 2) * grid.r));
+  const to = Math.ceil((area.x + area.width - grid.x) / ((HEX_W / 2) * grid.r));
+
+  const found: Array<Axial & { depth: number }> = [];
+  for (let row = first.r; row <= last.r; row++) {
+    for (let step = from; step <= to; step++) {
+      if ((((step - row) % 2) + 2) % 2 !== 0) continue;
+      const cell = { q: (step - row) / 2, r: row };
+      const centre = centreAt(cell, grid);
+
+      let nearest = horizon;
+      let land = false;
+      for (let i = 0; i < coasts.length && !land; i++) {
+        if (toBox(centre, boxes[i]) > nearest) continue;
+        const distance = signedDistance(centre, coasts[i]);
+        if (distance >= 0) land = true;
+        else nearest = Math.min(nearest, -distance);
+      }
+      if (land || nearest < clearance * grid.r) continue;
+      found.push({ ...cell, depth: nearest / grid.r });
+    }
+  }
+  return found;
+}
+
 /* ──────────────────────────────  The filling  ───────────────────────────── */
 
 const key = (cell: Axial): string => `${cell.q},${cell.r}`;

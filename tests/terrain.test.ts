@@ -2,15 +2,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
-import { ringOf } from '../shared/polygon';
+import { insideRing, ringOf } from '../shared/polygon';
 import {
   cellsIn,
+  centreAt,
   fillCells,
   findTile,
   findTerrain,
   hexGridOf,
+  oceanCells,
   terrainFor,
   DEFAULT_TERRAIN,
+  OCEAN,
   TERRAINS,
   TERRAIN_BY_CONTINENT,
   TERRAIN_BY_DOMAIN,
@@ -35,20 +38,25 @@ const mapSvg = fs.readFileSync(path.join(root, 'public/map.svg'), 'utf8');
 
 type Shape = { domainId: string; continent: string; d: string };
 
-const shapes: Shape[] = [...mapSvg.matchAll(/<path\b([^>]*)\/>/g)]
-  .map((match) => {
-    const attributes: Record<string, string> = {};
-    for (const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/g)) {
-      attributes[attribute[1]] = attribute[2];
-    }
-    return attributes;
-  })
+const paths = [...mapSvg.matchAll(/<path\b([^>]*)\/>/g)].map((match) => {
+  const attributes: Record<string, string> = {};
+  for (const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/g)) {
+    attributes[attribute[1]] = attribute[2];
+  }
+  return attributes;
+});
+
+const shapes: Shape[] = paths
   .filter((attributes) => attributes.class === 'domain-shape')
   .map((attributes) => ({
     domainId: attributes['data-domain'],
     continent: attributes['data-continent'],
     d: attributes.d,
   }));
+
+const coastlines: string[] = paths
+  .filter((attributes) => attributes.class === 'coastline')
+  .map((attributes) => attributes.d);
 
 describe('the terrain table', () => {
   it('names a terrain for every domain in domains.yaml', () => {
@@ -110,6 +118,27 @@ describe('the terrain table', () => {
     }
   });
 
+  it('builds the sea out of water pieces, and paints nothing over the app’s own', () => {
+    for (const band of [OCEAN.near, OCEAN.open]) {
+      for (const entry of band.scatter) {
+        const tile = findTile(entry.tile);
+        expect(tile, `${band.id}: ${entry.tile}`).toBeDefined();
+        expect(tile!.over, `${band.id}: ${entry.tile}`).toBe('water');
+        // A plate is an opaque cell of sea colour. The screen paints its own
+        // sea, in a colour that follows the theme, and a plate over it would
+        // be a patch of some other blue.
+        expect(tile!.layer, `${band.id}: ${entry.tile}`).not.toBe('plate');
+      }
+      if (band.chain) {
+        const body = findTile(band.chain.body.tile)!;
+        expect(body.over, band.id).toBe('water');
+        expect(body.seams.some((seam) => seam.edges.includes(0)), band.id).toBe(true);
+        expect(body.seams.some((seam) => seam.edges.includes(3)), band.id).toBe(true);
+      }
+    }
+    expect(OCEAN.shore).toBeGreaterThan(0);
+  });
+
   it('gives an unknown domain its continent, and an unknown continent a default', () => {
     expect(terrainFor('no-such-domain', 'formal').id).toBe(TERRAIN_BY_CONTINENT.formal);
     expect(terrainFor('no-such-domain', 'atlantis').id).toBe(DEFAULT_TERRAIN);
@@ -139,6 +168,20 @@ describe('the map the terrain is laid on', () => {
       const filled = fillCells(cells, terrainFor(shape.domainId, shape.continent), shape.domainId);
       expect(filled.length, shape.domainId).toBeGreaterThan(0);
     }
+  });
+
+  it('keeps the water off the land', () => {
+    const coasts = coastlines.map((d) => ringOf(d));
+    const cells = oceanCells({ x: 0, y: 0, width: 1680, height: 980 }, coasts, grid!);
+    expect(cells.length).toBeGreaterThan(100);
+    const aground = cells.filter((cell) => {
+      const centre = centreAt(cell, grid!);
+      return coasts.some((ring) => insideRing(centre, ring));
+    });
+    expect(aground).toEqual([]);
+    // The shallow band has to actually find a coast, or the shoals are the
+    // same thing as the open sea.
+    expect(cells.filter((cell) => cell.depth < OCEAN.shore).length).toBeGreaterThan(20);
   });
 
   it('fills a territory the same way twice', () => {

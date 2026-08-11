@@ -64,6 +64,8 @@ export type MapLandmass = {
   continent: string;
   kind: 'continent' | 'island';
   d: string;
+  /** The coastline as the file wrote it — see `MapShape.plan`. */
+  plan: string;
   width: number;
   height: number;
   x: number;
@@ -127,6 +129,7 @@ export function parseMapSvg(text: string): ParsedMap {
         continent: attributes['data-continent'] ?? 'formal',
         kind: attributes['data-kind'] === 'island' ? 'island' : 'continent',
         d,
+        plan: attributes.d,
         ...extentOf(d),
       });
       continue;
