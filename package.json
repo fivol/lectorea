@@ -28,6 +28,8 @@
     "map:preview": "tsx scripts/map-poc.ts",
     "map:landforms": "tsx scripts/map-landforms.ts",
     "map:sandbox": "tsx scripts/map-sandbox.ts",
+    "tiles:build": "tsx scripts/tiles-build.ts",
+    "tiles:view": "tsx scripts/tiles-view.ts",
     "data:seed-dev": "tsx scripts/dev-seed.ts",
     "course:new": "tsx scripts/course-new.ts",
     "check:i18n": "tsx scripts/check-i18n.ts"

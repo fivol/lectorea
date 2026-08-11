@@ -152,6 +152,7 @@ Detailed documents:
 - [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota
 - [docs/scripts.md](docs/scripts.md) — every command: what it does, its flags, when to run it
+- [docs/tiles.md](docs/tiles.md) — the hex tile collection: what a piece is, how pieces join, how to export them
 - [CONTRIBUTING.md](CONTRIBUTING.md) — the rules external edits must follow
 
 ## The two entities
@@ -209,6 +210,8 @@ pnpm data:seed-dev       # synthetic playlists for development
 pnpm course:new          # scaffold a course across its three files
 pnpm map:preview         # next-generation map into .map-poc/ (not wired to the build)
 pnpm map:sandbox         # the same generator with sliders, one HTML file
+pnpm tiles:view          # the hex tile collection as one HTML page
+pnpm tiles:build         # generate and export that collection into .tiles/
 
 pnpm data:discover       # channels → playlists, monthly
 pnpm data:refresh        # metadata → videos → liveness, nightly

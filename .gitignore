@@ -25,6 +25,9 @@ dev-dist/
 # Sandbox and map preview output. Rebuildable with `pnpm map:sandbox`.
 .map-poc/
 
+# Exported tile collection. Rebuildable with `pnpm tiles:build`.
+.tiles/
+
 # Agent scratch worktrees.
 .claude/worktrees/
 .idea

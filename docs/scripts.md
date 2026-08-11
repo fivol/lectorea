@@ -61,6 +61,8 @@ a time by hand.
 | `pnpm map:preview` | `map-poc.ts` | `data/` | `.map-poc/` |
 | `pnpm map:landforms` | `map-landforms.ts` | `data/` | nothing — prints a table |
 | `pnpm map:sandbox` | `map-sandbox.ts` | `data/` | `.map-poc/sandbox.html` |
+| `pnpm tiles:build` | `tiles-build.ts` | — | `.tiles/` |
+| `pnpm tiles:view` | `tiles-view.ts` | — | `.tiles/collection.html` |
 | `pnpm check:i18n` | `check-i18n.ts` | `data/i18n/`, `data/keywords/`, `src/` | nothing — exits non-zero |
 | `pnpm data:discover` | `01-discover.ts` | API key | `cache.db` |
 | `pnpm data:playlists` | `02-playlists.ts` | API key | `cache.db` |
@@ -176,6 +178,29 @@ override with `MAP_POC_OUT` and `MAP_SANDBOX_OUT`.
 as a mainland, a peninsula or an island is the one part of the map that changes
 what it *claims* rather than how it looks, and «философия стала островом» should
 be checkable without squinting at a coastline.
+
+### `pnpm tiles:build`, `tiles:view`
+
+The generator draws territories, not what is inside them. These two are the
+other half: a collection of SVG pieces sized to one hex of the grid — soil,
+grass, water, coast, mountains, rivers, forest — that stack several to a cell
+and join across cells into ranges, lakes and rivers.
+
+```bash
+pnpm tiles:view                        # one self-contained HTML page
+pnpm tiles:build                       # manifest + files + sprite into .tiles/
+pnpm tiles:build --out=public/tiles    # somewhere that ships
+pnpm tiles:build --only=coast --formats=svg --size=128 --seed=v2
+```
+
+`tiles:build` writes four things: `collection.json` (every piece in unit-hex
+coordinates, plus the geometry, the joining rules and the object recipes),
+`svg/` (one file per picture), `objects/` (each assembled object) and
+`sprite.svg`. `tiles:view` bundles the same generator with controls into
+`.tiles/collection.html`, which opens straight from disk. Output is gitignored;
+override with `TILES_OUT` and `TILES_VIEW_OUT`.
+
+Neither is wired into the build. Full documentation: [docs/tiles.md](tiles.md).
 
 ### `pnpm check:i18n`
 
