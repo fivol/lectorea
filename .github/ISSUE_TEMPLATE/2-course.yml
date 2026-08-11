@@ -1,0 +1,101 @@
+name: Курс
+description: Новая единица в графе — один семестровый курс
+title: 'Курс: '
+labels: [course]
+
+# `deps` and the syllabus are optional here even though no course lands without
+# them: the programme is easier to find during triage than to demand from
+# somebody who merely noticed a hole in the catalogue. Only the name and the
+# domain are required, and the domain is a dropdown so that nobody has to go
+# looking for an id in data/domains.yaml.
+#
+# The option list is kept in step with data/domains.yaml by
+# tests/issue-templates.test.ts.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Единица каталога — **один семестровый курс**: не тема и не двухлетний
+        блок. Проверка на глаз: прочитал бы это один лектор за один семестр и
+        стоит ли это одной строкой в учебном плане.
+
+  - type: input
+    id: name
+    attributes:
+      label: Название
+      placeholder: Теория вероятностей
+    validations:
+      required: true
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Область
+      description: Куда он относится в первую очередь. Ошибётесь — поправим.
+      options:
+        - Математика (math)
+        - Логика (logic)
+        - Вероятность и статистика (probability)
+        - Информатика (cs)
+        - Физика (physics)
+        - Астрономия (astronomy)
+        - Химия (chemistry)
+        - Науки о Земле (earth-science)
+        - Биология (biology)
+        - Медицина (medicine)
+        - Инженерия (engineering)
+        - Биохимия (biochemistry)
+        - Биоинформатика (bioinformatics)
+        - Квантовая химия (quantum-chemistry)
+        - Машинное обучение (machine-learning)
+        - Экономика (economics)
+        - Социология (sociology)
+        - Политология (political-science)
+        - Психология (psychology)
+        - Антропология (anthropology)
+        - Право (law)
+        - Менеджмент (management)
+        - Социальная география (human-geography)
+        - Образование (education)
+        - Эконометрика (econometrics)
+        - Когнитивистика (cognitive-science)
+        - Философия (philosophy)
+        - История (history)
+        - Лингвистика (linguistics)
+        - Литературоведение (literature)
+        - История искусства (art-history)
+        - Музыковедение (musicology)
+        - Религиоведение (religion)
+        - Археология (archaeology)
+        - Классическая филология (classics)
+        - Кинотеория (film-studies)
+        - Компьютерная лингвистика (computational-linguistics)
+        - История науки (history-of-science)
+        - Биоэтика (bioethics)
+        - Ни одна не подходит — нужна новая область
+    validations:
+      required: true
+
+  - type: input
+    id: deps
+    attributes:
+      label: Что нужно знать заранее
+      description: >-
+        Необязательно. Только прямые зависимости: если курс требует матанализ,
+        а матанализ — школьную алгебру, школьную алгебру не пишем.
+      placeholder: Математический анализ 2, комбинаторика
+
+  - type: input
+    id: syllabus
+    attributes:
+      label: Ссылка на программу курса
+      description: >-
+        Необязательно, но это самое полезное, что можно приложить: зависимости
+        берутся из программ, а не из ощущений. MIT OCW и Berkeley пишут их явно.
+      placeholder: https://ocw.mit.edu/courses/6-041-.../
+
+  - type: textarea
+    id: note
+    attributes:
+      label: Что стоит знать
+      description: Необязательно. Где такой курс читают, чем он отличается от соседних.

@@ -1,0 +1,62 @@
+name: Область
+description: Новая территория на карте
+title: 'Область: '
+labels: [domain]
+
+# Colour, shape on the map, bandOrder, icon and description are the
+# maintainer's work, not the reporter's. This form asks only for what the
+# reporter is the one who knows: the name, what it borders, what goes in it.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Область — территория на карте, а не рубрика. Она нужна, когда курсов
+        набирается на отдельный край, и не нужна, когда одному курсу неуютно
+        среди соседей.
+
+        Цвет, очертания, иконку и место в колонках подберём сами.
+
+  - type: input
+    id: name
+    attributes:
+      label: Название
+      placeholder: Нейронауки
+    validations:
+      required: true
+
+  - type: dropdown
+    id: continent
+    attributes:
+      label: Материк
+      description: Три материка карты. Не уверены — так и оставьте.
+      options:
+        - Точные и естественные
+        - Социальные
+        - Гуманитарные
+        - Не знаю
+      default: 3
+
+  - type: input
+    id: near
+    attributes:
+      label: С чем граничит
+      description: Необязательно. Существующие области, из которых она растёт.
+      placeholder: биология, психология
+
+  - type: textarea
+    id: courses
+    attributes:
+      label: Какие курсы туда попадут
+      description: >-
+        Необязательно, но именно этот список решает, область это или один курс.
+        Хватит нескольких названий.
+      placeholder: |
+        Клеточная нейробиология
+        Нейрофизиология
+        Вычислительная нейронаука
+
+  - type: textarea
+    id: note
+    attributes:
+      label: Что стоит знать
+      description: Необязательно.

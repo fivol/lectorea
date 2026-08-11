@@ -223,6 +223,7 @@ pnpm data:build          # data/ + cache.db → public/data (run before dev)
 pnpm data:map            # regenerate public/map.svg from domains.yaml
 pnpm data:seed-dev       # synthetic playlists for development
 pnpm course:new          # scaffold a course across its three files
+pnpm playlist:add        # bind one playlist to a course, by link
 pnpm map:preview         # the map generator into .map-poc/, with a metrics report
 pnpm map:sandbox         # the same generator with sliders, one HTML file
 pnpm tiles:view          # the hex tile collection as one HTML page
@@ -282,6 +283,26 @@ files without a line being edited. A build outside CI assumes `fivol/lectorea`;
 `VITE_REPO` in `.env` overrides it, and `BASE_PATH` overrides the subdirectory
 the site is built for, which otherwise follows the repository name because
 Pages serves a project site from `/<repo>/`.
+
+An issue is the whole of what a reader has to do. There are four forms in
+[.github/ISSUE_TEMPLATE](.github/ISSUE_TEMPLATE) — a playlist, a course, a
+domain, and everything else — and between them they ask for five required
+fields, because a form is answered in proportion to how little it asks. A
+playlist takes one: the link. The channel, the university, the lecturer, the
+language, the lecture count and the running time all come from the YouTube API,
+and asking a reader to type them is asking them to copy out what the pipeline
+already knows. A course takes two, a name and a field of knowledge picked from
+a list; the syllabus and the prerequisites are welcome and optional, since they
+are easier to find during triage than to demand from somebody who merely
+noticed a hole in the catalogue.
+
+The other side of that bargain is that the forms are read by hand.
+`/issues` — [.claude/commands/issues.md](.claude/commands/issues.md) — takes a
+batch of open ones, checks each against the API and the repository, applies
+what verifies, asks about what does not, and leaves the rest as questions on
+the issue itself. It is committed to the repository rather than kept in
+somebody's home directory, because the rules it follows are the ones in
+CONTRIBUTING.md and the two have to move together.
 
 Dependencies are not invented — they are taken from syllabi. MIT OCW and
 Berkeley state them explicitly, and that is the only source that will not drift

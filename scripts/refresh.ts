@@ -7,6 +7,7 @@ import {
   checkLiveness,
   fetchPlaylistVideos,
   refreshPlaylistMetadata,
+  seedManualMatches,
   videoQueueTiers,
 } from './lib/tasks.js';
 
@@ -23,6 +24,13 @@ async function main(): Promise<void> {
   const db = openDb();
   const api = createClient(db);
   const started = api.spent();
+  const sources = loadSources();
+
+  // Hand-written bindings come first: `overrides.yaml` is committed and the
+  // cache is not, so a playlist accepted from an issue on somebody's laptop is
+  // known to this run only through that file.
+  const seeded = seedManualMatches(db, sources.overrides.matches);
+  if (seeded) console.log(`· ${seeded} hand-bound playlists the crawl had not seen`);
 
   const metadata = await refreshPlaylistMetadata(db, api, limit);
   console.log(`· metadata: ${metadata.refreshed} refreshed, ${metadata.remaining} left`);
@@ -31,7 +39,7 @@ async function main(): Promise<void> {
 
   if (!exhausted) {
     console.log(`· videos: ${pendingCount(db, ['videos'])} queued`);
-    rankTargets(db, videoQueueTiers(db, loadSources().overrides.matches));
+    rankTargets(db, videoQueueTiers(db, sources.overrides.matches));
     const videos = await runWorker(
       db,
       ['videos'],

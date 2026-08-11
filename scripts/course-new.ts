@@ -3,7 +3,7 @@ import path from 'node:path';
 import { ensureDir, paths } from './lib/config.js';
 import { loadCourseFiles, reportSourceError, SourceError } from './lib/sources.js';
 import { loadYamlList } from './lib/sources.js';
-import { DomainSchema } from '../shared/schema.js';
+import { DomainSchema, Stage, STAGE_ORDER, type Stage as StageValue } from '../shared/schema.js';
 
 /**
  * Adding a course means touching three files: the graph entry, the texts and
@@ -11,7 +11,7 @@ import { DomainSchema } from '../shared/schema.js';
  * files, and it is only tolerable if a script does the clerical part — miss the
  * keywords and the course exists but nobody can find it.
  *
- *   pnpm course:new probability --domain=math --deps=calculus-2,combinatorics
+ *   pnpm course:new probability --domain=math --stage=bachelor-2 --deps=calculus-2
  *
  * The entry is written with placeholder text on purpose: it is left obviously
  * unfinished so `pnpm check:i18n` fails until a human writes the real thing.
@@ -20,6 +20,7 @@ import { DomainSchema } from '../shared/schema.js';
 type Args = {
   id: string;
   domains: string[];
+  stage: StageValue;
   deps: string[];
   soft: string[];
   title?: string;
@@ -32,7 +33,9 @@ function parseArgs(argv: string[]): Args {
 
   const id = positional[0];
   if (!id) {
-    throw new SourceError('Usage: pnpm course:new <id> --domain=<id>[,<id>] [--deps=a,b] [--soft=c] [--title="…"]');
+    throw new SourceError(
+      'Usage: pnpm course:new <id> --domain=<id>[,<id>] --stage=<stage> [--deps=a,b] [--soft=c] [--title="…"]'
+    );
   }
   if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) {
     throw new SourceError(`"${id}" is not a valid course id`, [
@@ -53,7 +56,26 @@ function parseArgs(argv: string[]): Args {
     ]);
   }
 
-  return { id, domains, deps: list(flag('deps')), soft: list(flag('soft')), title: flag('title') };
+  // Required, and deliberately not defaulted: the stage says which year a real
+  // curriculum puts the course in, and a guess written by a script is
+  // indistinguishable from an answer, including to the reviewer.
+  const stage = Stage.safeParse(flag('stage'));
+  if (!stage.success) {
+    throw new SourceError(`${id}: --stage is required`, [
+      `One of: ${STAGE_ORDER.join(', ')}.`,
+      'Ask it as "which year would a student normally take this?" — not off the',
+      'column, which counts prerequisites inside this catalogue instead.',
+    ]);
+  }
+
+  return {
+    id,
+    domains,
+    stage: stage.data,
+    deps: list(flag('deps')),
+    soft: list(flag('soft')),
+    title: flag('title'),
+  };
 }
 
 /**
@@ -76,7 +98,11 @@ function appendJsonKeys(file: string, entries: Array<[string, unknown]>): void {
 }
 
 function yamlEntry(args: Args): string {
-  const lines = [`- id: ${args.id}`, `  domains: [${args.domains.join(', ')}]`];
+  const lines = [
+    `- id: ${args.id}`,
+    `  domains: [${args.domains.join(', ')}]`,
+    `  stage: ${args.stage}`,
+  ];
   if (args.deps.length) lines.push(`  deps: [${args.deps.join(', ')}]`);
   if (args.soft.length) lines.push(`  soft: [${args.soft.join(', ')}]`);
   return lines.join('\n');

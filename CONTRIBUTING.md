@@ -2,6 +2,19 @@
 
 All content lives in `data/` as YAML and JSON. Changes go through pull requests.
 
+## Without cloning anything
+
+Open an issue. There are four forms — a playlist, a course, a domain, and
+everything else — and they ask for as little as the pipeline can get away with:
+a playlist needs the link and nothing more, since the channel, the university,
+the lecturer, the language and the running time are all read off the YouTube
+API. Anything left blank is either derived or asked about during triage; there
+is no form to fill in twice.
+
+Maintainers work through them with `/issues`, which checks each one against the
+API and against this file before anything is written. What it cannot verify it
+asks about — in the issue, so the answer stays with the request.
+
 ## The rule that matters most
 
 **One unit = one semester course.**
@@ -71,8 +84,11 @@ the graph — and a file with three courses in it is fine.
 ## Adding a course
 
 ```bash
-pnpm course:new probability --domain=math --deps=calculus-2,combinatorics
+pnpm course:new probability --domain=math --stage=bachelor-2 --deps=calculus-2,combinatorics
 ```
+
+`--stage` is required and has no default: a year written by a script is
+indistinguishable from an answer, including to the reviewer.
 
 That writes the graph entry and reserves the text and keyword keys. Then fill in
 by hand:
@@ -125,6 +141,20 @@ of two quota units.
 To bind a specific playlist to a course, run `pnpm data:review` — a local server
 that shows one playlist at a time with keyboard shortcuts and writes decisions
 to `data/overrides.yaml`. That file is committed and is the reviewed record.
+
+For the single playlist that arrives from outside that queue — an issue with a
+link in it, something spotted by hand — there is:
+
+```bash
+pnpm playlist:add https://youtube.com/playlist?list=PL… --course=probability
+pnpm playlist:add PL…                                    # look, do not touch
+```
+
+It does the two halves that are easy to do only one of: writes the match into
+`overrides.yaml`, and puts the playlist into the crawl queue. Without the second
+the match points at a row the database does not have, and the build skips it
+without a word. Without `--course` it spends one quota unit to say what the
+playlist is, which is the check worth doing before believing a link.
 
 ## What CI checks
 

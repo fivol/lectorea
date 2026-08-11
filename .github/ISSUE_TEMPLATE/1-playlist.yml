@@ -1,0 +1,47 @@
+name: Плейлист
+description: Курс лекций на YouTube, которого здесь не хватает
+title: 'Плейлист: '
+labels: [playlist]
+
+# One required field: the link. Channel, provider, lecturer, language, video
+# count and duration all come from the YouTube API — asking a human for them is
+# asking them to copy out what the pipeline already knows.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Достаточно ссылки. Канал, вуз, лектора, язык и длительность
+        определим сами — переписывать их руками не нужно.
+
+  - type: input
+    id: url
+    attributes:
+      label: Ссылка на плейлист
+      placeholder: https://www.youtube.com/playlist?list=PL...
+    validations:
+      required: true
+
+  - type: input
+    id: course
+    attributes:
+      label: К какому курсу
+      description: >-
+        Название или id из каталога — «Теория вероятностей» и `probability`
+        одинаково годятся. Не знаете, куда отнести, — оставьте пустым,
+        подберём при разборе.
+      placeholder: probability
+
+  - type: checkboxes
+    id: new-course
+    attributes:
+      label: Курса ещё нет
+      options:
+        - label: Такого курса в каталоге нет, его нужно завести
+
+  - type: textarea
+    id: note
+    attributes:
+      label: Что стоит знать
+      description: >-
+        Необязательно. Полный ли это курс, чем он лучше уже добавленного,
+        какой предмет заводить, если курса ещё нет.

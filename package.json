@@ -33,6 +33,7 @@
     "tiles:view": "tsx scripts/tiles-view.ts",
     "data:seed-dev": "tsx scripts/dev-seed.ts",
     "course:new": "tsx scripts/course-new.ts",
+    "playlist:add": "tsx scripts/playlist-add.ts",
     "check:i18n": "tsx scripts/check-i18n.ts"
   },
   "pnpm": {

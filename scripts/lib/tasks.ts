@@ -156,6 +156,50 @@ function knownPlaylists(
   return known;
 }
 
+/* ─────────────────────────  Playlists known by id  ─────────────────────── */
+
+/**
+ * Channel ids a playlist carries before the crawler has met its real channel.
+ * A playlist can arrive as a bare id — imported from an awesome-list, or
+ * written into `overrides.yaml` from an issue — and there is nowhere to look
+ * the channel up until the metadata call answers.
+ */
+const PLACEHOLDER_CHANNEL = 'proposed';
+const PLACEHOLDER_CHANNELS = [PLACEHOLDER_CHANNEL, 'imported'];
+const PLACEHOLDER_CHANNELS_SQL = `(${PLACEHOLDER_CHANNELS.map((id) => `'${id}'`).join(', ')})`;
+
+/**
+ * Playlists bound by hand in `overrides.yaml` that the crawl has never seen.
+ *
+ * A binding written by hand — by `data:review`, or when an issue is accepted
+ * with nothing in it but a link — is the one case where the catalogue knows
+ * about a playlist before the crawler does. Without this the binding does
+ * nothing at all and says nothing about it: the build reads playlists out of
+ * the database, and a match pointing at a row that is not there is skipped in
+ * silence.
+ */
+export function seedManualMatches(db: Db, matches: Record<string, string | null>): number {
+  const insert = db.prepare(
+    `INSERT INTO playlists (id, channel_id, video_count, alive, next_refresh_at)
+     VALUES (?, '${PLACEHOLDER_CHANNEL}', 0, 1, ?)
+     ON CONFLICT(id) DO NOTHING`
+  );
+
+  let seeded = 0;
+  db.transaction(() => {
+    for (const [playlistId, courseId] of Object.entries(matches)) {
+      if (!courseId) continue; // `null` means "this is not a course", not "fetch it"
+      // Due immediately: it is bound to a course already, so it is the most
+      // valuable metadata the next run can buy.
+      if (!insert.run(playlistId, nowIso()).changes) continue;
+      enqueue(db, 'videos', playlistId);
+      seeded += 1;
+    }
+  })();
+
+  return seeded;
+}
+
 /* ──────────────────────────  Playlist metadata  ────────────────────────── */
 
 /** How many rows are examined for being due. Not a cap on the work itself. */
@@ -184,8 +228,12 @@ export async function refreshPlaylistMetadata(
   const allDue = (
     db
       .prepare(
+        // A playlist that has never had metadata is scanned first. Ordering by
+        // views alone put it last — its view count is still null — and with
+        // more playlists than the scan window, a hand-added one would fall
+        // outside it every night and never be fetched at all.
         `SELECT id, views, video_count, videos_fetched_at, next_refresh_at FROM playlists
-         WHERE alive = 1 ORDER BY views DESC LIMIT ?`
+         WHERE alive = 1 ORDER BY (published_at IS NULL) DESC, views DESC LIMIT ?`
       )
       .all(SCAN_LIMIT) as Array<{
       id: string;
@@ -211,10 +259,22 @@ export async function refreshPlaylistMetadata(
         : REFRESH_DAYS.statsRegular
     );
 
+  // The channel is written only when there is no real one yet. A playlist that
+  // arrived by id — imported from a list, or named in an issue — has a
+  // placeholder there, and without this it would keep it forever: nothing else
+  // fills the column in, and the catalogue would show the playlist with no
+  // university against it and no way to filter to it.
   const update = db.prepare(
     `UPDATE playlists SET title = ?, description = ?, video_count = ?, published_at = ?,
+                          channel_id = CASE WHEN channel_id IS NULL OR channel_id IN ${PLACEHOLDER_CHANNELS_SQL}
+                                            THEN ? ELSE channel_id END,
                           checked_at = ?, next_refresh_at = ?
      WHERE id = ?`
+  );
+  // Nothing but the title: `provider_id` is set by discovery from channels.yaml
+  // and by hand in `overrides.channels`, and a channel met this way has neither.
+  const learnChannel = db.prepare(
+    `INSERT INTO channels (id, title) VALUES (?, ?) ON CONFLICT(id) DO NOTHING`
   );
   const markDead = db.prepare(`UPDATE playlists SET alive = 0, checked_at = ? WHERE id = ?`);
 
@@ -238,10 +298,12 @@ export async function refreshPlaylistMetadata(
           item.snippet.description ?? '',
           item.contentDetails.itemCount,
           item.snippet.publishedAt,
+          item.snippet.channelId,
           nowIso(),
           nextRefreshFor(item.id),
           item.id
         );
+        learnChannel.run(item.snippet.channelId, item.snippet.channelTitle);
         // Only when the item count moved — the comment used to say as much
         // while the code queued every playlist it looked at, which handed the
         // expensive step the whole catalogue on every metadata run.

@@ -48,15 +48,16 @@ everything due, exactly as before.
 | `data:import` | one newly queued playlist |
 | `data:seed-dev` | one course seeded |
 
-`data:build`, `data:review`, `data:map`, `check:i18n` and `course:new` take no
-limit: they either process the catalogue as a whole or already work one item at
-a time by hand.
+`data:build`, `data:review`, `data:map`, `check:i18n`, `course:new` and
+`playlist:add` take no limit: they either process the catalogue as a whole or
+already work one item at a time by hand.
 
 | Command | Script | Needs | Writes |
 |---|---|---|---|
 | `pnpm data:build` | `08-build.ts` | `data/`, optional `cache.db` | `public/data/` |
 | `pnpm data:seed-dev` | `dev-seed.ts` | — | `cache.db` |
 | `pnpm course:new` | `course-new.ts` | `data/` | `data/courses/`, `i18n/`, `keywords/` |
+| `pnpm playlist:add` | `playlist-add.ts` | `data/`, API key | `data/overrides.yaml`, `cache.db` |
 | `pnpm data:map` | `10-map.ts` | `data/domains.yaml` | `public/map.svg` |
 | `pnpm map:import` | `map-import.ts` | a sandbox SVG export, `data/domains.yaml` | `public/map.svg` |
 | `pnpm map:preview` | `map-poc.ts` | `data/` | `.map-poc/` |
@@ -122,14 +123,16 @@ search keywords — because the course files deliberately carry no prose. This d
 the clerical part.
 
 ```bash
-pnpm course:new probability --domain=math --deps=calculus-2,combinatorics
-pnpm course:new topology --domain=math,cs --soft=real-analysis --title="Топология"
+pnpm course:new probability --domain=math --stage=bachelor-2 --deps=calculus-2
+pnpm course:new topology --domain=math,cs --stage=bachelor-3 --title="Топология"
 ```
 
 `--domain=` is required and its **first** entry decides the file the course lands
-in (`data/courses/math.yaml`). `--deps=` and `--soft=` take comma-separated
-course ids, all of which must already exist. `--title=` is optional and seeds the
-title plus a first keyword.
+in (`data/courses/math.yaml`). `--stage=` is required too, from
+`school-8`…`phd`: the schema demands it, and a default would be a guess the
+reviewer could not tell from an answer. `--deps=` and `--soft=` take
+comma-separated course ids, all of which must already exist. `--title=` is
+optional and seeds the title plus a first keyword.
 
 It refuses unknown domains, unknown dependencies and duplicate ids, and it
 appends to the JSON files as text rather than reserialising them — keywords keep
@@ -137,6 +140,30 @@ one array per line, which is what makes their diffs reviewable.
 
 The description is left empty on purpose, so `pnpm check:i18n` keeps failing
 until somebody writes it.
+
+### `pnpm playlist:add`
+
+Binds one playlist to one course, by link. `data:review` is the tool for a queue
+of candidates; this is for the single playlist that arrives from outside it —
+an issue with a link in it, a recommendation, something spotted by hand.
+
+```bash
+pnpm playlist:add https://youtube.com/playlist?list=PL… --course=probability
+pnpm playlist:add PL…                                    # look, do not touch
+```
+
+The id is the `list=` parameter, and a `watch?v=…` without one is refused — it
+points at one video out of the course, not at the course.
+
+Two writes, and the second is the one that is easy to forget: the match goes
+into `data/overrides.yaml`, which is the committed record, and the playlist goes
+into the crawl queue. A match without a queued playlist points at a row the
+database does not have, and `data:build` skips it in silence.
+
+Without `--course` it spends one unit to say what the playlist is — title,
+channel, video count — and whether the crawl already has it. Out of quota it
+takes the link on trust rather than refusing to record the decision; the crawl
+checks the id again before anything is published.
 
 ### `pnpm data:map`
 
@@ -286,6 +313,14 @@ liveness in that order until the queue drains or the quota does.
 ```bash
 pnpm data:refresh
 ```
+
+Before the first step it seeds any playlist named in `overrides.yaml` that the
+crawl has never seen. `overrides.yaml` is committed and `cache.db` is not, so a
+playlist bound on somebody's laptop reaches CI only through that file — and a
+playlist that has never had metadata is scanned first, ahead of the popular
+ones. There are more playlists than the metadata scan window holds, and a new
+row has no view count to sort by, so without that it would fall outside the
+window every night and never be fetched at all.
 
 The three steps are also available separately, which is mostly useful when
 debugging one of them:

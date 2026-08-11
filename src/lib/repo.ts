@@ -9,3 +9,33 @@ export const REPO = import.meta.env.VITE_REPO;
 export function repoUrl(path = ''): string {
   return `https://github.com/${REPO}${path}`;
 }
+
+/**
+ * A prefilled issue form. The keys are the `id`s of the fields in
+ * `.github/ISSUE_TEMPLATE/`, which is how GitHub fills a form from a link —
+ * so a reader arrives with the part the app already knows filled in and only
+ * has the part it cannot know left to type.
+ *
+ * `title`, `body` and `labels` are reserved by GitHub and are never field ids;
+ * tests/issue-templates.test.ts holds the rest of the names to the forms.
+ */
+function issueUrl(template: string, fields: Record<string, string> = {}): string {
+  const query = new URLSearchParams({ template, ...fields });
+  return repoUrl(`/issues/new?${query}`);
+}
+
+/** «Предложить плейлист», with the course already named. */
+export function suggestPlaylistUrl(courseId: string): string {
+  return issueUrl('1-playlist.yml', { course: courseId });
+}
+
+/**
+ * Straight to the course entry on GitHub. Courses are stored one file per area,
+ * named after the primary domain — which is exactly why that rule is worth
+ * enforcing: it makes the file derivable instead of something to look up.
+ */
+export function fixDataUrl(courseId: string, primaryDomain: string): string {
+  return repoUrl(
+    `/blob/main/data/courses/${primaryDomain}.yaml#:~:text=${encodeURIComponent(`id: ${courseId}`)}`
+  );
+}

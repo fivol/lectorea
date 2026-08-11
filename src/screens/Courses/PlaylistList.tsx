@@ -3,7 +3,7 @@ import type { BuiltCourse, BuiltPlaylist } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { loadPlaylistsCached } from '@/lib/data';
-import { repoUrl } from '@/lib/repo';
+import { suggestPlaylistUrl } from '@/lib/repo';
 import { useCatalogParams } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import PlaylistFilters from './PlaylistFilters';
@@ -168,30 +168,3 @@ function RowSkeletons({ n }: { n: number }) {
   );
 }
 
-export function suggestPlaylistUrl(courseId: string): string {
-  const title = encodeURIComponent(`Плейлист для курса: ${courseId}`);
-  const body = encodeURIComponent(
-    [
-      `Курс: \`${courseId}\``,
-      '',
-      'Ссылка на плейлист: ',
-      'Вуз / канал: ',
-      'Лектор: ',
-      'Язык: ',
-      '',
-      'Почему стоит добавить: ',
-    ].join('\n')
-  );
-  return repoUrl(`/issues/new?title=${title}&body=${body}&labels=playlist`);
-}
-
-/**
- * Straight to the course entry on GitHub. Courses are stored one file per area,
- * named after the primary domain — which is exactly why that rule is worth
- * enforcing: it makes the file derivable instead of something to look up.
- */
-export function fixDataUrl(courseId: string, primaryDomain: string): string {
-  return repoUrl(
-    `/blob/main/data/courses/${primaryDomain}.yaml#:~:text=${encodeURIComponent(`id: ${courseId}`)}`
-  );
-}
