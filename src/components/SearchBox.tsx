@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import type { SearchEntry } from '@shared/schema';
 import { SEARCH_SECTION_ORDER } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
+import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { useCatalogParams } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
@@ -13,8 +15,12 @@ type Props = {
   query: string;
   onQueryChange: (value: string) => void;
   results: SearchResults;
-  /** Floating pill on the map screen; inline field in the graph top bar. */
-  variant?: 'floating' | 'inline';
+  /**
+   * Floating pill on the map screen; inline field otherwise. `compact` is the
+   * inline field on a wide screen and a search icon on a phone, where the field
+   * would be a 160px slot in an already crowded toolbar.
+   */
+  variant?: 'floating' | 'inline' | 'compact';
   className?: string;
 };
 
@@ -26,14 +32,35 @@ export default function SearchBox({
   className = '',
 }: Props) {
   const { t } = useT();
-  const catalog = useCatalog();
   const navigate = useNavigate();
   const params = useCatalogParams();
+  const isMobile = useIsMobile();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+
+  /*
+   * On a phone the field becomes a button and the search becomes a screen: a
+   * back arrow, the field, and the whole height for the list. A 160px input
+   * wedged between two icons is a target you aim at, and what it drops down is
+   * a list read through a letterbox — the pattern every phone already teaches
+   * is to leave the toolbar behind entirely while searching.
+   */
+  const asSheet = variant === 'compact' && isMobile;
+  const [sheet, setSheet] = useState(false);
+
+  const closeSheet = useCallback(() => {
+    setSheet(false);
+    // Backing out of the search leaves nothing behind: with the field gone the
+    // query would still be there, invisible, and the next tap would open onto
+    // someone else's half-typed word.
+    onQueryChange('');
+  }, [onQueryChange]);
+
+  useEscape(sheet, closeSheet);
+  useScrollLock(sheet);
 
   /*
    * A typed query preselects its best hit, so Enter goes where the eye already
@@ -53,8 +80,12 @@ export default function SearchBox({
         target?.isContentEditable;
       if (event.key === '/' && !typing) {
         event.preventDefault();
-        inputRef.current?.focus();
-        setOpen(true);
+        if (asSheet) {
+          setSheet(true);
+        } else {
+          inputRef.current?.focus();
+          setOpen(true);
+        }
       }
       // Second Escape — the one pressed when the field is no longer focused —
       // clears the query. The first only drops focus and keeps the highlight.
@@ -64,7 +95,7 @@ export default function SearchBox({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [query, onQueryChange]);
+  }, [query, onQueryChange, asSheet]);
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent): void => {
@@ -107,11 +138,19 @@ export default function SearchBox({
           setOpen(false);
           break;
       }
+      // A row was chosen, so the search is over — including the screen it was
+      // filling, or the filter it just switched on would be hidden behind it.
+      setSheet(false);
     },
     [navigate, onQueryChange, params]
   );
 
-  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
+  /** ↑/↓/Enter over the list. Escape is the caller's, because backing out of a
+   *  dropdown and backing out of a screen are not the same retreat. */
+  const onNavKey = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    onEscape: () => void
+  ): void => {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setOpen(true);
@@ -126,12 +165,99 @@ export default function SearchBox({
         select(entry);
       }
     } else if (event.key === 'Escape') {
-      // Drops focus but keeps the highlight — that is the point of two steps.
       event.preventDefault();
-      setOpen(false);
-      inputRef.current?.blur();
+      onEscape();
     }
   };
+
+  const list = (
+    <Results results={results} active={active} onActivate={setActive} onSelect={select} />
+  );
+
+  if (asSheet) {
+    return (
+      <>
+        <button
+          type="button"
+          className="btn tap px-2"
+          onClick={() => setSheet(true)}
+          aria-label={t('ui.search.open')}
+          aria-expanded={sheet}
+        >
+          <Icon name="search" />
+        </button>
+
+        {sheet
+          ? createPortal(
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={t('ui.search.open')}
+                className="fixed inset-0 z-50 flex animate-fade-in flex-col bg-surface"
+              >
+                <div className="flex shrink-0 items-center gap-2 border-b border-line px-2 py-2">
+                  <button
+                    type="button"
+                    className="btn-ghost tap rounded p-2"
+                    onClick={closeSheet}
+                    aria-label={t('ui.common.back')}
+                  >
+                    <Icon name="arrow-left" />
+                  </button>
+                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-chip border
+                                  border-line bg-surface-2 px-3 py-2">
+                    <Icon name="search" className="text-ink-faint" />
+                    <input
+                      ref={inputRef}
+                      type="search"
+                      // eslint-disable-next-line jsx-a11y/no-autofocus
+                      autoFocus
+                      value={query}
+                      onChange={(event) => onQueryChange(event.target.value)}
+                      onKeyDown={(event) => onNavKey(event, closeSheet)}
+                      placeholder={t('ui.search.placeholder')}
+                      aria-label={t('ui.search.placeholder')}
+                      aria-controls="search-results"
+                      role="combobox"
+                      aria-expanded="true"
+                      enterKeyHint="search"
+                      autoComplete="off"
+                      className="w-full bg-transparent text-base text-ink outline-none
+                                 placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+                    />
+                    {query ? (
+                      <button
+                        type="button"
+                        className="btn-ghost rounded p-1 text-ink-faint"
+                        onClick={() => {
+                          onQueryChange('');
+                          inputRef.current?.focus();
+                        }}
+                        aria-label={t('ui.search.clear')}
+                      >
+                        <Icon name="close" size={16} />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Here the line follows the list instead of being pinned under
+                    it: a whole screen tall, a footer over that much empty space
+                    reads as a bottom bar rather than as a footnote to the rows
+                    above it. */}
+                <div id="search-results" role="listbox" className="panel-scroll min-h-0 flex-1 p-2">
+                  {list}
+                  {results.suggested && !results.empty ? (
+                    <Hint sections={results.sections} className="mx-1 mt-2" />
+                  ) : null}
+                </div>
+              </div>,
+              document.body
+            )
+          : null}
+      </>
+    );
+  }
 
   const floating = variant === 'floating';
 
@@ -154,7 +280,14 @@ export default function SearchBox({
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          onKeyDown={onKeyDown}
+          onKeyDown={(event) =>
+            onNavKey(event, () => {
+              // Drops focus but keeps the highlight — that is the point of the
+              // two steps: the second Escape clears the query.
+              setOpen(false);
+              inputRef.current?.blur();
+            })
+          }
           placeholder={t('ui.search.placeholder')}
           aria-label={t('ui.search.placeholder')}
           aria-expanded={open}
@@ -205,57 +338,81 @@ export default function SearchBox({
                      sm:w-[340px]"
         >
           <div id="search-results" role="listbox" className="panel-scroll min-h-0 flex-1 p-2">
-            {results.empty ? (
-              /* Nothing was asked for yet, so «ничего не найдено» would be
-                 answering a question nobody put: the slice is empty, and that
-                 is what the columns behind the panel say too. */
-              <p className="px-3 py-4 text-center text-sm text-ink-faint">
-                {results.suggested ? t('ui.graph.empty') : t('ui.search.empty')}
-              </p>
-            ) : (
-              results.sections.map((section) => (
-                <section key={section.type} className="mb-1 last:mb-0">
-                  <h3 className="mono-label px-3 pb-1 pt-2">
-                    {results.suggested
-                      ? t(`ui.search.suggest.${section.type}`)
-                      : t(`ui.search.section.${section.type}`)}
-                  </h3>
-                  {section.items.map(({ entry }) => {
-                    const index = results.flat.indexOf(entry);
-                    const isActive = index === active;
-                    return (
-                      <button
-                        key={`${entry.t}:${entry.id}`}
-                        type="button"
-                        role="option"
-                        aria-selected={isActive}
-                        onMouseEnter={() => setActive(index)}
-                        onClick={() => select(entry)}
-                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm
-                                    ${isActive ? 'bg-surface-2 text-ink' : 'text-ink-dim'}`}
-                      >
-                        <SectionMark type={entry.t} />
-                        <span className="min-w-0 flex-1 truncate">
-                          <MarkedText text={entry.n} query={results.query} />
-                        </span>
-                        <Secondary entry={entry} catalog={catalog} />
-                      </button>
-                    );
-                  })}
-                  {section.more > 0 ? (
-                    <p className="px-3 pb-1 text-xs text-ink-faint">
-                      {t('ui.search.more', { n: section.more })}
-                    </p>
-                  ) : null}
-                </section>
-              ))
-            )}
+            {list}
           </div>
 
           {results.suggested && !results.empty ? <Hint sections={results.sections} /> : null}
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** The rows themselves — the same list under a dropdown and inside the sheet. */
+function Results({
+  results,
+  active,
+  onActivate,
+  onSelect,
+}: {
+  results: SearchResults;
+  active: number;
+  onActivate: (index: number) => void;
+  onSelect: (entry: SearchEntry) => void;
+}) {
+  const { t } = useT();
+  const catalog = useCatalog();
+
+  if (results.empty) {
+    /* Nothing was asked for yet, so «ничего не найдено» would be answering a
+       question nobody put: the slice is empty, and that is what the columns
+       behind the panel say too. */
+    return (
+      <p className="px-3 py-4 text-center text-sm text-ink-faint">
+        {results.suggested ? t('ui.graph.empty') : t('ui.search.empty')}
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {results.sections.map((section) => (
+        <section key={section.type} className="mb-1 last:mb-0">
+          <h3 className="mono-label px-3 pb-1 pt-2">
+            {results.suggested
+              ? t(`ui.search.suggest.${section.type}`)
+              : t(`ui.search.section.${section.type}`)}
+          </h3>
+          {section.items.map(({ entry }) => {
+            const index = results.flat.indexOf(entry);
+            const isActive = index === active;
+            return (
+              <button
+                key={`${entry.t}:${entry.id}`}
+                type="button"
+                role="option"
+                aria-selected={isActive}
+                onMouseEnter={() => onActivate(index)}
+                onClick={() => onSelect(entry)}
+                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm
+                            ${isActive ? 'bg-surface-2 text-ink' : 'text-ink-dim'}`}
+              >
+                <SectionMark type={entry.t} />
+                <span className="min-w-0 flex-1 truncate">
+                  <MarkedText text={entry.n} query={results.query} />
+                </span>
+                <Secondary entry={entry} catalog={catalog} />
+              </button>
+            );
+          })}
+          {section.more > 0 ? (
+            <p className="px-3 pb-1 text-xs text-ink-faint">
+              {t('ui.search.more', { n: section.more })}
+            </p>
+          ) : null}
+        </section>
+      ))}
+    </>
   );
 }
 
@@ -269,7 +426,7 @@ export default function SearchBox({
  * It sits outside the scroll area, or the line explaining what else there is
  * would itself be the thing you have to scroll to find.
  */
-function Hint({ sections }: { sections: SearchSection[] }) {
+function Hint({ sections, className = '' }: { sections: SearchSection[]; className?: string }) {
   const { t } = useT();
 
   const shown = new Set(sections.map((section) => section.type));
@@ -284,7 +441,7 @@ function Hint({ sections }: { sections: SearchSection[] }) {
       : `${rest.slice(0, -1).join(', ')} ${t('ui.common.and')} ${rest[rest.length - 1]}`;
 
   return (
-    <p className="shrink-0 border-t border-line px-3 py-2 text-[11px] text-ink-faint">
+    <p className={`shrink-0 border-t border-line px-3 py-2 text-[11px] text-ink-faint ${className}`}>
       {t('ui.search.hint', { kinds })}
     </p>
   );

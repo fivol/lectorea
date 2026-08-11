@@ -143,6 +143,7 @@ export default function CoursesScreen() {
             query={query}
             onQueryChange={setQuery}
             results={results}
+            variant="compact"
             className="w-40 sm:w-64"
           />
           <ThemeToggle className="tap" />

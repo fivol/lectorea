@@ -80,6 +80,12 @@ fields of knowledge the map opens with — once a field has been picked, «the
 biggest area» is no longer an answer to anything. Typing still reaches the whole
 catalogue; a filter says what to look at, not what exists.
 
+On a phone that field is a search icon. The row is three filters deep already,
+and an input wedged into the 160px left between two buttons is a target you have
+to aim at, dropping a list read through a letterbox. Tapping the icon opens the
+search as its own screen instead — back arrow, full-width field, the whole
+height for the list — and backing out of it leaves nothing typed behind.
+
 A domain filter shows that field and nothing else — not even a prerequisite from
 elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead: «Требует знания» and «Даст

@@ -6,6 +6,7 @@
   "ui.common.cancel": "Отмена",
   "ui.common.all": "Все",
   "ui.common.and": "и",
+  "ui.common.back": "Назад",
   "ui.common.reset": "Сбросить",
   "ui.common.loading": "Загрузка…",
   "ui.common.copied": "Скопировано",
@@ -37,6 +38,7 @@
   "ui.theme.toDark": "Тёмная тема",
 
   "ui.search.placeholder": "Область, курс, вуз…",
+  "ui.search.open": "Поиск",
   "ui.search.empty": "Ничего не найдено",
   "ui.search.more": "и ещё {n}",
   "ui.search.clear": "Очистить поиск",
