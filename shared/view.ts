@@ -30,11 +30,13 @@ export type Point = { x: number; y: number };
  * How flat the ground lies: a unit of north-south ground is this much screen.
  *
  * At 1 the map is a plan and the collection has nothing to stand up in; at 0 it
- * is a horizon. Around 0.6 a hex still reads as a hex — under about 0.45 the
- * cells turn into slots and the territory shapes stop being distinguishable
- * from one another, which on this map is the whole content.
+ * is a horizon. High, on purpose: the reader is looking down at the map and
+ * only leaning a little, so the ground barely foreshortens and the thickness of
+ * the land does the rest. Pushed towards a real isometric the continents grow
+ * wide and squat, and a territory's outline — which is what says how big a
+ * field is — stops being comparable with the one next to it.
  */
-export const GROUND = 0.62;
+export const GROUND = 0.82;
 
 /**
  * The land's thickness, in hex radii.

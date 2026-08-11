@@ -255,16 +255,43 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         onPointerLeave={() => setHovered(null)}
       >
         <defs>
-          <filter id="map-shore" x="-6%" y="-6%" width="112%" height="112%">
+          {/*
+            Room for the blur to finish in, given in map units rather than as a
+            share of what is being filtered.
+
+            A share cannot serve both: a continent is a thousand units across
+            and a few percent of it is plenty of margin, while an island is
+            forty across and the same few percent cut the shallows off square a
+            third of the way out — which is exactly what it looked like. Stated
+            once in absolute terms, the region covers the whole sea and every
+            shore in it fades out properly.
+          */}
+          <filter
+            id="map-shore"
+            filterUnits="userSpaceOnUse"
+            x={-SHORE_BLUR * 4}
+            y={-SHORE_BLUR * 4}
+            width={map.width + SHORE_BLUR * 8}
+            height={map.height + DEPTH + SHORE_BLUR * 8}
+          >
             <feGaussianBlur stdDeviation={SHORE_BLUR} />
           </filter>
         </defs>
 
-        {/* Every landmass as the slab it is: the water brightening around its
-            foot, the cliff, and the ground on top. Nothing here is a picture —
-            all three are the same coastline path the territories tile, so the
-            wall, the shore and the borders can never drift apart at some window
-            size.
+        {/* The water brightening as it shallows towards every shore, all of it
+            in one pass and under all of the land. It belongs to the surface of
+            the sea, which is at the foot of the cliffs rather than at the top
+            of them — hence the drop. */}
+        <g filter="url(#map-shore)" transform={`translate(0 ${DEPTH})`}>
+          {map.landmasses.map((mass, index) => (
+            <path key={`shore-${index}`} d={mass.d} style={{ fill: 'var(--map-surf)' }} />
+          ))}
+        </g>
+
+        {/* Every landmass as the slab it is: the cliff, and the ground on top
+            of it. Neither is a picture — both are the same coastline path the
+            territories tile, so the wall and the borders can never drift apart
+            at some window size.
 
             North to south, because a wall hangs southward across whatever is
             behind it: an island lying just off a coast has to be painted after
@@ -273,9 +300,6 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
           .sort((a, b) => a.y - b.y)
           .map((mass, index) => (
             <g key={`mass-${index}`}>
-              <g filter="url(#map-shore)" transform={`translate(0 ${DEPTH})`}>
-                <path d={mass.d} style={{ fill: 'var(--map-surf)' }} />
-              </g>
               <path
                 d={mass.d}
                 transform={`translate(0 ${DEPTH})`}
