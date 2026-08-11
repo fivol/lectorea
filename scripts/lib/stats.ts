@@ -13,6 +13,7 @@ import { forwardClosureSizes, dependantsIndex } from '../../shared/graph.js';
 import { median } from './score.js';
 import { env, paths } from './config.js';
 import { dbExists, MATCH_THRESHOLD, openDb, type Db } from './db.js';
+import { REFRESH_DAYS } from './tasks.js';
 import { loadYamlObject } from './sources.js';
 
 /**
@@ -89,6 +90,10 @@ export type Forecast = {
   useful: { playlists: number; units: number; days: number };
   /** Queued jobs on playlists already ruled out — quota that would buy nothing. */
   wasted: { playlists: number; units: number };
+  /** The whole queue, useful and not: what finishing the current channels costs. */
+  total: { playlists: number; units: number; days: number; videos: number };
+  /** Passes that are scheduled rather than queued, and the date they come round. */
+  scheduled: Array<{ label: string; due: number; when: string | null }>;
   review: { playlists: number; courses: number; hours: number };
   /** Empty courses the review queue alone could close. */
   fillable: { courses: number; candidates: number };
@@ -681,7 +686,6 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
 
     const channels = count('channels');
     const discovered = count('playlists');
-    const withStats = count('playlists WHERE stats_fetched_at IS NOT NULL');
     const withVideos = count('playlists WHERE videos_fetched_at IS NOT NULL');
     const bound = count(
       `matches WHERE course_id IS NOT NULL AND (reviewed = 1 OR confidence >= ?)`,
@@ -816,10 +820,12 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
           hint: 'решений через pnpm data:review',
         },
       ],
+      // No separate "has metadata" step: `stats_fetched_at` is written by the
+      // video pass, not by the metadata one, so it would always equal the step
+      // below it and read as a stage that never loses anything.
       funnel: [
-        { label: 'найдено', value: discovered },
-        { label: 'с метаданными', value: withStats },
-        { label: 'со списком лекций', value: withVideos },
+        { label: 'найдено при обходе каналов', value: discovered },
+        { label: 'лекции выкачаны', value: withVideos },
         { label: 'привязано к курсу', value: bound },
         { label: 'в каталоге', value: context.publishedPlaylists },
       ],
@@ -871,22 +877,31 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
  * the honest "how much more quota" is the first number, not the queue length.
  */
 function buildForecast(db: Db, context: CrawlContext): Forecast {
+  // `running` counts with `pending`: a job a killed process left behind is
+  // recovered by the next run, so it is work outstanding either way.
   const cost = db
     .prepare(
       `SELECT
          CASE WHEN m.course_id IS NULL AND m.playlist_id IS NOT NULL THEN 1 ELSE 0 END AS ruled_out,
          count(*) AS playlists,
-         COALESCE(sum(${UNITS_PER_JOB}), 0) AS units
+         COALESCE(sum(${UNITS_PER_JOB}), 0) AS units,
+         COALESCE(sum(p.video_count), 0) AS videos
        FROM jobs j
        LEFT JOIN playlists p ON p.id = j.target
        LEFT JOIN matches m ON m.playlist_id = j.target
-       WHERE j.type = 'videos' AND j.status = 'pending'
+       WHERE j.type = 'videos' AND j.status IN ('pending', 'running')
        GROUP BY ruled_out`
     )
-    .all() as Array<{ ruled_out: number; playlists: number; units: number }>;
+    .all() as Array<{ ruled_out: number; playlists: number; units: number; videos: number }>;
 
-  const useful = cost.find((row) => row.ruled_out === 0) ?? { playlists: 0, units: 0 };
-  const wasted = cost.find((row) => row.ruled_out === 1) ?? { playlists: 0, units: 0 };
+  const nothing = { playlists: 0, units: 0, videos: 0 };
+  const useful = cost.find((row) => row.ruled_out === 0) ?? nothing;
+  const wasted = cost.find((row) => row.ruled_out === 1) ?? nothing;
+  const queued = {
+    playlists: useful.playlists + wasted.playlists,
+    units: useful.units + wasted.units,
+    videos: useful.videos + wasted.videos,
+  };
 
   const queue = db
     .prepare(
@@ -905,12 +920,44 @@ function buildForecast(db: Db, context: CrawlContext): Forecast {
   const projected = total ? (covered + fillable.length) / total : 0;
 
   const days = Math.ceil(useful.units / env.quotaCeiling);
+  const totalDays = Math.ceil(queued.units / env.quotaCeiling);
   const hours = (inReview * SECONDS_PER_DECISION) / HOUR;
   const dayText = days <= 1 ? 'меньше дня квоты' : `${days} дн квоты`;
+
+  // Metadata and liveness are not queued — each is a scan over its own window,
+  // so what is left of them is a date rather than a number of units. Both are
+  // cheap besides: fifty playlists to a unit, against two per playlist walked.
+  const now = Date.now();
+  const scheduled = [
+    {
+      label: 'Метаданные',
+      due: countAlive(db, 'next_refresh_at IS NULL OR next_refresh_at <= ?', iso(now)),
+      // Discovery schedules a playlist a month out, so the soonest date in the
+      // column is when the next pass has anything to do.
+      when: minAlive(db, 'next_refresh_at'),
+      after: 0,
+    },
+    {
+      label: 'Доступность',
+      due: countAlive(
+        db,
+        'checked_at IS NULL OR checked_at <= ?',
+        iso(now - REFRESH_DAYS.liveness * 24 * HOUR * 1000)
+      ),
+      when: minAlive(db, 'checked_at'),
+      after: REFRESH_DAYS.liveness,
+    },
+  ].map((row) => ({
+    label: row.label,
+    due: row.due,
+    when: row.when ? iso(Date.parse(row.when) + row.after * 24 * HOUR * 1000) : null,
+  }));
 
   return {
     ceiling: env.quotaCeiling,
     useful: { playlists: useful.playlists, units: useful.units, days },
+    total: { ...queued, days: totalDays },
+    scheduled,
     wasted: { playlists: wasted.playlists, units: wasted.units },
     review: { playlists: inReview, courses: queue.length, hours },
     fillable: {
@@ -920,6 +967,13 @@ function buildForecast(db: Db, context: CrawlContext): Forecast {
     unsourced: empty.size - fillable.length,
     projectedCoverage: projected,
     facts: [
+      {
+        label: 'Дообойти текущие каналы',
+        value: totalDays === 1 ? '1 день' : `${totalDays} дн`,
+        hint: `${fmt(queued.units)} единиц на ${fmt(queued.playlists)} плейлистов (${fmt(
+          queued.videos
+        )} лекций) при потолке ${fmt(env.quotaCeiling)} в сутки`,
+      },
       {
         label: 'Осталось полезного обхода',
         value: `${fmt(useful.units)} ед.`,
@@ -952,6 +1006,22 @@ function buildForecast(db: Db, context: CrawlContext): Forecast {
       },
     ],
   };
+}
+
+const iso = (at: number): string => new Date(at).toISOString();
+
+function countAlive(db: Db, where: string, ...args: string[]): number {
+  const row = db
+    .prepare(`SELECT count(*) AS n FROM playlists WHERE alive = 1 AND (${where})`)
+    .get(...args) as { n: number };
+  return row.n;
+}
+
+function minAlive(db: Db, column: string): string | null {
+  const row = db
+    .prepare(`SELECT min(${column}) AS at FROM playlists WHERE alive = 1`)
+    .get() as { at: string | null };
+  return row.at;
 }
 
 function freshCount(db: Db, days: number): number {

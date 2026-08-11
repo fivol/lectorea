@@ -131,6 +131,7 @@ function columns(
 }
 
 const DAY_LABEL = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
+const DAY_ONLY = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
 
 function dayLabel(iso: string): string {
   return DAY_LABEL.format(new Date(`${iso}T00:00:00Z`));
@@ -588,6 +589,18 @@ export function renderPage(stats: Stats): string {
       )} единиц, так что полезной работы тут ${
         forecast.useful.days <= 1 ? 'меньше чем на день' : `на ${forecast.useful.days} дн`
       }.</p>`
+  )}
+  ${card(
+    'Плановые проходы',
+    'метаданные и проверка доступности идут не очередью, а окном — им остался срок, а не квота',
+    `<div class="scroll">${table(
+      ['Проход', 'Ждёт сейчас', 'Следующий'],
+      forecast.scheduled.map((row) => [
+        row.label,
+        row.due ? fmt(row.due) : '—',
+        row.due ? 'уже пора' : row.when ? DAY_ONLY.format(new Date(row.when)) : '—',
+      ])
+    )}</div>`
   )}
   ${card(
     'Пустые курсы: чем закрываются',
