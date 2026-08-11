@@ -44,6 +44,10 @@
   "ui.search.section.p": "Плейлисты",
   "ui.search.section.v": "Вузы и площадки",
   "ui.search.section.l": "Лекторы",
+  "ui.search.suggest.d": "Крупнейшие области",
+  "ui.search.suggest.c": "Популярные курсы",
+  "ui.search.suggest.v": "Крупнейшие вузы и площадки",
+  "ui.search.hint": "Ещё найдутся плейлисты и лекторы — начните печатать",
 
   "ui.continent.formal": "Формально-естественные",
   "ui.continent.social": "Социальные",

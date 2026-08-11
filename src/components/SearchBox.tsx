@@ -32,9 +32,15 @@ export default function SearchBox({
   const inputRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(-1);
 
-  useEffect(() => setActive(0), [results.query]);
+  /*
+   * A typed query preselects its best hit, so Enter goes where the eye already
+   * is. The default list has no best hit — nothing was asked for yet — and
+   * preselecting its first row would send Enter to «Математика» for anyone who
+   * focused the field and thought better of it. `-1` is "nothing yet"; ↓ picks.
+   */
+  useEffect(() => setActive(results.suggested ? -1 : 0), [results.query, results.suggested]);
 
   // `/` focuses the field from anywhere, as long as nothing else is being typed into.
   useEffect(() => {
@@ -176,52 +182,79 @@ export default function SearchBox({
         )}
       </div>
 
-      {open && query.trim() ? (
+      {/*
+        The panel opens on focus, not on the first keystroke. An empty dropdown
+        under a field that says «Область, курс, вуз…» leaves the reader to take
+        that on faith; the same three sections, filled with the largest of each,
+        show what the catalogue is made of and that all three are searchable.
+      */}
+      {open ? (
+        /*
+          As wide as the field, and never narrower than a name: in the header of
+          the columns screen the field is a 160px slot between two buttons, and
+          a list scaled to it reads «Мат…  22 курса». So the panel hangs from the
+          field's right edge and takes the width it needs — capped at 60vw,
+          which is what keeps its left edge on screen on a phone.
+        */
         <div
-          id="search-results"
-          role="listbox"
-          className="panel-scroll glass-strong absolute inset-x-0 top-[calc(100%+8px)] z-40
-                     max-h-[60vh] origin-top animate-pop-in rounded-pop border border-line p-2
-                     shadow-[var(--shadow-pop)] backdrop-blur-xl"
+          className="glass-strong absolute right-0 top-[calc(100%+8px)] z-40 flex max-h-[70vh]
+                     w-[min(60vw,340px)] min-w-full flex-col overflow-hidden rounded-pop
+                     border border-line
+                     origin-top animate-pop-in shadow-[var(--shadow-pop)] backdrop-blur-xl
+                     sm:w-[340px]"
         >
-          {results.empty ? (
-            <p className="px-3 py-4 text-center text-sm text-ink-faint">{t('ui.search.empty')}</p>
-          ) : (
-            results.sections.map((section) => (
-              <section key={section.type} className="mb-1 last:mb-0">
-                <h3 className="mono-label px-3 pb-1 pt-2">
-                  {t(`ui.search.section.${section.type}`)}
-                </h3>
-                {section.items.map(({ entry }) => {
-                  const index = results.flat.indexOf(entry);
-                  const isActive = index === active;
-                  return (
-                    <button
-                      key={`${entry.t}:${entry.id}`}
-                      type="button"
-                      role="option"
-                      aria-selected={isActive}
-                      onMouseEnter={() => setActive(index)}
-                      onClick={() => select(entry)}
-                      className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm
-                                  ${isActive ? 'bg-surface-2 text-ink' : 'text-ink-dim'}`}
-                    >
-                      <SectionMark type={entry.t} />
-                      <span className="min-w-0 flex-1 truncate">
-                        <MarkedText text={entry.n} query={results.query} />
-                      </span>
-                      <Secondary entry={entry} catalog={catalog} />
-                    </button>
-                  );
-                })}
-                {section.more > 0 ? (
-                  <p className="px-3 pb-1 text-xs text-ink-faint">
-                    {t('ui.search.more', { n: section.more })}
-                  </p>
-                ) : null}
-              </section>
-            ))
-          )}
+          <div id="search-results" role="listbox" className="panel-scroll min-h-0 flex-1 p-2">
+            {results.empty ? (
+              <p className="px-3 py-4 text-center text-sm text-ink-faint">{t('ui.search.empty')}</p>
+            ) : (
+              results.sections.map((section) => (
+                <section key={section.type} className="mb-1 last:mb-0">
+                  <h3 className="mono-label px-3 pb-1 pt-2">
+                    {results.suggested
+                      ? t(`ui.search.suggest.${section.type}`)
+                      : t(`ui.search.section.${section.type}`)}
+                  </h3>
+                  {section.items.map(({ entry }) => {
+                    const index = results.flat.indexOf(entry);
+                    const isActive = index === active;
+                    return (
+                      <button
+                        key={`${entry.t}:${entry.id}`}
+                        type="button"
+                        role="option"
+                        aria-selected={isActive}
+                        onMouseEnter={() => setActive(index)}
+                        onClick={() => select(entry)}
+                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm
+                                    ${isActive ? 'bg-surface-2 text-ink' : 'text-ink-dim'}`}
+                      >
+                        <SectionMark type={entry.t} />
+                        <span className="min-w-0 flex-1 truncate">
+                          <MarkedText text={entry.n} query={results.query} />
+                        </span>
+                        <Secondary entry={entry} catalog={catalog} />
+                      </button>
+                    );
+                  })}
+                  {section.more > 0 ? (
+                    <p className="px-3 pb-1 text-xs text-ink-faint">
+                      {t('ui.search.more', { n: section.more })}
+                    </p>
+                  ) : null}
+                </section>
+              ))
+            )}
+          </div>
+
+          {/* The two kinds the default list leaves out are still findable —
+              said once, under the list rather than as two more sections. It
+              sits outside the scroll area, or the one line explaining what else
+              there is would itself be the thing you have to scroll to find. */}
+          {results.suggested && !results.empty ? (
+            <p className="shrink-0 border-t border-line px-3 py-2 text-[11px] text-ink-faint">
+              {t('ui.search.hint')}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

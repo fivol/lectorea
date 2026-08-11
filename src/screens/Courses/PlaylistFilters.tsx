@@ -56,6 +56,14 @@ export default function PlaylistFilters({
     );
   }, [facets.providers, providerQuery, catalog.providers]);
 
+  // The lecturer filter is a substring match, so what is typed is both the
+  // query and the filter itself — the list below narrows as it is refined.
+  const shownLecturers = useMemo(() => {
+    const needle = normalize(state.lecturer);
+    if (!needle) return facets.lecturers;
+    return facets.lecturers.filter((name) => normalize(name).includes(needle));
+  }, [facets.lecturers, state.lecturer]);
+
   const toggle = <K extends keyof PlaylistFilterState>(
     key: K,
     list: string[],
@@ -126,21 +134,41 @@ export default function PlaylistFilters({
             ))}
           </Dropdown>
 
-          <Dropdown label={t('ui.filters.lecturer')} active={Boolean(state.lecturer)}>
-            <input
-              type="text"
-              value={state.lecturer}
-              list="lecturer-options"
-              onChange={(event) => onChange({ ...state, lecturer: event.target.value })}
-              placeholder={t('ui.filters.lecturerPlaceholder')}
-              className="w-full rounded border border-line bg-surface-2 px-2 py-1 text-sm outline-none"
-            />
-            <datalist id="lecturer-options">
-              {facets.lecturers.map((name) => (
-                <option key={name} value={name} />
+          {/* A field with a `datalist` behind it showed nothing until something
+              was typed, and what it then showed was up to the browser. The
+              names are right here — listed, they say who recorded this course
+              before anyone has to guess at a spelling. And when none of the
+              recordings names a lecturer, the filter itself has nothing to
+              offer, so it goes away like the year and count ranges do. */}
+          {facets.lecturers.length || state.lecturer ? (
+            <Dropdown
+              label={t('ui.filters.lecturer')}
+              active={Boolean(state.lecturer)}
+              search={{
+                value: state.lecturer,
+                onChange: (next) => onChange({ ...state, lecturer: next }),
+                placeholder: t('ui.filters.lecturerPlaceholder'),
+              }}
+            >
+              <Caption>
+                {state.lecturer.trim()
+                  ? t('ui.filter.found', { n: shownLecturers.length })
+                  : t('ui.filter.popular')}
+              </Caption>
+              {shownLecturers.length ? null : (
+                <p className="px-2 py-1.5 text-sm text-ink-faint">{t('ui.search.empty')}</p>
+              )}
+              {shownLecturers.map((name) => (
+                <RadioRow
+                  key={name}
+                  checked={state.lecturer === name}
+                  onChange={() => onChange({ ...state, lecturer: name })}
+                >
+                  {name}
+                </RadioRow>
               ))}
-            </datalist>
-          </Dropdown>
+            </Dropdown>
+          ) : null}
 
           <Dropdown label={t('ui.filters.kind')} active={state.kinds.length > 0}>
             {KINDS.map((kind) => (

@@ -41,8 +41,12 @@ painting's own coordinates, and they are clipped to its coastline so no border
 runs out into the sea. Pick a territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
-stemmer. On a small screen the map falls back to a grid of blocks carrying the
-same icons; the toggle is in the profile settings.
+stemmer. It opens on focus rather than on the first keystroke, and before
+anything is typed it holds the largest areas, courses and universities under
+their own headings: a field that says «Область, курс, вуз…» is worth more when
+it shows the three rather than asking to be believed. On a small screen the map
+falls back to a grid of blocks carrying the same icons; the toggle is in the
+profile settings.
 
 **The columns** (`/courses`) are the catalogue proper. A column is «сложность
 N» — the length of the longest chain of prerequisites ending at that course — so
@@ -92,8 +96,12 @@ or a click on empty space, puts the columns back to full width.
   length, captions, year, completeness; hide what you have watched. The filters
   sit in one strip that scrolls sideways, ordered by how often they are reached
   for, and the button at its end unfolds the lot; sorting has its own row,
-  because at the end of that strip it read as one more filter. The provider list
-  is searchable, here and in the header filter above the columns.
+  because at the end of that strip it read as one more filter. The provider and
+  lecturer lists are searchable — here and in the header filters above the
+  columns — and every one of them names its rows before anything is typed, most
+  first, so the field narrows a list you can already see rather than asking you
+  to guess at a spelling. The lecturer filter disappears for a course whose
+  recordings name nobody.
 - Marking a course cycles it through *nothing → in progress → done*, which is
   what makes "what can I study right now" answerable.
 

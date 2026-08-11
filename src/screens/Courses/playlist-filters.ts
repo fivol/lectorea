@@ -148,7 +148,10 @@ export function sortPlaylists(playlists: BuiltPlaylist[], key: SortKey): BuiltPl
 export function facetsOf(playlists: BuiltPlaylist[]) {
   const langs = new Set<string>();
   const providers = new Set<string>();
-  const lecturers = new Set<string>();
+  // Counted, not just collected: the filter offers them before anything is
+  // typed, and the one with six recordings is a better first row than the one
+  // whose name happens to start with «А».
+  const lecturers = new Map<string, number>();
   let minCount = Infinity;
   let maxCount = 0;
   let minYear = Infinity;
@@ -157,7 +160,9 @@ export function facetsOf(playlists: BuiltPlaylist[]) {
   for (const playlist of playlists) {
     langs.add(playlist.lang);
     providers.add(playlist.providerId);
-    if (playlist.lecturer) lecturers.add(playlist.lecturer);
+    if (playlist.lecturer) {
+      lecturers.set(playlist.lecturer, (lecturers.get(playlist.lecturer) ?? 0) + 1);
+    }
     minCount = Math.min(minCount, playlist.videoCount);
     maxCount = Math.max(maxCount, playlist.videoCount);
     if (playlist.year) {
@@ -169,7 +174,9 @@ export function facetsOf(playlists: BuiltPlaylist[]) {
   return {
     langs: [...langs].sort(),
     providers: [...providers].sort(),
-    lecturers: [...lecturers].sort(),
+    lecturers: [...lecturers]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([name]) => name),
     countRange: Number.isFinite(minCount) ? ([minCount, maxCount] as [number, number]) : null,
     yearRange: Number.isFinite(minYear) ? ([minYear, maxYear] as [number, number]) : null,
   };
