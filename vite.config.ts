@@ -3,7 +3,16 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
-export default defineConfig({
+// GitHub Pages serves the project from /lectorea/, not from the domain root,
+// so a built bundle has to know it lives in a subdirectory. Dev keeps the
+// short root URL; everything that builds a runtime path reads
+// `import.meta.env.BASE_URL`, which follows this setting on its own.
+// Keyed on mode rather than command so that `vite preview` — which serves a
+// production build but still counts as `serve` — shows the site exactly as
+// Pages will. Only the dev server stays at the root.
+export default defineConfig(({ mode }) => ({
+  base: mode === 'production' ? '/lectorea/' : '/',
+
   plugins: [
     react(),
     VitePWA({
@@ -19,16 +28,19 @@ export default defineConfig({
         theme_color: '#0B0F17',
         background_color: '#0B0F17',
         display: 'standalone',
-        start_url: '/',
+        // No `start_url` or `scope`: the plugin derives both from `base`, and
+        // a hardcoded '/' would install a shortcut to the wrong site.
         // Two shapes of the same mark: the rounded tile for platforms that
         // show an icon as it is, and a full-bleed one for Android, which
         // crops every icon to its own shape and would otherwise cut the
         // corners off the tile.
+        // Relative sources: the browser resolves them against the manifest's
+        // own URL, so they land in the subdirectory without repeating it here.
         icons: [
-          { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: '/pwa-maskable-512.png',
+            src: 'pwa-maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -54,4 +66,4 @@ export default defineConfig({
       '@shared': fileURLToPath(new URL('./shared', import.meta.url)),
     },
   },
-});
+}));
