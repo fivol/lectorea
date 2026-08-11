@@ -2,8 +2,13 @@ import { parseLimit } from './lib/config.js';
 import { openDb } from './lib/db.js';
 import { loadSources, reportSourceError } from './lib/sources.js';
 import { createClient } from './lib/youtube.js';
-import { pendingCount, preferTargets, runWorker } from './lib/queue.js';
-import { checkLiveness, fetchPlaylistVideos, refreshPlaylistMetadata } from './lib/tasks.js';
+import { pendingCount, rankTargets, runWorker } from './lib/queue.js';
+import {
+  checkLiveness,
+  fetchPlaylistVideos,
+  refreshPlaylistMetadata,
+  videoQueueTiers,
+} from './lib/tasks.js';
 
 /**
  * The nightly job: metadata → videos → liveness, in that order, until the queue
@@ -26,12 +31,7 @@ async function main(): Promise<void> {
 
   if (!exhausted) {
     console.log(`· videos: ${pendingCount(db, ['videos'])} queued`);
-    preferTargets(
-      db,
-      Object.entries(loadSources().overrides.matches)
-        .filter(([, courseId]) => courseId !== null)
-        .map(([playlistId]) => playlistId)
-    );
+    rankTargets(db, videoQueueTiers(db, loadSources().overrides.matches));
     const videos = await runWorker(
       db,
       ['videos'],

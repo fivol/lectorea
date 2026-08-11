@@ -3,6 +3,7 @@ import type { Db } from './db.js';
 import { enqueue } from './queue.js';
 import { chunked, parseDuration, QuotaExceededError, type YoutubeClient } from './youtube.js';
 import { detectLang } from './classify.js';
+import { cleanSegments, isNotACourse } from './rules.js';
 import { median } from './score.js';
 
 /**
@@ -365,6 +366,40 @@ export async function fetchPlaylistVideos(
   write();
 
   return videos.length;
+}
+
+/**
+ * How the video queue should be ordered, worked out from the two things the
+ * queue cannot see: the hand decisions in `overrides.yaml`, and the rule that
+ * recognises a title as support material rather than a course.
+ *
+ * Both ends matter. A playlist someone bound by hand is the one the crawl most
+ * owes a duration to, and a playlist someone refused — or one whose title says
+ * «seminar series» — is never shown however much is spent on it. The refusals
+ * are also the expensive end: topic bins run to hundreds of videos apiece.
+ */
+export function videoQueueTiers(
+  db: Db,
+  overrides: Record<string, string | null>
+): { first: string[]; last: string[] } {
+  const first: string[] = [];
+  const last: string[] = [];
+  for (const [playlistId, courseId] of Object.entries(overrides)) {
+    (courseId === null ? last : first).push(playlistId);
+  }
+
+  const queued = db
+    .prepare(
+      `SELECT p.id, p.title FROM playlists p
+       JOIN jobs j ON j.type = 'videos' AND j.target = p.id AND j.status = 'pending'
+       WHERE p.alive = 1`
+    )
+    .all() as Array<{ id: string; title: string }>;
+  for (const row of queued) {
+    if (cleanSegments(row.title).some(isNotACourse)) last.push(row.id);
+  }
+
+  return { first, last };
 }
 
 /* ────────────────────────────────  Liveness  ───────────────────────────── */

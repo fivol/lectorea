@@ -64,15 +64,34 @@ per-target work is queued.
 **The order the video queue drains in is a quota decision too.** Walking a
 playlist's videos is the most expensive thing here, and a playlist no course
 claims is never shown, so the work buys nothing. Matching is free and needs only
-the title that discovery already stored. So the order is: discover, match, then
-crawl the ones that matched — playlists decided by hand in `overrides.yaml`
-first of all, then the ones the passes bound confidently, then the rest. With
-7900 playlists queued and a day of quota buying some 4500, which 4500 is the
-whole question.
+the title that discovery already stored, so the order is: discover, match, then
+crawl what matched. With 7900 playlists queued and a day of quota buying some
+4500, which 4500 is the whole question. The day is spent down five tiers:
+
+| Tier | What | Why here |
+|---|---|---|
+| 0 | bound by hand in `overrides.yaml` | someone spent attention on it already |
+| 1 | bound confidently by a pass | it is in the catalogue; this is what gives it hours and a rating |
+| 2 | claimed too weakly to publish | the review queue — a crawl pays twice, in lecture titles a reviewer reads and in the first five names the model pass is shown |
+| 3 | nothing claims it yet | |
+| 4 | refused by hand, or a title naming support material | never shown however much is spent, and the expensive end: «Stanford Seminars» is 1150 videos, 47 units for a bin |
+
+Tiers 1–3 the queue reads off the `matches` table. Tiers 0 and 4 it cannot see
+by itself — hand decisions are a file in git and the support-material rule lives
+in `lib/rules.ts` — so `03-videos.ts` works them out and hands them over.
 
 `lib/youtube.ts` counts spent units in the `quota(date, spent)` table and stops
 at 9500, leaving a margin. The date key follows Pacific midnight, which is when
 the real quota resets.
+
+Jobs run six at a time, because every unit is one request and one request at a
+time is bound by the round trip rather than by the quota: at a second each, a
+day's 9500 units would take three hours of wall clock. Six is a handful on
+purpose — `rateLimitExceeded` is a separate 403 the API returns for asking too
+fast, and the point is to spend the quota, not to race it. It is handled as
+transient and retried with backoff, unlike `quotaExceeded`, which really does
+mean tomorrow. The margin under 10 000 also covers the few units that requests
+already in flight can add after the ceiling is reached.
 
 Estimate for 500 channels and ~5000 playlists: a full first crawl is roughly
 15–20 thousand units, so two days. The queue is not decoration — the crawl

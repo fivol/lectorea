@@ -68,7 +68,15 @@ export function createClient(db: Db) {
 
     if (response.status === 403) {
       const body = await response.text();
-      if (body.includes('quotaExceeded') || body.includes('rateLimitExceeded')) {
+      // Two different 403s wear the same status. `quotaExceeded` is the day's
+      // 10 000 units and means come back tomorrow; `rateLimitExceeded` is a
+      // burst limit measured in seconds and means wait a moment. Reading the
+      // second as the first throws away the rest of the day over one busy
+      // instant — and it is the one concurrency provokes.
+      if (body.includes('rateLimitExceeded') || body.includes('userRateLimitExceeded')) {
+        throw new TransientError(`${endpoint} rate limited`, 403);
+      }
+      if (body.includes('quotaExceeded') || body.includes('dailyLimitExceeded')) {
         throw new QuotaExceededError();
       }
       throw new NotFoundError(`${endpoint} ${JSON.stringify(params)}`);

@@ -406,6 +406,13 @@ Decisions are written to `data/overrides.yaml`, which is committed — that file
 the reviewed record and what goes into the pull request. Override the port with
 `REVIEW_PORT`.
 
+A refusal is worth as much as a binding. «Stanford Seminars», «Дни открытых
+дверей» and «Our Research» are topic bins rather than courses, and without a
+record saying so they come back into the queue every time and take crawl quota
+with them — the bins are the long playlists. Both answers also reach
+`data:videos`, which crawls what was bound first of all and what was refused
+last of all.
+
 The keyboard-first design is the whole point: the alternative is hand-editing
 YAML by playlist id, which is torture and therefore does not get done.
 
