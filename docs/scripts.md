@@ -48,7 +48,7 @@ everything due, exactly as before.
 | `data:import` | one newly queued playlist |
 | `data:seed-dev` | one course seeded |
 
-`data:build`, `data:review`, `data:map`, `check:i18n`, `course:new` and
+`data:build`, `data:review`, `data:map`, `stats`, `check:i18n`, `course:new` and
 `playlist:add` take no limit: they either process the catalogue as a whole or
 already work one item at a time by hand.
 
@@ -65,6 +65,7 @@ already work one item at a time by hand.
 | `pnpm map:sandbox` | `map-sandbox.ts` | `data/` | `.map-poc/sandbox.html` |
 | `pnpm tiles:build` | `tiles-build.ts` | — | `.tiles/` |
 | `pnpm tiles:view` | `tiles-view.ts` | — | `.tiles/collection.html` |
+| `pnpm stats` | `stats.ts` | `public/data`, optional `cache.db` | `.stats/dashboard.html` |
 | `pnpm check:i18n` | `check-i18n.ts` | `data/i18n/`, `data/keywords/`, `src/` | nothing — exits non-zero |
 | `pnpm data:discover` | `01-discover.ts` | API key | `cache.db` |
 | `pnpm data:playlists` | `02-playlists.ts` | API key | `cache.db` |
@@ -258,6 +259,38 @@ Neither is wired into the build, and neither needs to be: the map screen imports
 the generator from `shared/tiles/` and draws the ground of every territory
 itself. These two exist for consumers outside the repository. Full
 documentation: [docs/tiles.md](tiles.md).
+
+### `pnpm stats`
+
+The dashboard: one local page with the coverage, the shape of the graph, the
+material, the crawl, the daily series and — the part worth opening it for — an
+estimate of what is left.
+
+```bash
+pnpm stats               # .stats/dashboard.html
+pnpm stats --serve       # localhost:5180, recomputed on every reload
+pnpm stats --json        # the same figures as JSON
+```
+
+Local rather than published, and that is the whole design. Half of what is worth
+watching lives in `data/cache.db` — the quota, the queue, the matching
+confidence — and that file is not committed and never reaches the site.
+Publishing the page would mean either dropping those numbers or shipping the
+cache, and the numbers are the point.
+
+Three sources answer three different questions and are never mixed:
+`public/data` says what the site publishes, `cache.db` says what the crawl knows
+but has not published, `data/` says what was decided by hand. Either of the
+first two may be missing — the page then says so in a badge and drops the
+sections that would have been guesses.
+
+The estimate keeps quota and review time apart, because they are not the same
+currency: quota refills by itself overnight, review time does not. It says how
+many units of crawling would still put something in the catalogue, how many
+would be spent on playlists already ruled «not a course», how long the review
+queue is in hours, and how much of the coverage gap that queue alone would
+close. `--serve` recomputes per request, so the page can be left open while a
+crawl runs. Output is gitignored; override with `STATS_OUT` and `STATS_PORT`.
 
 ### `pnpm check:i18n`
 

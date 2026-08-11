@@ -31,6 +31,7 @@
     "map:sandbox": "tsx scripts/map-sandbox.ts",
     "tiles:build": "tsx scripts/tiles-build.ts",
     "tiles:view": "tsx scripts/tiles-view.ts",
+    "stats": "tsx scripts/stats.ts",
     "data:seed-dev": "tsx scripts/dev-seed.ts",
     "course:new": "tsx scripts/course-new.ts",
     "playlist:add": "tsx scripts/playlist-add.ts",

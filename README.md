@@ -237,6 +237,7 @@ pnpm data:review         # local review server on :5174 for the leftovers
 pnpm data:images         # procedural SVGs (--openai for domain images)
 pnpm data:import         # pull playlist links out of awesome-lists
 
+pnpm stats               # the dashboard into .stats/ (--serve for :5180)
 pnpm check:i18n          # every key used exists, every key present is used
 ```
 

@@ -28,6 +28,9 @@ dev-dist/
 # Exported tile collection. Rebuildable with `pnpm tiles:build`.
 .tiles/
 
+# Statistics dashboard. Rebuildable with `pnpm stats`.
+.stats/
+
 # Agent scratch worktrees.
 .claude/worktrees/
 .idea
