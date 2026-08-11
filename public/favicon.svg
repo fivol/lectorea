@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!--
+    The mark: two courses already behind you, and the one they open up.
+
+    It is the catalogue in a glyph — the whole product is «what has to come
+    first» drawn as a graph, so the icon is a piece of that graph rather than a
+    letter. It reads upwards for the same reason the map does: the vertical
+    axis is the direction of the dependency, prerequisites underneath what they
+    unlock. Colours are the design system's own (src/index.css) — the dark
+    canvas, ink for what is done, accent green for what is now open.
+
+    This file is the source of the mark. The .ico and the PNGs beside it are
+    rendered from it; edit here and re-render, never the other way round.
+  -->
+  <rect width="64" height="64" rx="14" fill="#0B0F17" />
+  <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="#243044" stroke-width="1" />
+
+  <!-- Edges first: the nodes are opaque and cover the ends, so a line can be
+       drawn centre to centre and still stop cleanly at the circle. Every
+       attribute sits on the shape itself — the simpler rasterisers that turn
+       this file into the .ico do not inherit them from a group. -->
+  <path d="M18 45.5 L32 20" fill="none" stroke="#E6EBF2" stroke-width="5" stroke-linecap="round" />
+  <path d="M46 45.5 L32 20" fill="none" stroke="#E6EBF2" stroke-width="5" stroke-linecap="round" />
+
+  <circle cx="18" cy="45.5" r="6.5" fill="#E6EBF2" />
+  <circle cx="46" cy="45.5" r="6.5" fill="#E6EBF2" />
+  <circle cx="32" cy="20" r="9" fill="#34C98A" />
+</svg>

@@ -12,6 +12,18 @@
     <title>Lectorea — каталог курсов в порядке изучения</title>
 
     <!--
+      The mark, in the three forms browsers actually ask for: the .ico for the
+      tab (still the only thing every browser reads), the SVG for the ones that
+      prefer it and will scale it to any density, and the touch icon for a home
+      screen on iOS, which ignores both of the others. The rest — the PWA sizes
+      — are declared in the manifest, which vite-plugin-pwa injects here.
+      public/favicon.svg is the source all of them are rendered from.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!--
       Shared links. Courses and playlists already have their own URLs, but this
       is a static single-page app: there is no server to fill a per-course card
       in, and a crawler that does not run JavaScript sees only this. So the tags
