@@ -85,7 +85,7 @@ Turns `data/` plus whatever is in `cache.db` into the static JSON the frontend
 fetches. Nothing runs before it: `public/data/` is generated and gitignored, so a
 fresh checkout has an empty catalogue until this is run.
 
-It is also the validator — see [README → What the build guarantees](../README.md).
+It is also the validator — see [what CI checks](../CONTRIBUTING.md#what-ci-checks).
 A schema violation, a cycle, a dangling `deps` target, an unknown domain or a
 course in the wrong file fails the build with the file and line, and CI runs the
 same command. Redundant edges are reported as warnings and do not fail it.

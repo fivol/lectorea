@@ -49,7 +49,7 @@ export function requireYoutubeKey(): string {
   if (!env.youtubeKey) {
     console.error(
       'YOUTUBE_API_KEY is not set. Copy .env.example to .env and put the key there.\n' +
-        'See README → Setup for how to obtain one.'
+        'See docs/setup.md for how to obtain one.'
     );
     process.exit(1);
   }
