@@ -31,3 +31,4 @@ dev-dist/
 # Agent scratch worktrees.
 .claude/worktrees/
 .idea
+CLAUDE.local.md
