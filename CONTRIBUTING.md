@@ -119,9 +119,12 @@ A domain also needs a **biome**: a line in `BIOME_BY_DOMAIN`
 (`shared/tiles/biomes.ts`) saying what kind of country the field is — and, on
 the same line, which tone of that biome's ramp it is painted. That one entry
 decides both the ground inside the territory and its colour everywhere in the
-app. `tests/biomes.test.ts` fails until it is written, and again if the tone is
-too close to a neighbour's on the redrawn map. The rules, and a prompt for
-picking one, are in [docs/biomes.md](docs/biomes.md).
+app. Pick from the biomes of the domain's own continent: a continent is one
+climate, which is what makes it readable as one place.
+`tests/biomes.test.ts` fails until the line is written, again if the biome comes
+from another continent, and again if the tone is too close to a neighbour's on
+the redrawn map. The rules, and a prompt for picking one, are in
+[docs/biomes.md](docs/biomes.md).
 
 A domain also needs a `bandOrder`: its vertical position in the course columns,
 fundamental at the top and applied at the bottom. Pick a number between its

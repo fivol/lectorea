@@ -2,7 +2,7 @@
 
 The map is a field of hexagons with no borders drawn: territories coloured by
 domain, sea between them. This is the set of pieces that go on those cells —
-36 tiles at the altitude of a mountain range, a river, a reef, stacked several
+41 tiles at the altitude of a mountain range, a river, a reef, stacked several
 to a cell and joined across cells into larger objects.
 
 ```bash
@@ -231,9 +231,9 @@ polygons: the next import moves every one of them, and nothing says so.
 domain** — never on the polygon, its position or its size:
 
 ```ts
-math: 'alpine/granite',        // the range everything else on the continent stands on
-'earth-science': 'badlands/terracotta',
-literature: 'forest/elm',
+math: 'alpine/granite',        // the range the whole continent stands on
+'earth-science': 'karst/travertine',
+literature: 'forest/oak',
 ```
 
 A redraw is then free: mathematics is mountainous — and grey-blue — wherever the
@@ -247,8 +247,11 @@ The ground and the colour are one decision and one line, because kept apart they
 drift — the ground says taiga and the fill says apricot, and the map stops being
 a picture of anywhere. `data/domains.yaml` carries no colours at all; the loader
 asks this file, so the map and every badge, icon and piece of course art agree.
-The whole argument, the palette's three rules, and a prompt for rebuilding the
-table are in **[docs/biomes.md](biomes.md)**.
+
+A biome also belongs to exactly one continent's climate — ice and stone, grass
+and sand, wood and heather — so a landmass reads as one place before any of its
+names is read. The whole argument, the palette's rules, and a prompt for
+rebuilding the table are in **[docs/biomes.md](biomes.md)**.
 
 A biome is a recipe rather than a picture:
 
@@ -261,7 +264,8 @@ A biome is a recipe rather than a picture:
            body: { tile: 'mountain-slope' },
            crown: { tile: 'mountain-peak', opts: { cap: 'snow' } },
            tail: { tile: 'mountain-foot' } },
-  colours: { granite: '#8093C3', cobalt: '#4082C0', slate: '#7179AC', gabbro: '#B5A2D9' },
+  climate: 'formal',                           // no biome crosses a coast
+  colours: { granite: '#9FB6D6', cobalt: '#264EA6', slate: '#525CB0' },
   scatter: [{ tile: 'crags', weight: 3 }, { tile: 'hills', weight: 2 },
             { tile: 'snowfield', weight: 1 }],
 }

@@ -60,7 +60,8 @@ colour it is painted are one line. `data/domains.yaml` holds no colours; the
 loader fills them in, so `domain.color` still works everywhere it used to.
 
 Those colours are picked to be *territories*: large shapes with a border round
-them, spread far enough apart that no two neighbours on the map read alike. A
+them, grouped by continent and spread far enough apart that no two neighbours on
+the map read alike. A
 biome ramp therefore reaches both ends of the range that fails as text — dark
 basalt dies on the night canvas, pale chalk on the day one. So anything that
 prints a domain colour as *text* runs it through `inkOn()`
@@ -235,12 +236,14 @@ Three, each for a reason that outlived the spec:
   these names, and the Tailwind layer above them is already the vocabulary
   components are written in — a rename would have been churn across every file
   for no change a reader could see.
-- **The domain hues no longer sort by continent.** They used to: formal was
-  green through blue, social warm, humanities violet. That made every border
-  inside a continent a seam between two shades of one hue, which is the one
-  thing a map may not do — so the hue now says which *country* a field is, and
-  the continent is carried by the landmass, its heading and `--c-formal` and
-  friends. The reasoning is in [docs/biomes.md](biomes.md).
+- **The domain hues sort by continent, but no longer by a single hue.** They
+  used to be one hue per continent — formal green through blue, social warm,
+  humanities violet — which made every border inside a continent a seam between
+  two shades of the same thing, and that is the one job a map may not fail. Now
+  a continent is a *climate* with several biomes in it: still one family of
+  colours per landmass, but a cobalt next to a flint next to a lichen. The
+  reasoning, and the distances it is held to, are in
+  [docs/biomes.md](biomes.md).
 - **`aria-current`, not `aria-selected`, marks the chosen course.**
   `aria-selected` is only valid inside a listbox or a grid, and turning a card
   full of interactive detail into an `option` would cost more than the attribute

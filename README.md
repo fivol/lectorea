@@ -42,13 +42,14 @@ the light and dark themes. It is a plan on disk and a view on screen — the app
 lays the ground back a little and stands the continents in the water as slabs
 with a cliff at the coast, which is the same projection the tile collection
 draws in ([docs/tiles.md](docs/tiles.md)). The ground inside a territory comes
-from that collection, and so does the water around them: sixteen biomes —
-alpine ranges, taiga, steppe, badlands, an island biome that exists nowhere on
-the mainland — with shoals and reefs by the coasts and swell out to the edges of
-the window. One table says which field is which country and, on the same line,
-what colour it is painted, so no two neighbours look alike
-([docs/biomes.md](docs/biomes.md)); the grid is read back off the outlines
-rather than stored, so a redrawn map keeps its ground. Pick a
+from that collection, and so does the water around them. Each continent is a
+climate — the formal one is ice and stone, the social one grass and sand, the
+humanities wood, water and heather — and each field inside it is a biome: a
+range, a glacier, a steppe, a marsh, with an island biome that exists nowhere on
+the mainland. One table says which country a field is and, on the same line,
+what colour it is painted, so a continent reads as one place and no two
+neighbours look alike ([docs/biomes.md](docs/biomes.md)); the grid is read back
+off the outlines rather than stored, so a redrawn map keeps its ground. Pick a
 territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
@@ -160,7 +161,7 @@ to the view being shared, and stay in `localStorage`.
 | Design tokens | CSS variables, surfaced through Tailwind | one palette the map screen can swap wholesale at runtime — see [docs/design-system.md](docs/design-system.md) |
 | Controls | one UI kit in `src/components/ui/` | every button, chip, field and switch is the same capsule cut from one material; the class names live in one file |
 | Scripts | tsx + better-sqlite3 | |
-| Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain, one biome per domain, and no two neighbouring territories the same colour |
+| Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain, one biome per domain, every biome on its own continent, and no two neighbouring territories the same colour |
 | Deploy | any static host | |
 
 Detailed documents:
@@ -170,7 +171,7 @@ Detailed documents:
 - [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota
 - [docs/scripts.md](docs/scripts.md) — every command: what it does, its flags, when to run it
-- [docs/biomes.md](docs/biomes.md) — what each field of knowledge is made of and what colour it is: the sixteen biomes, the rules the palette keeps, and the prompt for rebuilding the table
+- [docs/biomes.md](docs/biomes.md) — what each field of knowledge is made of and what colour it is: the three continental climates, the biomes inside them, the rules the palette keeps, and the prompt for rebuilding the table
 - [docs/tiles.md](docs/tiles.md) — the hex tile collection: the angle everything is seen at, what a piece is, how pieces join, what each territory of the map is made of, how to export them
 - [CONTRIBUTING.md](CONTRIBUTING.md) — the rules external edits must follow
 

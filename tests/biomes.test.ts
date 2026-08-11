@@ -96,13 +96,13 @@ const neighbours: Array<[string, string]> = (() => {
  * How far apart two territories have to look, in OKLab.
  *
  * `NEIGHBOURS` is the one that matters: it is the answer to "are these two
- * fields the same country?" asked across a border. `ANYWHERE` is looser on
- * purpose — two fields on opposite continents may be cousins, and a palette
- * that forbids that has to spread 39 colours over the whole wheel and stops
- * looking like a map of anywhere.
+ * fields the same country?" asked across a border. `ANYWHERE` is much looser on
+ * purpose — a continent is one climate, so its fields are *supposed* to be
+ * cousins, and two of them at opposite ends of it being close is the palette
+ * working rather than failing. It is only here to catch a genuine collision.
  */
 const NEIGHBOURS = 0.15;
-const ANYWHERE = 0.045;
+const ANYWHERE = 0.04;
 
 describe('the biome table', () => {
   it('names a biome for every domain in domains.yaml', () => {
@@ -133,9 +133,33 @@ describe('the biome table', () => {
     );
   });
 
-  it('has a fallback for every continent the domains use', () => {
+  it('has a fallback for every continent the domains use, of that climate', () => {
     const continents = [...new Set(domains.map((domain) => domain.continent))];
     expect(continents.filter((continent) => !BIOME_BY_CONTINENT[continent])).toEqual([]);
+    const wrong = continents.filter(
+      (continent) => findBiome(BIOME_BY_CONTINENT[continent])?.climate !== continent
+    );
+    expect(wrong).toEqual([]);
+  });
+
+  it('gives every continent one climate of its own', () => {
+    // A continent is a country's worth of weather: no biome is worn on two of
+    // them, so the three continents come out as three palettes rather than as
+    // one palette shuffled. `offshore` is the exception the islands exist for.
+    const strays = domains
+      .map((domain) => ({ domain, biome: biomeFor(domain.id, domain.continent) }))
+      .filter(({ domain, biome }) => biome.climate !== domain.continent)
+      .map(({ domain, biome }) => `${domain.id} (${domain.continent}) wears ${biome.id} (${biome.climate})`)
+      // An island territory is allowed — and required — to be offshore.
+      .filter((line) => !line.includes('(offshore)'));
+    expect(strays).toEqual([]);
+
+    const climates = new Map<string, Set<string>>();
+    for (const biome of BIOMES) {
+      if (!climates.has(biome.climate)) climates.set(biome.climate, new Set());
+      climates.get(biome.climate)!.add(biome.id);
+    }
+    expect([...climates.keys()].sort()).toEqual(['formal', 'humanities', 'offshore', 'social']);
   });
 
   it('spends every tone at most once, and writes each colour once', () => {
@@ -246,7 +270,7 @@ describe('the palette on the map as it is drawn now', () => {
     expect(alike).toEqual([]);
   });
 
-  it('keeps the islands in one biome of their own', () => {
+  it('keeps the islands in an offshore biome the mainland never wears', () => {
     const coasts = paths
       .filter((attributes) => attributes.class === 'coastline')
       .map((attributes) => ({ kind: attributes['data-kind'], ring: ringOf(attributes.d) }));
@@ -260,15 +284,16 @@ describe('the palette on the map as it is drawn now', () => {
     });
     expect(offshore.length).toBeGreaterThan(0);
     // An island is the one place on the map with no neighbour to be told apart
-    // from, so it is where a biome that exists nowhere else can live.
+    // from, so it is where a biome that belongs to no continent can live.
     const ashore = new Set(
       shapes
         .filter((shape) => !offshore.includes(shape))
         .map((shape) => biomeFor(shape.domainId, shape.continent).id)
     );
     for (const shape of offshore) {
-      const biome = biomeFor(shape.domainId, shape.continent).id;
-      expect(ashore.has(biome), `${shape.domainId} wears ${biome}, which the mainland also wears`)
+      const biome = biomeFor(shape.domainId, shape.continent);
+      expect(biome.climate, `${shape.domainId} is offshore`).toBe('offshore');
+      expect(ashore.has(biome.id), `${shape.domainId} wears ${biome.id}, which the mainland also wears`)
         .toBe(false);
     }
   });

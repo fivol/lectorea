@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import type { BuiltDomain, Continent } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { inkOn, withAlpha } from '@/lib/format';
+import { AS_SHAPE, inkOn, withAlpha } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import Icon from '@/components/Icon';
 import DomainIcon from '@/components/DomainIcon';
@@ -87,11 +87,13 @@ function DomainCard({
   dimmed: boolean;
 }) {
   const { t, count } = useT();
-  // The stripe and the glyph can wear the raw domain hue — they are shapes, and
-  // 3:1 is enough for those. The counter is text, so it takes the version of
-  // the hue that clears 4.5:1 on whichever card it is printed on.
+  // Three jobs, three bars. The stripe and the border are washes behind
+  // something else and wear the raw hue. The glyph and the badge are shapes, read
+  // by their outline, so they take the hue at 3:1. The counter is text and takes
+  // it at 4.5:1. All three come off one palette — see `inkOn`.
   const scheme = useResolvedTheme();
   const counterColour = inkOn(domain.color, scheme);
+  const glyphColour = inkOn(domain.color, scheme, AS_SHAPE);
 
   return (
     <Link
@@ -113,7 +115,7 @@ function DomainCard({
             domainId={domain.id}
             size={30}
             strokeWidth={1.5}
-            style={{ color: domain.color }}
+            style={{ color: glyphColour }}
           />
           <span className="min-w-0">{t(`domain.${domain.id}.title`)}</span>
         </h3>
@@ -125,7 +127,7 @@ function DomainCard({
               icon="bridge"
               className="shrink-0 px-1.5 py-0.5"
               ariaLabel={t('ui.map.bridge')}
-              style={{ color: domain.color, borderColor: withAlpha(domain.color, 0.4) }}
+              style={{ color: glyphColour, borderColor: withAlpha(domain.color, 0.4) }}
             >
               {null}
             </Chip>

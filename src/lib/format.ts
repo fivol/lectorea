@@ -46,7 +46,10 @@ export function formatDate(iso: string, lang = 'ru'): string {
 
 /** The card a domain colour is printed on — what the contrast is measured against. */
 const CARD = { dark: '#111726', light: '#ffffff' } as const;
-const AA = 4.5;
+
+/** Text has to clear 4.5:1; a line-art glyph or a rule is a shape, and 3:1 is the bar. */
+export const AS_TEXT = 4.5;
+export const AS_SHAPE = 3;
 
 function relativeLuminance(hex: string): number {
   const value = hex.replace('#', '');
@@ -79,10 +82,15 @@ function contrast(a: string, b: string): number {
  * lightness is not contrast: the same HSL value is a legible violet and an
  * illegible yellow, and a palette with a gold in it makes the difference
  * visible.
+ *
+ * `bar` is how much contrast the mark needs. `AS_TEXT` for words, `AS_SHAPE`
+ * for a glyph or a rule — a shape is read by its outline, so it may sit closer
+ * to the card than a word may. A fill or a wash needs neither: it is the
+ * background of something else and takes the raw hue.
  */
-export function inkOn(hex: string, scheme: 'dark' | 'light'): string {
+export function inkOn(hex: string, scheme: 'dark' | 'light', bar: number = AS_TEXT): string {
   const card = CARD[scheme];
-  if (contrast(hex, card) >= AA) return hex;
+  if (contrast(hex, card) >= bar) return hex;
 
   const { h, s, l } = hexToHsl(hex);
   // Saturation is nudged up on the day scheme only: deepening a hue there drains
@@ -91,7 +99,7 @@ export function inkOn(hex: string, scheme: 'dark' | 'light'): string {
   const step = scheme === 'dark' ? 0.02 : -0.02;
   let lightness = l;
   let ink = hslToHex({ h, s: saturation, l: lightness });
-  while (contrast(ink, card) < AA && lightness > 0 && lightness < 1) {
+  while (contrast(ink, card) < bar && lightness > 0 && lightness < 1) {
     lightness = clamp(lightness + step, 0, 1);
     ink = hslToHex({ h, s: saturation, l: lightness });
   }

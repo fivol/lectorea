@@ -4,9 +4,9 @@ import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { pathTo, useCatalog } from '@/lib/catalog';
 import { loadPlaylists } from '@/lib/data';
-import { formatHours } from '@/lib/format';
+import { formatHours, inkOn } from '@/lib/format';
 import { courseHref } from '@/lib/url';
-import { useProfile } from '@/store/profile';
+import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
@@ -26,6 +26,7 @@ type Props = {
  * motivating and most sobering figure on the site.
  */
 export default function PathBlock({ course, search, outsideFilter }: Props) {
+  const scheme = useResolvedTheme();
   const catalog = useCatalog();
   const { t, count, lang } = useT();
   const profile = useProfile((state) => state.profile);
@@ -185,7 +186,10 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
                     ) : (
                       <span
                         className="num shrink-0 text-[11px]"
-                        style={{ color: domain?.color }}
+                        // Text, so the field's hue is taken at reading strength:
+                        // a biome ramp runs from basalt to chalk and both ends
+                        // vanish into one scheme or the other.
+                        style={{ color: domain ? inkOn(domain.color, scheme) : undefined }}
                         title={new Intl.NumberFormat(lang).format(step.hours)}
                       >
                         {step.hours ? `${formatHours(step.hours)} ч` : ''}
