@@ -40,3 +40,5 @@ jobs:
 
       - name: Frontend build
         run: pnpm build
+        env:
+          VITE_REPO: ${{ github.repository }}

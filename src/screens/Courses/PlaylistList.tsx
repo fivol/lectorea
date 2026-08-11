@@ -3,6 +3,7 @@ import type { BuiltCourse, BuiltPlaylist } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { loadPlaylistsCached } from '@/lib/data';
+import { repoUrl } from '@/lib/repo';
 import { useCatalogParams } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import PlaylistFilters from './PlaylistFilters';
@@ -181,7 +182,7 @@ export function suggestPlaylistUrl(courseId: string): string {
       'Почему стоит добавить: ',
     ].join('\n')
   );
-  return `https://github.com/lectorea/lectorea/issues/new?title=${title}&body=${body}&labels=playlist`;
+  return repoUrl(`/issues/new?title=${title}&body=${body}&labels=playlist`);
 }
 
 /**
@@ -190,7 +191,7 @@ export function suggestPlaylistUrl(courseId: string): string {
  * enforcing: it makes the file derivable instead of something to look up.
  */
 export function fixDataUrl(courseId: string, primaryDomain: string): string {
-  return `https://github.com/lectorea/lectorea/blob/main/data/courses/${primaryDomain}.yaml#:~:text=${encodeURIComponent(
-    `id: ${courseId}`
-  )}`;
+  return repoUrl(
+    `/blob/main/data/courses/${primaryDomain}.yaml#:~:text=${encodeURIComponent(`id: ${courseId}`)}`
+  );
 }

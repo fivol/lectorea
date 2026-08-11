@@ -267,6 +267,13 @@ All content is open and changes go through pull requests. Every course panel has
 a "Исправить данные" link straight to the file, and every empty course has a
 "Предложить плейлист" button that opens a pre-filled issue.
 
+Both links point at whichever repository the site was built from — CI takes it
+from the run itself, so a fork sends its readers to its own issues and its own
+files without a line being edited. A build outside CI assumes `fivol/lectorea`;
+`VITE_REPO` in `.env` overrides it, and `BASE_PATH` overrides the subdirectory
+the site is built for, which otherwise follows the repository name because
+Pages serves a project site from `/<repo>/`.
+
 Dependencies are not invented — they are taken from syllabi. MIT OCW and
 Berkeley state them explicitly, and that is the only source that will not drift
 between contributors.

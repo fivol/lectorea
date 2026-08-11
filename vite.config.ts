@@ -7,11 +7,29 @@ import { fileURLToPath, URL } from 'node:url';
 // so a built bundle has to know it lives in a subdirectory. Dev keeps the
 // short root URL; everything that builds a runtime path reads
 // `import.meta.env.BASE_URL`, which follows this setting on its own.
+/**
+ * Which repository this build belongs to, as `owner/repo`. Two things follow
+ * from it — the subdirectory Pages serves a project site from, and where the
+ * "suggest a playlist" and "fix this entry" links go — so it is stated once.
+ * CI passes it in from GitHub's own context, which is why a fork gets its own
+ * links without editing anything; the default is only for a bare checkout.
+ */
+const repo = process.env.VITE_REPO ?? 'fivol/lectorea';
+
+/** A custom domain would serve the site from the root instead of /<repo>/. */
+const basePath = process.env.BASE_PATH ?? `/${repo.split('/')[1]}/`;
+
 // Keyed on mode rather than command so that `vite preview` — which serves a
 // production build but still counts as `serve` — shows the site exactly as
 // Pages will. Only the dev server stays at the root.
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/lectorea/' : '/',
+  base: mode === 'production' ? basePath : '/',
+
+  // Injected rather than left to .env discovery, so that passing VITE_REPO in
+  // the environment is enough and CI needs no file on disk.
+  define: {
+    'import.meta.env.VITE_REPO': JSON.stringify(repo),
+  },
 
   plugins: [
     react(),

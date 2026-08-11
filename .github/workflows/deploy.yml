@@ -65,7 +65,12 @@ jobs:
           restore-keys: cache-db-
 
       - run: pnpm data:build
+
+      # Taken from the run rather than written down, so a fork publishes links
+      # to itself and the subdirectory always matches the repository name.
       - run: pnpm build
+        env:
+          VITE_REPO: ${{ github.repository }}
 
       # Pages serves static files and knows nothing about client-side routes,
       # so a direct hit on /courses/:id would 404. Serving the app as the 404
