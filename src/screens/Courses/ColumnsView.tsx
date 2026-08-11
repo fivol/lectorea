@@ -227,7 +227,11 @@ export default function ColumnsView({
           {columns.map((column) => (
             <section key={column.level} className="relative shrink-0">
               <header
-                className="on-canvas sticky top-0 z-10 mb-3 flex items-baseline gap-2
+                // Same z as the curve layer, later in the document: the label a
+                // column is holding at the top of the screen is chrome, and a
+                // prerequisite line running through it is the one place the
+                // curves are not welcome.
+                className="on-canvas sticky top-0 z-20 mb-3 flex items-baseline gap-2
                            pb-2 pt-1 backdrop-blur"
               >
                 <h2 className="mono-label text-ink-dim">

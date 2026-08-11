@@ -47,8 +47,12 @@ export function useHighlight(
     const course = catalog.courseById.get(focusId);
     if (!course) return INERT;
 
-    const pinned = !hoveredId && Boolean(selectedId);
+    // Pointing at the card you just clicked is not a different question, so it
+    // must not take the chain away again: the pin holds while the pointer is on
+    // the selection itself. Without this, clicking a card left the curves
+    // waiting for the mouse to move off it, which reads as the click being slow.
     const showFullChain = Boolean(selectedId) && (!hoveredId || hoveredId === selectedId);
+    const pinned = showFullChain;
 
     const direct = new Set(course.deps);
     const soft = new Set(course.soft);

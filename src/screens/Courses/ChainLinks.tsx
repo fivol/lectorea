@@ -101,7 +101,13 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
 
   return (
     <svg
-      className="pointer-events-none absolute left-0 top-0 z-0"
+      // Over the cards, not under them. The curves are the answer to the click;
+      // a card in the middle of a long hop — dimmed, out of the chain, and still
+      // opaque — used to cut the line in half exactly where it had the most to
+      // say. The column headers stay above them: they carry the same z and come
+      // later in the document, so a curve passes behind the sticky label rather
+      // than across it.
+      className="pointer-events-none absolute left-0 top-0 z-20"
       width={size.width}
       height={size.height}
       aria-hidden="true"
@@ -118,11 +124,13 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
           style={
             animate
               ? {
-                  // Each curve draws itself just after the card it points at
-                  // lights up, so the line and the highlight read as one move.
+                  // Every curve starts drawing on the click itself. Staggering
+                  // them by depth made the far end of a long chain arrive a
+                  // third of a second late — the path looked hesitant, and the
+                  // cards it connects had already lit up without it.
                   ['--dash' as string]: curve.length,
                   strokeDasharray: curve.length,
-                  animation: `draw-line 400ms var(--ease-out) ${curve.depth * 30}ms both`,
+                  animation: 'draw-line 400ms var(--ease-out) both',
                 }
               : undefined
           }
