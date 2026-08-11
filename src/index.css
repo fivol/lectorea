@@ -91,14 +91,20 @@
   --shadow-modal: 0 16px 48px rgb(0 0 0 / 0.5);
 
   /*
-   * The floating chrome (`.plate`) is the one exception to the rule above: it
-   * lies on the map rather than on a known surface, so it needs its own shadow
-   * even in dark, and a rim of light along its top edge — the same trick the
-   * coastline uses to lift a continent off the water. Its own variables, not
-   * `--shadow-card`, because that one is legitimately `none` here and `none`
-   * cannot be one entry of a shadow list.
+   * The floating chrome (`.plate`): the material every control is cut from.
+   *
+   * It has its own fill rather than `--c-surface`, and the rule it follows is
+   * that the fill is always *lighter* than whatever it lies on. A surface that
+   * is darker than the page is a hole, not a control — which is exactly what
+   * the header looked like in the dark theme, and worse over the sea, where the
+   * water is lighter than every surface in the palette. It also carries its own
+   * shadow and a rim of light along the top edge — the same two devices that
+   * lift a continent off the water — because `--shadow-card` is legitimately
+   * `none` here, and `none` cannot be one entry of a shadow list.
    */
-  --plate-rim: rgb(255 255 255 / 0.07);
+  --plate-bg: rgb(28 37 53 / 0.94);
+  --plate-line: rgb(255 255 255 / 0.16);
+  --plate-rim: rgb(255 255 255 / 0.08);
   --plate-shadow: 0 2px 12px rgb(0 0 0 / 0.4);
 
   color-scheme: dark;
@@ -146,6 +152,8 @@
   --shadow-pop: 0 8px 24px rgb(15 23 42 / 0.12);
   --shadow-modal: 0 16px 48px rgb(15 23 42 / 0.18);
 
+  --plate-bg: rgb(255 255 255 / 0.94);
+  --plate-line: rgb(15 23 42 / 0.14);
   --plate-rim: rgb(255 255 255 / 0.9);
   --plate-shadow: 0 2px 8px rgb(15 23 42 / 0.09);
 
@@ -300,14 +308,15 @@
    * made of two different materials is read as two.
    */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-line
-           px-2.5 py-1 text-xs text-ink-dim transition-colors duration-fast ease-out;
-    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs text-ink-dim
+           transition-colors duration-fast ease-out;
+    border: 1px solid var(--plate-line);
+    background: var(--plate-bg);
     box-shadow: inset 0 1px 0 0 var(--plate-rim);
   }
   button.chip:hover {
     color: var(--c-ink);
-    border-color: var(--c-line-strong);
+    border-color: color-mix(in srgb, var(--c-ink) 30%, transparent);
   }
   .chip-active {
     color: var(--c-canvas);
@@ -318,9 +327,9 @@
   .chip-on {
     color: var(--c-ink);
     border-color: transparent;
-    background: color-mix(in srgb, var(--c-accent) 24%, var(--c-surface));
+    background: color-mix(in srgb, var(--c-accent) 24%, var(--plate-bg));
     box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 48%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 60%, transparent),
       inset 0 1px 0 0 var(--plate-rim);
   }
 
@@ -330,9 +339,10 @@
    * thing on the screen that is not.
    */
   .field {
-    @apply flex items-center gap-2 rounded-full border border-line px-4 py-2
+    @apply flex items-center gap-2 rounded-full px-4 py-2
            transition-colors duration-fast ease-out;
-    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    border: 1px solid var(--plate-line);
+    background: var(--plate-bg);
     box-shadow: inset 0 1px 0 0 var(--plate-rim);
   }
   .field:focus-within {
@@ -359,9 +369,10 @@
 
   /* A bare input that is its own field — the search line inside a popover. */
   .input {
-    @apply w-full rounded-full border border-line px-3 py-1 text-sm text-ink outline-none
-           placeholder:text-ink-faint transition-colors duration-fast ease-out;
-    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    @apply w-full rounded-full px-3 py-1 text-sm text-ink outline-none
+           placeholder:text-ink-dim transition-colors duration-fast ease-out;
+    border: 1px solid var(--plate-line);
+    background: var(--plate-bg);
     box-shadow: inset 0 1px 0 0 var(--plate-rim);
   }
   .input:focus {
@@ -374,9 +385,10 @@
   /* A field that holds more than a line, so it keeps the card's corner rather
      than the capsule's. */
   .field-area {
-    @apply w-full rounded-card border border-line p-2 outline-none
-           placeholder:text-ink-faint transition-colors duration-fast ease-out;
-    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    @apply w-full rounded-card p-2 outline-none
+           placeholder:text-ink-dim transition-colors duration-fast ease-out;
+    border: 1px solid var(--plate-line);
+    background: var(--plate-bg);
     box-shadow: inset 0 1px 0 0 var(--plate-rim);
   }
   .field-area:focus {
@@ -388,16 +400,17 @@
 
   /* A native select, dressed as a field. */
   .select {
-    @apply rounded-full border border-line px-3 py-1 text-sm text-ink
-           transition-colors duration-fast ease-out;
-    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    @apply rounded-full px-3 py-1 text-sm text-ink transition-colors duration-fast ease-out;
+    border: 1px solid var(--plate-line);
+    background: var(--plate-bg);
     box-shadow: inset 0 1px 0 0 var(--plate-rim);
   }
 
   /* The keyboard hint inside a field — a key, so it is drawn as one. */
   .kbd {
-    @apply rounded-md border border-line px-1.5 font-mono text-[11px] text-ink-faint;
-    background: color-mix(in srgb, var(--c-ink) 5%, transparent);
+    @apply rounded-md px-1.5 font-mono text-[11px] text-ink-dim;
+    border: 1px solid var(--plate-line);
+    background: color-mix(in srgb, var(--c-ink) 8%, transparent);
   }
 
   .num {
@@ -457,8 +470,8 @@
    */
   .plate {
     border-radius: 999px;
-    border: 1px solid var(--c-line);
-    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    border: 1px solid var(--plate-line);
+    background: var(--plate-bg);
     box-shadow:
       inset 0 1px 0 0 var(--plate-rim),
       var(--plate-shadow);
@@ -481,7 +494,7 @@
     width: 1px;
     align-self: stretch;
     margin: 4px 2px;
-    background: var(--c-line);
+    background: var(--plate-line);
   }
 
   /*
@@ -491,17 +504,17 @@
    */
   .tab {
     @apply inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-sm
-           text-ink-faint transition-colors duration-fast ease-out;
+           text-ink-dim transition-colors duration-fast ease-out;
   }
   .tab:hover {
-    color: var(--c-ink-dim);
+    color: var(--c-ink);
   }
   .tab[aria-selected='true'],
   .tab[aria-pressed='true'] {
     color: var(--c-ink);
-    background: color-mix(in srgb, var(--c-accent) 24%, var(--c-surface));
+    background: color-mix(in srgb, var(--c-accent) 24%, transparent);
     box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 48%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 60%, transparent),
       inset 0 1px 0 0 var(--plate-rim);
   }
 
@@ -542,9 +555,9 @@
     left: 2px;
     width: calc(50% - 2px);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--c-accent) 24%, var(--c-surface));
+    background: color-mix(in srgb, var(--c-accent) 24%, transparent);
     box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 48%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 60%, transparent),
       inset 0 1px 0 0 var(--plate-rim);
     transition: transform var(--dur-base) var(--ease-out);
   }
@@ -553,11 +566,11 @@
        plate beside it are one row, and one pixel of difference between two
        capsules sitting side by side is visible. */
     @apply relative z-10 inline-flex h-[28px] items-center justify-center gap-1.5 rounded-full px-3
-           font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint
+           font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-dim
            transition-colors duration-fast ease-out;
   }
   .seg-item:hover {
-    color: var(--c-ink-dim);
+    color: var(--c-ink);
   }
   .seg-item[aria-pressed='true'] {
     color: var(--c-ink);
@@ -643,6 +656,19 @@
    */
   .map-surface {
     --c-canvas: var(--map-sea);
+  }
+
+  /*
+   * The night sea is lighter than any surface in the dark palette, so the
+   * chrome that floats on it has to be cut from something else again: the land,
+   * a shade above the water it stands in. It is the same answer the map itself
+   * gives — what reads as floating here is ground, not a darker patch of sea.
+   */
+  :root[data-theme='dark'] .map-surface {
+    --plate-bg: rgb(30 63 79 / 0.94);
+    --plate-line: rgb(230 243 249 / 0.26);
+    --plate-rim: rgb(255 255 255 / 0.12);
+    --plate-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
   }
 
   :root[data-theme='light'] .map-surface {

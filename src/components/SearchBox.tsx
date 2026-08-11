@@ -222,7 +222,7 @@ export default function SearchBox({
                       enterKeyHint="search"
                       autoComplete="off"
                       className="w-full bg-transparent text-base text-ink outline-none
-                                 placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+                                 placeholder:text-ink-dim [&::-webkit-search-cancel-button]:hidden"
                     />
                     {query ? (
                       <button
@@ -289,7 +289,7 @@ export default function SearchBox({
           aria-controls="search-results"
           role="combobox"
           autoComplete="off"
-          className={`w-full bg-transparent text-ink outline-none placeholder:text-ink-faint
+          className={`w-full bg-transparent text-ink outline-none placeholder:text-ink-dim
                       [&::-webkit-search-cancel-button]:hidden ${floating ? 'text-base' : 'text-sm'}`}
         />
         {query ? (
