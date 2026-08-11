@@ -134,12 +134,14 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   }
 
   /**
-   * Named territories, with the one under the pointer written last so its
-   * course count is never covered by a neighbour's name.
+   * The lettering, with the territory under the pointer written last: its name
+   * grows and gains a course count, and neither may end up under a neighbour's.
    */
   const labelled = map.shapes
-    .filter((shape) => placements.has(shape.domainId) || shape.domainId === hovered)
-    .map((shape) => ({ shape, placement: placements.get(shape.domainId) ?? null }))
+    .flatMap((shape) => {
+      const placement = placements.get(shape.domainId);
+      return placement ? [{ shape, placement }] : [];
+    })
     .sort((a, b) => Number(a.shape.domainId === hovered) - Number(b.shape.domainId === hovered));
 
   /**
@@ -349,8 +351,14 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                 counter={
                   domain.courseCount ? count(domain.courseCount, 'course') : t('ui.map.emptyDomain')
                 }
-                showCounter={hovered === domain.id}
+                hovered={hovered === domain.id}
                 faded={emphasisOf(domain.id) === 'dim'}
+                onHover={(isHovered) =>
+                  setHovered((current) =>
+                    isHovered ? domain.id : current === domain.id ? null : current
+                  )
+                }
+                onSelect={() => navigate(`/courses?domain=${encodeURIComponent(domain.id)}`)}
               />
             );
           })}
@@ -401,9 +409,10 @@ const overlaps = (a: Rect, b: Rect): boolean =>
 /**
  * Where one territory's name goes, and how big.
  *
- * `y` is the baseline of the first line; `glyph` is the diameter of the icon
- * drawn at the territory's own label point, or null where there is no room for
- * one.
+ * `y` is the baseline of the first line and `lines` is empty when no name would
+ * go anywhere — the icon is still drawn, and the name waits for the pointer.
+ * `glyph` is the diameter of the icon at the territory's own label point, or
+ * null where even that does not fit.
  */
 type Placement = {
   lines: string[];
@@ -411,9 +420,14 @@ type Placement = {
   x: number;
   y: number;
   glyph: number | null;
-  /** Out at sea rather than on the territory — the counter goes below it. */
+  /** Out at sea rather than on the territory — it answers the pointer itself. */
   outside: boolean;
+  /** The rectangle the name occupies out at sea: its hit area. */
+  box: Rect | null;
 };
+
+/** Below this an icon is a smudge rather than a picture of anything. */
+const MIN_GLYPH = 18;
 
 /** Names put out to sea are all one size: they are not standing on anything. */
 const SEA_LABEL_SIZE = 12;
@@ -477,8 +491,13 @@ function placeLabels(
     if (inside) {
       const textHeight = inside.length * size * LINE_HEIGHT;
       const gap = size * 0.45;
-      const withGlyph = shape.room * 2 > glyphAlone + gap + textHeight + size * 0.8;
-      const blockHeight = (withGlyph ? glyphAlone + gap : 0) + textHeight;
+      // The icon takes what the name leaves, down to a size below which it stops
+      // being a picture of anything — a territory that cannot hold both at once
+      // gets a smaller icon rather than none.
+      const spare = shape.room * 2 - textHeight - gap - size * 0.4;
+      const glyphSize = Math.min(glyphAlone, spare);
+      const withGlyph = glyphSize >= MIN_GLYPH;
+      const blockHeight = (withGlyph ? glyphSize + gap : 0) + textHeight;
       const rect: Rect = {
         x: shape.cx - lineWidth(inside, size) / 2,
         y: shape.cy - blockHeight / 2,
@@ -491,19 +510,34 @@ function placeLabels(
           lines: inside,
           size,
           x: shape.cx,
-          y: rect.y + (withGlyph ? glyphAlone + gap : 0) + size * 0.78,
-          glyph: withGlyph ? glyphAlone : null,
+          y: rect.y + (withGlyph ? glyphSize + gap : 0) + size * 0.78,
+          glyph: withGlyph ? glyphSize : null,
           outside: false,
+          box: null,
         });
         continue;
       }
     }
 
-    // Too small to write on. The icon still fits more often than the name does,
-    // so it stays where it was and only the name goes looking for water.
+    // Too small to write on. The icon stays where it was — a territory with an
+    // icon and no name still says what it is — and only the name goes looking
+    // for water.
     const glyph = shape.room * 2 > glyphAlone + 4 ? glyphAlone : null;
+    const iconOnly: Placement = {
+      lines: [],
+      size,
+      x: shape.cx,
+      y: shape.cy,
+      glyph,
+      outside: false,
+      box: null,
+    };
+
     const sea = fitLines(title, SEA_LABEL_SIZE, SEA_LABEL_WIDTH);
-    if (!sea) continue;
+    if (!sea) {
+      placements.set(shape.domainId, iconOnly);
+      continue;
+    }
 
     const w = lineWidth(sea, SEA_LABEL_SIZE) + 8;
     const h = sea.length * SEA_LABEL_SIZE * LINE_HEIGHT + 4;
@@ -522,7 +556,10 @@ function placeLabels(
     }
 
     const spot = candidates.find((rect) => free(rect, [...land, ...taken]));
-    if (!spot) continue;
+    if (!spot) {
+      placements.set(shape.domainId, iconOnly);
+      continue;
+    }
 
     taken.push(spot);
     placements.set(shape.domainId, {
@@ -535,6 +572,7 @@ function placeLabels(
       y: spot.y + SEA_LABEL_SIZE * 0.9,
       glyph,
       outside: true,
+      box: spot,
     });
   }
 
@@ -547,37 +585,38 @@ function Label({
   domainId,
   title,
   counter,
-  showCounter,
+  hovered,
   faded,
+  onHover,
+  onSelect,
 }: {
   shape: MapShape;
-  /** Where the fitting pass put this name, or null if it found nowhere. */
-  placement: Placement | null;
+  placement: Placement;
   domainId: string;
   title: string;
   counter: string;
-  showCounter: boolean;
+  /** The territory under the pointer is this one. */
+  hovered: boolean;
   /** Ruled out by a filter or a search — the veil is over the land, not the name. */
   faded: boolean;
+  /** A name standing out at sea answers the pointer for its own territory. */
+  onHover: (hovered: boolean) => void;
+  onSelect: () => void;
 }) {
   // A territory that found nowhere for its name says it on hover anyway, at its
   // own label point: nothing else is competing for that space at that moment,
   // and a name that overruns a border for as long as the pointer is on it is
   // worth more than no name at all.
-  const shown: Placement =
-    placement ??
-    {
-      lines: fitLines(title, SEA_LABEL_SIZE, shape.span * 0.92) ?? [title],
-      size: SEA_LABEL_SIZE,
-      x: shape.cx,
-      y: shape.cy + SEA_LABEL_SIZE * 0.36,
-      glyph: null,
-      outside: false,
-    };
-  if (!placement && !showCounter) return null;
+  const named = placement.lines.length > 0;
+  const lines = named ? placement.lines : (fitLines(title, SEA_LABEL_SIZE, shape.span * 0.92) ?? [title]);
+  const size = named ? placement.size : SEA_LABEL_SIZE;
+  const nameY = named
+    ? placement.y
+    : shape.cy + (placement.glyph ? placement.glyph / 2 + size : size * 0.36);
 
-  const lineHeight = shown.size * LINE_HEIGHT;
-  const lastLineY = shown.y + (shown.lines.length - 1) * lineHeight;
+  const lineHeight = size * LINE_HEIGHT;
+  const lastLineY = nameY + (lines.length - 1) * lineHeight;
+  const glyphY = glyphCentre(placement, shape);
 
   // A halo, not an outline. `strokeLinejoin: round` is the whole trick: the
   // default miter join throws long spikes off every sharp corner of a glyph,
@@ -588,24 +627,54 @@ function Label({
     fill: MAP_INK,
     paintOrder: 'stroke' as const,
     stroke: MAP_HALO,
-    strokeWidth: 3.2,
+    strokeWidth: hovered ? 4 : 3.2,
     strokeLinejoin: 'round' as const,
     strokeLinecap: 'round' as const,
     strokeOpacity: 0.9,
   };
 
+  // Pointing at a territory has to be visible on its name too, or a name
+  // standing off in the water belongs to whichever territory the reader
+  // guesses. It grows a little about its own anchor — enough to read as picked
+  // out, not enough to move it somewhere else.
+  const lift = (x: number, y: number): string | undefined =>
+    hovered ? `translate(${x} ${y}) scale(1.08) translate(${-x} ${-y})` : undefined;
+
   return (
     <g textAnchor="middle" opacity={faded ? 0.65 : 1}>
+      {/* Which ground this name is for. Only while it is pointed at: a map with
+          a leader off every offshore name is a map of leaders. */}
+      {hovered && placement.box ? (
+        <line
+          x1={placement.x}
+          // From the edge of the label that faces the territory, so the line
+          // never crosses the words it is coming from.
+          y1={
+            shape.cy > placement.box.y + placement.box.h
+              ? placement.box.y + placement.box.h
+              : placement.box.y
+          }
+          x2={shape.cx}
+          y2={shape.cy}
+          style={{
+            stroke: MAP_INK,
+            strokeWidth: 1.4,
+            strokeOpacity: 0.45,
+            strokeLinecap: 'round',
+          }}
+        />
+      ) : null}
+
       {/* The same halo the names get, and for the same reason: line art in one
           dark colour vanishes into a strongly coloured field. Drawn as a thick
           pale pass with the ink laid over it. */}
-      {shown.glyph ? (
-        <>
+      {placement.glyph ? (
+        <g transform={lift(shape.cx, glyphY)}>
           <DomainGlyph
             domainId={domainId}
             x={shape.cx}
-            y={glyphCentre(shown, shape)}
-            size={shown.glyph}
+            y={glyphY}
+            size={placement.glyph}
             colour={MAP_HALO}
             opacity={0.85}
             strokeWidth={5}
@@ -613,36 +682,59 @@ function Label({
           <DomainGlyph
             domainId={domainId}
             x={shape.cx}
-            y={glyphCentre(shown, shape)}
-            size={shown.glyph}
+            y={glyphY}
+            size={placement.glyph}
             colour={MAP_INK}
-            opacity={0.85}
-            strokeWidth={2}
+            opacity={hovered ? 1 : 0.85}
+            strokeWidth={hovered ? 2.6 : 2}
           />
-        </>
+        </g>
       ) : null}
-      {shown.lines.map((line, index) => (
-        <text
-          key={line}
-          x={shown.x}
-          y={shown.y + index * lineHeight}
-          fontSize={shown.size}
-          fontWeight={700}
-          style={halo}
-        >
-          {line}
-        </text>
-      ))}
-      {showCounter ? (
-        <text
-          x={shown.x}
-          y={lastLineY + shown.size + 3}
-          fontSize={shown.size * 0.75}
-          fontWeight={600}
-          style={halo}
-        >
-          {counter}
-        </text>
+
+      {named || hovered ? (
+        <g transform={lift(placement.x, nameY)}>
+          {lines.map((line, index) => (
+            <text
+              key={line}
+              x={placement.x}
+              y={nameY + index * lineHeight}
+              fontSize={size}
+              fontWeight={700}
+              style={halo}
+            >
+              {line}
+            </text>
+          ))}
+          {hovered ? (
+            <text
+              x={placement.x}
+              y={lastLineY + size + 3}
+              fontSize={size * 0.75}
+              fontWeight={600}
+              style={halo}
+            >
+              {counter}
+            </text>
+          ) : null}
+        </g>
+      ) : null}
+
+      {/* A name out at sea is the only part of a territory that is nowhere near
+          it, so it carries its own hit area — otherwise the reader points at the
+          words and nothing lights up. Text is hit glyph by glyph, hence a plain
+          rectangle over the whole label rather than the text itself. */}
+      {placement.box ? (
+        <rect
+          x={placement.box.x}
+          y={placement.box.y}
+          width={placement.box.w}
+          height={placement.box.h}
+          fill="transparent"
+          style={{ pointerEvents: 'all', cursor: 'pointer' }}
+          onPointerEnter={() => onHover(true)}
+          onPointerLeave={() => onHover(false)}
+          onClick={onSelect}
+        />
       ) : null}
     </g>
   );
@@ -653,7 +745,7 @@ function Label({
  * the middle of the territory when the name was sent out to sea.
  */
 function glyphCentre(placement: Placement, shape: MapShape): number {
-  if (placement.outside || !placement.glyph) return shape.cy;
+  if (placement.outside || !placement.glyph || !placement.lines.length) return shape.cy;
   const textHeight = placement.lines.length * placement.size * LINE_HEIGHT;
   const gap = placement.size * 0.45;
   return shape.cy - (placement.glyph + gap + textHeight) / 2 + placement.glyph / 2;
