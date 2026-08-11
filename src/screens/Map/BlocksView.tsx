@@ -48,11 +48,23 @@ export default function BlocksView({ matched, searchActive, allowed }: Props) {
         if (!domains.length) return null;
         return (
           <section key={continent} className="mb-10">
-            <header className="mb-3 border-b border-line pb-2">
-              <h2 className="font-display text-h2" style={{ color: `var(--c-${continent})` }}>
+            {/* Named the way the map names a continent: quiet tracked capitals
+                in the page's own ink, with the hue left to the ground below —
+                the cards, which already wear their field's colour. A 22px title
+                in full-strength blue was louder than everything it introduced,
+                and it was a hue the map never uses. */}
+            <header
+              className="mb-3 border-b pb-2"
+              style={{
+                borderColor: `color-mix(in srgb, var(--c-${continent}) 40%, var(--c-line))`,
+              }}
+            >
+              <h2 className="text-h3 uppercase tracking-[0.18em] text-ink">
                 {t(`ui.continent.${continent}`)}
               </h2>
-              <p className="mt-1 text-body text-ink-dim">{t(`ui.continent.${continent}.desc`)}</p>
+              <p className="mt-1.5 text-body text-ink-dim">
+                {t(`ui.continent.${continent}.desc`)}
+              </p>
             </header>
             {/* One card per row on a phone: at two columns the long titles —
                 "Вероятность и статистика" — broke into three lines and shoved
