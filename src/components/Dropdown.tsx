@@ -45,6 +45,12 @@ type Props = {
 const POPOVER_WIDTH = 240;
 
 /**
+ * A filter menu taller than this stops being a menu and becomes a page. The
+ * viewport room from `placeBy` is the other ceiling; whichever is lower wins.
+ */
+const POPOVER_HEIGHT = 320;
+
+/**
  * Minimal popover used by every filter control — one implementation, one
  * behaviour.
  *
@@ -64,7 +70,7 @@ export default function Dropdown({
   const ref = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [place, setPlace] = useState<Placement>({});
+  const [place, setPlace] = useState<Partial<Placement>>({});
 
   // Before paint, so the popover never shows up in the top-left corner first.
   useLayoutEffect(() => {
@@ -120,12 +126,16 @@ export default function Dropdown({
         ? createPortal(
             <div
               ref={popoverRef}
-              style={{ ...place, transformOrigin: place.bottom ? 'bottom' : 'top' }}
-              className="fixed z-50 w-60 animate-pop-in rounded-pop border border-line bg-surface
-                         shadow-[var(--shadow-pop)]"
+              style={{
+                ...place,
+                maxHeight: Math.min(place.maxHeight ?? POPOVER_HEIGHT, POPOVER_HEIGHT),
+                transformOrigin: place.bottom ? 'bottom' : 'top',
+              }}
+              className="fixed z-50 flex w-60 flex-col overflow-hidden animate-pop-in rounded-pop
+                         border border-line bg-surface shadow-[var(--shadow-pop)]"
             >
               {search ? (
-                <div className="border-b border-line p-2">
+                <div className="shrink-0 border-b border-line p-2">
                   <Input
                     type="search"
                     autoFocus
@@ -135,7 +145,11 @@ export default function Dropdown({
                   />
                 </div>
               ) : null}
-              <div className="panel-scroll max-h-72 p-2">
+              {/* The ceiling is the placement's, not a number of its own: a
+                  `max-h-72` list under a search field overshoots a landscape
+                  phone, and what hangs past the edge of a fixed panel cannot be
+                  scrolled to. The field stays put and only the list moves. */}
+              <div className="panel-scroll min-h-0 flex-1 p-2">
                 <DropdownContext.Provider value={() => setOpen(false)}>
                   {children}
                 </DropdownContext.Provider>

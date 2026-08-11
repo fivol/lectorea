@@ -187,8 +187,16 @@ export default function CoursesScreen() {
                 onClick={() => navigate(`/courses${params.search}`)}
                 aria-hidden="true"
               />
-              <div className="animate-slide-in-bottom max-h-[88vh] overflow-hidden rounded-t-2xl border-t border-line bg-surface">
-                <div className="flex items-center justify-between border-b border-line px-3 py-2">
+              {/*
+                One ceiling, and the panel fills what is left under the grab
+                bar. Two independent caps — the sheet at 88vh, the scroller
+                under it at 80vh — only add up while the bar is thinner than
+                the 8vh between them, and below a screen of about 780px it is
+                not: the tail of the panel ended up under the sheet's own
+                `overflow-hidden`, out of reach of any scroll.
+              */}
+              <div className="flex max-h-[88svh] animate-slide-in-bottom flex-col overflow-hidden rounded-t-2xl border-t border-line bg-surface">
+                <div className="flex shrink-0 items-center justify-between border-b border-line px-3 py-2">
                   <span className="h-1 w-10 rounded-full bg-line" aria-hidden="true" />
                   <IconButton
                     icon="close"
@@ -197,7 +205,9 @@ export default function CoursesScreen() {
                     onClick={() => navigate(`/courses${params.search}`)}
                   />
                 </div>
-                <div className="max-h-[80vh] overflow-y-auto">
+                {/* CoursePanel is `panel-scroll h-full` — it is the scrollport
+                    itself, so this box only has to give it a definite height. */}
+                <div className="min-h-0 flex-1">
                   <CoursePanel
                     course={selected}
                     search={params.search}

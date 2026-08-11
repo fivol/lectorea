@@ -11,18 +11,6 @@ const SEEN_KEY = 'lectorea.legend.seen.v1';
 const width = (): number => Math.min(360, window.innerWidth - 16);
 
 /**
- * How tall the panel may grow before it starts scrolling on its own — the room
- * left between the edge it hangs off and the far side of the viewport.
- */
-const roomFor = (place: Placement): number =>
-  Math.max(120, window.innerHeight - (place.top ?? place.bottom ?? 0) - 8);
-
-type Box = Placement & { maxHeight: number };
-
-const sameBox = (a: Partial<Box>, b: Box): boolean =>
-  samePlace(a, b) && a.maxHeight === b.maxHeight;
-
-/**
  * What everything on this screen means, in one place.
  *
  * The screen carries a lot of quiet signalling — a dimmed card, a star, a tick,
@@ -42,7 +30,7 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState<Partial<Box>>({});
+  const [box, setBox] = useState<Partial<Placement>>({});
 
   useEffect(() => {
     try {
@@ -60,9 +48,8 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
     const measure = (): void => {
       const trigger = boxRef.current?.getBoundingClientRect();
       if (!trigger) return;
-      const place = placeBy(trigger, 'right', width());
-      const next: Box = { ...place, maxHeight: roomFor(place) };
-      setBox((prev) => (sameBox(prev, next) ? prev : next));
+      const next = placeBy(trigger, 'right', width());
+      setBox((prev) => (samePlace(prev, next) ? prev : next));
     };
     measure();
     window.addEventListener('resize', measure);

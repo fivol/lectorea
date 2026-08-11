@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useT } from '@/i18n';
-import { useEscape, useFocusTrap, useIsMobile, useScrollLock } from '@/lib/hooks';
+import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
 import { useUi } from '@/store/ui';
 import { IconButton, Segmented } from '@/components/ui';
 import CoursesTab from './CoursesTab';
@@ -22,7 +22,6 @@ export default function ProfilePanel() {
   const open = useUi((state) => state.profileOpen);
   const close = useUi((state) => state.closeProfile);
   const { t } = useT();
-  const isMobile = useIsMobile();
   const [tab, setTab] = useState<Tab>('courses');
 
   useEscape(open, close);
@@ -32,7 +31,7 @@ export default function ProfilePanel() {
   if (!open) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 ${isMobile ? '' : 'flex items-center justify-center p-6'}`}>
+    <div className="fixed inset-0 z-50 md:flex md:items-center md:justify-center md:p-6">
       <div
         className="fade-only absolute inset-0 animate-fade-in bg-overlay"
         onClick={close}
@@ -40,11 +39,17 @@ export default function ProfilePanel() {
       />
 
       {/*
+        A sheet on a phone, a centred modal above it — a media query rather than
+        a measured viewport, so the first frame is already the right shape.
+
         Height follows the content. A profile holding one goal used to be a
         card at the top of a window-tall white rectangle, which reads as a page
         that failed to load rather than as a profile with one thing in it. The
         floor keeps the tab strip from looking cut off; the ceiling keeps a long
-        list scrolling inside the modal rather than off the screen.
+        list scrolling inside the modal rather than off the screen — and both
+        are held under `100%` of the padded box, because a ceiling stated in
+        viewport units plus the padding around it adds up to more than the
+        window on a short one.
       */}
       <div
         ref={trapRef}
@@ -52,13 +57,11 @@ export default function ProfilePanel() {
         aria-modal="true"
         aria-label={t('ui.profile.title')}
         tabIndex={-1}
-        className={`flex flex-col bg-surface shadow-[var(--shadow-modal)]
-                    ${
-                      isMobile
-                        ? 'absolute inset-0 animate-slide-in-bottom'
-                        : `relative max-h-[88vh] min-h-[320px] w-[min(1120px,92vw)] animate-scale-in
-                           overflow-hidden rounded-pop border border-line`
-                    }`}
+        className="absolute inset-0 flex animate-slide-in-bottom flex-col overflow-hidden
+                   bg-surface shadow-[var(--shadow-modal)]
+                   md:relative md:inset-auto md:max-h-[min(88svh,100%)]
+                   md:min-h-[min(20rem,100%)] md:w-[min(70rem,92vw)] md:animate-scale-in
+                   md:rounded-pop md:border md:border-line"
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
           <h2 className="font-display text-lg">{t('ui.profile.title')}</h2>

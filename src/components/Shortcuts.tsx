@@ -81,14 +81,16 @@ function HelpSheet({ onClose, label }: { onClose: () => void; label: string }) {
         onClick={onClose}
         aria-hidden="true"
       />
+      {/* `max-h-full` is against the padded box around it, so the sheet stays on
+          screen — and scrolls rather than spilling — in a short window. */}
       <div
         ref={trapRef}
         role="dialog"
         aria-modal="true"
         aria-label={label}
         tabIndex={-1}
-        className="relative w-[min(420px,92vw)] animate-scale-in rounded-pop border border-line
-                   bg-surface p-5 shadow-[var(--shadow-modal)]"
+        className="panel-scroll relative max-h-full w-[min(420px,92vw)] animate-scale-in
+                   rounded-pop border border-line bg-surface p-5 shadow-[var(--shadow-modal)]"
       >
         <div className="mb-3 flex items-center gap-2">
           <h2 className="text-h3">{label}</h2>
