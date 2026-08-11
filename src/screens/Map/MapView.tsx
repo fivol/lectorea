@@ -15,6 +15,7 @@ import { DomainGlyph } from '@/components/DomainIcon';
  */
 const MAP_INK = 'var(--map-ink)';
 const MAP_HALO = 'var(--map-halo)';
+const MAP_HALO_SEA = 'var(--map-halo-sea)';
 
 /**
  * The sea, as a value the screen around the map can paint itself with — so the
@@ -23,16 +24,48 @@ const MAP_HALO = 'var(--map-halo)';
  */
 export const MAP_SEA = 'var(--map-sea)';
 
-/** How far the land is lifted off the water, in map units. */
-const LAND_SHADOW = 10;
+/**
+ * The two lines on the map, in map units.
+ *
+ * They are not the same line at different weights: a coast separates land from
+ * water and a border separates two washes of one continent's own hue, so the
+ * coast is drawn heavier and the border only has to be seen. Both used to be
+ * thick white ribbons, which on an outline that scallops around every hex made
+ * the continents read as a bag of marshmallows rather than as ground.
+ */
+const BORDER = 1.6;
+const BORDER_HOVER = 2.8;
+const COAST = 2.8;
 
 /**
- * The continent titles: the largest lettering on the map, and the only one that
- * is tracked out. `TRACKING` is what the letter-spacing costs in width, which
- * the label placer needs in order to keep the fields' names out of that band.
+ * How far the water brightens as it shallows towards a shore, in map units.
+ *
+ * The landmasses are drawn a second time underneath themselves, blurred, in the
+ * shallows colour; the opaque land then covers everything but the falloff, which
+ * is left standing in the water all the way round. Blurred rather than a stack
+ * of wide strokes — hard-edged strokes step, and three visible steps around a
+ * continent look like a target, not like water.
+ *
+ * This is what holds the continents off the sea now. The map used to stand on a
+ * hard copy of its own coast offset ten units down, and an offset shadow with no
+ * blur reads as a sticker on a page — the one thing a map must never look like.
+ */
+const SHORE_BLUR = 9;
+
+/**
+ * The continent titles: the largest lettering on the map, and the one set
+ * widest apart. The tracking is in map units per letter, because the placer has
+ * to know how far the title actually runs to keep the fields' names out of it.
  */
 const CONTINENT_SIZE = 19;
-const CONTINENT_TRACKING = 1.4;
+const CONTINENT_TRACKING = CONTINENT_SIZE * 0.24;
+/**
+ * Clear water around a continent's title that no other name may enter — wider
+ * to the sides than above and below, because the damage is done along the line
+ * the title is written on: a field's name that comes up beside it reads as the
+ * next word of the title, while one that sits under it plainly does not.
+ */
+const CONTINENT_AIR = { x: CONTINENT_SIZE * 2, y: CONTINENT_SIZE * 0.5 };
 
 type Props = {
   /** Domains matching the current search; empty means "no query typed". */
@@ -89,18 +122,22 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         .map((mass) => {
           const title = t(`ui.continent.${mass.continent}`);
           const y = Math.max(mass.y - 20, CONTINENT_SIZE + 8);
-          const width = textWidth(title, CONTINENT_SIZE * CONTINENT_TRACKING);
+          const width = textWidth(title, CONTINENT_SIZE, CONTINENT_TRACKING);
           return {
             id: mass.continent,
             cx: mass.x + mass.width / 2,
             y,
             // The band a territory's name may not be written into. A continent
             // is named once and read first; everything else gives way to it.
+            //
+            // With air around it, not just the letters: a field's name that
+            // stops exactly where the title starts is not overlapping it, but
+            // the reader still sees one run of words at two sizes.
             box: {
-              x: mass.x + mass.width / 2 - width / 2,
-              y: y - CONTINENT_SIZE,
-              w: width,
-              h: CONTINENT_SIZE * 1.5,
+              x: mass.x + mass.width / 2 - width / 2 - CONTINENT_AIR.x,
+              y: y - CONTINENT_SIZE - CONTINENT_AIR.y,
+              w: width + CONTINENT_AIR.x * 2,
+              h: CONTINENT_SIZE * 1.5 + CONTINENT_AIR.y * 2,
             },
           };
         }),
@@ -184,18 +221,21 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         aria-label={t('ui.a11y.mapRegion')}
         onPointerLeave={() => setHovered(null)}
       >
-        {/* The land itself, under everything: first its shadow on the water,
-            then the pale ground the territories are washed over. Nothing here
-            is a picture — the same paths the territories tile, so the coast and
-            the borders can never drift apart at some window size. */}
-        {map.landmasses.map((mass, index) => (
-          <path
-            key={`shadow-${index}`}
-            d={mass.d}
-            style={{ fill: 'var(--map-shadow)' }}
-            transform={`translate(0 ${LAND_SHADOW})`}
-          />
-        ))}
+        {/* The land itself, under everything: first the water brightening as it
+            shallows towards every shore, then the pale ground the territories
+            are washed over. Nothing here is a picture — the same paths the
+            territories tile, so the coast and the borders can never drift apart
+            at some window size. */}
+        <defs>
+          <filter id="map-shore" x="-6%" y="-6%" width="112%" height="112%">
+            <feGaussianBlur stdDeviation={SHORE_BLUR} />
+          </filter>
+        </defs>
+        <g filter="url(#map-shore)">
+          {map.landmasses.map((mass, index) => (
+            <path key={`shore-${index}`} d={mass.d} style={{ fill: 'var(--map-surf)' }} />
+          ))}
+        </g>
         {map.landmasses.map((mass, index) => (
           <path key={`land-${index}`} d={mass.d} style={{ fill: 'var(--map-land)' }} />
         ))}
@@ -254,7 +294,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                   id={shape.shapeId}
                   className="territory-edge"
                   d={shape.d}
-                  strokeWidth={isHovered ? 5 : 3}
+                  strokeWidth={isHovered ? BORDER_HOVER : BORDER}
                   strokeLinejoin="round"
                   style={{
                     // The colour is the field's own; how much of it goes down is
@@ -292,15 +332,16 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
           })}
         </g>
 
-        {/* The shoreline, over the territories that meet it: a border between
-            two fields is one white line, and the edge of the land should not be
-            the only one drawn at half that weight. */}
+        {/* The shoreline, over the territories that meet it: the coastal
+            territories each draw their own border along it, and without this
+            the edge of a continent would be told in the same weight as the line
+            between two of its fields. */}
         {map.landmasses.map((mass, index) => (
           <path
             key={`coast-${index}`}
             d={mass.d}
             fill="none"
-            strokeWidth={4.5}
+            strokeWidth={COAST}
             strokeLinejoin="round"
             style={{ stroke: 'var(--map-coast)', pointerEvents: 'none' }}
           />
@@ -314,6 +355,10 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
           way to be on top.
         */}
         <g className="pointer-events-none">
+          {/* The branch of knowledge a continent is, written over open water in
+              the manner an atlas names an ocean: wide apart, unemphatic, and
+              light enough that nothing on the ground has to fight it. Bold dark
+              capitals here read as a heading pasted over the map. */}
           {continents.map((continent) => (
             <text
               key={continent.id}
@@ -321,16 +366,16 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
               y={continent.y}
               textAnchor="middle"
               fontSize={CONTINENT_SIZE}
-              fontWeight={700}
-              letterSpacing={2.6}
-              opacity={0.72}
+              fontWeight={600}
+              letterSpacing={CONTINENT_TRACKING}
+              opacity={0.55}
               style={{
                 fill: MAP_INK,
                 paintOrder: 'stroke',
-                stroke: MAP_HALO,
-                strokeWidth: 4,
+                stroke: MAP_HALO_SEA,
+                strokeWidth: CONTINENT_SIZE * 0.28,
                 strokeLinejoin: 'round',
-                strokeOpacity: 0.85,
+                strokeOpacity: 0.7,
                 textTransform: 'uppercase',
               }}
             >
@@ -372,8 +417,16 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   );
 }
 
+/**
+ * How much air a name is given between its letters, as a share of its size.
+ * Small lettering over a coloured field closes up and turns into a bar; a
+ * little tracking is what keeps a five-letter name at 11 units a word.
+ */
+const TRACKING = 0.03;
+
 /** Rough width of a bold line at a given size — no measuring in an SVG. */
-const textWidth = (text: string, size: number): number => text.length * size * 0.62;
+const textWidth = (text: string, size: number, tracking = size * TRACKING): number =>
+  text.length * (size * 0.62 + tracking);
 
 const lineWidth = (lines: string[], size: number): number =>
   Math.max(...lines.map((line) => textWidth(line, size)));
@@ -429,14 +482,39 @@ type Placement = {
 /** Below this an icon is a smudge rather than a picture of anything. */
 const MIN_GLYPH = 18;
 
+/**
+ * The three sizes a territory's name is written at, and the room each one asks
+ * for.
+ *
+ * Sizing every name off the ground under it gave thirty-eight fields thirty-
+ * eight sizes, and a reader cannot see an order in that — only that the
+ * lettering is uneven. Three steps say what the continuous scale meant to: this
+ * is one of the large fields, this is one of the small ones.
+ */
+const NAME_STEPS: Array<{ room: number; size: number }> = [
+  { room: 50, size: 16.5 },
+  { room: 32, size: 13 },
+  { room: 0, size: 11 },
+];
+
+const nameSize = (room: number): number =>
+  NAME_STEPS.find((step) => room >= step.room)!.size;
+
 /** Names put out to sea are all one size: they are not standing on anything. */
 const SEA_LABEL_SIZE = 12;
 /** Widest a sea label may be before it has to wrap, in map units. */
 const SEA_LABEL_WIDTH = 150;
-/** Clearance from the coast — enough to miss the shadow the land casts. */
-const SEA_LABEL_GAP = 16;
+/** Clearance from the coast — far enough out to be past the shallows. */
+const SEA_LABEL_GAP = SHORE_BLUR * 2.2;
 
 const LINE_HEIGHT = 1.15;
+
+/**
+ * How much of the ground a name may run across before it is sent out to sea.
+ * The rest is the margin that keeps the last letter off the border — and it is
+ * measured against an estimate of the width, so it cannot be cut much finer.
+ */
+const NAME_FIT = 0.95;
 
 /**
  * Lays out every name on the map at once.
@@ -485,8 +563,8 @@ function placeLabels(
     // big enough to be read as the thing the area *is*, from across the map.
     const glyphAlone = Math.max(24, Math.min(76, shape.room * 0.9));
 
-    const size = Math.max(11, Math.min(18, shape.room * 0.3));
-    const inside = fitLines(title, size, shape.span * 0.92);
+    const size = nameSize(shape.room);
+    const inside = fitLines(title, size, shape.span * NAME_FIT);
 
     if (inside) {
       const textHeight = inside.length * size * LINE_HEIGHT;
@@ -608,7 +686,7 @@ function Label({
   // and a name that overruns a border for as long as the pointer is on it is
   // worth more than no name at all.
   const named = placement.lines.length > 0;
-  const lines = named ? placement.lines : (fitLines(title, SEA_LABEL_SIZE, shape.span * 0.92) ?? [title]);
+  const lines = named ? placement.lines : (fitLines(title, SEA_LABEL_SIZE, shape.span * NAME_FIT) ?? [title]);
   const size = named ? placement.size : SEA_LABEL_SIZE;
   const nameY = named
     ? placement.y
@@ -623,14 +701,22 @@ function Label({
   // which is what made the old thick stroke look serrated. The halo is nearly
   // opaque — over a coloured field a translucent one lets the ground through
   // and the name stops being readable at all.
+  //
+  // Its colour is the ground the name is written on, not one colour for the
+  // whole map: a pale halo out at sea is a smear of fog around every offshore
+  // name, and the ocean is the one place on the map where nothing else is
+  // competing for the reader's eye.
+  //
+  // The weight scales with the lettering. A fixed one made the small names on
+  // the slivers look outlined and the large ones look unprotected.
   const halo = {
     fill: MAP_INK,
     paintOrder: 'stroke' as const,
-    stroke: MAP_HALO,
-    strokeWidth: hovered ? 4 : 3.2,
+    stroke: placement.outside ? MAP_HALO_SEA : MAP_HALO,
+    strokeWidth: size * (hovered ? 0.3 : 0.24),
     strokeLinejoin: 'round' as const,
     strokeLinecap: 'round' as const,
-    strokeOpacity: 0.9,
+    strokeOpacity: 0.92,
   };
 
   // Pointing at a territory has to be visible on its name too, or a name
@@ -692,14 +778,21 @@ function Label({
       ) : null}
 
       {named || hovered ? (
-        <g transform={lift(placement.x, nameY)}>
+        // A name in the water is the only lettering on the map with nothing
+        // around it, which is enough to make it the loudest thing on screen.
+        // Held back a little so the fields are read before the strays.
+        <g transform={lift(placement.x, nameY)} opacity={placement.outside && !hovered ? 0.84 : 1}>
           {lines.map((line, index) => (
             <text
               key={line}
               x={placement.x}
               y={nameY + index * lineHeight}
               fontSize={size}
-              fontWeight={700}
+              // A name standing in the water is not the name of that water: it
+              // is set lighter than the names written on their own ground, so
+              // the eye reads the fields first and the strays after them.
+              fontWeight={placement.outside ? 600 : 700}
+              letterSpacing={size * TRACKING}
               style={halo}
             >
               {line}
@@ -708,10 +801,13 @@ function Label({
           {hovered ? (
             <text
               x={placement.x}
-              y={lastLineY + size + 3}
-              fontSize={size * 0.75}
-              fontWeight={600}
-              style={halo}
+              y={lastLineY + size * 0.92 + 3}
+              fontSize={size * 0.72}
+              fontWeight={500}
+              letterSpacing={size * TRACKING}
+              // How many courses is an answer to pointing at a field, not part
+              // of its name — quieter than the name it hangs under.
+              style={{ ...halo, fillOpacity: 0.68 }}
             >
               {counter}
             </text>

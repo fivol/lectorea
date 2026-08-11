@@ -53,12 +53,19 @@
   --map-land: #17323f;
   --map-wash: 0.5;
   --map-wash-hover: 0.76;
-  --map-border: rgb(230 243 249 / 0.42);
+  --map-border: rgb(230 243 249 / 0.5);
   --map-border-strong: rgb(255 255 255 / 0.92);
-  --map-coast: rgb(230 243 249 / 0.34);
-  --map-shadow: rgb(0 0 0 / 0.45);
+  --map-coast: rgb(230 243 249 / 0.42);
+  /* The shallows: the water as it lightens on its way up to a shore. */
+  --map-surf: rgb(122 190 222 / 0.34);
   --map-ink: #eaf3f8;
   --map-halo: #08161e;
+  /*
+   * A name written out at sea is haloed in the water it stands in, not in the
+   * halo the names on land use: a pale smear behind offshore lettering is the
+   * loudest thing on an otherwise empty ocean.
+   */
+  --map-halo-sea: #0c2431;
 
   /*
    * Shadows are a light-mode device. On a dark canvas a drop shadow is a
@@ -100,12 +107,13 @@
   --map-land: #cfe6f0;
   --map-wash: 0.78;
   --map-wash-hover: 0.94;
-  --map-border: rgb(255 255 255 / 0.85);
+  --map-border: rgb(255 255 255 / 0.9);
   --map-border-strong: #ffffff;
   --map-coast: #ffffff;
-  --map-shadow: rgb(13 61 82 / 0.22);
+  --map-surf: rgb(255 255 255 / 0.62);
   --map-ink: #172433;
   --map-halo: #ffffff;
+  --map-halo-sea: #62b9d1;
 
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
   --shadow-pop: 0 8px 24px rgb(15 23 42 / 0.12);
