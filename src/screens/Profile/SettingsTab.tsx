@@ -33,17 +33,9 @@ export default function SettingsTab() {
         />
       </Row>
 
-      <Row label={t('ui.profile.settings.mapView')}>
-        <Segmented
-          value={settings.mapView}
-          options={(['map', 'blocks'] as const).map((value) => ({
-            value,
-            label: t(`ui.view.${value}`),
-          }))}
-          onChange={(value) => setSetting('mapView', value)}
-          label={t('ui.profile.settings.mapView')}
-        />
-      </Row>
+      {/* Map or blocks is not here any more: the map is the front door and
+          every visit opens on it, so the choice holds for the visit and lives
+          in the switch on the map's own header, where the two views are. */}
 
       <div className="border-t border-line pt-4">
         {confirming ? (

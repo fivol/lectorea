@@ -5,7 +5,7 @@ import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
 import { useIsMobile } from '@/lib/hooks';
-import { useProfile } from '@/store/profile';
+import { useMapView, useUi } from '@/store/ui';
 import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
 import GlobalFilters from '@/components/GlobalFilters';
@@ -23,8 +23,8 @@ export default function MapScreen() {
   const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
 
-  const mapView = useProfile((state) => state.profile.settings.mapView);
-  const setSetting = useProfile((state) => state.setSetting);
+  const mapView = useMapView();
+  const setMapView = useUi((state) => state.setMapView);
 
   const [query, setQuery] = useState('');
   const results = useSearchResults(query);
@@ -43,7 +43,7 @@ export default function MapScreen() {
     return set;
   }, [catalog, params.providers]);
 
-  const showMap = mapView === 'map' && !isMobile;
+  const showMap = mapView === 'map';
   const compact = !showMap && scrolled;
 
   return (
@@ -70,14 +70,20 @@ export default function MapScreen() {
                     ${compact ? 'on-canvas pb-2 pt-2 shadow-[var(--shadow-card)] backdrop-blur' : 'pt-4'}`}
       >
         <div className="flex items-baseline gap-3">
-          {/* The wordmark is the way home, as it is on every site: from a
-              filtered or searched map it leads back to the clean one, and the
-              link is what makes that discoverable at all. */}
+          {/* The wordmark is the way home, as it is on every site — and home
+              here is the map: from a filtered or searched view, and from the
+              blocks, it leads back to the clean drawing. The way back from the
+              columns is the other half of that pair: it returns to whichever
+              view you left, this one always to the same place. */}
           <h1
             className={`font-display tracking-tight transition-all duration-base ease-out
                         ${compact ? 'text-base' : 'text-xl'}`}
           >
-            <Link to="/" className="rounded transition-colors hover:text-accent">
+            <Link
+              to="/"
+              onClick={() => setMapView('map')}
+              className="rounded transition-colors hover:text-accent"
+            >
               {t('app.title')}
             </Link>
           </h1>
@@ -90,7 +96,7 @@ export default function MapScreen() {
             left, and who is looking on the right. */}
         <div className="flex items-center gap-2">
           {isMobile ? null : (
-            <ViewSwitch value={mapView} onChange={(next) => setSetting('mapView', next)} />
+            <ViewSwitch value={mapView} onChange={setMapView} />
           )}
           <Plate row>
             <ThemeToggle />

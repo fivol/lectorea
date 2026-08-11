@@ -312,7 +312,6 @@ export const ProfileSchema = z.object({
     .object({
       lang: z.string().default('ru'),
       theme: z.enum(['auto', 'light', 'dark']).default('auto'),
-      mapView: z.enum(['map', 'blocks']).default('map'),
       splitRatio: z.number().min(0.3).max(0.8).default(0.62),
       /**
        * Hide everything past this stage. A setting rather than a URL parameter:
@@ -324,7 +323,6 @@ export const ProfileSchema = z.object({
     .default({
       lang: 'ru',
       theme: 'auto',
-      mapView: 'map',
       splitRatio: 0.62,
       maxStage: null,
     }),

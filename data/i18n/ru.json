@@ -27,7 +27,8 @@
   "ui.plural.minute.few": "минуты",
   "ui.plural.minute.many": "минут",
 
-  "ui.nav.backToMap": "Карта",
+  "ui.nav.backTo.map": "Карта",
+  "ui.nav.backTo.blocks": "Блоки",
   "ui.nav.profile": "Профиль",
 
   "ui.view.map": "Карта",
@@ -262,7 +263,6 @@
   "ui.profile.settings.theme.auto": "Авто",
   "ui.profile.settings.theme.light": "Светлая",
   "ui.profile.settings.theme.dark": "Тёмная",
-  "ui.profile.settings.mapView": "Вид первого экрана",
   "ui.profile.settings.reset": "Сбросить все данные",
   "ui.profile.settings.resetConfirm": "Удалить весь профиль? Отметки, избранное и настройки исчезнут без возможности вернуть",
   "ui.profile.settings.resetDo": "Удалить",

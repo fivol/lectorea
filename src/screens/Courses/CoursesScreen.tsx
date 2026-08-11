@@ -9,7 +9,7 @@ import { courseHref, useCatalogParams } from '@/lib/url';
 import { useIsDesktop, useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp, inkOn } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
-import { useUi } from '@/store/ui';
+import { useMapView, useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
 import GlobalFilters from '@/components/GlobalFilters';
@@ -33,6 +33,7 @@ export default function CoursesScreen() {
   const isDesktop = useIsDesktop();
 
   const requestFocus = useUi((state) => state.requestFocus);
+  const mapView = useMapView();
   const splitRatio = useProfile((state) => state.profile.settings.splitRatio);
   const setSetting = useProfile((state) => state.setSetting);
 
@@ -125,12 +126,14 @@ export default function CoursesScreen() {
       <header className="z-30 flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-3 py-2">
         {/* The way back is set like the switch it came from — same plate, same
             spaced caps, so the two screens read as two views and not as two
-            sites. */}
+            sites. It names the view it returns to rather than always saying
+            «Карта»: whoever entered the columns from the blocks left a screen
+            of blocks behind, and that is the screen they get back. */}
         <Cap
           to="/"
           icon="arrow-left"
-          ariaLabel={t('ui.nav.backToMap')}
-          label={<span className="hidden sm:inline">{t('ui.nav.backToMap')}</span>}
+          ariaLabel={t(`ui.nav.backTo.${mapView}`)}
+          label={<span className="hidden sm:inline">{t(`ui.nav.backTo.${mapView}`)}</span>}
         />
 
         {/* No breadcrumb trail: with «Карта» already on the left and the domain

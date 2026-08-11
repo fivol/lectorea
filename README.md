@@ -57,8 +57,12 @@ stemmer. It opens on focus rather than on the first keystroke, and before
 anything is typed it holds the largest areas, courses and universities under
 their own headings: a field that says «Область, курс, вуз…» is worth more when
 it shows the three rather than asking to be believed. On a small screen the map
-falls back to a grid of blocks carrying the same icons; the toggle is in the
-profile settings.
+falls back to a grid of blocks carrying the same icons; on a wide one the switch
+in the header does the same by hand. That choice lasts the visit and no longer:
+the map is the front door, so every visit opens on the drawing, and the wordmark
+leads back to it from anywhere. The way back from the columns is the other half
+of that pair — it returns to the view you left, blocks included, and says which
+one it is.
 
 **The columns** (`/courses`) are the catalogue proper. A column is «сложность
 N» — the length of the longest chain of prerequisites ending at that course — so
@@ -132,7 +136,7 @@ or a click on empty space, puts the columns back to full width.
 **The profile** is a modal, not a page — it opens over whatever you were looking
 at. Courses and playlists you have marked, a **Недавние** tab holding the
 playlists you have opened (clearable in full or row by row), and settings for
-language, theme and map style. Light and dark also have a one-click toggle in
+language and theme. Light and dark also have a one-click toggle in
 the header of both screens — that choice is about the room you are sitting in,
 not about your account, and behind a modal most people put up with the wrong
 one; «Авто» stays in the settings. There is no account and no backend: it all
@@ -144,7 +148,9 @@ story, and it works between browsers without a server.
 The domain and provider filters, the selected course and the open playlist all
 live in the URL, so a link carries the exact view and the back button behaves.
 The stage cap and the display settings do not — they belong to the reader, not
-to the view being shared, and stay in `localStorage`.
+to the view being shared, and stay in `localStorage`. Map or blocks is neither:
+it is not what a link points at, and it is not something one visit should decide
+for the next, so it lives in memory for the length of the visit.
 
 ## How it is put together
 
