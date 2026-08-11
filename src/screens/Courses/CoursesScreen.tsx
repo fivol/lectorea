@@ -11,6 +11,7 @@ import { clamp, inkOn } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
+import ContributeBar from '@/components/ContributeBar';
 import GlobalFilters from '@/components/GlobalFilters';
 import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/Dropdown';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -292,6 +293,14 @@ export default function CoursesScreen() {
           ) : null}
         </div>
       )}
+
+      {/*
+        The columns are the screen where a gap is actually noticed — a field
+        with four cards in it, a course whose prerequisites are plainly wrong.
+        The map has the same bar, so crossing between the two does not lose the
+        one line saying the catalogue can be corrected.
+      */}
+      <ContributeBar>{t('ui.footer.contributeCourses')}</ContributeBar>
     </div>
   );
 }
