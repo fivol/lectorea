@@ -156,13 +156,14 @@ to the view being shared, and stay in `localStorage`.
 | Column order | own barycentric pass, **at build time** | dagre cannot express domain bands, and ranks nodes by edge length rather than by level |
 | Course screen | plain scrollable columns of cards | the column carries the meaning; arrows are drawn for the selected chain only, because over 200 cards they were noise |
 | Design tokens | CSS variables, surfaced through Tailwind | one palette the map screen can swap wholesale at runtime — see [docs/design-system.md](docs/design-system.md) |
+| Controls | one UI kit in `src/components/ui/` | every button, chip, field and switch is the same capsule cut from one material; the class names live in one file |
 | Scripts | tsx + better-sqlite3 | |
 | Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain, one terrain per domain |
 | Deploy | any static host | |
 
 Detailed documents:
 
-- [docs/design-system.md](docs/design-system.md) — the tokens: colour, type, space, motion, and what the shared components are for
+- [docs/design-system.md](docs/design-system.md) — the tokens (colour, type, space, motion), the plate every control is cut from, and the UI kit
 - [docs/data.md](docs/data.md) — the data model, the files, and how to add content
 - [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota

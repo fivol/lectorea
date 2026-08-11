@@ -6,6 +6,7 @@ import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/
 import { useEscape, useFocusTrap, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
+import { Button, ButtonLink, IconButton } from '@/components/ui';
 import Tooltip from '@/components/Tooltip';
 import { QualityDot } from './PlaylistRow';
 
@@ -77,14 +78,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
             {playlist.title}
             {provider ? <span className="text-ink-faint"> — {provider.title}</span> : null}
           </h2>
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={close}
-            aria-label={t('ui.common.close')}
-          >
-            <Icon name="close" />
-          </button>
+          <IconButton icon="close" label={t('ui.common.close')} onClick={close} />
         </header>
 
         <div className={`flex min-h-0 flex-1 ${isMobile ? 'flex-col overflow-y-auto' : ''}`}>
@@ -231,31 +225,32 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                 isMobile ? 'sticky bottom-0 bg-surface pb-2 pt-2' : ''
               }`}
             >
-              <button
-                type="button"
-                className={`btn w-full justify-center ${favorite ? 'btn-primary' : ''}`}
+              <Button
+                variant={favorite ? 'primary' : 'default'}
+                icon={favorite ? 'star-filled' : 'star'}
+                iconSize={16}
+                className="w-full justify-center"
                 onClick={() => toggleFavorite(playlist.id)}
               >
-                <Icon name={favorite ? 'star-filled' : 'star'} />
                 {favorite ? t('ui.course.favoriteOn') : t('ui.course.favorite')}
-              </button>
-              <button
-                type="button"
-                className={`btn w-full justify-center ${watched ? 'btn-primary' : ''}`}
+              </Button>
+              <Button
+                variant={watched ? 'primary' : 'default'}
+                icon="check"
+                iconSize={16}
+                className="w-full justify-center"
                 onClick={() => toggleWatched(playlist.id)}
               >
-                <Icon name="check" />
                 {watched ? t('ui.playlist.watchedOn') : t('ui.playlist.watched')}
-              </button>
-              <a
-                className="btn w-full justify-center"
+              </Button>
+              <ButtonLink
                 href={`https://www.youtube.com/playlist?list=${playlist.id}`}
-                target="_blank"
-                rel="noreferrer noopener"
+                icon="external"
+                iconSize={16}
+                className="w-full justify-center"
               >
-                <Icon name="external" />
                 {t('ui.playlist.openYoutube')}
-              </a>
+              </ButtonLink>
             </div>
           </aside>
         </div>

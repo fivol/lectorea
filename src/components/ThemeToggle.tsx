@@ -2,6 +2,7 @@ import { useT } from '@/i18n';
 import { useMediaQuery } from '@/lib/hooks';
 import { resolveTheme, useProfile } from '@/store/profile';
 import Icon from './Icon';
+import { IconButton } from './ui';
 
 /**
  * Light and dark, one click away on both screens.
@@ -25,12 +26,11 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   const label = next === 'dark' ? t('ui.theme.toDark') : t('ui.theme.toLight');
 
   return (
-    <button
-      type="button"
-      className={`icon-btn ${className}`}
+    <IconButton
+      label={label}
+      className={className}
+      tap
       onClick={() => setSetting('theme', next)}
-      aria-label={label}
-      title={label}
     >
       {/* The glyph is the destination, not the current state — it is what the
           label says, so the two cannot be read against each other. Both are
@@ -44,6 +44,6 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
           <Icon name="sun" size={17} />
         </span>
       </span>
-    </button>
+    </IconButton>
   );
 }

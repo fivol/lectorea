@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
@@ -13,9 +13,9 @@ import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
 import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/Dropdown';
-import Icon from '@/components/Icon';
 import ThemeToggle from '@/components/ThemeToggle';
 import ProfileButton from '@/components/ProfileButton';
+import { Cap, IconButton, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -125,14 +125,12 @@ export default function CoursesScreen() {
         {/* The way back is set like the switch it came from — same plate, same
             spaced caps, so the two screens read as two views and not as two
             sites. */}
-        <Link
+        <Cap
           to="/"
-          className="plate plate-cap tap text-ink-dim hover:text-ink"
-          aria-label={t('ui.nav.backToMap')}
-        >
-          <Icon name="arrow-left" size={13} />
-          <span className="hidden sm:inline">{t('ui.nav.backToMap')}</span>
-        </Link>
+          icon="arrow-left"
+          ariaLabel={t('ui.nav.backToMap')}
+          label={<span className="hidden sm:inline">{t('ui.nav.backToMap')}</span>}
+        />
 
         {/* No breadcrumb trail: with «Карта» already on the left and the domain
             filter naming the field it leads to, the path repeated both of them
@@ -151,11 +149,11 @@ export default function CoursesScreen() {
           />
           {/* The same plate as on the map, so crossing between the two screens
               does not change what the corner of the window is. */}
-          <div className="plate plate-row">
-            <ThemeToggle className="tap" />
-            <span className="plate-divider" aria-hidden="true" />
-            <ProfileButton className="tap" />
-          </div>
+          <Plate row>
+            <ThemeToggle />
+            <PlateDivider />
+            <ProfileButton />
+          </Plate>
         </div>
 
         <GlobalFilters className="w-full" />
@@ -188,14 +186,12 @@ export default function CoursesScreen() {
               <div className="animate-slide-in-bottom max-h-[88vh] overflow-hidden rounded-t-2xl border-t border-line bg-surface">
                 <div className="flex items-center justify-between border-b border-line px-3 py-2">
                   <span className="h-1 w-10 rounded-full bg-line" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="icon-btn tap"
+                  <IconButton
+                    icon="close"
+                    label={t('ui.common.close')}
+                    tap
                     onClick={() => navigate(`/courses${params.search}`)}
-                    aria-label={t('ui.common.close')}
-                  >
-                    <Icon name="close" />
-                  </button>
+                  />
                 </div>
                 <div className="max-h-[80vh] overflow-y-auto">
                   <CoursePanel

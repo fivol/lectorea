@@ -100,6 +100,34 @@ from `--c-surface` against `--c-surface-2` and from borders instead —
 keep one, because a popover lands on whatever happens to be beneath it and a
 border alone will not lift it off.
 
+### The plate
+
+Every control — a button, a chip, a field, a switch — is a capsule cut from one
+material, and the material has its own four tokens:
+
+| Token | Light | Dark | Dark, over the map |
+|---|---|---|---|
+| `--plate-bg` | `rgb(255 255 255 / .94)` | `rgb(28 37 53 / .94)` | `rgb(30 63 79 / .94)` |
+| `--plate-line` | `rgb(15 23 42 / .14)` | `rgb(255 255 255 / .16)` | `rgb(230 243 249 / .26)` |
+| `--plate-rim` | `rgb(255 255 255 / .9)` | `rgb(255 255 255 / .08)` | `rgb(255 255 255 / .12)` |
+| `--plate-shadow` | `0 2px 8px …` | `0 2px 12px …` | `0 6px 18px …` |
+
+One rule holds it together: **the plate is always lighter than what it lies
+on.** A control darker than its page is a hole, not a thing you press — and the
+night sea is lighter than every surface in the dark palette, which is why the
+map overrides the fill again with the colour of land. The rim of light along the
+top edge and the shadow under it are the same two devices the continents use to
+sit on the water.
+
+Capsules, not rounded rectangles: the map is drawn out of round shapes, and
+`rounded-chip` in the middle of it reads as a piece of some other product. Only
+what holds more than a line keeps a corner — cards, panels, the import textarea.
+
+The chrome is set in the map's own lettering, mono and spaced caps
+(«КАРТА · БЛОКИ · ПРОФИЛЬ»), so a control steering the catalogue never reads as
+a word inside it. The chosen half of a switch, an active filter and the current
+tab are all the same accent inlay: a 24% wash with a 60% ring.
+
 Keyboard focus is `2px solid var(--c-accent)` with a 2px offset, on everything
 interactive including cards. It is set once, on `:focus-visible` in the base
 layer, so nothing has to remember it.
@@ -133,6 +161,35 @@ for something being ticked off, and `shimmer` behind `.skeleton`.
 
 Selecting a course is the one signature effect. The chain lights up right to
 left at 30ms a step, and the prerequisite curves draw themselves in behind it.
+
+## The UI kit
+
+`src/components/ui/` is the only place the control classes are written down. A
+screen says what a control *is*; how it looks is one import away, and changing
+the material is one file rather than fifty.
+
+```tsx
+import { Button, Chip, Field, IconButton, Plate, Segmented, Switch } from '@/components/ui';
+```
+
+| Component | What it is | Notable props |
+|---|---|---|
+| `Plate` | the floating capsule everything else sits on | `row` — hold several controls, with `PlateDivider` between |
+| `Cap` | one control that is its own plate: «← КАРТА» | `to` \| `onClick`, `icon`, `label` |
+| `Button` / `ButtonLink` | the pressable capsule / the same, navigating | `variant: default·primary·danger·ghost`, `small`, `icon`, `tap` |
+| `IconButton` | a glyph on its own: close, clear, back | `icon`, `label` (name *and* tooltip), `tap` |
+| `Chip` | filter, tag, count. `span` without `onClick`, `button` with, `Link` with `to` | `on` (holds a value), `filled` (is a value), `icon` |
+| `Switch` | two or three views of one thing, state sliding between them | `options` with `icon`, `label` for the group |
+| `Segmented` | the same for labels of differing widths — the inlay stays put | `kind: group·tabs` |
+| `Field` / `Input` / `Textarea` / `Select` / `Kbd` | anything typed into, and the key that focuses it | `floating` — the one over the map |
+
+Two rules keep it honest. A control that navigates is an `<a>` — middle-click
+and «open in a new tab» are the difference, and on a link to YouTube they
+matter. And a chip with no click is a `<span>`, so a tag never lands in the tab
+order.
+
+Above the kit sit three app-level controls that know about the store:
+`ThemeToggle`, `ProfileButton` and `ViewSwitch`.
 
 ## Components worth knowing about
 

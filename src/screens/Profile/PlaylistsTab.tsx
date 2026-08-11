@@ -9,6 +9,7 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import EmptyState from '@/components/EmptyState';
+import { Chip } from '@/components/ui';
 
 type GroupBy = 'course' | 'provider';
 
@@ -87,14 +88,9 @@ export default function PlaylistsTab() {
       <div className="mb-3 flex items-center gap-2 text-xs text-ink-faint">
         {t('ui.profile.groupBy')}:
         {(['course', 'provider'] as GroupBy[]).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setGroupBy(key)}
-            className={`chip ${groupBy === key ? 'border-accent text-ink' : ''}`}
-          >
+          <Chip key={key} on={groupBy === key} onClick={() => setGroupBy(key)}>
             {t(`ui.profile.groupBy.${key}`)}
-          </button>
+          </Chip>
         ))}
       </div>
 

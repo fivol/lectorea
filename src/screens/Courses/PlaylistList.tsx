@@ -10,6 +10,7 @@ import PlaylistFilters from './PlaylistFilters';
 import PlaylistRow from './PlaylistRow';
 import PlaylistModal from './PlaylistModal';
 import { playlistHeadings } from './playlist-label';
+import { ButtonLink } from '@/components/ui';
 import {
   applyFilters,
   defaultFilters,
@@ -77,14 +78,9 @@ export default function PlaylistList({ course }: Props) {
       <section className="border-t border-line px-4 py-4">
         <h3 className="text-sm font-medium">{t('ui.playlists.title')}</h3>
         <p className="mt-2 text-sm text-ink-faint">{t('ui.playlists.empty')}</p>
-        <a
-          className="btn mt-3"
-          href={suggestPlaylistUrl(course.id)}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
+        <ButtonLink href={suggestPlaylistUrl(course.id)} className="mt-3">
           {t('ui.course.suggestPlaylist')}
-        </a>
+        </ButtonLink>
       </section>
     );
   }

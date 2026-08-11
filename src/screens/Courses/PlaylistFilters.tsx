@@ -6,6 +6,7 @@ import { useCatalog } from '@/lib/catalog';
 import Dropdown, { Caption, CheckRow, RadioRow, RangeRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import Tooltip from '@/components/Tooltip';
+import { Button, Chip } from '@/components/ui';
 import {
   activeFilterCount,
   facetsOf,
@@ -271,16 +272,18 @@ export default function PlaylistFilters({
         {/* An icon, and the same chip shape as the row it ends: a text button
             here sat on transparent background with a half-cut filter sliding
             under it. Opaque and square, it reads as the end of the strip. */}
-        <button
-          type="button"
-          className={`chip mt-1 shrink-0 px-2 ${expanded ? 'border-accent text-ink' : ''}`}
+        <Chip
+          on={expanded}
+          icon="sliders"
+          iconSize={14}
+          className="mt-1 shrink-0 px-2"
           onClick={() => setExpanded((value) => !value)}
-          aria-expanded={expanded}
-          aria-label={expanded ? t('ui.filters.fewer') : t('ui.filters.showAll')}
+          ariaExpanded={expanded}
+          ariaLabel={expanded ? t('ui.filters.fewer') : t('ui.filters.showAll')}
           title={expanded ? t('ui.filters.fewer') : t('ui.filters.showAll')}
         >
-          <Icon name="sliders" size={14} />
-        </button>
+          {null}
+        </Chip>
       </div>
 
       {/*
@@ -292,9 +295,9 @@ export default function PlaylistFilters({
         {activeCount > 0 ? (
           <>
             <ActiveChips state={state} onChange={onChange} />
-            <button type="button" className="btn-ghost text-xs" onClick={onReset}>
+            <Button variant="ghost" small onClick={onReset}>
               {t('ui.filter.resetAll')}
-            </button>
+            </Button>
           </>
         ) : null}
 
@@ -441,12 +444,12 @@ function ActiveChips({
         /* No transition on the neighbours: flex moves them the instant one is
            removed, and a list that slides closed under the cursor makes the
            next × land somewhere else. Only the chip itself animates. */
-        <span key={chip.key} className="chip animate-scale-in">
+        <Chip key={chip.key} className="animate-scale-in">
           {chip.label}
           <button type="button" onClick={chip.clear} aria-label={`${t('ui.common.reset')} ${chip.label}`}>
             <Icon name="close" size={11} />
           </button>
-        </span>
+        </Chip>
       ))}
     </>
   );

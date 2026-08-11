@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useT } from '@/i18n';
 import { useEscape, useFocusTrap, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { useUi } from '@/store/ui';
-import Icon from '@/components/Icon';
+import { IconButton, Segmented } from '@/components/ui';
 import CoursesTab from './CoursesTab';
 import PlaylistsTab from './PlaylistsTab';
 import SettingsTab from './SettingsTab';
@@ -62,33 +62,23 @@ export default function ProfilePanel() {
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
           <h2 className="font-display text-lg">{t('ui.profile.title')}</h2>
-          <button
-            type="button"
-            className="icon-btn ml-auto"
+          <IconButton
+            icon="close"
+            label={t('ui.a11y.closePanel')}
+            className="ml-auto"
             onClick={close}
-            aria-label={t('ui.a11y.closePanel')}
-          >
-            <Icon name="close" />
-          </button>
+          />
         </header>
 
         {/* One plate holding all five, as in the header: an underlined word is
             the tab bar of a document, and this is a control panel. */}
-        <nav className="shrink-0 border-b border-line px-4 py-3" role="tablist">
-          <div className="plate plate-row scroll-x-plain w-fit max-w-full">
-            {TABS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                role="tab"
-                aria-selected={tab === item}
-                onClick={() => setTab(item)}
-                className="tab"
-              >
-                {t(`ui.profile.tab.${item}`)}
-              </button>
-            ))}
-          </div>
+        <nav className="shrink-0 border-b border-line px-4 py-3">
+          <Segmented
+            kind="tabs"
+            value={tab}
+            onChange={setTab}
+            options={TABS.map((item) => ({ value: item, label: t(`ui.profile.tab.${item}`) }))}
+          />
         </nav>
 
         <div className="panel-scroll min-h-0 flex-1" role="tabpanel">

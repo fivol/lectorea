@@ -8,6 +8,7 @@ import { useProfile, useResolvedTheme } from '@/store/profile';
 import Icon from '@/components/Icon';
 import DomainIcon from '@/components/DomainIcon';
 import Tooltip from '@/components/Tooltip';
+import { Chip } from '@/components/ui';
 
 type Props = {
   matched: Set<string>;
@@ -120,13 +121,14 @@ function DomainCard({
           /* A bridge, not an hourglass: the badge means "this field spans two
              continents", which an hourglass never managed to say. */
           <Tooltip content={t('ui.map.bridgeHint')}>
-            <span
-              className="chip shrink-0 px-1.5 py-0.5"
-              aria-label={t('ui.map.bridge')}
+            <Chip
+              icon="bridge"
+              className="shrink-0 px-1.5 py-0.5"
+              ariaLabel={t('ui.map.bridge')}
               style={{ color: domain.color, borderColor: withAlpha(domain.color, 0.4) }}
             >
-              <Icon name="bridge" size={12} />
-            </span>
+              {null}
+            </Chip>
           </Tooltip>
         ) : null}
       </div>

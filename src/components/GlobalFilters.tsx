@@ -2,6 +2,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useCatalogParams } from '@/lib/url';
 import Icon from './Icon';
+import { Button, Chip } from '@/components/ui';
 
 /**
  * The provider and lecturer filters live above both screens, so they need a
@@ -31,11 +32,7 @@ export default function GlobalFilters({ className = '' }: { className?: string }
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
       {chips.map((chip) => (
-        <span
-          key={chip.key}
-          className="chip chip-active bg-accent text-canvas"
-          style={{ background: 'var(--c-accent)' }}
-        >
+        <Chip key={chip.key} filled>
           {chip.label}
           <button
             type="button"
@@ -45,12 +42,12 @@ export default function GlobalFilters({ className = '' }: { className?: string }
           >
             <Icon name="close" size={12} />
           </button>
-        </span>
+        </Chip>
       ))}
       {chips.length > 1 ? (
-        <button type="button" className="btn-ghost text-xs" onClick={params.clearGlobalFilters}>
+        <Button variant="ghost" small onClick={params.clearGlobalFilters}>
           {t('ui.filter.resetAll')}
-        </button>
+        </Button>
       ) : null}
     </div>
   );

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useT } from '@/i18n';
 import { placeBy, samePlace, type Placement } from '@/lib/popover';
 import Icon from '@/components/Icon';
+import { IconButton } from '@/components/ui';
 
 const SEEN_KEY = 'lectorea.legend.seen.v1';
 
@@ -94,7 +95,7 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
     <span ref={boxRef} className="relative inline-flex">
       <button
         type="button"
-        className="btn-ghost rounded-full p-0.5"
+        className="icon-btn h-6 w-6"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-label={t('ui.legend.title')}
@@ -122,14 +123,13 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
             >
               <div className="mb-2 flex items-baseline gap-2">
                 <h2 className="text-h3 text-ink">{t('ui.legend.title')}</h2>
-                <button
-                  type="button"
-                  className="icon-btn ml-auto"
+                <IconButton
+                  icon="close"
+                  iconSize={13}
+                  label={t('ui.common.close')}
+                  className="ml-auto"
                   onClick={() => setOpen(false)}
-                  aria-label={t('ui.common.close')}
-                >
-                  <Icon name="close" size={13} />
-                </button>
+                />
               </div>
 
               <dl className="space-y-2.5">

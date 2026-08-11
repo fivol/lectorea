@@ -1,19 +1,13 @@
 import { useT } from '@/i18n';
-import Icon, { type IconName } from './Icon';
+import { Switch, type SwitchOption } from './ui';
 
 type View = 'map' | 'blocks';
-
-const ITEMS: Array<{ id: View; icon: IconName; key: string }> = [
-  { id: 'map', icon: 'map', key: 'ui.view.map' },
-  { id: 'blocks', icon: 'grid', key: 'ui.view.blocks' },
-];
 
 /**
  * Map or blocks — the same catalogue, drawn twice.
  *
- * A sliding pill rather than two independently highlighted halves: the two
- * views are one thing seen two ways, and a state that travels between them says
- * that in a way two lit rectangles never do.
+ * The only thing this adds to `Switch` is what the two halves are called; the
+ * sliding pill, the plate and the lettering are the kit's.
  */
 export default function ViewSwitch({
   value,
@@ -25,29 +19,19 @@ export default function ViewSwitch({
   className?: string;
 }) {
   const { t } = useT();
-  const index = ITEMS.findIndex((item) => item.id === value);
+
+  const options: Array<SwitchOption<View>> = [
+    { value: 'map', label: t('ui.view.map'), icon: 'map' },
+    { value: 'blocks', label: t('ui.view.blocks'), icon: 'grid' },
+  ];
 
   return (
-    <div className={`plate seg ${className}`} role="group" aria-label={t('ui.view.switch')}>
-      {/* The pill is one element under both halves, so the browser animates a
-          single transform instead of cross-fading two backgrounds. */}
-      <span
-        className="seg-thumb"
-        style={{ transform: `translateX(${Math.max(index, 0) * 100}%)` }}
-        aria-hidden="true"
-      />
-      {ITEMS.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          className="seg-item"
-          onClick={() => onChange(item.id)}
-          aria-pressed={value === item.id}
-        >
-          <Icon name={item.icon} size={13} />
-          {t(item.key)}
-        </button>
-      ))}
-    </div>
+    <Switch
+      value={value}
+      options={options}
+      onChange={onChange}
+      label={t('ui.view.switch')}
+      className={className}
+    />
   );
 }

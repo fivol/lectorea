@@ -11,6 +11,7 @@ import { useCatalogParams } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
 import MarkedText from './MarkedText';
+import { Button, Field, IconButton, Kbd } from './ui';
 
 type Props = {
   query: string;
@@ -178,15 +179,15 @@ export default function SearchBox({
   if (asSheet) {
     return (
       <>
-        <button
-          type="button"
-          className="btn tap px-2"
+        <Button
+          icon="search"
+          iconSize={16}
+          tap
+          className="px-2"
           onClick={() => setSheet(true)}
           aria-label={t('ui.search.open')}
           aria-expanded={sheet}
-        >
-          <Icon name="search" />
-        </button>
+        />
 
         {sheet
           ? createPortal(
@@ -197,15 +198,13 @@ export default function SearchBox({
                 className="fixed inset-0 z-50 flex animate-fade-in flex-col bg-surface"
               >
                 <div className="flex shrink-0 items-center gap-2 border-b border-line px-2 py-2">
-                  <button
-                    type="button"
-                    className="icon-btn tap"
+                  <IconButton
+                    icon="arrow-left"
+                    label={t('ui.common.back')}
+                    tap
                     onClick={closeSheet}
-                    aria-label={t('ui.common.back')}
-                  >
-                    <Icon name="arrow-left" />
-                  </button>
-                  <div className="field min-w-0 flex-1 px-3 py-2">
+                  />
+                  <Field className="min-w-0 flex-1 px-3 py-2">
                     <Icon name="search" className="text-ink-faint" />
                     <input
                       ref={inputRef}
@@ -226,19 +225,17 @@ export default function SearchBox({
                                  placeholder:text-ink-dim [&::-webkit-search-cancel-button]:hidden"
                     />
                     {query ? (
-                      <button
-                        type="button"
-                        className="icon-btn"
+                      <IconButton
+                        icon="close"
+                        iconSize={14}
+                        label={t('ui.search.clear')}
                         onClick={() => {
                           onQueryChange('');
                           inputRef.current?.focus();
                         }}
-                        aria-label={t('ui.search.clear')}
-                      >
-                        <Icon name="close" size={16} />
-                      </button>
+                      />
                     ) : null}
-                  </div>
+                  </Field>
                 </div>
 
                 {/* Here the line follows the list instead of being pinned under
@@ -263,9 +260,7 @@ export default function SearchBox({
 
   return (
     <div ref={boxRef} className={`relative ${className}`}>
-      <div
-        className={floating ? 'field field-floating' : 'field px-3 py-1.5'}
-      >
+      <Field floating={floating} className={floating ? '' : 'px-3 py-1.5'}>
         <Icon name="search" className="text-ink-faint" />
         <input
           ref={inputRef}
@@ -294,21 +289,19 @@ export default function SearchBox({
                       [&::-webkit-search-cancel-button]:hidden ${floating ? 'text-base' : 'text-sm'}`}
         />
         {query ? (
-          <button
-            type="button"
-            className="icon-btn"
+          <IconButton
+            icon="close"
+            iconSize={14}
+            label={t('ui.search.clear')}
             onClick={() => {
               onQueryChange('');
               inputRef.current?.focus();
             }}
-            aria-label={t('ui.search.clear')}
-          >
-            <Icon name="close" size={14} />
-          </button>
+          />
         ) : (
-          <kbd className="kbd hidden sm:block">/</kbd>
+          <Kbd className="hidden sm:block">/</Kbd>
         )}
-      </div>
+      </Field>
 
       {/*
         The panel opens on focus, not on the first keystroke. An empty dropdown

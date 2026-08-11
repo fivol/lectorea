@@ -12,6 +12,7 @@ import GlobalFilters from '@/components/GlobalFilters';
 import ThemeToggle from '@/components/ThemeToggle';
 import ViewSwitch from '@/components/ViewSwitch';
 import ProfileButton from '@/components/ProfileButton';
+import { Plate, PlateDivider } from '@/components/ui';
 import MapView, { MAP_SEA } from './MapView';
 import BlocksView from './BlocksView';
 
@@ -91,11 +92,11 @@ export default function MapScreen() {
           {isMobile ? null : (
             <ViewSwitch value={mapView} onChange={(next) => setSetting('mapView', next)} />
           )}
-          <div className="plate plate-row">
-            <ThemeToggle className="tap" />
-            <span className="plate-divider" aria-hidden="true" />
-            <ProfileButton label className="tap" />
-          </div>
+          <Plate row>
+            <ThemeToggle />
+            <PlateDivider />
+            <ProfileButton label />
+          </Plate>
         </div>
       </header>
 

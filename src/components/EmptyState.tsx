@@ -1,4 +1,5 @@
 import Icon, { type IconName } from './Icon';
+import { Button } from './ui';
 
 type Props = {
   icon: IconName;
@@ -21,10 +22,10 @@ export default function EmptyState({ icon, text, action }: Props) {
       </span>
       <p className="max-w-xs text-caption text-ink-dim">{text}</p>
       {action ? (
-        <button type="button" className="btn" onClick={action.onClick}>
+        <Button onClick={action.onClick}>
           {action.label}
           <Icon name="chevron-right" size={12} />
-        </button>
+        </Button>
       ) : null}
     </div>
   );

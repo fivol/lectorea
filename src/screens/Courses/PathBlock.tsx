@@ -10,6 +10,7 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
+import { Button } from '@/components/ui';
 
 type Props = {
   course: BuiltCourse;
@@ -138,15 +139,16 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
               />
               {t('ui.path.hideDone')}
             </label>
-            <button
-              type="button"
-              className="btn-ghost text-xs"
+            <Button
+              variant="ghost"
+              small
+              icon="download"
+              iconSize={13}
               onClick={exportPlan}
               disabled={exportState === 'working'}
             >
-              <Icon name="download" size={13} />
               {exportState === 'done' ? t('ui.common.copied') : t('ui.path.export')}
-            </button>
+            </Button>
           </div>
 
           {outsideFilter ? (

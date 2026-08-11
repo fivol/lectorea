@@ -4,6 +4,7 @@ import { formatDate } from '@/lib/format';
 import { downloadProfile, parseProfile, type ImportPreview } from '@/lib/profile-io';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
+import { Button, Textarea } from '@/components/ui';
 
 export default function DataTab() {
   const { t, plural, lang } = useT();
@@ -43,10 +44,9 @@ export default function DataTab() {
       <section>
         <h3 className="text-sm font-medium">{t('ui.profile.data.export')}</h3>
         <p className="mt-1 text-xs text-ink-faint">{t('ui.profile.data.exportHint')}</p>
-        <button type="button" className="btn mt-2" onClick={() => downloadProfile(profile)}>
-          <Icon name="download" size={14} />
+        <Button icon="download" className="mt-2" onClick={() => downloadProfile(profile)}>
           {t('ui.profile.data.export')}
-        </button>
+        </Button>
       </section>
 
       <section className="border-t border-line pt-6">
@@ -54,10 +54,9 @@ export default function DataTab() {
         <p className="mt-1 text-xs text-ink-faint">{t('ui.profile.data.importHint')}</p>
 
         <div className="mt-2 flex gap-2">
-          <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
-            <Icon name="upload" size={14} />
+          <Button icon="upload" onClick={() => fileRef.current?.click()}>
             {t('ui.profile.data.importFile')}
-          </button>
+          </Button>
           <input
             ref={fileRef}
             type="file"
@@ -70,12 +69,12 @@ export default function DataTab() {
           />
         </div>
 
-        <textarea
+        <Textarea
           value={text}
           onChange={(event) => inspect(event.target.value)}
           placeholder={t('ui.profile.data.importPaste')}
           rows={5}
-          className="field-area mt-2 font-mono text-xs"
+          className="mt-2 font-mono text-xs"
         />
 
         {invalid ? (
@@ -101,29 +100,26 @@ export default function DataTab() {
             </p>
             <p className="mt-2 text-xs text-ink-faint">{t('ui.profile.data.mergeHint')}</p>
             <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                className="btn btn-primary"
+              <Button
+                variant="primary"
                 onClick={() => {
                   mergeProfile(preview.profile);
                   finish();
                 }}
               >
                 {t('ui.profile.data.merge')}
-              </button>
-              <button
-                type="button"
-                className="btn"
+              </Button>
+              <Button
                 onClick={() => {
                   replaceProfile(preview.profile);
                   finish();
                 }}
               >
                 {t('ui.profile.data.replace')}
-              </button>
-              <button type="button" className="btn-ghost text-xs" onClick={finish}>
+              </Button>
+              <Button variant="ghost" small onClick={finish}>
                 {t('ui.common.cancel')}
-              </button>
+              </Button>
             </div>
           </div>
         ) : null}

@@ -4,6 +4,7 @@ import { upstreamOf } from '@shared/graph';
 import { loadCatalog, type Catalog } from './data';
 import { I18nProvider, useT } from '@/i18n';
 import { useProfile } from '@/store/profile';
+import { Button } from '@/components/ui';
 
 const CatalogContext = createContext<Catalog | null>(null);
 
@@ -88,9 +89,9 @@ function FatalError({ error }: { error: Error }) {
           Похоже, каталог ещё не собран. Запустите <code className="num">pnpm data:build</code>.
         </p>
         <p className="mt-3 text-xs text-ink-faint">{error.message}</p>
-        <button className="btn mt-4" onClick={() => window.location.reload()}>
+        <Button className="mt-4" onClick={() => window.location.reload()}>
           Повторить
-        </button>
+        </Button>
       </div>
     </div>
   );

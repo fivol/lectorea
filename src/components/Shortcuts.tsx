@@ -4,7 +4,7 @@ import { useT } from '@/i18n';
 import { useEscape, useFocusTrap, useMediaQuery, useScrollLock } from '@/lib/hooks';
 import { resolveTheme, useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
-import Icon from './Icon';
+import { IconButton, Kbd } from './ui';
 
 /** Every shortcut in one list, so the handler and the help cannot drift apart. */
 const KEYS = ['slash', 't', 'm', 'question', 'escape'] as const;
@@ -92,22 +92,19 @@ function HelpSheet({ onClose, label }: { onClose: () => void; label: string }) {
       >
         <div className="mb-3 flex items-center gap-2">
           <h2 className="text-h3">{label}</h2>
-          <button
-            type="button"
-            className="icon-btn ml-auto"
+          <IconButton
+            icon="close"
+            iconSize={14}
+            label={t('ui.common.close')}
+            className="ml-auto"
             onClick={onClose}
-            aria-label={t('ui.common.close')}
-          >
-            <Icon name="close" size={14} />
-          </button>
+          />
         </div>
         <dl className="space-y-2">
           {KEYS.map((key) => (
             <div key={key} className="flex items-baseline gap-3">
               <dt className="w-16 shrink-0">
-                <kbd className="kbd num py-0.5">
-                  {t(`ui.shortcuts.key.${key}`)}
-                </kbd>
+                <Kbd className="num py-0.5">{t(`ui.shortcuts.key.${key}`)}</Kbd>
               </dt>
               <dd className="min-w-0 flex-1 text-caption text-ink-dim">
                 {t(`ui.shortcuts.${key}`)}

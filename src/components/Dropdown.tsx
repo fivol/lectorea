@@ -10,6 +10,7 @@ import {
 import { createPortal } from 'react-dom';
 import { placeBy, samePlace, type Placement } from '@/lib/popover';
 import Icon from './Icon';
+import { Chip, Input } from './ui';
 
 /**
  * Lets a row close the popover it lives in.
@@ -111,15 +112,10 @@ export default function Dropdown({
       {/* No dot beside the label: the chip already changes colour when it holds
           a value, and what that value *is* is spelled out in the removable
           chips below — so the dot repeated a signal twice and crowded the row. */}
-      <button
-        type="button"
-        className={`chip ${active ? 'chip-on' : ''}`}
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-      >
+      <Chip on={active} onClick={() => setOpen((value) => !value)} ariaExpanded={open}>
         {label}
         <Icon name="chevron-down" size={12} />
-      </button>
+      </Chip>
       {open
         ? createPortal(
             <div
@@ -130,13 +126,12 @@ export default function Dropdown({
             >
               {search ? (
                 <div className="border-b border-line p-2">
-                  <input
+                  <Input
                     type="search"
                     autoFocus
                     value={search.value}
                     onChange={(event) => search.onChange(event.target.value)}
                     placeholder={search.placeholder}
-                    className="input"
                   />
                 </div>
               ) : null}

@@ -5,8 +5,8 @@ import { useCatalog } from '@/lib/catalog';
 import { formatDate } from '@/lib/format';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
-import Icon from '@/components/Icon';
 import EmptyState from '@/components/EmptyState';
+import { Button, IconButton } from '@/components/ui';
 
 /**
  * Playlists that were opened, newest first.
@@ -52,28 +52,24 @@ export default function RecentTab() {
         {confirming ? (
           <span className="ml-auto flex items-center gap-2">
             <span className="text-xs text-ink-dim">{t('ui.recent.clearConfirm')}</span>
-            <button
-              type="button"
-              className="btn text-xs text-danger"
+            <Button
+              small
+              className="text-danger"
               onClick={() => {
                 clearRecent();
                 setConfirming(false);
               }}
             >
               {t('ui.recent.clearDo')}
-            </button>
-            <button type="button" className="btn text-xs" onClick={() => setConfirming(false)}>
+            </Button>
+            <Button small onClick={() => setConfirming(false)}>
               {t('ui.common.cancel')}
-            </button>
+            </Button>
           </span>
         ) : (
-          <button
-            type="button"
-            className="btn-ghost ml-auto text-xs"
-            onClick={() => setConfirming(true)}
-          >
+          <Button variant="ghost" small className="ml-auto" onClick={() => setConfirming(true)}>
             {t('ui.recent.clear')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -95,15 +91,13 @@ export default function RecentTab() {
                   {formatDate(entry.at, lang)}
                 </span>
               </button>
-              <button
-                type="button"
-                className="icon-btn shrink-0"
+              <IconButton
+                icon="close"
+                iconSize={13}
+                label={`${t('ui.recent.remove')}: ${entry.title}`}
+                className="shrink-0"
                 onClick={() => removeRecent(entry.id)}
-                aria-label={`${t('ui.recent.remove')}: ${entry.title}`}
-                title={t('ui.recent.remove')}
-              >
-                <Icon name="close" size={13} />
-              </button>
+              />
             </li>
           );
         })}

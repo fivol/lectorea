@@ -10,6 +10,7 @@ import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
 import EmptyState from '@/components/EmptyState';
 import ProgressBar from '@/components/ProgressBar';
+import { Button } from '@/components/ui';
 
 /**
  * A favourited course is a goal — there is no third entity and no third icon.
@@ -151,10 +152,10 @@ function GoalCard({ course }: { course: BuiltCourse }) {
 
         {/* One verb for the path, in both of its states — «Изучать» in the
             panel is about a single course's status and stays there. */}
-        <button type="button" className="btn mt-2 text-xs" onClick={() => open(nextId)}>
+        <Button small className="mt-2" onClick={() => open(nextId)}>
           {doneIds.length ? t('ui.profile.continuePath') : t('ui.profile.startPath')}
           <Icon name="chevron-right" size={12} />
-        </button>
+        </Button>
       </div>
     </article>
   );

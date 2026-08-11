@@ -8,7 +8,7 @@ import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
 import { courseHref } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
-import Icon from '@/components/Icon';
+import { Button, Chip, IconButton } from '@/components/ui';
 import PathBlock from './PathBlock';
 import CourseLinkCard from './CourseLinkCard';
 import PlaylistList from './PlaylistList';
@@ -53,61 +53,58 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
       <header className="px-4 pb-3 pt-4">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
           {domains.map((domain) => (
-            <Link
+            <Chip
               key={domain.id}
               to={`/courses?domain=${encodeURIComponent(domain.id)}`}
-              className="chip"
               style={{ color: inkOn(domain.color, scheme), borderColor: withAlpha(domain.color, 0.4) }}
             >
               {t(`domain.${domain.id}.title`)}
-            </Link>
+            </Chip>
           ))}
-          <span className="num chip">{t(`ui.stage.${course.stage}`)}</span>
-          <span className="num chip">{t('ui.course.level', { n: course.level + 1 })}</span>
+          <Chip className="num">{t(`ui.stage.${course.stage}`)}</Chip>
+          <Chip className="num">{t('ui.course.level', { n: course.level + 1 })}</Chip>
           {course.hours ? (
-            <span className="num chip">{t('ui.course.hoursShort', { n: formatHours(course.hours) })}</span>
+            <Chip className="num">{t('ui.course.hoursShort', { n: formatHours(course.hours) })}</Chip>
           ) : null}
           {onClose ? (
-            <button
-              type="button"
-              className="icon-btn ml-auto"
+            <IconButton
+              icon="close"
+              iconSize={14}
+              label={t('ui.course.deselect')}
+              className="ml-auto"
               onClick={onClose}
-              aria-label={t('ui.course.deselect')}
-              title={t('ui.course.deselect')}
-            >
-              <Icon name="close" size={14} />
-            </button>
+            />
           ) : null}
         </div>
 
         <h2 className="font-display text-h1">{t(`course.${course.id}.title`)}</h2>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            className={`btn ${favorite ? 'btn-primary' : ''}`}
+          <Button
+            variant={favorite ? 'primary' : 'default'}
+            icon={favorite ? 'star-filled' : 'star'}
+            iconSize={16}
             onClick={() => toggleFavorite(course.id)}
             aria-pressed={favorite}
           >
-            <Icon name={favorite ? 'star-filled' : 'star'} />
             {favorite ? t('ui.course.favoriteOn') : t('ui.course.favorite')}
-          </button>
+          </Button>
           {/* The label names what the click does, not what the course already
               is — "Не начат" beside a dot read as a disabled badge. The state
               is still legible, from the icon and the filled button. */}
-          <button
-            type="button"
-            className={`btn ${status ? 'btn-primary' : ''}`}
+          <Button
+            variant={status ? 'primary' : 'default'}
+            icon={status === 'done' ? 'check' : status === 'in_progress' ? 'half' : 'circle'}
+            iconSize={16}
             onClick={() => cycleStatus(course.id)}
             title={t('ui.course.statusToggle')}
           >
-            <Icon name={status === 'done' ? 'check' : status === 'in_progress' ? 'half' : 'circle'} />
             {status === 'done'
               ? t('ui.course.done')
               : status === 'in_progress'
                 ? t('ui.course.finish')
                 : t('ui.course.start')}
-          </button>
+          </Button>
         </div>
       </header>
 
