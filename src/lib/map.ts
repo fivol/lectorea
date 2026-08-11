@@ -5,25 +5,38 @@
  * ordinary React elements with ordinary event handlers, instead of a DOM blob
  * that has to be patched by hand after every render.
  *
- * The territories are drawn over `public/map.png` and share its coordinates,
- * so the file also carries the painted coastline as a path called `land`. It is
- * not a territory — it is what the territory layer is clipped to, which is the
- * only thing keeping a border from running out into the sea where the painting
- * and the generated shapes disagree.
+ * It carries geometry and nothing else: the outline of every territory, and the
+ * coastline of every landmass those territories tile. Colour, lettering and the
+ * sea are the screen's, so a territory can change colour when a filter runs
+ * without the map being redrawn. `pnpm map:import` writes the file.
  */
 
 export type MapShape = {
   shapeId: string;
   domainId: string;
   continent: string;
-  /** Centroid, written by the generator — where the label goes. */
+  /** Where a label sits — the point inside with the most room around it. */
   cx: number;
   cy: number;
+  /** Distance from that point to the nearest border: how tall a label can be. */
+  room: number;
+  /** Width of the territory at that point: how long a line of it can be. */
+  span: number;
   d: string;
-  /** Rough extent, used to decide whether a label fits. */
+  /** Bounding box — what the label placer treats as occupied ground. */
   width: number;
   height: number;
-  /** Top-left of that extent — continents are named from the union of these. */
+  x: number;
+  y: number;
+};
+
+/** One coastline: a continent's mainland, or one of its offshore islands. */
+export type MapLandmass = {
+  continent: string;
+  kind: 'continent' | 'island';
+  d: string;
+  width: number;
+  height: number;
   x: number;
   y: number;
 };
@@ -33,12 +46,11 @@ export type ParsedMap = {
   width: number;
   height: number;
   shapes: MapShape[];
-  /** The painted coastline, as one path with a ring per landmass. */
-  land: string;
+  landmasses: MapLandmass[];
 };
 
-/** The one path in the file that is scenery rather than a territory. */
-const LAND_ID = 'land';
+/** The paths in the file that are ground rather than a territory. */
+const LAND_CLASS = 'coastline';
 
 const PATH_RE = /<path\b([^>]*)\/>/g;
 const ATTR_RE = /(\w[\w-]*)="([^"]*)"/g;
@@ -66,28 +78,36 @@ export function parseMapSvg(text: string): ParsedMap {
   const [, , widthRaw, heightRaw] = viewBox.split(/\s+/).map(Number);
 
   const shapes: MapShape[] = [];
-  let land = '';
+  const landmasses: MapLandmass[] = [];
   for (const match of text.matchAll(PATH_RE)) {
     const attributes: Record<string, string> = {};
     for (const attribute of match[1].matchAll(ATTR_RE)) {
       attributes[attribute[1]] = attribute[2];
     }
     if (!attributes.id || !attributes.d) continue;
-    if (attributes.id === LAND_ID) {
-      land = attributes.d;
+
+    if (attributes.class === LAND_CLASS) {
+      landmasses.push({
+        continent: attributes['data-continent'] ?? 'formal',
+        kind: attributes['data-kind'] === 'island' ? 'island' : 'continent',
+        d: attributes.d,
+        ...extentOf(attributes.d),
+      });
       continue;
     }
-    const extent = extentOf(attributes.d);
+
     shapes.push({
       shapeId: attributes.id,
       domainId: attributes['data-domain'] ?? attributes.id.replace(/^shape-/, ''),
       continent: attributes['data-continent'] ?? 'formal',
       cx: Number(attributes['data-cx'] ?? 0),
       cy: Number(attributes['data-cy'] ?? 0),
+      room: Number(attributes['data-room'] ?? 0),
+      span: Number(attributes['data-span'] ?? 0),
       d: attributes.d,
-      ...extent,
+      ...extentOf(attributes.d),
     });
   }
 
-  return { viewBox, width: widthRaw || 1680, height: heightRaw || 980, shapes, land };
+  return { viewBox, width: widthRaw || 1680, height: heightRaw || 980, shapes, landmasses };
 }

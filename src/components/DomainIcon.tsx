@@ -348,7 +348,10 @@ export function DomainGlyph({
     <g
       transform={`translate(${x - size / 2} ${y - size / 2}) scale(${scale})`}
       fill="none"
-      stroke={colour}
+      // In `style`, not as an attribute: the map passes a `var(--…)` here so the
+      // glyph follows the theme, and a presentation attribute is the one place
+      // that is not guaranteed to resolve.
+      style={{ stroke: colour }}
       strokeWidth={strokeWidth / scale}
       strokeLinecap="round"
       strokeLinejoin="round"

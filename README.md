@@ -33,12 +33,12 @@ pnpm data:seed-dev --wipe # remove them again
 Three screens, and the profile is the thread running through them.
 
 **The map** (`/`) is the way in. Three continents — formal and natural, social,
-humanities — drawn as a painted world (`public/map.png`), with the fields of
-knowledge marked out on it as territories, each sized by how many courses it
-holds and carrying an icon, so the empty outskirts are visible as work still to
-be done. The territories are a separate file, `public/map.svg`, in the
-painting's own coordinates, and they are clipped to its coastline so no border
-runs out into the sea. Pick a territory to enter the
+humanities — with the fields of knowledge marked out on them as territories,
+each sized by how many courses it holds and carrying an icon, so the empty
+outskirts are visible as work still to be done. It is one drawing,
+`public/map.svg`: coastlines and territory outlines and nothing else, with the
+colours, the lettering and the sea painted by the app, so the whole map follows
+the light and dark themes. Pick a territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
 stemmer. It opens on focus rather than on the first keystroke, and before
@@ -208,8 +208,9 @@ pnpm data:build          # data/ + cache.db → public/data (run before dev)
 pnpm data:map            # regenerate public/map.svg from domains.yaml
 pnpm data:seed-dev       # synthetic playlists for development
 pnpm course:new          # scaffold a course across its three files
-pnpm map:preview         # next-generation map into .map-poc/ (not wired to the build)
+pnpm map:preview         # the map generator into .map-poc/, with a metrics report
 pnpm map:sandbox         # the same generator with sliders, one HTML file
+pnpm map:import <svg>    # a sandbox export → public/map.svg
 pnpm tiles:view          # the hex tile collection as one HTML page
 pnpm tiles:build         # generate and export that collection into .tiles/
 

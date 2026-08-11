@@ -10,7 +10,7 @@ import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
 import Icon from '@/components/Icon';
 import ThemeToggle from '@/components/ThemeToggle';
-import MapView, { MAP_SEA, MAP_SURFACE_VARS } from './MapView';
+import MapView, { MAP_SEA } from './MapView';
 import BlocksView from './BlocksView';
 
 export default function MapScreen() {
@@ -47,13 +47,14 @@ export default function MapScreen() {
   return (
     /*
       In map mode the sea is the page, header and footer included — so the whole
-      screen takes the sea's colour and, with it, a palette that works on top of
-      it. Everything on this screen reads its colours from those variables, so
-      none of it needs to know the map is underneath.
+      screen takes the sea's colour and, with `map-surface`, a palette that works
+      on top of it. Both are theme colours, so switching to the dark theme sails
+      the whole screen into night without this component knowing anything about
+      it.
     */
     <div
-      className="flex h-full flex-col"
-      style={showMap ? { background: MAP_SEA, ...MAP_SURFACE_VARS } : undefined}
+      className={`flex h-full flex-col ${showMap ? 'map-surface' : ''}`}
+      style={showMap ? { background: MAP_SEA } : undefined}
     >
       {/*
         The header is chrome, not content — it never scrolls away. What it does
@@ -149,10 +150,10 @@ export default function MapScreen() {
       {/*
         The floating field sits over the map, so the canvas keeps clear of it.
 
-        In map mode the whole area is painted the sea's own colour. The picture
-        is 16:9 and the window is not, so without it the map ends in two bands
-        of page background — which reads as a picture pinned to a page rather
-        than as a map you are looking at.
+        In map mode the whole area takes the sea's own colour. The drawing is
+        16:9 and the window is not, so without it the map ends in two bands of
+        page background — which reads as a picture pinned to a page rather than
+        as a map you are looking at.
       */}
       <main
         className={`min-h-0 flex-1 overflow-auto ${showMap ? 'pt-16' : ''}`}

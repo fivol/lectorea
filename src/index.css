@@ -43,6 +43,24 @@
   --c-danger: #f87171;
 
   /*
+   * The map. On that screen the sea is the page, so it is a theme colour like
+   * any other and switching themes sails the whole map into night: deep water,
+   * dark ground, and a thinner wash of each field's own colour over it, because
+   * a fill that reads as a pastel on paper reads as a lamp on a dark ground.
+   * The lettering flips with it — pale ink in a dark halo.
+   */
+  --map-sea: #0c2431;
+  --map-land: #17323f;
+  --map-wash: 0.5;
+  --map-wash-hover: 0.76;
+  --map-border: rgb(230 243 249 / 0.42);
+  --map-border-strong: rgb(255 255 255 / 0.92);
+  --map-coast: rgb(230 243 249 / 0.34);
+  --map-shadow: rgb(0 0 0 / 0.45);
+  --map-ink: #eaf3f8;
+  --map-halo: #08161e;
+
+  /*
    * Shadows are a light-mode device. On a dark canvas a drop shadow is a
    * darker smudge on something already dark, so depth comes from `--c-surface`
    * against `--c-surface-2` and from borders instead. What survives is the
@@ -77,6 +95,17 @@
   --c-accent-soft: #e7f6ef;
   --c-warning: #d97706;
   --c-danger: #dc2626;
+
+  --map-sea: #62b9d1;
+  --map-land: #cfe6f0;
+  --map-wash: 0.78;
+  --map-wash-hover: 0.94;
+  --map-border: rgb(255 255 255 / 0.85);
+  --map-border-strong: #ffffff;
+  --map-coast: #ffffff;
+  --map-shadow: rgb(13 61 82 / 0.22);
+  --map-ink: #172433;
+  --map-halo: #ffffff;
 
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
   --shadow-pop: 0 8px 24px rgb(15 23 42 / 0.12);
@@ -276,6 +305,40 @@
   }
   .seg-off:hover {
     background: color-mix(in srgb, var(--c-ink) 6%, transparent);
+  }
+
+  /*
+   * The map screen, where the page is the sea instead of the canvas.
+   *
+   * Everything standing on it — header, search field, legend, footer — keeps
+   * reading its colours from the same variables as everywhere else; only what
+   * those variables mean changes for the length of this screen.
+   *
+   * In the dark theme that is one line: the water is dark like the canvas it
+   * replaces, so the palette already works over it. In the light theme the sea
+   * is a mid tone, and against it the theme's «faint» grey lands at about
+   * 1.6:1 — a legend nobody can read is not a quiet legend, it is a missing
+   * one. All three inks are restated dark enough to clear 4.5:1, which costs
+   * some of the spread between them and is the right way round to spend it,
+   * and the plates go opaque so a button is something floating on the water
+   * rather than a tinted pane of it.
+   */
+  .map-surface {
+    --c-canvas: var(--map-sea);
+  }
+
+  :root[data-theme='light'] .map-surface {
+    --c-surface: #f4fbfd;
+    --c-surface-2: #fbfeff;
+    --c-line: rgb(12 40 54 / 0.24);
+    --c-line-strong: rgb(12 40 54 / 0.42);
+    --c-ink: #0c1e28;
+    --c-ink-dim: #1a3540;
+    --c-ink-faint: #26454f;
+    --c-accent: #0b6a86;
+    --shadow-card: 0 6px 18px rgb(8 42 58 / 0.16);
+    --shadow-pop: 0 12px 30px rgb(8 42 58 / 0.2);
+    --shadow-modal: 0 18px 44px rgb(8 42 58 / 0.22);
   }
 
   .panel-scroll {

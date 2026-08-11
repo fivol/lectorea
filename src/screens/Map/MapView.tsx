@@ -2,75 +2,37 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { loadMapSvg, mapImageUrl } from '@/lib/data';
-import { parseMapSvg, type ParsedMap } from '@/lib/map';
+import { loadMapSvg } from '@/lib/data';
+import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
 import { useReducedMotion } from '@/lib/hooks';
-import { withAlpha } from '@/lib/format';
-import { shift } from '@shared/procedural';
 import { DomainGlyph } from '@/components/DomainIcon';
 
 /**
- * Lettering on a painted map, not on the app's canvas: the picture is one fixed
- * illustration, so its labels keep their own dark ink and white halo in either
- * theme rather than following the palette off it.
+ * The map's own colours live in `index.css` next to every other theme colour —
+ * `--map-sea`, `--map-land`, the wash over it, the borders, the lettering.
+ * Naming them there rather than here is what makes the map follow the light and
+ * dark themes without this file knowing which one is on.
  */
-const MAP_INK = '#172433';
-const MAP_HALO = '#ffffff';
+const MAP_INK = 'var(--map-ink)';
+const MAP_HALO = 'var(--map-halo)';
 
 /**
- * The painting's own sea, sampled from it.
- *
- * The screen behind the map is filled with this, so the ocean runs to the edges
- * of the window instead of stopping at the bitmap's corners — the map is the
- * surface of the page here, not a picture placed on it.
+ * The sea, as a value the screen around the map can paint itself with — so the
+ * ocean runs to the edges of the window instead of stopping at the drawing's
+ * corners. The map is the surface of the page here, not a picture placed on it.
  */
-export const MAP_SEA = '#62b9d1';
+export const MAP_SEA = 'var(--map-sea)';
+
+/** How far the land is lifted off the water, in map units. */
+const LAND_SHADOW = 10;
 
 /**
- * The palette the map screen runs on while the sea is the page.
- *
- * The sea is one fixed colour in both themes, so everything standing on it has
- * to be too — near-white lettering over light blue is unreadable, and that is
- * exactly what the dark theme would put there. These override the theme's own
- * variables for the duration of that screen, so every button, heading and field
- * on it keeps working without any of them knowing about the map.
+ * The continent titles: the largest lettering on the map, and the only one that
+ * is tracked out. `TRACKING` is what the letter-spacing costs in width, which
+ * the label placer needs in order to keep the fields' names out of that band.
  */
-export const MAP_SURFACE_VARS = {
-  '--c-canvas': MAP_SEA,
-  // Opaque, so a field or a button is a plate on the water rather than a
-  // tinted pane of it — a translucent white over this blue is still blue.
-  // Not pure white — a hair of the sea in it, so the controls read as part of
-  // this screen instead of holes punched through it.
-  '--c-surface': '#f4fbfd',
-  '--c-surface-2': '#fbfeff',
-  '--c-line': 'rgb(12 40 54 / 0.24)',
-  // All three inks are darker than a theme would normally make them. Against a
-  // mid-light ground the usual «faint» grey lands at about 2.4:1 — a legend
-  // nobody can read is not a quiet legend, it is a missing one. These clear
-  // 4.5:1, which costs some of the spread between the three levels and is the
-  // right way round to spend it.
-  '--c-ink': '#0c1e28',
-  '--c-ink-dim': '#1a3540',
-  '--c-ink-faint': '#26454f',
-  '--c-line-strong': 'rgb(12 40 54 / 0.42)',
-  '--c-accent': '#0b6a86',
-  // The one screen where a shadow does real work in either theme: the sea is
-  // light, so a plate on it needs the lift the dark theme normally forgoes.
-  '--shadow-modal': '0 18px 44px rgb(8 42 58 / 0.22)',
-  '--shadow-pop': '0 12px 30px rgb(8 42 58 / 0.2)',
-  '--shadow-card': '0 6px 18px rgb(8 42 58 / 0.16)',
-} as React.CSSProperties;
-
-/**
- * The territory colour, pushed away from its neighbours.
- *
- * `domains.yaml` gives every field in a continent a variation on one continent
- * hue, which is right on a card and useless on a map: fifteen shades of the
- * same blue, laid over the same washed-out ground, are one blue. Saturating and
- * darkening the tint spreads them back apart without inventing a second palette
- * — the field keeps the colour it has everywhere else, just stated properly.
- */
-const tintOf = (colour: string): string => shift(colour, 0, 0.3, -0.08);
+const CONTINENT_SIZE = 19;
+const CONTINENT_TRACKING = 1.4;
 
 type Props = {
   /** Domains matching the current search; empty means "no query typed". */
@@ -109,29 +71,59 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   }, []);
 
   /**
-   * Where each continent's name goes: centred over the union of its
-   * territories, clear of the northernmost coast.
+   * Where each continent's name goes: centred over its mainland, just off the
+   * northern coast.
+   *
+   * The mainland, not everything the continent owns — a continent with two
+   * islands off it would otherwise be named over the water between them, which
+   * reads as a label for the sea.
    *
    * The three continents are the one thing on the map that no territory says
-   * out loud — a reader can see that the land is in three pieces without being
-   * told what the split is for.
+   * out loud — a reader can see that the land is in pieces without being told
+   * what the split is for.
    */
-  const continents = useMemo(() => {
-    const boxes = new Map<string, { x0: number; x1: number; y0: number }>();
-    for (const shape of map?.shapes ?? []) {
-      const box = boxes.get(shape.continent);
-      boxes.set(shape.continent, {
-        x0: Math.min(box?.x0 ?? Infinity, shape.x),
-        x1: Math.max(box?.x1 ?? -Infinity, shape.x + shape.width),
-        y0: Math.min(box?.y0 ?? Infinity, shape.y),
-      });
-    }
-    return [...boxes].map(([id, box]) => ({
-      id,
-      cx: (box.x0 + box.x1) / 2,
-      y: box.y0 - 22,
-    }));
-  }, [map]);
+  const continents = useMemo(
+    () =>
+      (map?.landmasses ?? [])
+        .filter((mass) => mass.kind === 'continent')
+        .map((mass) => {
+          const title = t(`ui.continent.${mass.continent}`);
+          const y = Math.max(mass.y - 20, CONTINENT_SIZE + 8);
+          const width = textWidth(title, CONTINENT_SIZE * CONTINENT_TRACKING);
+          return {
+            id: mass.continent,
+            cx: mass.x + mass.width / 2,
+            y,
+            // The band a territory's name may not be written into. A continent
+            // is named once and read first; everything else gives way to it.
+            box: {
+              x: mass.x + mass.width / 2 - width / 2,
+              y: y - CONTINENT_SIZE,
+              w: width,
+              h: CONTINENT_SIZE * 1.5,
+            },
+          };
+        }),
+    [map, t]
+  );
+
+  /**
+   * The whole lettering layout, recomputed only when the map or the language
+   * changes — it is a fitting pass over every territory, not something to redo
+   * on each hover.
+   */
+  const placements = useMemo(
+    () =>
+      map
+        ? placeLabels(
+            map.shapes,
+            (domainId) => t(`domain.${domainId}.title`),
+            map,
+            continents.map((continent) => continent.box)
+          )
+        : new Map<string, Placement>(),
+    [map, t, continents]
+  );
 
   if (!map) {
     return (
@@ -142,10 +134,19 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   }
 
   /**
+   * Named territories, with the one under the pointer written last so its
+   * course count is never covered by a neighbour's name.
+   */
+  const labelled = map.shapes
+    .filter((shape) => placements.has(shape.domainId) || shape.domainId === hovered)
+    .map((shape) => ({ shape, placement: placements.get(shape.domainId) ?? null }))
+    .sort((a, b) => Number(a.shape.domainId === hovered) - Number(b.shape.domainId === hovered));
+
+  /**
    * SVG has no z-index — paint order is document order, so a territory drawn
-   * earlier sits under its neighbours. Scaling one up without moving it to the
-   * end left its grown edge clipped by whatever came after it, which is what
-   * made the hover look broken rather than raised.
+   * earlier sits under its neighbours. The one under the pointer is moved to
+   * the end, or the heavier border it takes is painted over from both sides by
+   * whatever is drawn after it and the highlight shows on one edge only.
    */
   const ordered = hovered
     ? [
@@ -181,49 +182,20 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         aria-label={t('ui.a11y.mapRegion')}
         onPointerLeave={() => setHovered(null)}
       >
-        <defs>
-          <clipPath id="map-land">
-            <path d={map.land} />
-          </clipPath>
-        </defs>
-
-        {/* The map is a painting; the territories are borders drawn on top of
-            it. Both live in the same viewBox, so they scale together and can
-            never drift apart at some window size. No frame around it and
-            nothing laid over it: the sea behind the page is the same colour as
-            the sea in the picture, so there is no edge left to dress. */}
-        <image
-          href={mapImageUrl}
-          x={0}
-          y={0}
-          width={map.width}
-          height={map.height}
-          preserveAspectRatio="none"
-        />
-
-        {continents.map((continent) => (
-          <text
-            key={continent.id}
-            x={continent.cx}
-            y={Math.max(continent.y, 26)}
-            textAnchor="middle"
-            fontSize={19}
-            fontWeight={700}
-            fill={MAP_INK}
-            letterSpacing={2.6}
-            opacity={0.72}
-            style={{
-              paintOrder: 'stroke',
-              stroke: MAP_HALO,
-              strokeWidth: 4,
-              strokeLinejoin: 'round',
-              strokeOpacity: 0.85,
-              textTransform: 'uppercase',
-              pointerEvents: 'none',
-            }}
-          >
-            {t(`ui.continent.${continent.id}`)}
-          </text>
+        {/* The land itself, under everything: first its shadow on the water,
+            then the pale ground the territories are washed over. Nothing here
+            is a picture — the same paths the territories tile, so the coast and
+            the borders can never drift apart at some window size. */}
+        {map.landmasses.map((mass, index) => (
+          <path
+            key={`shadow-${index}`}
+            d={mass.d}
+            style={{ fill: 'var(--map-shadow)' }}
+            transform={`translate(0 ${LAND_SHADOW})`}
+          />
+        ))}
+        {map.landmasses.map((mass, index) => (
+          <path key={`land-${index}`} d={mass.d} style={{ fill: 'var(--map-land)' }} />
         ))}
 
         <g>
@@ -263,67 +235,123 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                 aria-label={`${t(`domain.${domain.id}.title`)}, ${count(domain.courseCount, 'course')}`}
               >
                 {/*
-                 * Colour over a painting, not instead of it: the fill is
-                 * translucent enough that the terrain underneath still reads,
-                 * and the border is the same colour stated at full strength, so
-                 * a territory is identifiable without pointing at it.
+                 * A wash of the field's own colour over the pale ground, and a
+                 * white border around it. The two neighbours of any border draw
+                 * it from their own side, vertex for vertex, so the line reads
+                 * as one line and no gap can open between two territories.
                  *
-                 * One hairline, not a line with a pale one under it — the map
-                 * is washed out enough that a single stroke holds, and doubled
+                 * One hairline, not a line with a pale one under it — doubled
                  * strokes turned every border into a two-colour ribbon thicker
                  * than the small territories it was drawn around.
                  *
-                 * The territories no longer lift on hover: they used to be
-                 * floating shapes with their own shadow, and scaling one now
-                 * would slide its border off the coastline underneath it.
+                 * The territories do not lift on hover: they are pieces of a
+                 * continent, and lifting one slides its borders off the ones
+                 * still holding still around it.
                  */}
                 <path
                   id={shape.shapeId}
                   className="territory-edge"
                   d={shape.d}
-                  // The clip goes on the border, not on the whole territory: a
-                  // name that runs a little past its own coast is fine, a name
-                  // sliced in half by the shoreline is not.
-                  clipPath={map.land ? 'url(#map-land)' : undefined}
-                  fill={withAlpha(tintOf(domain.color), isHovered ? 0.62 : 0.46)}
-                  // White, and heavy enough to be a border rather than a seam.
-                  // The territories are strongly coloured now, so a border in
-                  // their own colour was a darker edge of the same field; white
-                  // is the one line that separates any two of them.
-                  stroke={isHovered ? '#ffffff' : 'rgb(255 255 255 / 0.85)'}
                   strokeWidth={isHovered ? 5 : 3}
-                  strokeDasharray={domain.bridge ? '10 6' : undefined}
                   strokeLinejoin="round"
                   style={{
+                    // The colour is the field's own; how much of it goes down is
+                    // the theme's, which is the whole reason the two are set
+                    // separately here instead of as one rgba.
+                    fill: domain.color,
+                    fillOpacity: isHovered ? 'var(--map-wash-hover)' : 'var(--map-wash)',
+                    // Heavy enough to be a border rather than a seam. It is the
+                    // one line that separates any two neighbours: they are shades
+                    // of one continent hue, so a border in a territory's own
+                    // colour is just a darker edge of the same field.
+                    stroke: isHovered ? 'var(--map-border-strong)' : 'var(--map-border)',
                     transition: reducedMotion
                       ? 'none'
-                      : 'fill 220ms ease-out, stroke-width 220ms ease-out',
+                      : 'fill-opacity 220ms ease-out, stroke-width 220ms ease-out',
                   }}
                 />
-                {/* Ruled out by a filter or a search: the territory washes out
-                    towards the colour of the sea around it rather than being
+                {/* Ruled out by a filter or a search: the territory washes back
+                    towards the bare ground it was painted on rather than being
                     blacked out. On a pale map a dark veil is the loudest thing
                     on screen, which is the opposite of what dimming is for. */}
                 {emphasis === 'dim' ? (
                   <path
                     d={shape.d}
-                    clipPath={map.land ? 'url(#map-land)' : undefined}
-                    fill={withAlpha(MAP_SEA, 0.62)}
                     stroke="none"
-                    style={{ pointerEvents: 'none' }}
+                    style={{
+                      fill: 'var(--map-land)',
+                      fillOpacity: 0.76,
+                      pointerEvents: 'none',
+                    }}
                   />
                 ) : null}
-                <Label
-                  shape={shape}
-                  domainId={domain.id}
-                  title={t(`domain.${domain.id}.title`)}
-                  counter={
-                    domain.courseCount ? count(domain.courseCount, 'course') : t('ui.map.emptyDomain')
-                  }
-                  showCounter={isHovered}
-                  faded={emphasis === 'dim'}
-                />
               </g>
+            );
+          })}
+        </g>
+
+        {/* The shoreline, over the territories that meet it: a border between
+            two fields is one white line, and the edge of the land should not be
+            the only one drawn at half that weight. */}
+        {map.landmasses.map((mass, index) => (
+          <path
+            key={`coast-${index}`}
+            d={mass.d}
+            fill="none"
+            strokeWidth={4.5}
+            strokeLinejoin="round"
+            style={{ stroke: 'var(--map-coast)', pointerEvents: 'none' }}
+          />
+        ))}
+
+        {/*
+          Every name on the map, in one layer over the whole drawing.
+          Lettering used to live inside the territory it belonged to, which put
+          the next territory's border — and the shoreline — straight over the
+          names near an edge. There is no z-index in SVG: being last is the only
+          way to be on top.
+        */}
+        <g className="pointer-events-none">
+          {continents.map((continent) => (
+            <text
+              key={continent.id}
+              x={continent.cx}
+              y={continent.y}
+              textAnchor="middle"
+              fontSize={CONTINENT_SIZE}
+              fontWeight={700}
+              letterSpacing={2.6}
+              opacity={0.72}
+              style={{
+                fill: MAP_INK,
+                paintOrder: 'stroke',
+                stroke: MAP_HALO,
+                strokeWidth: 4,
+                strokeLinejoin: 'round',
+                strokeOpacity: 0.85,
+                textTransform: 'uppercase',
+              }}
+            >
+              {t(`ui.continent.${continent.id}`)}
+            </text>
+          ))}
+
+          {labelled.map(({ shape, placement }) => {
+            const domain = catalog.domainById.get(shape.domainId);
+            if (!domain) return null;
+            return (
+              <Label
+                key={shape.shapeId}
+                shape={shape}
+                placement={placement}
+                domainId={domain.id}
+                title={t(`domain.${domain.id}.title`)}
+                counter={
+                  domain.courseCount ? count(domain.courseCount, 'course') : t('ui.map.emptyDomain')
+                }
+                showCounter={hovered === domain.id}
+                faded={emphasisOf(domain.id) === 'dim'}
+              />
             );
           })}
         </g>
@@ -336,15 +364,195 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   );
 }
 
+/** Rough width of a bold line at a given size — no measuring in an SVG. */
+const textWidth = (text: string, size: number): number => text.length * size * 0.62;
+
+const lineWidth = (lines: string[], size: number): number =>
+  Math.max(...lines.map((line) => textWidth(line, size)));
+
+/**
+ * The name, on one line or two, or nothing at all if it will not go into the
+ * width given. Two lines at most: a third turns a label into a paragraph.
+ */
+function fitLines(title: string, size: number, width: number): string[] | null {
+  if (textWidth(title, size) <= width) return [title];
+
+  const words = title.split(' ');
+  let best: string[] | null = null;
+  let bestWidth = Infinity;
+  for (let split = 1; split < words.length; split++) {
+    const lines = [words.slice(0, split).join(' '), words.slice(split).join(' ')];
+    const widest = lineWidth(lines, size);
+    if (widest <= width && widest < bestWidth) {
+      best = lines;
+      bestWidth = widest;
+    }
+  }
+  return best;
+}
+
+/* ───────────────────────────  Placing the names  ────────────────────────── */
+
+type Rect = { x: number; y: number; w: number; h: number };
+
+const overlaps = (a: Rect, b: Rect): boolean =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/**
+ * Where one territory's name goes, and how big.
+ *
+ * `y` is the baseline of the first line; `glyph` is the diameter of the icon
+ * drawn at the territory's own label point, or null where there is no room for
+ * one.
+ */
+type Placement = {
+  lines: string[];
+  size: number;
+  x: number;
+  y: number;
+  glyph: number | null;
+  /** Out at sea rather than on the territory — the counter goes below it. */
+  outside: boolean;
+};
+
+/** Names put out to sea are all one size: they are not standing on anything. */
+const SEA_LABEL_SIZE = 12;
+/** Widest a sea label may be before it has to wrap, in map units. */
+const SEA_LABEL_WIDTH = 150;
+/** Clearance from the coast — enough to miss the shadow the land casts. */
+const SEA_LABEL_GAP = 16;
+
+const LINE_HEIGHT = 1.15;
+
+/**
+ * Lays out every name on the map at once.
+ *
+ * Each territory would rather carry its own name: that is what a label on a map
+ * means. Where the ground is too small for the name — the islands, the slivers
+ * between two large fields — the name is put in the open water directly above
+ * or below instead, whichever side is empty, which is how an atlas labels an
+ * island too small to write on.
+ *
+ * Space is claimed, not shared. Territories are laid out largest first, each
+ * reserving the rectangle its name occupies, so a small field can never write
+ * over a name that was already there. What finds nowhere to go is left unnamed
+ * and says its name on hover — a map with every name on it and half of them
+ * unreadable is worth less than a map with fewer.
+ */
+function placeLabels(
+  shapes: MapShape[],
+  titleOf: (domainId: string) => string,
+  bounds: { width: number; height: number },
+  /** Space already spoken for — the continents' own names, written first. */
+  reserved: Rect[]
+): Map<string, Placement> {
+  const placements = new Map<string, Placement>();
+  // The land is an obstacle for a name that has been pushed off its territory:
+  // out at sea is the only place such a name is not on top of something.
+  const land: Rect[] = shapes.map((shape) => ({
+    x: shape.x,
+    y: shape.y,
+    w: shape.width,
+    h: shape.height,
+  }));
+  const taken: Rect[] = [...reserved];
+
+  const free = (rect: Rect, against: Rect[]): boolean =>
+    rect.x >= 0 &&
+    rect.y >= 0 &&
+    rect.x + rect.w <= bounds.width &&
+    rect.y + rect.h <= bounds.height &&
+    !against.some((other) => overlaps(rect, other));
+
+  for (const shape of [...shapes].sort((a, b) => b.room - a.room)) {
+    const title = titleOf(shape.domainId);
+
+    // The icon is sized against the territory rather than against the text —
+    // big enough to be read as the thing the area *is*, from across the map.
+    const glyphAlone = Math.max(24, Math.min(76, shape.room * 0.9));
+
+    const size = Math.max(11, Math.min(18, shape.room * 0.3));
+    const inside = fitLines(title, size, shape.span * 0.92);
+
+    if (inside) {
+      const textHeight = inside.length * size * LINE_HEIGHT;
+      const gap = size * 0.45;
+      const withGlyph = shape.room * 2 > glyphAlone + gap + textHeight + size * 0.8;
+      const blockHeight = (withGlyph ? glyphAlone + gap : 0) + textHeight;
+      const rect: Rect = {
+        x: shape.cx - lineWidth(inside, size) / 2,
+        y: shape.cy - blockHeight / 2,
+        w: lineWidth(inside, size),
+        h: blockHeight,
+      };
+      if (free(rect, taken)) {
+        taken.push(rect);
+        placements.set(shape.domainId, {
+          lines: inside,
+          size,
+          x: shape.cx,
+          y: rect.y + (withGlyph ? glyphAlone + gap : 0) + size * 0.78,
+          glyph: withGlyph ? glyphAlone : null,
+          outside: false,
+        });
+        continue;
+      }
+    }
+
+    // Too small to write on. The icon still fits more often than the name does,
+    // so it stays where it was and only the name goes looking for water.
+    const glyph = shape.room * 2 > glyphAlone + 4 ? glyphAlone : null;
+    const sea = fitLines(title, SEA_LABEL_SIZE, SEA_LABEL_WIDTH);
+    if (!sea) continue;
+
+    const w = lineWidth(sea, SEA_LABEL_SIZE) + 8;
+    const h = sea.length * SEA_LABEL_SIZE * LINE_HEIGHT + 4;
+
+    // Below first, then above, and each of those centred before it is allowed to
+    // slide along the coast or stand further off it. The order is the order of
+    // preference: the closer and the more centred, the more obviously the name
+    // belongs to the ground it is pointing at.
+    const candidates: Rect[] = [];
+    for (const reach of [1, 2.2]) {
+      for (const dx of [0, -w * 0.45, w * 0.45]) {
+        const gap = SEA_LABEL_GAP * reach;
+        candidates.push({ x: shape.cx - w / 2 + dx, y: shape.y + shape.height + gap, w, h });
+        candidates.push({ x: shape.cx - w / 2 + dx, y: shape.y - gap - h, w, h });
+      }
+    }
+
+    const spot = candidates.find((rect) => free(rect, [...land, ...taken]));
+    if (!spot) continue;
+
+    taken.push(spot);
+    placements.set(shape.domainId, {
+      lines: sea,
+      size: SEA_LABEL_SIZE,
+      // The centre of the spot that was actually free, not of the territory —
+      // a candidate that slid along the coast to find room has to be written
+      // where it found it.
+      x: spot.x + spot.w / 2,
+      y: spot.y + SEA_LABEL_SIZE * 0.9,
+      glyph,
+      outside: true,
+    });
+  }
+
+  return placements;
+}
+
 function Label({
   shape,
+  placement,
   domainId,
   title,
   counter,
   showCounter,
   faded,
 }: {
-  shape: { cx: number; cy: number; width: number; height: number };
+  shape: MapShape;
+  /** Where the fitting pass put this name, or null if it found nowhere. */
+  placement: Placement | null;
   domainId: string;
   title: string;
   counter: string;
@@ -352,38 +560,32 @@ function Label({
   /** Ruled out by a filter or a search — the veil is over the land, not the name. */
   faded: boolean;
 }) {
-  // Small territories only get a label when pointed at, otherwise the map turns
-  // into a wall of overlapping text.
-  const roomy = shape.width > 92 && shape.height > 52;
-  if (!roomy && !showCounter) return null;
+  // A territory that found nowhere for its name says it on hover anyway, at its
+  // own label point: nothing else is competing for that space at that moment,
+  // and a name that overruns a border for as long as the pointer is on it is
+  // worth more than no name at all.
+  const shown: Placement =
+    placement ??
+    {
+      lines: fitLines(title, SEA_LABEL_SIZE, shape.span * 0.92) ?? [title],
+      size: SEA_LABEL_SIZE,
+      x: shape.cx,
+      y: shape.cy + SEA_LABEL_SIZE * 0.36,
+      glyph: null,
+      outside: false,
+    };
+  if (!placement && !showCounter) return null;
 
-  const size = Math.max(11, Math.min(17, shape.width / 8));
-
-  /**
-   * The glyph carries the territory, so it is sized against the territory
-   * rather than against the text — big enough to be read as the thing the area
-   * *is*, at a glance and from across the map.
-   *
-   * It is drawn only where there is room for the glyph and the name together;
-   * on a cramped territory the name is worth more than the picture.
-   */
-  const glyphSize = Math.max(26, Math.min(76, shape.width / 2.6));
-  const gap = size * 0.45;
-  const showGlyph = shape.height > glyphSize + size * 2.4;
-
-  // Glyph and title are laid out as one block, centred together — otherwise
-  // adding the glyph pushes the whole label off the middle of the territory.
-  const blockTop = showGlyph
-    ? shape.cy - (glyphSize + gap + size * 0.72) / 2
-    : shape.cy - size * 0.36;
-  const titleY = blockTop + (showGlyph ? glyphSize + gap : 0) + size * 0.72;
+  const lineHeight = shown.size * LINE_HEIGHT;
+  const lastLineY = shown.y + (shown.lines.length - 1) * lineHeight;
 
   // A halo, not an outline. `strokeLinejoin: round` is the whole trick: the
   // default miter join throws long spikes off every sharp corner of a glyph,
-  // which is what made the old thick stroke look serrated. On painted ground
-  // the halo has to be opaque — grass and rock show straight through a
-  // translucent one and the name stops being readable at all.
+  // which is what made the old thick stroke look serrated. The halo is nearly
+  // opaque — over a coloured field a translucent one lets the ground through
+  // and the name stops being readable at all.
   const halo = {
+    fill: MAP_INK,
     paintOrder: 'stroke' as const,
     stroke: MAP_HALO,
     strokeWidth: 3.2,
@@ -393,17 +595,17 @@ function Label({
   };
 
   return (
-    <g className="pointer-events-none" textAnchor="middle" opacity={faded ? 0.65 : 1}>
+    <g textAnchor="middle" opacity={faded ? 0.65 : 1}>
       {/* The same halo the names get, and for the same reason: line art in one
-          dark colour vanishes over a forest or a mountain range. Drawn as a
-          thick pale pass with the ink laid over it. */}
-      {showGlyph ? (
+          dark colour vanishes into a strongly coloured field. Drawn as a thick
+          pale pass with the ink laid over it. */}
+      {shown.glyph ? (
         <>
           <DomainGlyph
             domainId={domainId}
             x={shape.cx}
-            y={blockTop + glyphSize / 2}
-            size={glyphSize}
+            y={glyphCentre(shown, shape)}
+            size={shown.glyph}
             colour={MAP_HALO}
             opacity={0.85}
             strokeWidth={5}
@@ -411,24 +613,32 @@ function Label({
           <DomainGlyph
             domainId={domainId}
             x={shape.cx}
-            y={blockTop + glyphSize / 2}
-            size={glyphSize}
+            y={glyphCentre(shown, shape)}
+            size={shown.glyph}
             colour={MAP_INK}
             opacity={0.85}
             strokeWidth={2}
           />
         </>
       ) : null}
-      <text x={shape.cx} y={titleY} fontSize={size} fontWeight={700} fill={MAP_INK} style={halo}>
-        {title}
-      </text>
+      {shown.lines.map((line, index) => (
+        <text
+          key={line}
+          x={shown.x}
+          y={shown.y + index * lineHeight}
+          fontSize={shown.size}
+          fontWeight={700}
+          style={halo}
+        >
+          {line}
+        </text>
+      ))}
       {showCounter ? (
         <text
-          x={shape.cx}
-          y={titleY + size + 3}
-          fontSize={size * 0.75}
+          x={shown.x}
+          y={lastLineY + shown.size + 3}
+          fontSize={shown.size * 0.75}
           fontWeight={600}
-          fill={MAP_INK}
           style={halo}
         >
           {counter}
@@ -436,4 +646,15 @@ function Label({
       ) : null}
     </g>
   );
+}
+
+/**
+ * Where the icon sits: under a name written on the territory it belongs to, in
+ * the middle of the territory when the name was sent out to sea.
+ */
+function glyphCentre(placement: Placement, shape: MapShape): number {
+  if (placement.outside || !placement.glyph) return shape.cy;
+  const textHeight = placement.lines.length * placement.size * LINE_HEIGHT;
+  const gap = placement.size * 0.45;
+  return shape.cy - (placement.glyph + gap + textHeight) / 2 + placement.glyph / 2;
 }

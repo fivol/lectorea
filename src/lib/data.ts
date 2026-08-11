@@ -123,6 +123,3 @@ export async function loadMapSvg(): Promise<string> {
   if (!response.ok) throw new Error('Failed to load map.svg');
   return response.text();
 }
-
-/** The painting the territories are drawn over — same coordinates as map.svg. */
-export const mapImageUrl = `${base}/map.png`;

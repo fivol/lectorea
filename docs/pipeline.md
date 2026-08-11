@@ -16,8 +16,9 @@ scripts/
   dev-seed.ts          synthetic playlists for development
   course-new.ts        scaffold a course across its three files
   check-i18n.ts        localisation and course-text gate
-  map-poc.ts           preview of the next map generator
+  map-poc.ts           run the map generator to an SVG and a metrics report
   map-sandbox.ts       the same, bundled as one HTML file with sliders
+  map-import.ts        a sandbox export → public/map.svg
   lib/
     youtube.ts        API wrapper with quota accounting
     db.ts             sqlite
@@ -38,7 +39,7 @@ shared/            imported by both the build and the browser
   graph.ts         Kahn's algorithm, cycles, closures
   search.ts        normalisation and scoring
   procedural.ts    course artwork
-  mapgen.ts        the power-diagram map generator (preview only)
+  mapgen.ts        the power-diagram map generator behind the shipped map
   domain-graph.ts  landform classification for that generator
 ```
 

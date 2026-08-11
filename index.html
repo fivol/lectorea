@@ -36,8 +36,11 @@
       property="og:description"
       content="Образовательные YouTube-плейлисты, выстроенные в порядке изучения: что нужно знать до каждого курса и что он открывает дальше."
     />
-    <meta property="og:image" content="/map.png" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <!-- The mark, not the map: the map is an SVG drawn by the app at runtime,
+         and no crawler renders it. A square icon with a `summary` card is
+         honest about that; a wide card with nothing wide to put in it is not. -->
+    <meta property="og:image" content="/pwa-512.png" />
+    <meta name="twitter:card" content="summary" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

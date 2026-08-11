@@ -58,6 +58,7 @@ a time by hand.
 | `pnpm data:seed-dev` | `dev-seed.ts` | — | `cache.db` |
 | `pnpm course:new` | `course-new.ts` | `data/` | `data/courses/`, `i18n/`, `keywords/` |
 | `pnpm data:map` | `10-map.ts` | `data/domains.yaml` | `public/map.svg` |
+| `pnpm map:import` | `map-import.ts` | a sandbox SVG export, `data/domains.yaml` | `public/map.svg` |
 | `pnpm map:preview` | `map-poc.ts` | `data/` | `.map-poc/` |
 | `pnpm map:landforms` | `map-landforms.ts` | `data/` | nothing — prints a table |
 | `pnpm map:sandbox` | `map-sandbox.ts` | `data/` | `.map-poc/sandbox.html` |
@@ -147,20 +148,40 @@ Run it after adding a domain or after a batch of new courses makes an area
 outgrow its territory; the generator warns when a territory ends up smaller than
 its share of courses.
 
-**It currently refuses to run.** The shipped `public/map.svg` is not generated
-output: it is a set of territories fitted to the painting in `public/map.png`,
-and it carries a `land` path — the painted coastline the territory layer is
-clipped to — that the generator does not produce. Regenerating would replace it
-with hexagons that no longer match the picture underneath, and nothing in the
-repo could bring it back, so the script stops when it sees that path. `--force`
-overrides, for when the painting is being retired along with it.
+**It currently refuses to run.** The shipped `public/map.svg` comes from the
+sandbox generator through `pnpm map:import`, and carries coastlines this script
+does not produce. Regenerating would replace its continents, islands and label
+anchors with plain hexagons, so it stops when it sees a `coastline` path.
+`--force` overrides, for when that map is being retired.
+
+### `pnpm map:import`
+
+```bash
+pnpm map:import '~/Downloads/map (1).svg'
+```
+
+Turns an SVG exported from `pnpm map:sandbox` into `public/map.svg` — which is
+how the shipped map is made.
+
+The export is a picture: a sea, drop shadows, dependency links, labels, and
+territories in whatever colours the sandbox was showing. The app needs none of
+that; it paints the territories from `domains.yaml` and writes its own labels
+in the current theme's colours. So the import keeps the geometry — one path per
+territory, one per coastline — and adds what the export does not carry: the
+continent each territory and each landmass belongs to, the point a label can be
+centred on, and how much room there is around it.
+
+It fails if the export and `data/domains.yaml` disagree about which territories
+exist, which is the only way the app could end up with a field that has no
+ground or ground that has no field.
 
 ### `pnpm map:preview`, `map:sandbox`, `map:landforms`
 
 A second map generator lives in `shared/mapgen.ts` — territories as a power
 diagram, sized to their course counts, with one shared border graph. It is a
-**preview**: `pnpm data:map` still ships `public/map.svg` from the older
-generator, and nothing in the build depends on this one yet.
+It is what the shipped map is drawn with: the sandbox exports an SVG and
+`pnpm map:import` turns it into `public/map.svg`. `pnpm data:map` and the older
+generator behind it are what the file predates.
 
 ```bash
 pnpm map:preview                 # SVG + a metrics report into .map-poc/
