@@ -40,6 +40,7 @@
   "ui.search.placeholder": "Область, курс, вуз…",
   "ui.search.open": "Поиск",
   "ui.search.empty": "Ничего не найдено",
+  "ui.search.suggestCourse": "Предложить курс",
   "ui.search.more": "и ещё {n}",
   "ui.search.clear": "Очистить поиск",
   "ui.search.section.d": "Области",
@@ -281,7 +282,8 @@
   "ui.a11y.mapRegion": "Карта областей знания",
   "ui.a11y.graphRegion": "Граф курсов",
 
-  "ui.footer.contribute": "Данные открыты — правки идут через pull request",
+  "ui.footer.contribute": "Каталог открыт и собирается вместе — не хватает курса, области или плейлиста:",
+  "ui.footer.suggest": "предложите",
 
   "domain.math.title": "Математика",
   "domain.math.desc": "Язык, на котором говорят все остальные точные науки. Отсюда начинается почти любая цепочка",

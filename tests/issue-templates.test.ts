@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
-import { suggestPlaylistUrl } from '../src/lib/repo';
+import { suggestCourseUrl, suggestPlaylistUrl } from '../src/lib/repo';
 
 /**
  * The issue forms are the front door: they are how a reader adds anything at
@@ -51,18 +51,26 @@ describe('issue templates', () => {
     expect([...offered].filter((id) => !known.has(id))).toEqual([]);
   });
 
-  it('prefills fields the playlist form actually has', () => {
-    const url = new URL(suggestPlaylistUrl('probability'));
-    const query = url.searchParams;
+  it('prefills fields the forms actually have', () => {
+    const links = [suggestPlaylistUrl('probability'), suggestCourseUrl('нейробиология')];
 
-    expect(query.get('template')).toBe('1-playlist.yml');
-    expect(query.get('course')).toBe('probability');
+    for (const link of links) {
+      const query = new URL(link).searchParams;
+      const template = query.get('template');
+      expect(template, link).toBeTruthy();
 
-    const ids = fieldIds('1-playlist.yml');
-    for (const [key] of query) {
-      if (key === 'template') continue;
-      expect(ids, `${key} is not a field of 1-playlist.yml`).toContain(key);
+      const ids = fieldIds(template!);
+      for (const [key] of query) {
+        if (key === 'template') continue;
+        expect(ids, `${key} is not a field of ${template}`).toContain(key);
+      }
     }
+
+    expect(new URL(suggestPlaylistUrl('probability')).searchParams.get('course')).toBe('probability');
+    expect(new URL(suggestCourseUrl('нейробиология')).searchParams.get('name')).toBe('нейробиология');
+    // Nothing typed, nothing prefilled — an empty `name=` would land the reader
+    // on a form whose required field looks filled in and is not.
+    expect(new URL(suggestCourseUrl('  ')).searchParams.has('name')).toBe(false);
   });
 
   it('labels each form so triage can filter by kind', () => {

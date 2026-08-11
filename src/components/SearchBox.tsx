@@ -6,6 +6,7 @@ import { SEARCH_SECTION_ORDER } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
+import { suggestCourseUrl } from '@/lib/repo';
 import { useCatalogParams } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
@@ -341,6 +342,30 @@ export default function SearchBox({
   );
 }
 
+/**
+ * The way out of a search that found nothing.
+ *
+ * A catalogue that answers «ничего не найдено» and stops has told the one
+ * person who knows what is missing that there is nothing to be done about it.
+ * The form opens with the query already in the name field, so the click costs
+ * what it looks like it costs.
+ */
+export function SuggestCourse({ query, className = '' }: { query: string; className?: string }) {
+  const { t } = useT();
+  return (
+    <a
+      href={suggestCourseUrl(query)}
+      target="_blank"
+      rel="noreferrer noopener"
+      className={`inline-flex items-center gap-1 text-xs text-ink-dim underline decoration-line
+                  underline-offset-2 transition-colors hover:text-accent ${className}`}
+    >
+      {t('ui.search.suggestCourse')}
+      <Icon name="external" size={11} />
+    </a>
+  );
+}
+
 /** The rows themselves — the same list under a dropdown and inside the sheet. */
 function Results({
   results,
@@ -361,9 +386,16 @@ function Results({
        question nobody put: the slice is empty, and that is what the columns
        behind the panel say too. */
     return (
-      <p className="px-3 py-4 text-center text-sm text-ink-faint">
-        {results.suggested ? t('ui.graph.empty') : t('ui.search.empty')}
-      </p>
+      <div className="px-3 py-4 text-center text-sm text-ink-faint">
+        <p>{results.suggested ? t('ui.graph.empty') : t('ui.search.empty')}</p>
+        {/*
+          Only when something was actually typed and missed. An empty slice is
+          a filter to undo, not a hole in the catalogue — offering to file the
+          missing course there would send people to write up courses that are
+          already in it, two rows behind the panel.
+        */}
+        {results.suggested ? null : <SuggestCourse query={results.query} />}
+      </div>
     );
   }
 

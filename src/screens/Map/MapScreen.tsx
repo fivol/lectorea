@@ -5,8 +5,9 @@ import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
 import { useIsMobile } from '@/lib/hooks';
+import { contributeUrl } from '@/lib/repo';
 import { useProfile } from '@/store/profile';
-import SearchBox from '@/components/SearchBox';
+import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
 import ThemeToggle from '@/components/ThemeToggle';
 import ViewSwitch from '@/components/ViewSwitch';
@@ -120,8 +121,12 @@ export default function MapScreen() {
         </div>
         <GlobalFilters className="pointer-events-auto justify-center" />
         {query.trim() && results.empty ? (
-          <p className="glass pointer-events-auto rounded-full px-3 py-1 text-xs text-ink-faint backdrop-blur">
+          <p
+            className="glass pointer-events-auto flex items-center gap-2 rounded-full px-3 py-1
+                       text-xs text-ink-faint backdrop-blur"
+          >
             {t('ui.search.empty')}
+            <SuggestCourse query={query} />
           </p>
         ) : null}
       </div>
@@ -154,8 +159,24 @@ export default function MapScreen() {
         )}
       </main>
 
+      {/*
+        The only place in the app that can offer a domain or an idea: nothing
+        on screen is either of those, so there is nothing to hang a contextual
+        link on. A playlist has its course panel and a missing course has the
+        search — this covers the rest, and says the catalogue is written by
+        the people reading it rather than merely licensed to them.
+      */}
       <footer className="px-4 pb-3 text-center text-xs text-ink-faint sm:px-6">
-        {t('ui.footer.contribute')}
+        {t('ui.footer.contribute')}{' '}
+        <a
+          href={contributeUrl()}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="text-ink-dim underline decoration-line underline-offset-2
+                     transition-colors hover:text-accent"
+        >
+          {t('ui.footer.suggest')}
+        </a>
       </footer>
     </div>
   );
