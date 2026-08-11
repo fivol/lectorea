@@ -15,6 +15,9 @@
 # matching would have to throw away. Verified with the API before adding:
 # a channel earns its line by having several playlists of ~10+ lectures that
 # name a subject.
+#
+# Where these came from, and which plausible-looking channels were refused and
+# why, is in docs/channel-hunt.md.
 
 # ─────────────────────────  Universities — courseware  ─────────────────────────
 
@@ -77,6 +80,79 @@
 - id: '@data8berkeley'
   title: Data 8 at UC Berkeley
   providerId: berkeley
+  lang: en
+
+# Two of the department's own lecture courses, complete: the databases group at
+# CMU publishes 15-445 and 15-721 a term at a time, and the deep-learning course
+# publishes 11-785.
+- id: UCHnBsf2rH-K7pn09rb3qvkA
+  title: CMU Database Group
+  providerId: cmu
+  lang: en
+
+- id: UC8hYZGEkI2dDO8scT8C5UQA
+  title: Carnegie Mellon University Deep Learning
+  providerId: cmu
+  lang: en
+
+- id: UCDUS80bdunpmvWVPyFRPqFQ
+  title: UofU Data Science
+  providerId: utah
+  lang: en
+
+- id: UCR5aYUnYqb66W1W1DeucIlg
+  title: UMass OS
+  providerId: umass
+  lang: en
+
+- id: UClOghZ_xkI1km31IeoY-9Bw
+  title: UCF CRCV
+  providerId: ucf
+  lang: en
+
+- id: UCIu2_2RVc6_F6_7wv5TDHoA
+  title: JSB UCLA
+  providerId: ucla
+  lang: en
+
+# Stanford's algorithms specialisation, which the university channel does not
+# carry as playlists.
+- id: UCH4s4ek5zqNvct5oy9_jd_g
+  title: Stanford Algorithms
+  providerId: stanford
+  lang: en
+
+- id: UClMJeVIVyGp-3_kWtspkS0Q
+  title: EPFL
+  providerId: epfl
+  lang: en
+
+- id: UCRf1mhfcDeJS2HLP6YR07kA
+  title: cvprtum
+  providerId: tum
+  lang: en
+
+- id: UCupmCsCA5CFXmm31PkUhEbA
+  title: Tübingen Machine Learning
+  providerId: tuebingen
+  lang: en
+
+# Campus TV sits alongside the courses here; the lecture series — image
+# analysis, pattern recognition, machine learning and physics — are complete.
+- id: UCb9svouAi1XHRqlOs8LXbBg
+  title: UniHeidelberg
+  providerId: heidelberg
+  lang: en
+
+- id: UCbaID7wz_ATPrddPkYlVK1w
+  title: Video DIAG - Sapienza, Università di Roma
+  providerId: sapienza
+  lang: en
+
+# The whole BS in Data Science and Applications, one course per playlist.
+- id: UCvKzzGO37oT83K0FwnUucxw
+  title: IIT Madras - B.S. Degree Programme
+  providerId: iitmadras
   lang: en
 
 # ───────────────────────────────  NPTEL / IITs  ────────────────────────────────
@@ -188,6 +264,51 @@
   providerId: lektorium
   lang: ru
 
+# The largest single source of Russian university lectures found so far: the
+# distance-learning arm of MFTI publishes a course per playlist, 370 of them
+# ten lectures or longer.
+- id: UCEEhbFAvl3fOW5geICQbMcg
+  title: Дистанционные занятия МФТИ
+  providerId: mipt
+  lang: ru
+
+- id: UC_ByV5irnAmCUZEGVZntFmQ
+  title: Кафедра высшей математики МФТИ
+  providerId: mipt
+  lang: ru
+
+- id: UCFTNoZYjkg-3LZTHrHfV1nQ
+  title: Deep Learning School
+  providerId: mipt
+  lang: ru
+
+# The CS Club at POMI RAS — the same people as the Computer Science Center,
+# a different lecture series.
+- id: UClSor1c_LJUnAfQLqzmPuAA
+  title: Computer Science Club
+  providerId: sms
+  lang: ru
+
+- id: UCRUe-hAq8VeNkwdSGq5zlUg
+  title: Исторический факультет МГУ
+  providerId: msu
+  lang: ru
+
+- id: UC8PifTzIV6AQfIRHMnwLj7A
+  title: НОЦ Математики ИТМО
+  providerId: itmo
+  lang: ru
+
+- id: UCZNo9zTHZNZOW4fSFcCKh_A
+  title: Innopolis University
+  providerId: innopolis
+  lang: en
+
+- id: UCBvOPEtL2cgzRJ6Zh77VDMA
+  title: Университет Сириус
+  providerId: sirius
+  lang: ru
+
 # ─────────────────────────  Platforms and course makers  ───────────────────────
 
 - id: '@khanacademy'
@@ -209,6 +330,100 @@
   title: Socratica
   providerId: socratica
   lang: en
+
+- id: UCBVCi5JbYmfG3q5MEuoWdOw
+  title: Udacity
+  providerId: udacity
+  lang: en
+
+# Each "Crash Course X" is a course in order — the exception to the rule that a
+# channel of standalone videos has nothing to point a course at.
+- id: UCX6b17PVsYBQ0ip5gyeme-Q
+  title: CrashCourse
+  providerId: crashcourse
+  lang: en
+
+- id: UCQYMhOMi_Cdj1CEAU-fv80A
+  title: Neso Academy
+  providerId: nesoacademy
+  lang: en
+
+- id: UCCWi3hpnq_Pe03nGxuS7isg
+  title: CampusX
+  providerId: campusx
+  lang: en
+
+- id: UCdEov4L0bpJ_h6W3sJxkfUA
+  title: Vizuara
+  providerId: vizuara
+  lang: en
+
+- id: UCJbPGzawDH1njbqV-D5HqKw
+  title: thenewboston
+  providerId: thenewboston
+  lang: en
+
+- id: UCdxipuXs6UJq7N-GUiBdxKw
+  title: OpenHPI Tutorials
+  providerId: openhpi
+  lang: en
+
+- id: UCthV50MozQIfawL9a_g5rdg
+  title: OpenSecurityTraining2
+  providerId: ost2
+  lang: en
+
+- id: UC6s-1TYa-1fBrUUIGijshCQ
+  title: Complexity Explorer
+  providerId: santafe
+  lang: en
+
+- id: UClBNq7mCMf5xm8baE_VMl3A
+  title: Qiskit
+  providerId: qiskit
+  lang: en
+
+- id: UC-_JZ93_gA5QL5mrmvdZ0-Q
+  title: 'SQuID: Schools for Quantum Information Development'
+  providerId: squid
+  lang: en
+
+- id: UC2GuY-AxnNxIJFAVfEW0QFA
+  title: APMonitor.com
+  providerId: apmonitor
+  lang: en
+
+- id: UC2Y6MNqiTwTrh-qPQHGIUyg
+  title: Programming Massively Parallel Processors
+  providerId: pmpp
+  lang: en
+
+- id: UCBymHJOtxYjmkGvpCGo1_5Q
+  title: JetBrains Research
+  providerId: jetbrains
+  lang: ru
+
+- id: UCw2ORfEOUoEe-MNgCCm0aoQ
+  title: Т-Образование
+  providerId: tbank
+  lang: ru
+
+- id: UC0iVXUmtQ1_BxvgXmlvU3ig
+  title: Фоксфорд
+  providerId: foxford
+  lang: ru
+
+# Humanities, which the catalogue is thinnest in: the Arzamas courses are
+# published here a lecture at a time.
+- id: UCVgvnGSFU41kIhEc09aztEg
+  title: Arzamas
+  providerId: arzamas
+  lang: ru
+
+- id: UCGm2Q52ewdFb5C8gG7G5tjw
+  title: KhanAcademyRussian
+  providerId: khanacademy
+  lang: ru
 
 # ──────────────────────────────  Individuals  ──────────────────────────────────
 
@@ -298,3 +513,235 @@
   title: sentdex
   providerId: sentdex
   lang: en
+
+- id: UCIwQ8uOeRFgOEvBLYc3kc3g
+  title: Onur Mutlu Lectures
+  providerId: mutlu
+  lang: en
+
+- id: UCcH4Ga14Y4ELFKrEYM1vXCg
+  title: Tim Roughgarden Lectures
+  providerId: roughgarden
+  lang: en
+
+- id: UCh27N8m4Jp_rkwx26Q4iclQ
+  title: Steven Skiena
+  providerId: skiena
+  lang: en
+
+- id: UCi1TC2fLRvgBQNe-T4dp8Eg
+  title: Cyrill Stachniss
+  providerId: stachniss
+  lang: en
+
+- id: UCt-Wvc_ojTzGLpjhruIXYSw
+  title: Douglas Schmidt
+  providerId: schmidt
+  lang: en
+
+- id: UCzntthQN6ZF01rRRWikcmmQ
+  title: Geoffrey Challen
+  providerId: challen
+  lang: en
+
+- id: UC47LbJhlJUAXT__zc_htuZQ
+  title: Dave Churchill
+  providerId: churchill
+  lang: en
+
+- id: UCRUDk5mnr_ofVRrYqbUk-wQ
+  title: Jon Eyolfson
+  providerId: eyolfson
+  lang: en
+
+- id: UC-WJQEm2k924NPOdUSzwI-w
+  title: Justin Solomon
+  providerId: solomon
+  lang: en
+
+- id: UC2JCYhib8HojEIBWFmH5g7A
+  title: Graham Neubig
+  providerId: neubig
+  lang: en
+
+- id: UCpHjg_Qmzxm3xaAWRrwQPCA
+  title: Tobias Osborne
+  providerId: osborne
+  lang: en
+
+- id: UCkKlJ5LHrE3C7fgbnPA5DGA
+  title: Manolis Kellis
+  providerId: kellis
+  lang: en
+
+- id: UCHAwDVSS8oDLLln07cNdU6A
+  title: Alex Flournoy
+  providerId: flournoy
+  lang: en
+
+- id: UCWnu2XymDtORV--qG2uG5eQ
+  title: Ryan O'Donnell
+  providerId: odonnell
+  lang: en
+
+- id: UCNJK6_DZvcMqNSzQdEkzvzA
+  title: Richard McElreath
+  providerId: mcelreath
+  lang: en
+
+- id: UCaiJlKxXamoODQtlx486qJA
+  title: Rich Radke
+  providerId: radke
+  lang: en
+
+- id: UCQLbCMJdEYvWmpCqp5VK2mg
+  title: C. Seshadhri
+  providerId: seshadhri
+  lang: en
+
+- id: UCA22UBznCy4KoW0nSwOfB3Q
+  title: Kent Quanrud
+  providerId: quanrud
+  lang: en
+
+- id: UCYoS2VT03weLA7uzvL2Vybw
+  title: Alex Smola
+  providerId: smola
+  lang: en
+
+- id: UCGIB72qWUzsGzPmIO8LFT_Q
+  title: Aaron Roth
+  providerId: roth
+  lang: en
+
+- id: UC_CzsS7UTjcxJ-xXp1ftxtA
+  title: Sebastian Raschka
+  providerId: raschka
+  lang: en
+
+# The gravitation and quantum-theory lecture courses, complete and in order.
+- id: UC6SaWe7xeOp31Vo8cQG1oXw
+  title: Frederic Schuller
+  providerId: schuller
+  lang: en
+
+- id: UCupQLyNchb9-2Z5lmUOIijw
+  title: Alfredo Canziani
+  providerId: canziani
+  lang: en
+
+- id: UC88M-XNc4BlzJVJvOyiHZDQ
+  title: Pieter Abbeel
+  providerId: abbeel
+  lang: en
+
+- id: UC0z_jCi0XWqI8awUuQRFnyw
+  title: Nando de Freitas
+  providerId: defreitas
+  lang: en
+
+- id: UCSy8f_88UztEh7RTtwLQIXw
+  title: Michael Elad
+  providerId: elad
+  lang: en
+
+- id: UCEbdjh7ohqJ5kyDzen6lDww
+  title: Wil van der Aalst
+  providerId: vanderaalst
+  lang: en
+
+- id: UCKl_DO2xRGS3JmbHh9S8dew
+  title: Seif Haridi
+  providerId: haridi
+  lang: en
+
+- id: UCu1lQtQ7SJU27bRlL6hzr9A
+  title: Steven Gordon
+  providerId: gordon
+  lang: en
+
+- id: UCQGShzqifIlBMWtH5PPtRXA
+  title: Arash Amini
+  providerId: amini
+  lang: en
+
+- id: UCWC4VKHmL4NZgFfKoHtANKg
+  title: Morris Riedel
+  providerId: riedel
+  lang: en
+
+- id: UCIjua4PF8X0LXcLeb67ruBg
+  title: Abrahim Ladha
+  providerId: ladha
+  lang: en
+
+- id: UCj4E77j0Fa7TIol_W6SApHw
+  title: Ali Bereyhi
+  providerId: bereyhi
+  lang: en
+
+- id: UCogleANSuRjxuQTA1CbM6Dw
+  title: Mohammad Hajiaghayi
+  providerId: hajiaghayi
+  lang: en
+
+- id: UC9stFHaBgaePUfqLz1NYpyA
+  title: Alexander Pacha
+  providerId: pacha
+  lang: en
+
+- id: UC5mHYCvWhHAjAY0Wzpy0gVA
+  title: Volodymyr Kuleshov
+  providerId: kuleshov
+  lang: en
+
+- id: UCEylYjYu6oRkMmPcIWEvhQA
+  title: Jukka Suomela
+  providerId: suomela
+  lang: en
+
+- id: UCoOjTxz-u5zU0W38zMkQIFw
+  title: Dr Peyam
+  providerId: peyam
+  lang: en
+
+- id: UC0cd_-e49hZpWLH3UIwoWRA
+  title: Professor Dave Explains
+  providerId: professordave
+  lang: en
+
+- id: UCOUbzLwquaQgKACIc2vJYdw
+  title: MathDoctorBob
+  providerId: mathdoctorbob
+  lang: en
+
+- id: UCAs7ne6yNAFSMA1KLpfS_bQ
+  title: A Probability Space
+  providerId: probabilityspace
+  lang: en
+
+- id: UCo2JwjPSEc9U8ZJ_KQi6rDQ
+  title: Борис Трушин
+  providerId: trushin
+  lang: ru
+
+- id: UCLDpIKDTFBSwIYtAG0Wpibg
+  title: Валерий Волков
+  providerId: volkov
+  lang: ru
+
+- id: UCj0Od_id0gPbmwZ65U8xwrw
+  title: Wild Mathing
+  providerId: wildmathing
+  lang: ru
+
+# The whole school physics course, 7th to 11th year, filmed lesson by lesson.
+- id: UCWfhBu4fAt126ZbxREz3IBw
+  title: Павел ВИКТОР
+  providerId: pavelviktor
+  lang: ru
+
+- id: UCWk8OxsylgmZ_VgY7jC9pjQ
+  title: 'Маткульт-привет!'
+  providerId: savvateev
+  lang: ru

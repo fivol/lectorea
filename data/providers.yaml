@@ -110,6 +110,73 @@
   country: RU
   site: https://compscicenter.ru/
 
+- id: cmu
+  title: Carnegie Mellon
+  type: university
+  country: US
+  site: https://www.cmu.edu/
+
+- id: ucla
+  title: UCLA
+  type: university
+  country: US
+
+- id: utah
+  title: University of Utah
+  type: university
+  country: US
+
+- id: ucf
+  title: University of Central Florida
+  type: university
+  country: US
+
+- id: umass
+  title: UMass Amherst
+  type: university
+  country: US
+
+- id: epfl
+  title: EPFL
+  type: university
+  country: CH
+
+- id: tum
+  title: TU München
+  type: university
+  country: DE
+
+- id: tuebingen
+  title: Universität Tübingen
+  type: university
+  country: DE
+
+- id: heidelberg
+  title: Universität Heidelberg
+  type: university
+  country: DE
+
+- id: sapienza
+  title: Sapienza Università di Roma
+  type: university
+  country: IT
+
+- id: iitmadras
+  title: IIT Madras
+  type: university
+  country: IN
+  site: https://study.iitm.ac.in/ds/
+
+- id: innopolis
+  title: Университет Иннополис
+  type: university
+  country: RU
+
+- id: sirius
+  title: Университет «Сириус»
+  type: university
+  country: RU
+
 # ────────────────────────────────  Platforms  ──────────────────────────────
 
 - id: coursera
@@ -164,6 +231,80 @@
   title: Socratica
   type: platform
   site: https://www.socratica.com/
+
+- id: udacity
+  title: Udacity
+  type: platform
+  site: https://www.udacity.com/
+
+- id: crashcourse
+  title: CrashCourse
+  type: platform
+
+- id: nesoacademy
+  title: Neso Academy
+  type: platform
+
+- id: campusx
+  title: CampusX
+  type: platform
+
+- id: vizuara
+  title: Vizuara
+  type: platform
+
+- id: thenewboston
+  title: thenewboston
+  type: platform
+
+- id: openhpi
+  title: openHPI
+  type: platform
+  site: https://open.hpi.de/
+
+- id: ost2
+  title: OpenSecurityTraining2
+  type: platform
+  site: https://ost2.fyi/
+
+- id: santafe
+  title: Complexity Explorer
+  type: platform
+  site: https://www.complexityexplorer.org/
+
+- id: qiskit
+  title: Qiskit
+  type: platform
+
+- id: squid
+  title: SQuID
+  type: platform
+
+- id: apmonitor
+  title: APMonitor
+  type: platform
+
+- id: pmpp
+  title: Programming Massively Parallel Processors
+  type: platform
+
+- id: jetbrains
+  title: JetBrains Research
+  type: platform
+
+- id: tbank
+  title: Т-Образование
+  type: platform
+
+- id: foxford
+  title: Фоксфорд
+  type: platform
+  site: https://foxford.ru/
+
+- id: arzamas
+  title: Arzamas
+  type: platform
+  site: https://arzamas.academy/
 
 # ───────────────────────────────  Individuals  ─────────────────────────────
 
@@ -244,6 +385,186 @@
 
 - id: sentdex
   title: sentdex
+  type: individual
+
+- id: mutlu
+  title: Onur Mutlu
+  type: individual
+
+- id: roughgarden
+  title: Tim Roughgarden
+  type: individual
+
+- id: skiena
+  title: Steven Skiena
+  type: individual
+
+- id: stachniss
+  title: Cyrill Stachniss
+  type: individual
+
+- id: schmidt
+  title: Douglas Schmidt
+  type: individual
+
+- id: challen
+  title: Geoffrey Challen
+  type: individual
+
+- id: churchill
+  title: Dave Churchill
+  type: individual
+
+- id: eyolfson
+  title: Jon Eyolfson
+  type: individual
+
+- id: solomon
+  title: Justin Solomon
+  type: individual
+
+- id: neubig
+  title: Graham Neubig
+  type: individual
+
+- id: osborne
+  title: Tobias Osborne
+  type: individual
+
+- id: kellis
+  title: Manolis Kellis
+  type: individual
+
+- id: flournoy
+  title: Alex Flournoy
+  type: individual
+
+- id: odonnell
+  title: Ryan O'Donnell
+  type: individual
+
+- id: mcelreath
+  title: Richard McElreath
+  type: individual
+
+- id: radke
+  title: Rich Radke
+  type: individual
+
+- id: seshadhri
+  title: C. Seshadhri
+  type: individual
+
+- id: quanrud
+  title: Kent Quanrud
+  type: individual
+
+- id: smola
+  title: Alex Smola
+  type: individual
+
+- id: roth
+  title: Aaron Roth
+  type: individual
+
+- id: raschka
+  title: Sebastian Raschka
+  type: individual
+
+- id: schuller
+  title: Frederic Schuller
+  type: individual
+
+- id: canziani
+  title: Alfredo Canziani
+  type: individual
+
+- id: abbeel
+  title: Pieter Abbeel
+  type: individual
+
+- id: defreitas
+  title: Nando de Freitas
+  type: individual
+
+- id: elad
+  title: Michael Elad
+  type: individual
+
+- id: vanderaalst
+  title: Wil van der Aalst
+  type: individual
+
+- id: haridi
+  title: Seif Haridi
+  type: individual
+
+- id: gordon
+  title: Steven Gordon
+  type: individual
+
+- id: amini
+  title: Arash Amini
+  type: individual
+
+- id: riedel
+  title: Morris Riedel
+  type: individual
+
+- id: ladha
+  title: Abrahim Ladha
+  type: individual
+
+- id: bereyhi
+  title: Ali Bereyhi
+  type: individual
+
+- id: hajiaghayi
+  title: Mohammad Hajiaghayi
+  type: individual
+
+- id: pacha
+  title: Alexander Pacha
+  type: individual
+
+- id: kuleshov
+  title: Volodymyr Kuleshov
+  type: individual
+
+- id: suomela
+  title: Jukka Suomela
+  type: individual
+
+- id: peyam
+  title: Dr Peyam
+  type: individual
+
+- id: professordave
+  title: Professor Dave Explains
+  type: individual
+
+- id: mathdoctorbob
+  title: MathDoctorBob
+  type: individual
+
+- id: probabilityspace
+  title: A Probability Space
+  type: individual
+
+- id: trushin
+  title: Борис Трушин
+  type: individual
+
+- id: volkov
+  title: Валерий Волков
+  type: individual
+
+- id: wildmathing
+  title: Wild Mathing
+  type: individual
+
+- id: pavelviktor
+  title: Павел Виктор
   type: individual
 
 # Veritasium, Mathologer and ПостНаука are no longer crawled — see the note at

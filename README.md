@@ -115,6 +115,8 @@ order to run them in — are in [docs/scripts.md](docs/scripts.md).
   columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the
   quota
+- [docs/channel-hunt.md](docs/channel-hunt.md) — where the crawled channels came
+  from, how a candidate is checked, and what was refused
 - [docs/scripts.md](docs/scripts.md) — every command: what it does, its flags,
   when to run it
 - [docs/design-system.md](docs/design-system.md) — the tokens (colour, type,
