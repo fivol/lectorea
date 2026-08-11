@@ -224,10 +224,39 @@ Above the kit sit three app-level controls that know about the store:
   chip strips are deliberately left out: they are well separated, and 44px each
   would make the filter row taller than the list it filters.
 
+## Layers over the catalogue
+
+Everything that floats above the page follows the same three rules, so that a
+menu, a legend and a search list read as one product rather than three.
+
+| Layer | z | Form |
+| --- | --- | --- |
+| Bottom sheet, backdrop | `z-40` | fills the phone, `88svh` ceiling |
+| Modal, popover, dropdown, search list | `z-50` | centred dialog, or pinned to a trigger |
+| Keyboard help | `z-[55]` | above the modal it was opened over |
+| Tooltip | `z-[60]` | above everything; never interactive |
+
+1. **Pinned to the viewport, not to a parent.** Anything anchored to a trigger is
+   portalled to `body` and positioned `fixed` by `placeBy` in `src/lib/popover.ts`.
+   The triggers live in strips that scroll sideways and headers that wrap, and a
+   menu clipped by its own ancestor is worse than no menu.
+2. **The placement carries the room left.** `placeBy` returns `maxHeight` along
+   with the coordinates, because only the placement knows which way the panel
+   grows. What hangs past the edge of a fixed panel cannot be scrolled to, so the
+   panel scrolls inside itself instead. `EDGE` — the gap kept from the window —
+   is one number, exported from the same file.
+3. **One ceiling per box.** A sheet that caps its own height and then caps the
+   scroller inside it at a second figure only adds up at one window size; below
+   it the tail of the content is clipped out of reach. Where a modal states a
+   ceiling in viewport units and has padding around it, both are held under
+   `100%` of the padded box.
+
 ## Layout
 
 Breakpoints: `<768` phone, `768–1200` tablet, `>1200` desktop
-(`useIsMobile` / `useIsDesktop` in `src/lib/hooks.ts`).
+(`useIsMobile` / `useIsDesktop` in `src/lib/hooks.ts`). Modals switch shape on
+the CSS breakpoint rather than on a measured viewport, so the first frame is
+already the right shape.
 
 The course panel takes a different form at each: a **draggable split** on
 desktop, a **420px drawer** over the columns on tablet — half of 1024px is

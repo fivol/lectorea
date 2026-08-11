@@ -1,5 +1,10 @@
-/** Gap between a popover and the viewport edge it would otherwise touch. */
-const EDGE = 8;
+/**
+ * Gap between a floating layer and the viewport edge it would otherwise touch.
+ * Exported because every layer over the catalogue keeps the same one — a menu
+ * that stops 8px short of the window and a tooltip that stops 12px short read
+ * as two different products.
+ */
+export const EDGE = 8;
 /** Enough of a popover to be worth opening downwards for. */
 const ROOM_BELOW = 240;
 

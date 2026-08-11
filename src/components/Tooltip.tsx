@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { EDGE } from '@/lib/popover';
 
 type Props = {
   /** What the tooltip says. Falsy content disables it entirely. */
@@ -26,8 +27,8 @@ type Props = {
 /** Long enough that it never fires while the pointer is only passing over. */
 const DELAY = 400;
 const MAX_WIDTH = 260;
+/** Between the bubble and the thing it explains — room for the arrow to sit in. */
 const GAP = 8;
-const EDGE = 8;
 
 /**
  * The explained state.
@@ -49,7 +50,13 @@ export default function Tooltip({ content, children, side = 'top' }: Props) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [open, setOpen] = useState(false);
-  const [place, setPlace] = useState<{ top: number; left: number; arrow: number } | null>(null);
+  const [place, setPlace] = useState<{
+    top: number;
+    left: number;
+    arrow: number;
+    /** Where it actually went, which is not always where it was asked to go. */
+    above: boolean;
+  } | null>(null);
 
   const cancel = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -81,11 +88,27 @@ export default function Tooltip({ content, children, side = 'top' }: Props) {
         Math.max(centre - bubble.width / 2, EDGE),
         Math.max(EDGE, window.innerWidth - bubble.width - EDGE)
       );
-      // Flips rather than hangs off the top of the window.
-      const above = side === 'top' && anchor.top > bubble.height + GAP;
-      const top = above ? anchor.top - bubble.height - GAP : anchor.bottom + GAP;
 
-      setPlace({ top, left, arrow: centre - left });
+      // The side asked for while the bubble fits there; otherwise whichever
+      // side has more room. Which one it ends up on has to be remembered, not
+      // re-derived from `side` further down: a bubble that flipped and kept its
+      // arrow where it was asked to put it points away from what it explains.
+      const needed = bubble.height + GAP + EDGE;
+      const roomAbove = anchor.top;
+      const roomBelow = window.innerHeight - anchor.bottom;
+      const wantsAbove = side === 'top';
+      const above = needed <= (wantsAbove ? roomAbove : roomBelow)
+        ? wantsAbove
+        : roomAbove > roomBelow;
+
+      // Neither side fits a bubble taller than the window — pin it inside
+      // rather than let the far end hang off where nothing can reach it.
+      const top = Math.min(
+        Math.max(above ? anchor.top - bubble.height - GAP : anchor.bottom + GAP, EDGE),
+        Math.max(EDGE, window.innerHeight - bubble.height - EDGE)
+      );
+
+      setPlace({ top, left, above, arrow: centre - left });
     };
     measure();
     window.addEventListener('resize', measure);
@@ -159,7 +182,7 @@ export default function Tooltip({ content, children, side = 'top' }: Props) {
                   className="absolute h-1.5 w-1.5 rotate-45 bg-ink"
                   style={{
                     left: Math.min(Math.max(place.arrow, 10), MAX_WIDTH - 10) - 3,
-                    [side === 'top' ? 'bottom' : 'top']: -3,
+                    [place.above ? 'bottom' : 'top']: -3,
                   }}
                 />
               ) : null}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import type { SearchEntry } from '@shared/schema';
@@ -6,6 +6,7 @@ import { SEARCH_SECTION_ORDER } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
+import { EDGE, placeBy, samePlace, type Placement } from '@/lib/popover';
 import { suggestCourseUrl } from '@/lib/repo';
 import { useCatalogParams } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
@@ -26,6 +27,9 @@ type Props = {
   className?: string;
 };
 
+/** The dropdown is at least this wide — a name has to fit on one line. */
+const PANEL_WIDTH = 340;
+
 export default function SearchBox({
   query,
   onQueryChange,
@@ -40,8 +44,10 @@ export default function SearchBox({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  const [place, setPlace] = useState<Partial<Placement & { width: number }>>({});
 
   /*
    * On a phone the field becomes a button and the search becomes a screen: a
@@ -99,9 +105,38 @@ export default function SearchBox({
     return () => window.removeEventListener('keydown', onKey);
   }, [query, onQueryChange, asSheet]);
 
+  // Before paint, so the panel never shows up in the top-left corner first.
+  useLayoutEffect(() => {
+    if (!open || asSheet) return;
+    const measure = (): void => {
+      const field = boxRef.current?.getBoundingClientRect();
+      if (!field) return;
+      // Never narrower than the field it hangs off — in the columns header that
+      // field is a 160px slot, and a list scaled to it reads «Мат…  22 курса».
+      const width = Math.min(
+        Math.max(field.width, PANEL_WIDTH),
+        window.innerWidth - EDGE * 2
+      );
+      const next = { ...placeBy(field, 'right', width), width };
+      setPlace((prev) => (samePlace(prev, next) && prev.width === width ? prev : next));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    document.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      document.removeEventListener('scroll', measure, true);
+    };
+  }, [open, asSheet]);
+
   useEffect(() => {
     const onPointerDown = (event: PointerEvent): void => {
-      if (!boxRef.current?.contains(event.target as Node)) setOpen(false);
+      // The panel is portalled out of the field's box, so it has to be asked
+      // about separately — otherwise the pointer that picks a row closes the
+      // list from under itself and the click lands on the page behind.
+      const target = event.target as Node;
+      if (boxRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
@@ -309,28 +344,31 @@ export default function SearchBox({
         that on faith; the same three sections, filled with the largest of each,
         show what the catalogue is made of and that all three are searchable.
       */}
-      {open ? (
-        /*
-          As wide as the field, and never narrower than a name: in the header of
-          the columns screen the field is a 160px slot between two buttons, and
-          a list scaled to it reads «Мат…  22 курса». So the panel hangs from the
-          field's right edge and takes the width it needs — capped at 60vw,
-          which is what keeps its left edge on screen on a phone.
-        */
-        <div
-          className="glass-strong absolute right-0 top-[calc(100%+8px)] z-40 flex max-h-[70vh]
-                     w-[min(60vw,340px)] min-w-full flex-col overflow-hidden rounded-pop
-                     border border-line
-                     origin-top animate-pop-in shadow-[var(--shadow-pop)] backdrop-blur-xl
-                     sm:w-[340px]"
-        >
-          <div id="search-results" role="listbox" className="panel-scroll min-h-0 flex-1 p-2">
-            {list}
-          </div>
+      {/*
+        Portalled and pinned to the viewport, like every other layer over the
+        catalogue: the field sits in a header that wraps and in a strip that
+        scrolls sideways, and a list clipped by its own ancestor is worse than
+        no list. The placement carries how much room is left under the field, so
+        the panel scrolls inside itself instead of running off the window.
+      */}
+      {open
+        ? createPortal(
+            <div
+              ref={panelRef}
+              style={{ ...place, transformOrigin: place.bottom ? 'bottom' : 'top' }}
+              className="glass-strong fixed z-50 flex flex-col overflow-hidden rounded-pop
+                         border border-line animate-pop-in shadow-[var(--shadow-pop)]
+                         backdrop-blur-xl"
+            >
+              <div id="search-results" role="listbox" className="panel-scroll min-h-0 flex-1 p-2">
+                {list}
+              </div>
 
-          {results.suggested && !results.empty ? <Hint sections={results.sections} /> : null}
-        </div>
-      ) : null}
+              {results.suggested && !results.empty ? <Hint sections={results.sections} /> : null}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
