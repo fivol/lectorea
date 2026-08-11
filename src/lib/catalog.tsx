@@ -60,9 +60,9 @@ function Booting() {
         <div key={section} className="mb-10">
           <div className="skeleton mb-2 h-6 w-56 rounded" />
           <div className="skeleton mb-4 h-3 w-full max-w-2xl rounded" />
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2.5 min-[480px]:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }, (_, index) => (
-              <div key={index} className="surface flex flex-col gap-2 p-4">
+              <div key={index} className="surface flex flex-col gap-2 p-3.5 sm:p-4">
                 <div className="flex items-center gap-2.5">
                   <span className="skeleton h-[30px] w-[30px] shrink-0 rounded" />
                   <span className="skeleton h-4 flex-1 rounded" />

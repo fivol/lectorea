@@ -53,7 +53,10 @@ export default function BlocksView({ matched, searchActive, allowed }: Props) {
               </h2>
               <p className="mt-1 text-body text-ink-dim">{t(`ui.continent.${continent}.desc`)}</p>
             </header>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {/* One card per row on a phone: at two columns the long titles —
+                "Вероятность и статистика" — broke into three lines and shoved
+                the glyph off the text it labels. */}
+            <div className="grid grid-cols-1 gap-2.5 min-[480px]:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
               {domains.map((domain) => (
                 <DomainCard
                   key={domain.id}
@@ -92,7 +95,7 @@ function DomainCard({
   return (
     <Link
       to={`/courses?domain=${encodeURIComponent(domain.id)}`}
-      className={`surface group relative flex flex-col gap-2 overflow-hidden p-4
+      className={`surface group relative flex flex-col gap-2 overflow-hidden p-3.5 sm:p-4
                   transition-all duration-fast ease-out hover:-translate-y-0.5
                   hover:border-line-strong hover:shadow-[var(--shadow-pop)]
                   ${dimmed ? 'opacity-45' : ''}`}
@@ -127,7 +130,11 @@ function DomainCard({
           </Tooltip>
         ) : null}
       </div>
-      <p className="line-clamp-2 text-caption text-ink-faint">{t(`domain.${domain.id}.desc`)}</p>
+      {/* A full-width card fits in one line what a half-width one needed two
+          for, so the phone list stays scrollable instead of doubling in height. */}
+      <p className="line-clamp-1 text-caption text-ink-faint min-[480px]:line-clamp-2">
+        {t(`domain.${domain.id}.desc`)}
+      </p>
       <div className="mt-auto flex items-center justify-between gap-2 pt-1">
         <span className="num min-w-0 truncate text-xs" style={{ color: counterColour }}>
           {domain.courseCount ? count(domain.courseCount, 'course') : t('ui.map.emptyDomain')}
