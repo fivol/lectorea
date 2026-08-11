@@ -314,6 +314,44 @@ for `data:review`. Results go into the `matches` table, not into YAML.
 
 Model choice is `OPENAI_CLASSIFY_MODEL` (default `gpt-5-mini`).
 
+#### How the rule pass decides
+
+The rule lives in [scripts/lib/rules.ts](../scripts/lib/rules.ts) and is biased
+towards refusing: a playlist it declines costs someone a minute in `data:review`,
+while a playlist it binds wrongly sits in the catalogue and misleads.
+
+Four things shape the answer.
+
+**Word boundaries, not substrings.** A keyword has to match as a word, with a
+short tail allowed for Russian inflection — «алгебра» still finds «алгебры», but
+`logic` no longer finds «bio**logic**al Chemistry» and `evolution` no longer
+finds «The American R**evolution**». Both were real bindings before this.
+
+**Course codes and terms are stripped first.** `MIT 18.06SC Linear Algebra, Fall
+2011` is measured as `mit linear algebra`. This happens before normalisation,
+while the dots are still there — otherwise `18.02` becomes `18 02` and is
+indistinguishable from the `2` in «Математический анализ 2», which decides which
+course that is.
+
+**Confidence follows coverage.** How much of the cleaned title the keyword
+accounts for: the whole title is 0.95, most of it 0.92, about half 0.82–0.88, a
+quarter 0.68–0.78, a passing mention 0.6. So «MIT 18.100A Real Analysis» is
+taken automatically and «Introduction to Ancient Greek History with Donald
+Kagan» — which merely contains `ancient greek` — is not.
+
+**Two subjects mean no answer.** When another course claims a different span of
+the same title, the playlist goes to a human: «Psychology and Economics», «Graph
+Theory and Additive Combinatorics». Adjacent words are exempt, since in
+«multivariable calculus» the two keywords describe one thing rather than two.
+
+On top of that a title that names support material rather than a course —
+homework help, exam prep, office hours, seminar series, podcasts, shorts, open
+days — is refused outright.
+
+Against the crawl in `cache.db` at the time of writing (1120 playlists) this
+took automatic bindings from 17 to 63 while dropping 25 bindings the old rule
+made, almost all of them wrong.
+
 ### `pnpm data:review`
 
 A local review server on `http://localhost:5174` for everything the automatic

@@ -2,22 +2,19 @@ import { nowIso, parseLimit, reportRemaining } from './lib/config.js';
 import { openDb, type Db, type PlaylistRow } from './lib/db.js';
 import { loadSources, reportSourceError, type Sources } from './lib/sources.js';
 import { hasOpenAI, MODELS, openai } from './lib/openai.js';
-import { normalize } from '../shared/search.js';
+import { buildKeywordIndex, matchByRules } from './lib/rules.js';
 
 /**
  * Binding a playlist to a course — the most laborious step, and the one that
  * does not fully automate.
  *
  * A cascade, cheapest first:
- *   1. rules  — regex and the synonym dictionary from keywords/{lang}.json
+ *   1. rules  — the synonym dictionary from keywords/{lang}.json, see lib/rules.ts
  *   2. LLM    — title, description and the first lecture names, in batches of 20
  *   3. human  — anything under the confidence threshold lands in `06-review.ts`
  */
 
 const CONFIDENCE_THRESHOLD = 0.75;
-const RULE_EXACT = 0.9;
-
-type Candidate = { courseId: string; confidence: number; method: 'rule' | 'llm' };
 
 async function main(): Promise<void> {
   const useLlm = process.argv.includes('--llm');
@@ -64,7 +61,7 @@ async function main(): Promise<void> {
   for (const playlist of pending) {
     const candidate = matchByRules(playlist, index);
     if (candidate) {
-      write.run(playlist.id, candidate.courseId, candidate.confidence, candidate.method, nowIso());
+      write.run(playlist.id, candidate.courseId, candidate.confidence, 'rule', nowIso());
       byRule += 1;
     } else {
       touch.run(playlist.id, 'rules-none', nowIso());
@@ -112,54 +109,6 @@ async function main(): Promise<void> {
   console.log(`✓ data:match: ${byRule} by rule, ${byLlm} by model`);
   console.log('· anything below 0.75 stays out of the catalogue until reviewed');
   db.close();
-}
-
-/* ──────────────────────────────  Rule matching  ────────────────────────── */
-
-type KeywordIndex = Array<{ courseId: string; phrase: string }>;
-
-/**
- * Longest phrases first: «теория вероятностей» must win over «вероятность»,
- * otherwise every probability course collapses into the same match.
- */
-function buildKeywordIndex(sources: Sources): KeywordIndex {
-  const index: KeywordIndex = [];
-  for (const course of sources.courses) {
-    const phrases = new Set<string>();
-    const title = sources.i18n[`course.${course.id}.title`];
-    if (title) phrases.add(normalize(title));
-    for (const keyword of sources.keywords[`course.${course.id}`] ?? []) {
-      phrases.add(normalize(keyword));
-    }
-    for (const phrase of phrases) {
-      // Two-letter keywords match everything; they are only useful in search.
-      if (phrase.length >= 4) index.push({ courseId: course.id, phrase });
-    }
-  }
-  return index.sort((a, b) => b.phrase.length - a.phrase.length);
-}
-
-function matchByRules(playlist: PlaylistRow, index: KeywordIndex): Candidate | null {
-  const title = normalize(playlist.title);
-  if (!title) return null;
-
-  const hits = index.filter((entry) => title.includes(entry.phrase));
-  if (!hits.length) return null;
-
-  const best = hits[0];
-  // More than one course claiming the same title is exactly the ambiguous case
-  // a human should look at, so it is handed over rather than guessed.
-  const competing = new Set(
-    hits.filter((hit) => hit.phrase.length === best.phrase.length).map((hit) => hit.courseId)
-  );
-  if (competing.size > 1) return null;
-
-  const exact = title === best.phrase || title.startsWith(`${best.phrase} `);
-  return {
-    courseId: best.courseId,
-    confidence: exact ? RULE_EXACT : 0.6,
-    method: 'rule',
-  };
 }
 
 /* ──────────────────────────────  LLM matching  ─────────────────────────── */
