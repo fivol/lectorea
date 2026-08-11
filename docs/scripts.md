@@ -203,15 +203,20 @@ be checkable without squinting at a coastline.
 ### `pnpm tiles:build`, `tiles:view`
 
 The generator draws territories, not what is inside them. These two are the
-other half: a collection of SVG pieces sized to one hex of the grid — soil,
-grass, water, coast, mountains, rivers, forest — that stack several to a cell
-and join across cells into ranges, lakes and rivers.
+other half: a collection of SVG pieces sized to one hex of the grid — ranges,
+plateaus, canyons, rivers, coasts, and the sea with its shoals, reefs, currents
+and whirlpools — that stack several to a cell and join across cells.
+
+Land pieces never paint the cell: a hex already carries its territory's colour,
+so relief is light and shade over it. Only water owns a colour. And the altitude
+is fixed by the grid — a cell is 27 px wide on the finished map, which is a
+range, not a tree.
 
 ```bash
 pnpm tiles:view                        # one self-contained HTML page
 pnpm tiles:build                       # manifest + files + sprite into .tiles/
 pnpm tiles:build --out=public/tiles    # somewhere that ships
-pnpm tiles:build --only=coast --formats=svg --size=128 --seed=v2
+pnpm tiles:build --only=coast,water --formats=svg --size=128 --seed=v2
 ```
 
 `tiles:build` writes four things: `collection.json` (every piece in unit-hex
