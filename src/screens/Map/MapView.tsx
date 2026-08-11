@@ -373,7 +373,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
                 fill: MAP_INK,
                 paintOrder: 'stroke',
                 stroke: MAP_HALO_SEA,
-                strokeWidth: CONTINENT_SIZE * 0.28,
+                strokeWidth: CONTINENT_SIZE * HALO,
                 strokeLinejoin: 'round',
                 strokeOpacity: 0.7,
                 textTransform: 'uppercase',
@@ -423,6 +423,24 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
  * little tracking is what keeps a five-letter name at 11 units a word.
  */
 const TRACKING = 0.03;
+
+/**
+ * The halo behind a name, as a share of its size — and only half of that shows,
+ * since a stroke straddles the outline it is drawn on.
+ *
+ * It is there to lift the letters off a coloured field, not to draw around
+ * them. Past about a fifth of the size the pale ring stops being a background
+ * and becomes the shape the eye follows, and the map turns into a scattering of
+ * white blobs with words somewhere inside.
+ */
+const HALO = 0.15;
+const HALO_HOVER = 0.18;
+
+/** The course count, against the size of the name it hangs under. */
+const COUNTER = 0.72;
+
+/** How much wider than its ink an icon's halo pass runs, per unit of icon. */
+const GLYPH_HALO = 0.05;
 
 /** Rough width of a bold line at a given size — no measuring in an SVG. */
 const textWidth = (text: string, size: number, tracking = size * TRACKING): number =>
@@ -707,17 +725,18 @@ function Label({
   // name, and the ocean is the one place on the map where nothing else is
   // competing for the reader's eye.
   //
-  // The weight scales with the lettering. A fixed one made the small names on
-  // the slivers look outlined and the large ones look unprotected.
-  const halo = {
+  // The weight scales with the lettering it protects, which is why this takes a
+  // size rather than closing over the name's: the course count under a name is
+  // set smaller and has to be haloed smaller, or it wears the name's collar.
+  const halo = (textSize: number) => ({
     fill: MAP_INK,
     paintOrder: 'stroke' as const,
     stroke: placement.outside ? MAP_HALO_SEA : MAP_HALO,
-    strokeWidth: size * (hovered ? 0.3 : 0.24),
+    strokeWidth: textSize * (hovered ? HALO_HOVER : HALO),
     strokeLinejoin: 'round' as const,
     strokeLinecap: 'round' as const,
     strokeOpacity: 0.92,
-  };
+  });
 
   // Pointing at a territory has to be visible on its name too, or a name
   // standing off in the water belongs to whichever territory the reader
@@ -753,7 +772,10 @@ function Label({
 
       {/* The same halo the names get, and for the same reason: line art in one
           dark colour vanishes into a strongly coloured field. Drawn as a thick
-          pale pass with the ink laid over it. */}
+          pale pass with the ink laid over it — and only the difference between
+          the two passes shows, so the pale one is measured against the icon it
+          is standing behind. A fixed weight put the same ring around a 24-unit
+          glyph and a 76-unit one, and on the small ones the ring was the icon. */}
       {placement.glyph ? (
         <g transform={lift(shape.cx, glyphY)}>
           <DomainGlyph
@@ -763,7 +785,7 @@ function Label({
             size={placement.glyph}
             colour={MAP_HALO}
             opacity={0.85}
-            strokeWidth={5}
+            strokeWidth={2 + placement.glyph * GLYPH_HALO}
           />
           <DomainGlyph
             domainId={domainId}
@@ -793,7 +815,7 @@ function Label({
               // the eye reads the fields first and the strays after them.
               fontWeight={placement.outside ? 600 : 700}
               letterSpacing={size * TRACKING}
-              style={halo}
+              style={halo(size)}
             >
               {line}
             </text>
@@ -802,12 +824,12 @@ function Label({
             <text
               x={placement.x}
               y={lastLineY + size * 0.92 + 3}
-              fontSize={size * 0.72}
+              fontSize={size * COUNTER}
               fontWeight={500}
-              letterSpacing={size * TRACKING}
+              letterSpacing={size * COUNTER * TRACKING}
               // How many courses is an answer to pointing at a field, not part
               // of its name — quieter than the name it hangs under.
-              style={{ ...halo, fillOpacity: 0.68 }}
+              style={{ ...halo(size * COUNTER), fillOpacity: 0.68 }}
             >
               {counter}
             </text>
