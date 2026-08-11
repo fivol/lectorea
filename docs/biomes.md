@@ -1,5 +1,9 @@
 # Biomes: what a field of knowledge is made of, and what colour it is
 
+[← docs](README.md) · [tiles.md](tiles.md) for the pieces the ground is drawn from
+
+![Three continents, three climates](images/map.webp)
+
 Every territory on the map is a **biome** — a kind of country. A biome carries
 two things that are really one decision:
 

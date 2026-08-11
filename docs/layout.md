@@ -1,5 +1,9 @@
 # Levels and columns
 
+[← docs](README.md)
+
+![Columns of cards, the selected chain lit](images/courses.webp)
+
 The courses screen is columns of cards. There are no arrows, no canvas and no
 graph library — the claim the screen makes is carried entirely by *where a card
 sits*, so this document is about how that position is decided.

@@ -1,8 +1,12 @@
 # The interface
 
+[← docs](README.md) · [the live site](https://fivol.github.io/lectorea/)
+
 Three screens, and the profile is the thread running through them.
 
 ## The map — `/`
+
+![The map](images/map.webp)
 
 The way in. Three continents — formal and natural, social, humanities — with the
 fields of knowledge marked out on them as territories, each sized by how many
@@ -28,13 +32,19 @@ outlines rather than stored, so a redrawn map keeps its ground.
 Pick a territory to enter the columns filtered to it, or search.
 
 On a small screen the map falls back to a grid of blocks carrying the same
-icons; on a wide one the switch in the header does the same by hand. That choice
+icons; on a wide one the switch in the header does the same by hand.
+
+![The blocks fallback](images/blocks.webp)
+
+That choice
 lasts the visit and no longer: the map is the front door, so every visit opens
 on the drawing, and the wordmark leads back to it from anywhere. The way back
 from the columns is the other half of that pair — it returns to the view you
 left, blocks included, and says which one it is.
 
 ## The columns — `/courses`
+
+![The columns with a course selected](images/courses.webp)
 
 The catalogue proper. A column is «сложность N» — the length of the longest
 chain of prerequisites ending at that course — so reading left to right is
@@ -79,11 +89,17 @@ you asked for. Those live in the panel instead.
 
 ## Search
 
+![Searching for «теорвер»](images/search.webp)
+
 The search box matches titles, abbreviations and slang (`теорвер`, `линал`),
 because morphology here is a list of forms, not a stemmer.
 
 It opens on focus rather than on the first keystroke, and before anything is
-typed it already holds rows. On the map those are the largest areas, courses and
+typed it already holds rows.
+
+![The search before anything is typed](images/search-suggest.webp)
+
+On the map those are the largest areas, courses and
 universities under their own headings: a field that says «Область, курс, вуз…»
 is worth more when it shows the three rather than asking to be believed. Beside
 the columns it opens on that slice instead — the courses and recordings that
@@ -108,6 +124,9 @@ the columns back to full width.
 - **Path** — everything that has to come first, in order, with an hour estimate
   and how much of it you have already marked done. «Export» copies it to the
   clipboard and downloads it as a Markdown checklist with links.
+
+  ![The path, expanded](images/path.webp)
+
 - **Playlists** — the concrete recordings of that course, sorted by a bayesian
   rating rather than raw views. Filter by language, provider, lecturer, lecture
   length, captions, year, completeness; hide what you have watched. The filters
@@ -120,10 +139,14 @@ the columns back to full width.
   spelling. The lecturer filter disappears for a course whose recordings name
   nobody.
 
+  ![The playlists of a course](images/playlists.webp)
+
 Marking a course cycles it through *nothing → in progress → done*, which is what
 makes "what can I study right now" answerable.
 
 ## The profile
+
+![The profile, with two goals in progress](images/profile.webp)
 
 A modal, not a page — it opens over whatever you were looking at. Courses and
 playlists you have marked, a **Недавние** tab holding the playlists you have

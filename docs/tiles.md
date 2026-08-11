@@ -1,13 +1,22 @@
 # The tile collection
 
+[← docs](README.md) · [biomes.md](biomes.md) for which field gets which pieces
+
 The map is a field of hexagons with no borders drawn: territories coloured by
 domain, sea between them. This is the set of pieces that go on those cells —
 41 tiles at the altitude of a mountain range, a river, a reef, stacked several
 to a cell and joined across cells into larger objects.
 
+One self-contained HTML page, opens straight from disk:
+
 ```bash
-pnpm tiles:view      # one self-contained HTML page, opens straight from disk
-pnpm tiles:build     # generate and export the collection into .tiles/
+pnpm tiles:view
+```
+
+Generate and export the collection into `.tiles/`:
+
+```bash
+pnpm tiles:build
 ```
 
 Code lives in `shared/tiles/`; the viewer's page in `sandbox/tiles/`; the two
@@ -196,6 +205,8 @@ bay and a stretch of open sea — and between them they exercise every joining
 rule above.
 
 ## On the map
+
+![Every territory filled from the collection](images/map.webp)
 
 The map screen fills every territory with the collection, and the sea around
 them: `shared/tiles/biomes.ts` says what a field is made of and what colour it

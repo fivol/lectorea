@@ -1,5 +1,7 @@
 # Data
 
+[← docs](README.md) · the model behind the JSON the site fetches
+
 ## Sources — edited by hand, reviewed in pull requests
 
 ```
@@ -192,7 +194,7 @@ and they should not be shipped alongside the interface strings. Morphology is
 solved here by listing forms, not by a stemmer on the client.
 
 The price is that adding a course touches three files. `pnpm course:new` does the
-clerical part — see [docs/scripts.md](scripts.md).
+clerical part — see [scripts/catalogue.md](scripts/catalogue.md#pnpm-coursenew).
 
 `pnpm check:i18n` fails when a key is used but missing, present but unused, or
 left empty, and when a course has no keywords at all. The last two matter most:

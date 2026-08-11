@@ -1,5 +1,7 @@
 # Where the channels came from
 
+[← docs](README.md) · [pipeline.md](pipeline.md) for what the crawl does with them
+
 `data/channels.yaml` is the crawl's whole input, and the bar it states is
 narrow: *structured courses* — several playlists of ~10+ lectures that name a
 subject. This is the record of how the list was filled and, just as usefully,

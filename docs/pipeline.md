@@ -1,5 +1,9 @@
 # Pipeline
 
+[← docs](README.md) · [![refresh](https://github.com/fivol/lectorea/actions/workflows/refresh.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/refresh.yml)
+
+The nightly crawl that keeps [the site](https://fivol.github.io/lectorea/) fresh.
+
 ```
 scripts/
   01-discover.ts       channels → list of playlists

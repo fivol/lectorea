@@ -2,6 +2,7 @@
   "name": "lectorea",
   "private": true,
   "version": "0.1.0",
+  "homepage": "https://fivol.github.io/lectorea/",
   "type": "module",
   "packageManager": "pnpm@10.6.3",
   "engines": {

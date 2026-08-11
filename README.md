@@ -5,7 +5,15 @@
 > what you need before it and what it opens up after, so a subject becomes a
 > route rather than a pile of links.
 
-**[🇷🇺 Читать по-русски](README.ru.md)** · [Open the catalogue →](https://fivol.github.io/lectorea/)
+**[🇷🇺 Читать по-русски](README.ru.md)** ·
+**[Open the catalogue →](https://fivol.github.io/lectorea/)**
+
+[![site](https://img.shields.io/badge/site-fivol.github.io%2Flectorea-2ea043)](https://fivol.github.io/lectorea/)
+[![deploy](https://github.com/fivol/lectorea/actions/workflows/deploy.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/deploy.yml)
+[![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
+[![courses](https://img.shields.io/badge/courses-186_in_39_fields-4c8eda)](https://fivol.github.io/lectorea/)
+
+[![The map](docs/images/map.webp)](https://fivol.github.io/lectorea/)
 
 Nearly 200 courses across 39 fields of knowledge, each one knowing what it
 depends on. That is the difference from a search engine: YouTube can find you a
@@ -56,6 +64,9 @@ missed.
 3. **Open a course.** You get its prerequisites and what it leads to, the full
    path to it in order, and the recordings themselves — filterable by language,
    university, lecturer, lecture length, subtitles, year and completeness.
+
+   ![A course open, its chain lit and its panel out](docs/images/courses.webp)
+
 4. **Mark what you are doing.** A course cycles through *not started → in
    progress → done*, and that is what makes "what can I study right now"
    answerable.
@@ -67,6 +78,8 @@ prerequisite in order, an estimate in hours, and a running count of how much of
 it you have already done. Export the plan and it downloads as a Markdown
 checklist with links, ready for your notes app.
 
+![The path to deep learning, seven of twelve courses done](docs/images/path.webp)
+
 **Recordings ranked honestly.** The default sort is not view count but how
 strongly people reacted — likes and comments per view — corrected so that a
 playlist with forty views and one enthusiastic comment cannot outrank MIT. A
@@ -76,6 +89,8 @@ that have died or been half-deleted are dropped automatically.
 **Goals and progress.** Add a course to your favourites and it becomes a goal:
 the profile shows a progress bar along its whole path, how many hours are left,
 and a button that takes you to the next course you can actually start.
+
+![The profile, with two goals in progress](docs/images/profile.webp)
 
 **Your marks, your playlists, your history.** Courses in progress and finished,
 favourite playlists, and everything you have opened recently — grouped by course

@@ -1,5 +1,13 @@
 # The design system
 
+[← docs](README.md) · [interface.md](interface.md) for what the screens do
+
+One palette, two themes — the same route, repainted by the same variables:
+
+| Dark | Light |
+|---|---|
+| ![The map in dark](images/map.webp) | ![The map in light](images/map-light.webp) |
+
 Every colour, size, radius, shadow and duration in the product is named once, in
 `src/index.css`, and referenced by name everywhere else. Components never carry
 a raw value.
