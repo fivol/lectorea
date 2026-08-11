@@ -1,17 +1,17 @@
 # Lectorea
 
+> **What to learn, and in what order.** A free catalogue of university lecture
+> courses on YouTube, arranged by what has to come first: every course shows
+> what you need before it and what it opens up after, so a subject becomes a
+> route rather than a pile of links.
+
 **[🇷🇺 Читать по-русски](README.ru.md)** · [Open the catalogue →](https://fivol.github.io/lectorea/)
 
-### What to learn, and in what order
-
-Lectorea is a free catalogue of university-level video courses on YouTube —
-lecture playlists from real universities, arranged not alphabetically but by
-what has to come first. Nearly 200 courses across 39 fields of knowledge, each
-one knowing what it depends on.
-
-That is the difference from a search engine: YouTube can find you a lecture on
-tensor analysis, but it cannot tell you that you will not understand it without
-linear algebra. Lectorea answers the two questions that actually come up:
+Nearly 200 courses across 39 fields of knowledge, each one knowing what it
+depends on. That is the difference from a search engine: YouTube can find you a
+lecture on tensor analysis, but it cannot tell you that you will not understand
+it without linear algebra. Lectorea answers the two questions that actually come
+up:
 
 - **What do I need to know before this course?**
 - **What can I study right now, with what I already know?**
