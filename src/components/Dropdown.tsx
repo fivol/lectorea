@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { placeBy, samePlace, type Placement } from '@/lib/popover';
 import Icon from './Icon';
 
 /**
@@ -41,36 +42,6 @@ type Props = {
 
 /** Matches `w-60` below — the popover is measured before it is rendered. */
 const POPOVER_WIDTH = 240;
-const EDGE = 8;
-/** Enough of the list to be worth opening downwards for. */
-const ROOM_BELOW = 240;
-
-type Placement = { left?: number; right?: number; top?: number; bottom?: number };
-
-/**
- * Anchored to the trigger in viewport coordinates, and clamped to the viewport
- * so a trigger near an edge — the far end of a scrolling filter strip, say —
- * still opens a popover that is fully on screen.
- */
-function placeBy(trigger: DOMRect, align: 'left' | 'right'): Placement {
-  const place: Placement = {};
-  const limit = Math.max(EDGE, window.innerWidth - POPOVER_WIDTH - EDGE);
-
-  if (align === 'right') {
-    place.right = Math.min(Math.max(window.innerWidth - trigger.right, EDGE), limit);
-  } else {
-    place.left = Math.min(Math.max(trigger.left, EDGE), limit);
-  }
-
-  const below = window.innerHeight - trigger.bottom;
-  if (below < ROOM_BELOW && trigger.top > below) place.bottom = window.innerHeight - trigger.top + 4;
-  else place.top = trigger.bottom + 4;
-
-  return place;
-}
-
-const samePlace = (a: Placement, b: Placement): boolean =>
-  a.left === b.left && a.right === b.right && a.top === b.top && a.bottom === b.bottom;
 
 /**
  * Minimal popover used by every filter control — one implementation, one
@@ -100,7 +71,7 @@ export default function Dropdown({
     const measure = (): void => {
       const trigger = ref.current?.getBoundingClientRect();
       if (!trigger) return;
-      const next = placeBy(trigger, align);
+      const next = placeBy(trigger, align, POPOVER_WIDTH);
       setPlace((prev) => (samePlace(prev, next) ? prev : next));
     };
     measure();

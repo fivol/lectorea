@@ -162,6 +162,14 @@ export default function CoursesScreen() {
 
       {isMobile ? (
         <>
+          {/* The phone list carries the same quiet signalling as the columns —
+              a star, a tick, a count — so it gets the same legend, minus the
+              rules that only exist in the graph. */}
+          <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-2
+                          text-xs text-ink-faint">
+            <span className="min-w-0 flex-1">{t('ui.mobile.legend')}</span>
+            <LegendPopover variant="list" />
+          </div>
           <main className="min-h-0 flex-1 overflow-y-auto">
             <MobileCourseList
               courses={mobileCourses}

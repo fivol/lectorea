@@ -1,8 +1,25 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useT } from '@/i18n';
+import { placeBy, samePlace, type Placement } from '@/lib/popover';
 import Icon from '@/components/Icon';
 
 const SEEN_KEY = 'lectorea.legend.seen.v1';
+
+/** Roomy enough for the longest row, and never wider than a phone. */
+const width = (): number => Math.min(360, window.innerWidth - 16);
+
+/**
+ * How tall the panel may grow before it starts scrolling on its own — the room
+ * left between the edge it hangs off and the far side of the viewport.
+ */
+const roomFor = (place: Placement): number =>
+  Math.max(120, window.innerHeight - (place.top ?? place.bottom ?? 0) - 8);
+
+type Box = Placement & { maxHeight: number };
+
+const sameBox = (a: Partial<Box>, b: Box): boolean =>
+  samePlace(a, b) && a.maxHeight === b.maxHeight;
 
 /**
  * What everything on this screen means, in one place.
@@ -14,11 +31,17 @@ const SEEN_KEY = 'lectorea.legend.seen.v1';
  * It opens itself once, on a first visit, and then never again unless asked:
  * a legend that reappears is an interruption, and one that never appears is a
  * secret.
+ *
+ * The phone shows a plain list instead of the graph, so half these rules do not
+ * exist there — `variant` drops the ones the reader cannot see.
  */
-export default function LegendPopover() {
+export default function LegendPopover({ variant = 'columns' }: { variant?: 'columns' | 'list' }) {
   const { t } = useT();
+  const columns = variant === 'columns';
   const [open, setOpen] = useState(false);
-  const boxRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLSpanElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<Partial<Box>>({});
 
   useEffect(() => {
     try {
@@ -30,10 +53,31 @@ export default function LegendPopover() {
     }
   }, []);
 
+  // Before paint, so the panel never shows up in the top-left corner first.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = (): void => {
+      const trigger = boxRef.current?.getBoundingClientRect();
+      if (!trigger) return;
+      const place = placeBy(trigger, 'right', width());
+      const next: Box = { ...place, maxHeight: roomFor(place) };
+      setBox((prev) => (sameBox(prev, next) ? prev : next));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    document.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      document.removeEventListener('scroll', measure, true);
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
+    const inside = (target: Node | null): boolean =>
+      Boolean(boxRef.current?.contains(target) || popoverRef.current?.contains(target));
     const onPointerDown = (event: PointerEvent): void => {
-      if (!boxRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!inside(event.target as Node)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') setOpen(false);
@@ -59,72 +103,113 @@ export default function LegendPopover() {
         <Icon name="help" size={14} />
       </button>
 
-      {open ? (
-        <div
-          role="dialog"
-          aria-label={t('ui.legend.title')}
-          className="absolute left-0 top-[calc(100%+8px)] z-50 w-[min(360px,80vw)] origin-top
-                     animate-pop-in rounded-pop border border-line bg-surface p-4
-                     text-caption shadow-[var(--shadow-pop)]"
-        >
-          <div className="mb-2 flex items-baseline gap-2">
-            <h2 className="text-h3 text-ink">{t('ui.legend.title')}</h2>
-            <button
-              type="button"
-              className="btn-ghost ml-auto rounded p-1"
-              onClick={() => setOpen(false)}
-              aria-label={t('ui.common.close')}
+      {/* Pinned to the viewport rather than to the button: the button sits at the
+          right edge of its row, and a panel anchored under it left-aligned ran
+          straight off a narrow screen. Clamped placement keeps it on screen. */}
+      {open
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              role="dialog"
+              aria-label={t('ui.legend.title')}
+              style={{
+                ...box,
+                width: 'min(360px, calc(100vw - 16px))',
+                transformOrigin: box.bottom ? 'bottom' : 'top',
+              }}
+              className="panel-scroll fixed z-50 animate-pop-in rounded-pop border border-line
+                         bg-surface p-4 text-caption shadow-[var(--shadow-pop)]"
             >
-              <Icon name="close" size={13} />
-            </button>
-          </div>
+              <div className="mb-2 flex items-baseline gap-2">
+                <h2 className="text-h3 text-ink">{t('ui.legend.title')}</h2>
+                <button
+                  type="button"
+                  className="btn-ghost ml-auto rounded p-1"
+                  onClick={() => setOpen(false)}
+                  aria-label={t('ui.common.close')}
+                >
+                  <Icon name="close" size={13} />
+                </button>
+              </div>
 
-          <dl className="space-y-2.5">
-            <Row mark={<span className="mono-label">{t('ui.column.level', { n: 4 })}</span>}>
-              {t('ui.legend.level')}
-            </Row>
-            <Row
-              mark={
-                <span className="h-4 w-6 rounded border border-line bg-surface-2 opacity-45 grayscale" />
-              }
-            >
-              {t('ui.legend.dimmed')}
-            </Row>
-            <Row mark={<span className="h-4 w-6 rounded border border-accent bg-accent-soft" />}>
-              {t('ui.legend.inPath')}
-            </Row>
-            <Row
-              mark={
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-canvas">
-                  <Icon name="check" size={10} />
-                </span>
-              }
-            >
-              {t('ui.legend.done')}
-            </Row>
-            <Row mark={<Icon name="star-filled" size={14} className="text-warning" />}>
-              {t('ui.legend.favorite')}
-            </Row>
-            <Row mark={<Icon name="bridge" size={14} className="text-ink-dim" />}>
-              {t('ui.map.bridgeHint')}
-            </Row>
-            <Row
-              mark={
-                <span className="flex items-center gap-0.5">
-                  <span className="h-2 w-2 rounded-full bg-accent" />
-                  <span className="h-2 w-2 rounded-full bg-warning" />
-                  <span className="h-2 w-2 rounded-full bg-ink-faint" />
-                </span>
-              }
-            >
-              {t('ui.legend.quality')}
-            </Row>
-            <Row mark={<span className="text-[10px] text-ink-faint">{t('ui.course.noMaterials')}</span>}>
-              {t('ui.legend.noMaterials')}
-            </Row>
-          </dl>
-        </div>
-      ) : null}
+              <dl className="space-y-2.5">
+                {columns ? (
+                  <Row mark={<span className="mono-label">{t('ui.column.level', { n: 4 })}</span>}>
+                    {t('ui.legend.level')}
+                  </Row>
+                ) : (
+                  <Row
+                    mark={
+                      <span className="text-[10px] uppercase tracking-wide text-ink-faint">
+                        {t('ui.mobile.levelGroup', { n: 4 })}
+                      </span>
+                    }
+                  >
+                    {t('ui.legend.levelGroup')}
+                  </Row>
+                )}
+                {columns ? (
+                  <>
+                    <Row
+                      mark={
+                        <span className="h-4 w-6 rounded border border-line bg-surface-2 opacity-45 grayscale" />
+                      }
+                    >
+                      {t('ui.legend.dimmed')}
+                    </Row>
+                    <Row
+                      mark={<span className="h-4 w-6 rounded border border-accent bg-accent-soft" />}
+                    >
+                      {t('ui.legend.inPath')}
+                    </Row>
+                  </>
+                ) : null}
+                <Row
+                  mark={
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-canvas">
+                      <Icon name="check" size={10} />
+                    </span>
+                  }
+                >
+                  {t('ui.legend.done')}
+                </Row>
+                <Row mark={<Icon name="star-filled" size={14} className="text-warning" />}>
+                  {t('ui.legend.favorite')}
+                </Row>
+                {columns ? (
+                  <>
+                    <Row mark={<Icon name="bridge" size={14} className="text-ink-dim" />}>
+                      {t('ui.map.bridgeHint')}
+                    </Row>
+                    <Row
+                      mark={
+                        <span className="flex items-center gap-0.5">
+                          <span className="h-2 w-2 rounded-full bg-accent" />
+                          <span className="h-2 w-2 rounded-full bg-warning" />
+                          <span className="h-2 w-2 rounded-full bg-ink-faint" />
+                        </span>
+                      }
+                    >
+                      {t('ui.legend.quality')}
+                    </Row>
+                  </>
+                ) : (
+                  <Row mark={<span className="num text-xs text-ink-faint">12</span>}>
+                    {t('ui.legend.playlistCount')}
+                  </Row>
+                )}
+                <Row
+                  mark={
+                    <span className="text-[10px] text-ink-faint">{t('ui.course.noMaterials')}</span>
+                  }
+                >
+                  {t('ui.legend.noMaterials')}
+                </Row>
+              </dl>
+            </div>,
+            document.body
+          )
+        : null}
     </span>
   );
 }
