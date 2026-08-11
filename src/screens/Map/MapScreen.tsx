@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
@@ -68,11 +69,16 @@ export default function MapScreen() {
                     ${compact ? 'on-canvas pb-2 pt-2 shadow-[var(--shadow-card)] backdrop-blur' : 'pt-4'}`}
       >
         <div className="flex items-baseline gap-3">
+          {/* The wordmark is the way home, as it is on every site: from a
+              filtered or searched map it leads back to the clean one, and the
+              link is what makes that discoverable at all. */}
           <h1
             className={`font-display tracking-tight transition-all duration-base ease-out
                         ${compact ? 'text-base' : 'text-xl'}`}
           >
-            {t('app.title')}
+            <Link to="/" className="rounded transition-colors hover:text-accent">
+              {t('app.title')}
+            </Link>
           </h1>
           {compact ? null : (
             <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
