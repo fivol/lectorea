@@ -1,6 +1,6 @@
 import { openDb } from './lib/db.js';
 import { loadSources, reportSourceError } from './lib/sources.js';
-import { nowIso } from './lib/config.js';
+import { nowIso, parseLimit, reportRemaining } from './lib/config.js';
 
 /**
  * DEVELOPMENT ONLY. Fills cache.db with synthetic playlists so the playlist
@@ -12,6 +12,7 @@ import { nowIso } from './lib/config.js';
  * rows with `dev-` ids, and `--wipe` removes them again.
  *
  *   pnpm tsx scripts/dev-seed.ts          # add fake playlists
+ *   pnpm tsx scripts/dev-seed.ts 20       # seed twenty more courses
  *   pnpm tsx scripts/dev-seed.ts --wipe   # remove them
  */
 
@@ -40,6 +41,7 @@ const LECTURERS = [
 
 function main(): void {
   const wipe = process.argv.includes('--wipe');
+  const limit = parseLimit();
   const sources = loadSources();
   const db = openDb();
 
@@ -86,16 +88,29 @@ function main(): void {
   }
 
   const now = nowIso();
+  const seenCourse = db.prepare(`SELECT 1 FROM playlists WHERE id = ?`);
   let playlists = 0;
   let videos = 0;
+  let courses = 0;
+  let remaining = 0;
 
   const run = db.transaction(() => {
     for (const course of sources.courses) {
+      // Seeding is per course, not per playlist: the generator is seeded once
+      // per course, so stopping mid-course would shift every number after it
+      // and the data would stop being reproducible.
+      if (seenCourse.get(`${DEV_PREFIX}${course.id}-0`)) continue;
+      if (courses >= limit) {
+        remaining += 1;
+        continue;
+      }
+
       const rnd = seeded(`dev:${course.id}`);
       // Not every course gets material — an empty course is a normal state the
       // interface has to look right in.
       if (rnd() < 0.18) continue;
 
+      courses += 1;
       const howMany = 1 + Math.floor(rnd() * 6);
       for (let i = 0; i < howMany; i++) {
         const channel = sources.channels[Math.floor(rnd() * sources.channels.length)];
@@ -154,9 +169,10 @@ function main(): void {
   run();
 
   console.log(
-    `✓ seeded ${playlists} development playlists (${videos} videos). ` +
+    `✓ seeded ${playlists} development playlists across ${courses} courses (${videos} videos). ` +
       `Run \`pnpm data:build\` next, and \`--wipe\` to undo.`
   );
+  reportRemaining(remaining, limit);
   db.close();
 }
 

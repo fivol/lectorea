@@ -113,28 +113,43 @@ export type WorkerResult = {
   done: number;
   failed: number;
   quotaExhausted: boolean;
+  stoppedAtLimit: boolean;
 };
 
 /**
- * Runs jobs until the queue drains or the quota does.
+ * Runs jobs until the queue drains, the quota does, or `limit` jobs have been
+ * taken.
  *
- * A quota stop is not an error — it is the normal end of the working day. The
- * process leaves the queue as it is and exits 0 so CI stays green and picks up
- * where it left off tomorrow.
+ * Neither a quota stop nor a limit stop is an error — both are a normal end of
+ * a run. The process leaves the queue as it is and exits 0, so CI stays green
+ * and the next call picks up the jobs this one did not reach.
  */
 export async function runWorker(
   db: Db,
   types: JobType[],
-  handle: (job: Job) => Promise<void>
+  handle: (job: Job) => Promise<void>,
+  limit = Infinity
 ): Promise<WorkerResult> {
   const recovered = recoverStale(db);
   if (recovered) console.log(`· recovered ${recovered} jobs left running by a previous crash`);
 
-  const result: WorkerResult = { done: 0, failed: 0, quotaExhausted: false };
+  const result: WorkerResult = {
+    done: 0,
+    failed: 0,
+    quotaExhausted: false,
+    stoppedAtLimit: false,
+  };
+  let taken = 0;
 
   for (;;) {
+    if (taken >= limit) {
+      // Only a stop worth announcing if something is actually left behind.
+      result.stoppedAtLimit = pendingCount(db, types) > 0;
+      break;
+    }
     const job = claim(db, types);
     if (!job) break;
+    taken += 1;
 
     try {
       await handle(job);
@@ -173,6 +188,10 @@ export function reportWorker(name: string, result: WorkerResult): void {
       `${name}: квота исчерпана, продолжу завтра ` +
         `(готово ${result.done}, ошибок ${result.failed})`
     );
+    return;
+  }
+  if (result.stoppedAtLimit) {
+    console.log(`${name}: лимит выбран (готово ${result.done}, ошибок ${result.failed})`);
     return;
   }
   console.log(`✓ ${name}: ${result.done} done, ${result.failed} failed`);

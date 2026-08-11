@@ -8,6 +8,50 @@ Two of them are needed to work on the interface (`data:build`, `data:seed-dev`).
 The rest exist to fill the catalogue with material and are run on a schedule, not
 per commit.
 
+## Doing it in batches
+
+Every script that processes things one by one takes a **leading positive
+integer** that caps how many it does in one run:
+
+```bash
+pnpm data:discover 3      # crawl three channels
+pnpm data:discover 3      # the next three, not the same three
+```
+
+This works because each step already knows what it finished: a refresh window
+that has not expired, a job marked `done`, a playlist that already has a match,
+an image already on disk. The cap stops the run early; the skip rules decide
+where the next one starts. Nothing is repeated and nothing is lost.
+
+The point is control over spending. A crawl that runs to the quota ceiling is
+hard to reason about mid-flight — a batch of ten is not, and the last line of
+output always says how much is left:
+
+```
+data:discover: лимит выбран (готово 3, ошибок 0)
+· 48 left — run the same command again for the next 3
+```
+
+Flags are ignored when looking for the number, so `pnpm data:match 20 --llm` and
+`pnpm data:images --openai 5` both work. Without the number a script processes
+everything due, exactly as before.
+
+| Command | What one unit of the limit means |
+|---|---|
+| `data:discover` | one channel |
+| `data:playlists` | one playlist's metadata |
+| `data:videos` | one playlist's video list |
+| `data:liveness` | one playlist checked |
+| `data:refresh` | applies the cap to each of its three stages |
+| `data:match` | one playlist classified |
+| `data:images` | one image written |
+| `data:import` | one newly queued playlist |
+| `data:seed-dev` | one course seeded |
+
+`data:build`, `data:review`, `data:map`, `check:i18n` and `course:new` take no
+limit: they either process the catalogue as a whole or already work one item at
+a time by hand.
+
 | Command | Script | Needs | Writes |
 |---|---|---|---|
 | `pnpm data:build` | `08-build.ts` | `data/`, optional `cache.db` | `public/data/` |
@@ -60,8 +104,13 @@ without spending a day of YouTube quota on a first crawl.
 ```bash
 pnpm data:seed-dev          # insert
 pnpm data:build             # then rebuild, seeds only reach the UI through the build
+pnpm data:seed-dev 20       # twenty more courses, skipping those already seeded
 pnpm data:seed-dev --wipe   # remove every seeded row, leaving real data alone
 ```
+
+The limit counts courses rather than playlists: the generator is seeded once per
+course, so stopping in the middle of one would shift every number after it and
+the data would stop being reproducible.
 
 ### `pnpm course:new`
 
@@ -249,10 +298,16 @@ pnpm data:images --openai --only=math,physics
 ```
 
 `--only=` takes a comma-separated list of domain ids; without it every domain is
-regenerated. Needs `OPENAI_API_KEY`; model is `OPENAI_IMAGE_MODEL` (default
+covered. Needs `OPENAI_API_KEY`; model is `OPENAI_IMAGE_MODEL` (default
 `gpt-image-1`). Look changes go through `scripts/lib/visual.config.ts` — editing
 `seedSalt` there redraws all procedural art, which is one string instead of 500
 API calls.
+
+Both modes **skip images already on disk**, since there is no table to record
+what is done and the file is the record. That is what makes the limit work
+(`pnpm data:images --openai 5` twice generates ten different images), and it is
+also what keeps a re-run from paying for the same pictures twice. A changed
+`seedSalt` or prompt therefore needs `--force`, which regenerates regardless.
 
 ### `pnpm data:import`
 

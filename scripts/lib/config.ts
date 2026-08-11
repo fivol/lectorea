@@ -56,6 +56,37 @@ export function requireYoutubeKey(): string {
   return env.youtubeKey;
 }
 
+/**
+ * A leading positive integer caps how many items one run takes on:
+ * `pnpm data:discover 3` crawls three channels and leaves the rest for later.
+ *
+ * The cap is only useful because every step already skips what it finished — a
+ * refresh window that has not expired, a job marked `done`, a playlist that
+ * already has a match — so running the same command again continues with the
+ * next three rather than redoing the first three. Flags are ignored, which
+ * keeps `pnpm data:match 20 --llm` working.
+ */
+export function parseLimit(argv: string[] = process.argv.slice(2)): number {
+  const first = argv.find((argument) => !argument.startsWith('-'));
+  if (first === undefined) return Infinity;
+  const value = Number(first);
+  if (!Number.isInteger(value) || value <= 0) {
+    console.error(`The limit must be a positive integer, got "${first}".`);
+    process.exit(1);
+  }
+  return value;
+}
+
+/** `· 12 left, run again to take the next 3` — the nudge that makes batching obvious. */
+export function reportRemaining(remaining: number, limit: number): void {
+  if (remaining <= 0) return;
+  console.log(
+    Number.isFinite(limit)
+      ? `· ${remaining} left — run the same command again for the next ${limit}`
+      : `· ${remaining} left`
+  );
+}
+
 export function ensureDir(dir: string): void {
   fs.mkdirSync(dir, { recursive: true });
 }

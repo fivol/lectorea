@@ -108,24 +108,35 @@ export async function discoverChannel(
 
 /* ──────────────────────────  Playlist metadata  ────────────────────────── */
 
+/** How many rows are examined for being due. Not a cap on the work itself. */
+const SCAN_LIMIT = 5000;
+
 /**
  * Refreshes playlist metadata 50 at a time. Popular playlists come round more
  * often — their numbers move, and they are the ones people actually sort by.
+ *
+ * `limit` caps how many playlists this run refreshes; the ones left over stay
+ * due and are picked up by the next call, since `stats_fetched_at` is what
+ * decides due-ness and only the refreshed rows get a new one.
  */
 export async function refreshPlaylistMetadata(
   db: Db,
   api: YoutubeClient,
-  limit = 5000
-): Promise<{ refreshed: number; quotaExhausted: boolean }> {
+  limit = Infinity
+): Promise<{ refreshed: number; quotaExhausted: boolean; remaining: number }> {
   const popularCutoff = popularThreshold(db);
 
-  const due = (
+  const allDue = (
     db
       .prepare(
         `SELECT id, views, stats_fetched_at FROM playlists
          WHERE alive = 1 ORDER BY views DESC LIMIT ?`
       )
-      .all(limit) as Array<{ id: string; views: number | null; stats_fetched_at: string | null }>
+      .all(SCAN_LIMIT) as Array<{
+      id: string;
+      views: number | null;
+      stats_fetched_at: string | null;
+    }>
   ).filter((row) =>
     isDue(
       row.stats_fetched_at,
@@ -133,7 +144,10 @@ export async function refreshPlaylistMetadata(
     )
   );
 
-  if (!due.length) return { refreshed: 0, quotaExhausted: false };
+  const due = allDue.slice(0, limit);
+  const remaining = allDue.length - due.length;
+
+  if (!due.length) return { refreshed: 0, quotaExhausted: false, remaining };
 
   const update = db.prepare(
     `UPDATE playlists SET title = ?, description = ?, video_count = ?, published_at = ?,
@@ -148,7 +162,7 @@ export async function refreshPlaylistMetadata(
     try {
       items = await api.playlists(chunk);
     } catch (error) {
-      if (error instanceof QuotaExceededError) return { refreshed, quotaExhausted: true };
+      if (error instanceof QuotaExceededError) return { refreshed, quotaExhausted: true, remaining };
       throw error;
     }
 
@@ -174,7 +188,7 @@ export async function refreshPlaylistMetadata(
     refreshed += items.length;
   }
 
-  return { refreshed, quotaExhausted: false };
+  return { refreshed, quotaExhausted: false, remaining };
 }
 
 /** Views level that puts a playlist in the top fifth of the catalogue. */
@@ -290,11 +304,16 @@ export async function fetchPlaylistVideos(
 
 /* ────────────────────────────────  Liveness  ───────────────────────────── */
 
+/**
+ * `limit` caps how many playlists this run checks. `checked_at` moves only for
+ * the ones actually asked about, so the next call continues with the rest.
+ */
 export async function checkLiveness(
   db: Db,
-  api: YoutubeClient
-): Promise<{ checked: number; dead: number; quotaExhausted: boolean }> {
-  const due = (
+  api: YoutubeClient,
+  limit = Infinity
+): Promise<{ checked: number; dead: number; quotaExhausted: boolean; remaining: number }> {
+  const allDue = (
     db
       .prepare(`SELECT id, checked_at FROM playlists WHERE alive = 1`)
       .all() as Array<{ id: string; checked_at: string | null }>
@@ -302,7 +321,10 @@ export async function checkLiveness(
     .filter((row) => isDue(row.checked_at, REFRESH_DAYS.liveness))
     .map((row) => row.id);
 
-  if (!due.length) return { checked: 0, dead: 0, quotaExhausted: false };
+  const due = allDue.slice(0, limit);
+  const remaining = allDue.length - due.length;
+
+  if (!due.length) return { checked: 0, dead: 0, quotaExhausted: false, remaining };
 
   const markDead = db.prepare(`UPDATE playlists SET alive = 0, checked_at = ? WHERE id = ?`);
   const touch = db.prepare(`UPDATE playlists SET checked_at = ? WHERE id = ?`);
@@ -316,7 +338,7 @@ export async function checkLiveness(
       items = await api.playlists(chunk);
     } catch (error) {
       if (error instanceof QuotaExceededError) {
-        return { checked, dead, quotaExhausted: true };
+        return { checked, dead, quotaExhausted: true, remaining };
       }
       throw error;
     }
@@ -336,5 +358,5 @@ export async function checkLiveness(
     checked += chunk.length;
   }
 
-  return { checked, dead, quotaExhausted: false };
+  return { checked, dead, quotaExhausted: false, remaining };
 }

@@ -1,4 +1,4 @@
-import { nowIso } from './lib/config.js';
+import { nowIso, parseLimit, reportRemaining } from './lib/config.js';
 import { openDb, type Db, type PlaylistRow } from './lib/db.js';
 import { loadSources, reportSourceError, type Sources } from './lib/sources.js';
 import { hasOpenAI, MODELS, openai } from './lib/openai.js';
@@ -21,11 +21,13 @@ type Candidate = { courseId: string; confidence: number; method: 'rule' | 'llm' 
 
 async function main(): Promise<void> {
   const useLlm = process.argv.includes('--llm');
+  const limit = parseLimit();
   const sources = loadSources();
   const db = openDb();
 
-  const pending = unmatchedPlaylists(db, sources);
-  console.log(`· ${pending.length} playlists without a confident match`);
+  const allPending = unmatchedPlaylists(db, sources);
+  const pending = allPending.slice(0, limit);
+  console.log(`· ${allPending.length} playlists without a confident match`);
   if (!pending.length) {
     db.close();
     return;
@@ -43,6 +45,19 @@ async function main(): Promise<void> {
      WHERE matches.reviewed = 0`
   );
 
+  /**
+   * Records that a pass looked at this playlist and came away with nothing.
+   * Only `updated_at` moves, so a weak guess from an earlier pass survives —
+   * but the playlist sorts to the back of the queue, which is what lets a
+   * limited run continue with different playlists instead of the same ones.
+   */
+  const touch = db.prepare(
+    `INSERT INTO matches (playlist_id, course_id, confidence, method, reviewed, updated_at)
+     VALUES (?, NULL, 0, ?, 0, ?)
+     ON CONFLICT(playlist_id) DO UPDATE SET updated_at = excluded.updated_at
+     WHERE matches.reviewed = 0`
+  );
+
   let byRule = 0;
   const unresolved: PlaylistRow[] = [];
 
@@ -52,10 +67,12 @@ async function main(): Promise<void> {
       write.run(playlist.id, candidate.courseId, candidate.confidence, candidate.method, nowIso());
       byRule += 1;
     } else {
+      touch.run(playlist.id, 'rules-none', nowIso());
       unresolved.push(playlist);
     }
   }
   console.log(`· rules matched ${byRule}, ${unresolved.length} left`);
+  reportRemaining(allPending.length - pending.length, limit);
 
   if (!unresolved.length) {
     db.close();
@@ -82,7 +99,10 @@ async function main(): Promise<void> {
     const batch = unresolved.slice(i, i + 20);
     const answers = await classifyBatch(db, batch, courses);
     for (const answer of answers) {
-      if (!answer.courseId) continue;
+      if (!answer.courseId) {
+        touch.run(answer.playlistId, 'llm-none', nowIso());
+        continue;
+      }
       write.run(answer.playlistId, answer.courseId, answer.confidence, 'llm', nowIso());
       byLlm += 1;
     }
@@ -203,6 +223,11 @@ async function classifyBatch(
 
 /* ────────────────────────────────  Selection  ──────────────────────────── */
 
+/**
+ * Never-tried playlists first, then the ones tried longest ago. Without an
+ * order a limited run would keep re-reading the same head of the list, and
+ * `pnpm data:match 20` twice would classify the same twenty twice.
+ */
 function unmatchedPlaylists(db: Db, sources: Sources): PlaylistRow[] {
   const overridden = new Set(Object.keys(sources.overrides.matches));
   const rows = db
@@ -210,7 +235,8 @@ function unmatchedPlaylists(db: Db, sources: Sources): PlaylistRow[] {
       `SELECT p.* FROM playlists p
        LEFT JOIN matches m ON m.playlist_id = p.id
        WHERE p.alive = 1
-         AND (m.playlist_id IS NULL OR (m.reviewed = 0 AND m.confidence < ?))`
+         AND (m.playlist_id IS NULL OR (m.reviewed = 0 AND m.confidence < ?))
+       ORDER BY m.updated_at IS NULL DESC, m.updated_at, p.id`
     )
     .all(CONFIDENCE_THRESHOLD) as PlaylistRow[];
   return rows.filter((row) => !overridden.has(row.id));

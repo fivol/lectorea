@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parse, stringify } from 'yaml';
 import { z } from 'zod';
-import { nowIso, paths } from './lib/config.js';
+import { nowIso, parseLimit, paths, reportRemaining } from './lib/config.js';
 import { openDb } from './lib/db.js';
 import { enqueue } from './lib/queue.js';
 import { reportSourceError } from './lib/sources.js';
@@ -14,6 +14,9 @@ import { reportSourceError } from './lib/sources.js';
  * the script drops suggestions into data/proposed-courses.yaml, where a human adds
  * them by hand with real `deps`. Auto-generated dependencies are a guaranteed
  * way to ruin the graph, and the graph is the whole product.
+ *
+ * `pnpm data:import 50` queues fifty new playlists — the lists are read in full
+ * either way, since that costs nothing, but the crawl they trigger does not.
  */
 
 const SourceSchema = z.object({
@@ -29,6 +32,7 @@ const LINK_RE = /\[([^\]]{3,120})\]\((https?:\/\/[^)\s]+)\)/g;
 type Found = { playlistId: string; title: string; source: string };
 
 async function main(): Promise<void> {
+  const limit = parseLimit();
   const file = path.join(paths.data, 'sources.yaml');
   const sources = z.array(SourceSchema).parse(parse(fs.readFileSync(file, 'utf8')));
 
@@ -85,9 +89,19 @@ async function main(): Promise<void> {
      ON CONFLICT(id) DO NOTHING`
   );
 
+  const exists = db.prepare(`SELECT 1 FROM playlists WHERE id = ?`);
+
   let added = 0;
+  let skipped = 0;
   const write = db.transaction(() => {
     for (const item of found.values()) {
+      // A playlist already in the table was imported by an earlier run; the
+      // limit therefore applies to genuinely new ones, and the next call
+      // continues with the ones this one stopped short of.
+      if (added >= limit) {
+        if (!exists.get(item.playlistId)) skipped += 1;
+        continue;
+      }
       const changes = insert.run(item.playlistId, item.title, nowIso(), nowIso()).changes;
       if (changes) {
         enqueue(db, 'videos', item.playlistId);
@@ -101,6 +115,7 @@ async function main(): Promise<void> {
   db.close();
 
   console.log(`✓ data:import: ${added} new playlists queued, ${found.size} seen`);
+  reportRemaining(skipped, limit);
   console.log('· run `pnpm data:refresh` to fetch them, then `pnpm data:match`');
 }
 
