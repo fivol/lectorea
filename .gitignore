@@ -27,3 +27,4 @@ dev-dist/
 
 # Agent scratch worktrees.
 .claude/worktrees/
+.idea
