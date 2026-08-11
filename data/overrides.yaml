@@ -6,8 +6,13 @@
 #             `hidden: true` removes a playlist from the catalogue entirely.
 # channels  : channelId → providerId, when the channel title is not enough.
 
-matches: {}
-
+matches:
+  PLUl4u3cNGP601Q2jo-J_3raNCMMs6Jves: finance
+  PL221E2BBF13BECF6C: linear-algebra
+  PL21D8ADED13B2D74C: quantum-mechanics
+  PL1C22D4DED943EF7B: calculus-3
+  PL21BCE50ABFF029F1: calculus-1
+  PL09D3A5433313EADB: signal-processing
+  PLUl4u3cNGP63wurgwdJKo6UEYBWDLnmCj: film-studies-intro
 playlists: {}
-
 channels: {}
