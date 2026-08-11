@@ -29,19 +29,15 @@ import { hydroTiles } from './atlas/hydro.js';
 import { waterTiles } from './atlas/water.js';
 import { assemblies } from './atlas/assemblies.js';
 import { assemblyBox, assemblySvg, SEED_SALT, tileBody } from './render.js';
-import {
-  OCEAN,
-  TERRAINS,
-  TERRAIN_BY_CONTINENT,
-  TERRAIN_BY_DOMAIN,
-  type Terrain,
-} from './terrain.js';
+import { OCEAN } from './terrain.js';
+import { BIOMES, BIOME_BY_CONTINENT, BIOME_BY_DOMAIN, type Biome } from './biomes.js';
 import type { Assembly, Over, Tile, TileGroup } from './types.js';
 
 export * from './hex.js';
 export * from './types.js';
 export * from './render.js';
 export * from './terrain.js';
+export * from './biomes.js';
 export * from './fill.js';
 export { terrain, WATERS, type Palette } from './ink.js';
 export { assemblies };
@@ -132,16 +128,18 @@ export type Manifest = {
   tiles: ManifestTile[];
   assemblies: ManifestAssembly[];
   /**
-   * What the app fills its territories with. Recipes rather than pictures, and
-   * a table keyed on the domain rather than on the polygon — see
-   * `shared/tiles/terrain.ts` for why that is the only key that survives the
-   * map being redrawn.
+   * What the app fills its territories with, and paints them. A biome is a
+   * recipe plus a ramp of colours, and the table is keyed on the domain rather
+   * than on the polygon — see `shared/tiles/biomes.ts` for why that is the only
+   * key that survives the map being redrawn.
    */
-  terrains: {
-    recipes: Terrain[];
+  biomes: {
+    kinds: Biome[];
+    /** domain → `biome/tone`. The tone names a colour in that biome's ramp. */
     byDomain: Record<string, string>;
     byContinent: Record<string, string>;
-    /** The water: what goes near a coast, what goes out in the open. */
+    /** The water: what goes near a coast, what goes out in the open. No colour
+     *  of its own — a consumer paints the sea whatever its own theme says. */
     ocean: typeof OCEAN;
   };
 };
@@ -220,11 +218,13 @@ export function buildManifest(options: ManifestOptions = {}): Manifest {
       over:
         'over = land | water. На суше клетка уже покрашена цветом области, поэтому наземные ' +
         'куски рисуют свет и тень, а не заливку. Заливку имеет только вода.',
-      terrain:
-        'terrains — чем засеяна каждая область карты. Рецепт (какие плитки и как густо) плюс ' +
-        'таблица domain → рецепт. Ключ — область знания, а не полигон: карту перерисовывают, ' +
-        'и координаты устаревают, а «математика — это горы» остаётся. Сетку клеток берут не ' +
-        'из файла соответствия, а из самих контуров карты.',
+      biome:
+        'biomes — чем засеяна и в какой цвет покрашена каждая область карты. Биом = рецепт ' +
+        '(какие плитки и как густо) плюс рампа цветов, а таблица byDomain говорит «биом/тон». ' +
+        'Ключ — область знания, а не полигон: карту перерисовывают, и координаты устаревают, ' +
+        'а «математика — это горы цвета гранита» остаётся. Тон тратится один раз: два соседа ' +
+        'одного цвета — две области, которые читатель не различит. Сетку клеток берут не из ' +
+        'файла соответствия, а из самих контуров карты.',
     },
     groups: GROUPS,
     tiles: tiles.map((tile) => ({
@@ -250,10 +250,10 @@ export function buildManifest(options: ManifestOptions = {}): Manifest {
         tileBody(tile, { variant }, render)
       ),
     })),
-    terrains: {
-      recipes: TERRAINS,
-      byDomain: TERRAIN_BY_DOMAIN,
-      byContinent: TERRAIN_BY_CONTINENT,
+    biomes: {
+      kinds: BIOMES,
+      byDomain: BIOME_BY_DOMAIN,
+      byContinent: BIOME_BY_CONTINENT,
       ocean: OCEAN,
     },
     assemblies: assemblies.map((assembly) => ({

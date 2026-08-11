@@ -45,14 +45,20 @@
   /*
    * The map. On that screen the sea is the page, so it is a theme colour like
    * any other and switching themes sails the whole map into night: deep water,
-   * dark ground, and a thinner wash of each field's own colour over it, because
-   * a fill that reads as a pastel on paper reads as a lamp on a dark ground.
-   * The lettering flips with it — pale ink in a dark halo.
+   * dark ground, and the wash of each field's own colour over it.
+   *
+   * The wash is heavy here rather than thin. It was thin while the palette was
+   * a set of neon hues picked to glow on this ground — half strength took the
+   * glare off them. The fields wear their biome's colour now, which is earth
+   * and stone and grass, and half of that over a blue-black ground is neither:
+   * every territory silts up into the same grey-teal and the map loses the one
+   * thing it is for. So the colour goes down nearly whole and the night comes
+   * from the water around it.
    */
   --map-sea: #0c2431;
   --map-land: #17323f;
-  --map-wash: 0.5;
-  --map-wash-hover: 0.76;
+  --map-wash: 0.82;
+  --map-wash-hover: 0.95;
   --map-border: rgb(230 243 249 / 0.5);
   --map-border-strong: rgb(255 255 255 / 0.92);
   --map-coast: rgb(230 243 249 / 0.42);

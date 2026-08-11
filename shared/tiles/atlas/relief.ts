@@ -31,7 +31,7 @@
  */
 
 import { flat, rim, round, type Point } from '../hex.js';
-import { between, blob, dim, edge, lit, smooth, type Palette } from '../ink.js';
+import { between, blob, dim, edge, lit, smooth, spot, type Palette } from '../ink.js';
 import { defineTile, type Tile } from '../types.js';
 
 /**
@@ -170,6 +170,93 @@ function tree(rnd: () => number, ink: Palette, x: number, base: number, h: numbe
     dim(body, ink, 0.3) +
     lit(west, ink, 0.34) +
     edge(body, ink, 0.022, 0.38)
+  );
+}
+
+/**
+ * A flat, irregular patch lying on the ground — a puddle, a snowfield.
+ *
+ * `blob` is round; this is deliberately much wider than it is deep, because
+ * anything lying flat is seen at the map's angle and a circle on the ground
+ * arrives on screen as an ellipse. A round one reads as a stone.
+ */
+function patch(
+  rnd: () => number,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  count = 8
+): string {
+  const points: Point[] = [];
+  const turn = (Math.PI * 2) / count;
+  const phase = rnd() * Math.PI * 2;
+  for (let i = 0; i < count; i++) {
+    const angle = phase + turn * i;
+    const wobble = 0.82 + rnd() * 0.36;
+    points.push({ x: cx + Math.cos(angle) * rx * wobble, y: cy + Math.sin(angle) * ry * wobble });
+  }
+  return smooth(points, true);
+}
+
+/**
+ * One line combed across the whole cell, as points.
+ *
+ * Grass is drawn at the altitude everything else here is: not a tuft but a
+ * field of it, seen from far enough away that the only thing left is the way
+ * the wind lies in it. Which is a set of long lines, and a lit band hanging
+ * under each one.
+ */
+function comb(rnd: () => number, y: number, amplitude: number, steps = 6): Point[] {
+  const phase = rnd() * Math.PI * 2;
+  const turns = between(rnd, 1.1, 2.2);
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const t = i / steps;
+    return { x: -0.98 + 1.96 * t, y: y + Math.sin(phase + t * Math.PI * turns) * amplitude };
+  });
+}
+
+/**
+ * A palm: a leaning trunk under a heavy crown. The islands' one tree.
+ *
+ * The crown is a filled shape rather than a fan of drawn fronds. Five hairlines
+ * meeting at a point is a spider at any size under 40 px; a solid mass with
+ * three notches cut into its underside is a palm at 16.
+ */
+function palm(rnd: () => number, ink: Palette, x: number, base: number, h: number): string {
+  const lean = between(rnd, -0.2, 0.2);
+  const tip = { x: x + lean, y: base - h };
+
+  /** One frond: out from the crown and down, with a little width to it. */
+  const frond = (side: number, length: number, rise: number): string => {
+    const end = { x: tip.x + side * length, y: tip.y + Math.abs(side) * length * 0.42 + 0.02 };
+    const lift = { x: tip.x + side * length * 0.5, y: tip.y - rise };
+    return (
+      `M${round(tip.x)} ${round(tip.y)}` +
+      `Q${round(lift.x)} ${round(lift.y)} ${round(end.x)} ${round(end.y)}` +
+      `Q${round(lift.x)} ${round(lift.y + 0.1)} ${round(tip.x)} ${round(tip.y + 0.06)}Z`
+    );
+  };
+
+  const spread = h * between(rnd, 0.46, 0.58);
+  const fronds = [-1, -0.58, 0.05, 0.6, 1].map((side) =>
+    frond(side, spread * between(rnd, 0.86, 1.1), h * between(rnd, 0.2, 0.32))
+  );
+  return (
+    edge(
+      `M${round(x)} ${round(base)}Q${round(x + lean * 0.3)} ${round(base - h * 0.62)} ` +
+        `${round(tip.x)} ${round(tip.y)}`,
+      ink,
+      0.048,
+      0.5
+    ) +
+    fronds.map((d) => dim(d, ink, 0.28) + edge(d, ink, 0.02, 0.34)).join('') +
+    // The two western fronds catch the light, which is what turns a black star
+    // into a crown with a near side and a far one.
+    fronds
+      .slice(0, 2)
+      .map((d) => lit(d, ink, 0.3))
+      .join('')
   );
 }
 
@@ -327,6 +414,78 @@ export const reliefTiles: Tile[] = [
       }
       // Furthest first: a near tree has to overlap the one behind it, and the
       // draw order is the only depth this projection has.
+      return parts
+        .sort((a, b) => b.back - a.back)
+        .map((entry) => entry.markup)
+        .join('');
+    },
+  }),
+
+  defineTile({
+    id: 'canopy',
+    group: 'relief',
+    layer: 'relief',
+    title: 'Полог',
+    use: 'Сомкнутый лес с круглыми кронами. Влажный лес — противоположность ельника.',
+    tags: ['лес', 'рельеф'],
+    bleed: 0.14,
+    draw: ({ rnd, ink }) => {
+      // Round crowns where `forest` has cones — the other kind of wood, and the
+      // only difference two woods can hold at 16 px without drawing a leaf.
+      // Small and spaced rather than large and piled: two translucent crowns
+      // laid over each other double their opacity, and a cell of big ones comes
+      // out as a heap of bubbles with a dark seam on every join.
+      const rows = [
+        { back: 0.5, count: 4, r: 0.2 },
+        { back: 0.12, count: 3, r: 0.25 },
+      ];
+      const parts: string[] = [];
+      for (const row of rows) {
+        for (let i = 0; i < row.count; i++) {
+          const spread = 0.6 - row.back * 0.2;
+          const x =
+            -spread + (i * spread * 2) / Math.max(1, row.count - 1) + between(rnd, -0.04, 0.04);
+          const base = foot(x) - flat(row.back);
+          const r = row.r * between(rnd, 0.9, 1.1);
+          const body = blob(rnd, x, base - r * 1.05, r, 0.42, 9);
+          parts.push(
+            dim(body, ink, 0.26),
+            lit(blob(rnd, x - r * 0.34, base - r * 1.28, r * 0.5, 0.4, 7), ink, 0.36),
+            edge(body, ink, 0.024, 0.36),
+            // A stub of trunk under each crown, so the wood stands on the
+            // ground instead of floating over it.
+            edge(
+              `M${round(x)} ${round(base)}V${round(base - r * 0.6)}`,
+              ink,
+              0.026,
+              0.34
+            )
+          );
+        }
+      }
+      return parts.join('');
+    },
+  }),
+
+  defineTile({
+    id: 'palms',
+    group: 'relief',
+    layer: 'relief',
+    title: 'Пальмы',
+    use: 'Пальмовая группа. Только на островах — единственное дерево со своим силуэтом.',
+    tags: ['лес', 'остров', 'рельеф'],
+    bleed: 0.18,
+    draw: ({ rnd, ink }) => {
+      const count = 3 + Math.floor(rnd() * 2);
+      const parts: Array<{ back: number; markup: string }> = [];
+      for (let i = 0; i < count; i++) {
+        const x = between(rnd, -0.44, 0.44);
+        const back = between(rnd, 0, 0.5);
+        parts.push({
+          back,
+          markup: palm(rnd, ink, x, foot(x) - flat(back), between(rnd, 0.42, 0.62)),
+        });
+      }
       return parts
         .sort((a, b) => b.back - a.back)
         .map((entry) => entry.markup)
@@ -607,6 +766,78 @@ export const reliefTiles: Tile[] = [
         parts.push(
           dim(blob(rnd, x, y + r * 0.25, r, 0.45, 5), ink, 0.34),
           lit(blob(rnd, x - r * 0.22, y - r * 0.3, r * 0.72, 0.45, 5), ink, 0.42)
+        );
+      }
+      return parts.join('');
+    },
+  }),
+
+  defineTile({
+    id: 'grass',
+    group: 'relief',
+    layer: 'surface',
+    title: 'Травостой',
+    use: 'Открытая трава: длинные полосы, причёсанные ветром. Степь, саванна, луг.',
+    tags: ['трава', 'поверхность'],
+    draw: ({ rnd, ink }) => {
+      const parts: string[] = [];
+      for (let i = 0; i < 5; i++) {
+        const line = comb(rnd, -0.68 + i * 0.34 + between(rnd, -0.05, 0.05), between(rnd, 0.05, 0.1));
+        const lift = between(rnd, 0.07, 0.12);
+        const above = line.map((point) => ({ x: point.x, y: point.y - lift }));
+        parts.push(
+          lit(`${smooth([...above, ...[...line].reverse()], false)}Z`, ink, 0.2),
+          edge(smooth(line, false), ink, 0.022, 0.24)
+        );
+      }
+      return parts.join('');
+    },
+  }),
+
+  defineTile({
+    id: 'marsh',
+    group: 'relief',
+    layer: 'surface',
+    title: 'Марь',
+    use: 'Мокрая земля: стоячая вода пятнами. Не озеро — вода на карте только у берега.',
+    tags: ['вода', 'поверхность'],
+    draw: ({ rnd, ink }) => {
+      const parts: string[] = [];
+      for (let i = 0; i < 4; i++) {
+        const centre = spot(rnd, 0.58);
+        const rx = between(rnd, 0.24, 0.4);
+        const ry = rx * between(rnd, 0.34, 0.46);
+        // The dark ring is the wet ground the water stands in; without it a lit
+        // patch on a coloured field is a smudge rather than a puddle.
+        parts.push(
+          dim(patch(rnd, centre.x, centre.y + ry * 0.3, rx * 1.16, ry * 1.3), ink, 0.24),
+          lit(patch(rnd, centre.x, centre.y, rx, ry), ink, 0.42)
+        );
+      }
+      return parts.join('');
+    },
+  }),
+
+  defineTile({
+    id: 'snowfield',
+    group: 'relief',
+    layer: 'surface',
+    title: 'Снежник',
+    use: 'Пятна снега между камнями. Верхний пояс: ледники и тундра.',
+    tags: ['снег', 'поверхность'],
+    draw: ({ rnd, ink }) => {
+      const parts: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        const centre = spot(rnd, 0.52);
+        const rx = between(rnd, 0.36, 0.56);
+        const ry = rx * between(rnd, 0.3, 0.42);
+        const lying = patch(rnd, centre.x, centre.y, rx, ry, 9);
+        parts.push(
+          // A shadow slid south, so the snow lies *on* the ground instead of
+          // hovering as a white hole in it.
+          dim(patch(rnd, centre.x, centre.y + ry * 0.34, rx * 0.96, ry), ink, 0.16),
+          lit(lying, ink, 0.52),
+          edge(lying, ink, 0.018, 0.14)
         );
       }
       return parts.join('');

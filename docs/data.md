@@ -5,6 +5,7 @@
 ```
 data/
   domains.yaml           areas, continents, links, shapes, band order
+                         (no colours: they come with the biome — docs/biomes.md)
   courses/
     math.yaml            the course graph, one file per area
     physics.yaml

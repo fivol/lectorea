@@ -3,10 +3,11 @@
  * collection, on the real map.
  *
  * The screen asks one question — what does this field look like — and three
- * files answer it. `shared/tiles/terrain.ts` says which terrain a domain has,
- * `shared/tiles/fill.ts` works out which hexes the territory owns and what goes
- * on them, and the collection itself draws the pieces. Nothing here knows how a
- * mountain is drawn, and nothing there knows what a domain is.
+ * files answer it. `shared/tiles/biomes.ts` says which biome a domain is (and,
+ * on the same line, what colour it is painted), `shared/tiles/fill.ts` works
+ * out which hexes the territory owns and what goes on them, and the collection
+ * itself draws the pieces. Nothing here knows how a mountain is drawn, and
+ * nothing there knows what a domain is.
  *
  * The result is markup rather than React elements. A field of relief is a few
  * thousand paths that never change once they are drawn — there is nothing for
@@ -18,13 +19,13 @@
 
 import { ringOf } from '@shared/polygon';
 import {
+  biomeFor,
   cellsIn,
   fillCells,
   fillMarkup,
   findTile,
   hexGridOf,
   oceanCells,
-  terrainFor,
   terrain as neutral,
   OCEAN,
   type Palette,
@@ -98,7 +99,7 @@ export function groundOf(map: ParsedMap, scheme: 'light' | 'dark'): MapGround {
     .map((shape) => {
       const cells = fillCells(
         cellsIn(ringOf(shape.plan), grid),
-        terrainFor(shape.domainId, shape.continent),
+        biomeFor(shape.domainId, shape.continent),
         // Seeded on the field, not on its place: a redrawn map moves the
         // territory without redrawing the ground it already had.
         shape.domainId

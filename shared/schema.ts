@@ -14,12 +14,21 @@ import { z } from 'zod';
 export const Continent = z.enum(['formal', 'social', 'humanities']);
 export type Continent = z.infer<typeof Continent>;
 
-export const DomainSchema = z.object({
+/**
+ * A domain as `data/domains.yaml` writes it: everything a person decides about
+ * a field of knowledge except how it looks.
+ *
+ * The colour is deliberately absent. It belongs to the field's biome — see
+ * `shared/tiles/biomes.ts`, where the ground a territory is made of and the
+ * colour it is painted are one line — and a second copy here would be one more
+ * thing to keep in step for no gain. `loadSources()` fills it in, so everything
+ * downstream still reads `domain.color`.
+ */
+export const SourceDomainSchema = z.object({
   id: z.string(), // 'math', 'bioinformatics'
   continent: Continent,
   parent: z.string().optional(), // for sub-domains
   bridge: z.boolean().default(false), // interdisciplinary domain in a strait
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/), // hex, base of the palette
   shapeId: z.string(), // id of the <path> in map.svg
   dependsOn: z.array(z.string()).default([]), // source domains (for highlighting)
   image: z.string().optional(), // path to a generated image
@@ -29,6 +38,12 @@ export const DomainSchema = z.object({
    * builds and shuffle the whole screen on an unrelated edit.
    */
   bandOrder: z.number().int(),
+});
+export type SourceDomain = z.infer<typeof SourceDomainSchema>;
+
+/** The same domain once the loader has given it the colour of its biome. */
+export const DomainSchema = SourceDomainSchema.extend({
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/), // hex, base of the palette
 });
 export type Domain = z.infer<typeof DomainSchema>;
 

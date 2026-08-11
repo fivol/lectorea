@@ -3,7 +3,8 @@
 # continent : formal | social | humanities
 # bridge    : true for interdisciplinary domains living in the straits
 # dependsOn : source domains, used for the cascade highlight on hover
-# color     : base of the domain palette; a variation of its continent hue
+# color     : not here — a territory's colour comes with its biome, in
+#             shared/tiles/biomes.ts. See docs/biomes.md.
 # shapeId   : id of the <path> in public/map.svg
 #
 # Titles and descriptions live in data/i18n/{lang}.json under `domain.{id}.title`.
@@ -12,7 +13,6 @@
 
 - id: math
   continent: formal
-  color: '#45D98F'
   shapeId: shape-math
   bandOrder: 10
   dependsOn: []
@@ -20,28 +20,24 @@
 - id: logic
   continent: formal
   parent: math
-  color: '#58D4E7'
   shapeId: shape-logic
   bandOrder: 20
   dependsOn: [math]
 
 - id: probability
   continent: formal
-  color: '#6E8CF2'
   shapeId: shape-probability
   bandOrder: 30
   dependsOn: [math]
 
 - id: cs
   continent: formal
-  color: '#52D6DC'
   shapeId: shape-cs
   bandOrder: 40
   dependsOn: [math, logic]
 
 - id: physics
   continent: formal
-  color: '#6690E9'
   shapeId: shape-physics
   bandOrder: 60
   dependsOn: [math]
@@ -49,42 +45,36 @@
 - id: astronomy
   continent: formal
   parent: physics
-  color: '#32ECE3'
   shapeId: shape-astronomy
   bandOrder: 70
   dependsOn: [physics, math]
 
 - id: chemistry
   continent: formal
-  color: '#6094DE'
   shapeId: shape-chemistry
   bandOrder: 80
   dependsOn: [physics, math]
 
 - id: earth-science
   continent: formal
-  color: '#74EBDA'
   shapeId: shape-earth-science
   bandOrder: 100
   dependsOn: [chemistry, physics]
 
 - id: biology
   continent: formal
-  color: '#4198ED'
   shapeId: shape-biology
   bandOrder: 110
   dependsOn: [chemistry]
 
 - id: medicine
   continent: formal
-  color: '#6EE1C7'
   shapeId: shape-medicine
   bandOrder: 140
   dependsOn: [biology, chemistry]
 
 - id: engineering
   continent: formal
-  color: '#3B9FE2'
   shapeId: shape-engineering
   bandOrder: 150
   dependsOn: [physics, math]
@@ -94,7 +84,6 @@
 - id: biochemistry
   continent: formal
   bridge: true
-  color: '#50EFBC'
   shapeId: shape-biochemistry
   bandOrder: 120
   dependsOn: [chemistry, biology]
@@ -102,7 +91,6 @@
 - id: bioinformatics
   continent: formal
   bridge: true
-  color: '#7BC3E4'
   shapeId: shape-bioinformatics
   bandOrder: 130
   dependsOn: [biology, cs, probability]
@@ -110,7 +98,6 @@
 - id: quantum-chemistry
   continent: formal
   bridge: true
-  color: '#49E5A5'
   shapeId: shape-quantum-chemistry
   bandOrder: 90
   dependsOn: [physics, chemistry]
@@ -118,7 +105,6 @@
 - id: machine-learning
   continent: formal
   bridge: true
-  color: '#5FD0F0'
   shapeId: shape-machine-learning
   bandOrder: 50
   dependsOn: [cs, probability, math]
@@ -127,63 +113,54 @@
 
 - id: economics
   continent: social
-  color: '#D95845'
   shapeId: shape-economics
   bandOrder: 160
   dependsOn: [math, probability]
 
 - id: sociology
   continent: social
-  color: '#F28034'
   shapeId: shape-sociology
   bandOrder: 180
   dependsOn: [probability]
 
 - id: political-science
   continent: social
-  color: '#EDB340'
   shapeId: shape-political-science
   bandOrder: 190
   dependsOn: [sociology]
 
 - id: psychology
   continent: social
-  color: '#E96B4C'
   shapeId: shape-psychology
   bandOrder: 210
   dependsOn: [biology, probability]
 
 - id: anthropology
   continent: social
-  color: '#E59957'
   shapeId: shape-anthropology
   bandOrder: 230
   dependsOn: [sociology]
 
 - id: law
   continent: social
-  color: '#E2C062'
   shapeId: shape-law
   bandOrder: 200
   dependsOn: [political-science]
 
 - id: management
   continent: social
-  color: '#F68055'
   shapeId: shape-management
   bandOrder: 250
   dependsOn: [economics, psychology]
 
 - id: human-geography
   continent: social
-  color: '#F2AE61'
   shapeId: shape-human-geography
   bandOrder: 240
   dependsOn: [sociology, earth-science]
 
 - id: education
   continent: social
-  color: '#EFD56C'
   shapeId: shape-education
   bandOrder: 260
   dependsOn: [psychology]
@@ -193,7 +170,6 @@
 - id: econometrics
   continent: social
   bridge: true
-  color: '#EC9E76'
   shapeId: shape-econometrics
   bandOrder: 170
   dependsOn: [economics, probability]
@@ -201,7 +177,6 @@
 - id: cognitive-science
   continent: social
   bridge: true
-  color: '#E9C081'
   shapeId: shape-cognitive-science
   bandOrder: 220
   dependsOn: [psychology, biology, cs]
@@ -210,70 +185,60 @@
 
 - id: philosophy
   continent: humanities
-  color: '#6245D9'
   shapeId: shape-philosophy
   bandOrder: 270
   dependsOn: [logic]
 
 - id: history
   continent: humanities
-  color: '#CE36F4'
   shapeId: shape-history
   bandOrder: 280
   dependsOn: []
 
 - id: linguistics
   continent: humanities
-  color: '#F344AE'
   shapeId: shape-linguistics
   bandOrder: 330
   dependsOn: [logic]
 
 - id: literature
   continent: humanities
-  color: '#9852F2'
   shapeId: shape-literature
   bandOrder: 350
   dependsOn: [linguistics, history]
 
 - id: art-history
   continent: humanities
-  color: '#F15FEC'
   shapeId: shape-art-history
   bandOrder: 360
   dependsOn: [history]
 
 - id: musicology
   continent: humanities
-  color: '#F16D9D'
   shapeId: shape-musicology
   bandOrder: 370
   dependsOn: [history]
 
 - id: religion
   continent: humanities
-  color: '#CA7AF0'
   shapeId: shape-religion
   bandOrder: 320
   dependsOn: [history, philosophy]
 
 - id: archaeology
   continent: humanities
-  color: '#E73DB8'
   shapeId: shape-archaeology
   bandOrder: 300
   dependsOn: [history]
 
 - id: classics
   continent: humanities
-  color: '#7C4AE6'
   shapeId: shape-classics
   bandOrder: 310
   dependsOn: [linguistics, history]
 
 - id: film-studies
   continent: humanities
-  color: '#DA58E6'
   shapeId: shape-film-studies
   bandOrder: 380
   dependsOn: [art-history]
@@ -283,7 +248,6 @@
 - id: computational-linguistics
   continent: humanities
   bridge: true
-  color: '#E664A3'
   shapeId: shape-computational-linguistics
   bandOrder: 340
   dependsOn: [linguistics, cs, machine-learning]
@@ -291,7 +255,6 @@
 - id: history-of-science
   continent: humanities
   bridge: true
-  color: '#B271E6'
   shapeId: shape-history-of-science
   bandOrder: 290
   dependsOn: [history, philosophy, physics]
@@ -299,7 +262,6 @@
 - id: bioethics
   continent: humanities
   bridge: true
-  color: '#E67DD6'
   shapeId: shape-bioethics
   bandOrder: 390
   dependsOn: [philosophy, biology, medicine]

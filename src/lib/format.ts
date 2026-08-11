@@ -41,19 +41,58 @@ export function formatDate(iso: string, lang = 'ru'): string {
   }).format(date);
 }
 
+/** The card a domain colour is printed on — what the contrast is measured against. */
+const CARD = { dark: '#111726', light: '#ffffff' } as const;
+const AA = 4.5;
+
+function relativeLuminance(hex: string): number {
+  const value = hex.replace('#', '');
+  const channel = (at: number): number => {
+    const srgb = parseInt(value.slice(at, at + 2), 16) / 255;
+    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+}
+
+function contrast(a: string, b: string): number {
+  const first = relativeLuminance(a);
+  const second = relativeLuminance(b);
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+}
+
 /**
  * A domain hue, adjusted to the canvas it is drawn on.
  *
- * `domains.yaml` holds one colour per domain, picked to glow against the dark
- * canvas — which makes those same colours nearly invisible as text or a border
- * on a white one. Rather than keep a second palette in step with the first,
- * the light scheme deepens the hue it is given: same colour, still recognisable
- * as the domain's, dark enough to read.
+ * One palette serves both schemes and both jobs, so it is bent at the point of
+ * use rather than duplicated. A domain's colour is its biome's — basalt, taiga,
+ * flint — chosen to be a *territory* on a map, which is a large shape with a
+ * border round it. As four words of text on a card it has to clear 4.5:1, and a
+ * biome ramp reaches both ends of the range that fails: dark stone vanishes into
+ * the night canvas, pale chalk into the day one. So the hue is walked the one
+ * way it needs to go until it clears, and no further — a colour that already
+ * clears is handed straight back.
+ *
+ * Walked against the real ratio rather than to a fixed lightness, because
+ * lightness is not contrast: the same HSL value is a legible violet and an
+ * illegible yellow, and a palette with a gold in it makes the difference
+ * visible.
  */
 export function inkOn(hex: string, scheme: 'dark' | 'light'): string {
-  if (scheme === 'dark') return hex;
+  const card = CARD[scheme];
+  if (contrast(hex, card) >= AA) return hex;
+
   const { h, s, l } = hexToHsl(hex);
-  return hslToHex({ h, s: Math.min(1, s + 0.08), l: Math.min(l, 0.34) });
+  // Saturation is nudged up on the day scheme only: deepening a hue there drains
+  // it, and a domain colour that arrives as grey has stopped being one.
+  const saturation = scheme === 'light' ? Math.min(1, s + 0.08) : s;
+  const step = scheme === 'dark' ? 0.02 : -0.02;
+  let lightness = l;
+  let ink = hslToHex({ h, s: saturation, l: lightness });
+  while (contrast(ink, card) < AA && lightness > 0 && lightness < 1) {
+    lightness = clamp(lightness + step, 0, 1);
+    ink = hslToHex({ h, s: saturation, l: lightness });
+  }
+  return ink;
 }
 
 /** Mixes a colour with the canvas so a domain hue can fade without alpha stacking. */

@@ -14,7 +14,9 @@ Code lives in `shared/tiles/`; the viewer's page in `sandbox/tiles/`; the two
 commands in `scripts/tiles-build.ts` and `scripts/tiles-view.ts`. The map screen
 imports the same generator and lays it on `public/map.svg` — see
 [On the map](#on-the-map) for what each field is made of and how the pieces find
-their cells. The two commands stay a workshop: they export the collection for
+their cells, and **[docs/biomes.md](biomes.md)** for the table that decides both
+that and the colour each territory is painted, with the prompt for rebuilding it
+from scratch. The two commands stay a workshop: they export the collection for
 anybody outside this repository, and nothing in the build runs them.
 
 ## The angle
@@ -196,9 +198,9 @@ rule above.
 ## On the map
 
 The map screen fills every territory with the collection, and the sea around
-them: `shared/tiles/terrain.ts` says what a field is made of, `shared/tiles/
-fill.ts` works out which hexes it owns and what goes on them, and
-`src/screens/Map/ground.ts` is the hundred lines that ask.
+them: `shared/tiles/biomes.ts` says what a field is made of and what colour it
+is, `shared/tiles/fill.ts` works out which hexes it owns and what goes on them,
+and `src/screens/Map/ground.ts` is the hundred lines that ask.
 
 ### Where the cells come from
 
@@ -225,33 +227,43 @@ polygons: the next import moves every one of them, and nothing says so.
 
 ### What each field is made of
 
-`shared/tiles/terrain.ts` is the correspondence, and it is keyed on **the
+`shared/tiles/biomes.ts` is the correspondence, and it is keyed on **the
 domain** — never on the polygon, its position or its size:
 
 ```ts
-math: 'peaks',          // the range everything else on the continent stands on
-'earth-science': 'canyons',
-literature: 'forest',
+math: 'alpine/granite',        // the range everything else on the continent stands on
+'earth-science': 'badlands/terracotta',
+literature: 'forest/elm',
 ```
 
-A redraw is then free: mathematics is mountainous wherever the mountains end up.
-A domain the table has not caught up with falls back to its continent
-(`TERRAIN_BY_CONTINENT`), so a new field is on the map the day it is added —
-and `tests/terrain.test.ts` fails until the table names it. A domain that has
-gone leaves a stale line, which the same test names.
+A redraw is then free: mathematics is mountainous — and grey-blue — wherever the
+mountains end up. A domain the table has not caught up with falls back to its
+continent (`BIOME_BY_CONTINENT`), so a new field is on the map the day it is
+added, and `tests/biomes.test.ts` fails until the table names it. A domain that
+has gone leaves a stale line, which the same test names.
 
-A terrain is a recipe rather than a picture:
+The word after the slash is a **tone**: a colour out of that biome's own ramp.
+The ground and the colour are one decision and one line, because kept apart they
+drift — the ground says taiga and the fill says apricot, and the map stops being
+a picture of anywhere. `data/domains.yaml` carries no colours at all; the loader
+asks this file, so the map and every badge, icon and piece of course art agree.
+The whole argument, the palette's three rules, and a prompt for rebuilding the
+table are in **[docs/biomes.md](biomes.md)**.
+
+A biome is a recipe rather than a picture:
 
 ```ts
 {
-  id: 'peaks',
+  id: 'alpine',
   cover: 0.4,                                  // of the cells no run took
   chain: { share: 0.42, min: 2, max: 5,        // runs laid west to east
            head: { tile: 'mountain-foot' },
            body: { tile: 'mountain-slope' },
            crown: { tile: 'mountain-peak', opts: { cap: 'snow' } },
            tail: { tile: 'mountain-foot' } },
-  scatter: [{ tile: 'crags', weight: 3 }, { tile: 'hills', weight: 2 }],
+  colours: { granite: '#8093C3', cobalt: '#4082C0', slate: '#7179AC', gabbro: '#B5A2D9' },
+  scatter: [{ tile: 'crags', weight: 3 }, { tile: 'hills', weight: 2 },
+            { tile: 'snowfield', weight: 1 }],
 }
 ```
 
@@ -260,7 +272,7 @@ are five mountains, and the same five in a row are a range. Runs go west to
 east because that is the axis the ridge and scarp pieces join on, and the ends
 are mirrored rather than turned — relief has a top. Everything a run did not
 take is drawn from `scatter` by weight, `once` marking a landmark that may
-appear at most one to a territory. A terrain quiet enough to come out empty
+appear at most one to a territory. A biome quiet enough to come out empty
 still gets one piece on its middle cell: an empty territory between full ones
 reads as one whose ground failed to load.
 
@@ -328,10 +340,17 @@ hues.
 
 ### Changing what a field is made of
 
-Edit one line in `TERRAIN_BY_DOMAIN`. A new terrain is an entry in `TERRAINS`
+Edit one line in `BIOME_BY_DOMAIN`, then `pnpm data:build` so the catalogue
+picks up the colour that came with it. A new biome is an entry in `BIOMES`
 built from land pieces — the test checks that every tile it names exists, is a
 land piece, and that a `chain` body actually joins along the east and west
-edges. Nothing needs regenerating: the app renders the collection from source.
+edges. It also checks the palette: every tone spent once, and no two
+neighbours on the current map looking alike. Nothing else needs regenerating:
+the app renders the collection from source, and `public/map.svg` holds no
+colours.
+
+The rules a new line has to satisfy, and a prompt that walks the whole table
+from scratch, are in [docs/biomes.md](biomes.md).
 
 ## Sizes and colours
 
@@ -391,9 +410,9 @@ What comes out:
 - **`collection.json`** — the manifest. Metadata for every tile, each variant's
   drawing in unit-hex coordinates, the hex geometry, the clip path, the edge
   numbering, a `view` block with the projection and the slab, the object
-  recipes, the `terrains` block — the recipes and the domain table the app fills
-  its territories from — and a `howToUse` block spelling out the placement
-  rules. `--only`
+  recipes, the `biomes` block — the recipes, the colour ramps and the domain
+  table the app fills and paints its territories from — and a `howToUse` block
+  spelling out the placement rules. `--only`
   narrows the loose files, never the manifest or the objects: either of those,
   cut down to one group, would point at tiles it no longer carries.
 - **`svg/<group>/<id>-<variant>.svg`** — one standalone file per picture.

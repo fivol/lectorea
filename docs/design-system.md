@@ -54,11 +54,18 @@ border and a position in the path list as well as a wash.
 
 ### The domain hues
 
-`data/domains.yaml` gives each field its own colour, a variation on its
-continent's. Those are picked against the dark canvas, which makes several of
-them unreadable as text on a white card — so anything that prints a domain
-colour as *text* runs it through `inkOn()` (`src/lib/format.ts`), which deepens
-the hue until it clears 4.5:1 without introducing a second palette to keep in
+Each field's colour comes with its biome — `shared/tiles/biomes.ts`, and
+[docs/biomes.md](biomes.md) for why the ground a territory is made of and the
+colour it is painted are one line. `data/domains.yaml` holds no colours; the
+loader fills them in, so `domain.color` still works everywhere it used to.
+
+Those colours are picked to be *territories*: large shapes with a border round
+them, spread far enough apart that no two neighbours on the map read alike. A
+biome ramp therefore reaches both ends of the range that fails as text — dark
+basalt dies on the night canvas, pale chalk on the day one. So anything that
+prints a domain colour as *text* runs it through `inkOn()`
+(`src/lib/format.ts`), which lifts or deepens the hue until it clears 4.5:1 on
+the scheme it is printed on, without introducing a second palette to keep in
 step. Shapes — the stripe on a card, a territory, a glyph — use the raw hue,
 where 3:1 is the bar.
 
@@ -228,9 +235,12 @@ Three, each for a reason that outlived the spec:
   these names, and the Tailwind layer above them is already the vocabulary
   components are written in — a rename would have been churn across every file
   for no change a reader could see.
-- **The domain hues span more than ±20° of their continent.** Reining them in
-  is a data change to `data/domains.yaml` that repaints the generated map, and
-  that is a decision about how the map should look rather than a token cleanup.
+- **The domain hues no longer sort by continent.** They used to: formal was
+  green through blue, social warm, humanities violet. That made every border
+  inside a continent a seam between two shades of one hue, which is the one
+  thing a map may not do — so the hue now says which *country* a field is, and
+  the continent is carried by the landmass, its heading and `--c-formal` and
+  friends. The reasoning is in [docs/biomes.md](biomes.md).
 - **`aria-current`, not `aria-selected`, marks the chosen course.**
   `aria-selected` is only valid inside a listbox or a grid, and turning a card
   full of interactive detail into an `option` would cost more than the attribute

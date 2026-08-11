@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { LineCounter, parseDocument, isSeq } from 'yaml';
 import { z } from 'zod';
+import { colourOf } from '../../shared/tiles/biomes.js';
 import {
   ChannelSchema,
   CourseSchema,
-  DomainSchema,
+  SourceDomainSchema,
   OverridesSchema,
   ProviderSchema,
   type Channel,
@@ -208,7 +209,15 @@ export type Sources = {
 };
 
 export function loadSources(lang = 'ru'): Sources {
-  const domains = loadYamlList(path.join(paths.data, 'domains.yaml'), DomainSchema);
+  // The colour is not in the YAML: it belongs to the domain's biome, and
+  // `shared/tiles/biomes.ts` is the one place that decides both what a
+  // territory is made of and what it is painted. Filled in here so that every
+  // consumer downstream — the build, the map generator, the course art — goes
+  // on reading `domain.color` and none of them has to know where it came from.
+  const domains: Domain[] = loadYamlList(
+    path.join(paths.data, 'domains.yaml'),
+    SourceDomainSchema
+  ).map((domain) => ({ ...domain, color: colourOf(domain.id, domain.continent) }));
   const { courses, locations, fileOf } = loadCourseFiles();
   const providers = loadYamlList(path.join(paths.data, 'providers.yaml'), ProviderSchema);
   const channels = loadYamlList(path.join(paths.data, 'channels.yaml'), ChannelSchema);

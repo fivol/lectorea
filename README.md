@@ -42,11 +42,13 @@ the light and dark themes. It is a plan on disk and a view on screen — the app
 lays the ground back a little and stands the continents in the water as slabs
 with a cliff at the coast, which is the same projection the tile collection
 draws in ([docs/tiles.md](docs/tiles.md)). The ground inside a territory comes
-from that collection, and so does the water around them: ranges, forest,
-plateau and sand on the land, shoals and reefs by the coasts, swell out to the
-edges of the window — laid on the map's own hexes, with a table saying which
-field stands on which, and the grid read back off the outlines rather than
-stored, so a redrawn map keeps its terrain. Pick a
+from that collection, and so does the water around them: sixteen biomes —
+alpine ranges, taiga, steppe, badlands, an island biome that exists nowhere on
+the mainland — with shoals and reefs by the coasts and swell out to the edges of
+the window. One table says which field is which country and, on the same line,
+what colour it is painted, so no two neighbours look alike
+([docs/biomes.md](docs/biomes.md)); the grid is read back off the outlines
+rather than stored, so a redrawn map keeps its ground. Pick a
 territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
@@ -158,7 +160,7 @@ to the view being shared, and stay in `localStorage`.
 | Design tokens | CSS variables, surfaced through Tailwind | one palette the map screen can swap wholesale at runtime — see [docs/design-system.md](docs/design-system.md) |
 | Controls | one UI kit in `src/components/ui/` | every button, chip, field and switch is the same capsule cut from one material; the class names live in one file |
 | Scripts | tsx + better-sqlite3 | |
-| Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain, one terrain per domain |
+| Tests | vitest, on the build logic | levels, cycles, column order, score, search, one icon per domain, one biome per domain, and no two neighbouring territories the same colour |
 | Deploy | any static host | |
 
 Detailed documents:
@@ -168,6 +170,7 @@ Detailed documents:
 - [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota
 - [docs/scripts.md](docs/scripts.md) — every command: what it does, its flags, when to run it
+- [docs/biomes.md](docs/biomes.md) — what each field of knowledge is made of and what colour it is: the sixteen biomes, the rules the palette keeps, and the prompt for rebuilding the table
 - [docs/tiles.md](docs/tiles.md) — the hex tile collection: the angle everything is seen at, what a piece is, how pieces join, what each territory of the map is made of, how to export them
 - [CONTRIBUTING.md](CONTRIBUTING.md) — the rules external edits must follow
 
