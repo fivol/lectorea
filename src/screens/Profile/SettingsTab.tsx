@@ -16,7 +16,7 @@ export default function SettingsTab() {
         <select
           value={settings.lang}
           onChange={(event) => setSetting('lang', event.target.value)}
-          className="rounded border border-line bg-surface-2 px-2 py-1 text-sm"
+          className="select"
         >
           <option value="ru">Русский</option>
         </select>
@@ -51,8 +51,7 @@ export default function SettingsTab() {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="btn"
-                style={{ background: 'var(--c-danger)', color: '#fff', borderColor: 'transparent' }}
+                className="btn btn-danger"
                 onClick={() => {
                   resetProfile();
                   setConfirming(false);
@@ -99,15 +98,16 @@ function Segmented<T extends string>({
   onChange: (next: T) => void;
 }) {
   return (
-    <div className="flex overflow-hidden rounded-lg border border-line" role="group">
+    // Three options with three different widths, so the chosen one is an inlay
+    // rather than a pill that slides — the same treatment as the profile tabs.
+    <div className="plate plate-row" role="group">
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           onClick={() => onChange(option.value)}
           aria-pressed={value === option.value}
-          className={`px-3 py-1.5 text-sm transition-colors
-                      ${value === option.value ? 'bg-surface-2 text-ink' : 'text-ink-faint hover:text-ink'}`}
+          className="tab"
         >
           {option.label}
         </button>

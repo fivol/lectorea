@@ -90,6 +90,17 @@
   --shadow-pop: 0 8px 24px rgb(0 0 0 / 0.45);
   --shadow-modal: 0 16px 48px rgb(0 0 0 / 0.5);
 
+  /*
+   * The floating chrome (`.plate`) is the one exception to the rule above: it
+   * lies on the map rather than on a known surface, so it needs its own shadow
+   * even in dark, and a rim of light along its top edge — the same trick the
+   * coastline uses to lift a continent off the water. Its own variables, not
+   * `--shadow-card`, because that one is legitimately `none` here and `none`
+   * cannot be one entry of a shadow list.
+   */
+  --plate-rim: rgb(255 255 255 / 0.07);
+  --plate-shadow: 0 2px 12px rgb(0 0 0 / 0.4);
+
   color-scheme: dark;
 }
 
@@ -134,6 +145,9 @@
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
   --shadow-pop: 0 8px 24px rgb(15 23 42 / 0.12);
   --shadow-modal: 0 16px 48px rgb(15 23 42 / 0.18);
+
+  --plate-rim: rgb(255 255 255 / 0.9);
+  --plate-shadow: 0 2px 8px rgb(15 23 42 / 0.09);
 
   color-scheme: light;
 }
@@ -228,9 +242,18 @@
     @apply bg-surface border border-line rounded-card;
   }
 
+  /*
+   * Everything that can be pressed is a capsule.
+   *
+   * The map is drawn out of round shapes on round shapes and the controls over
+   * it are capsules too, so a rounded rectangle in the middle of it reads as a
+   * piece of some other product. The lit top edge is the plate's, for the same
+   * reason: it is what tells a fill from a hole.
+   */
   .btn {
-    @apply inline-flex items-center gap-2 rounded-chip border border-line bg-surface-2 px-3 py-1.5
+    @apply inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1.5
            text-sm text-ink transition-colors duration-fast ease-out;
+    box-shadow: inset 0 1px 0 0 var(--plate-rim);
   }
   .btn:hover:not(:disabled) {
     background: color-mix(in srgb, var(--c-surface-2) 70%, var(--c-ink) 8%);
@@ -252,6 +275,16 @@
   .btn-primary:active:not(:disabled) {
     background: color-mix(in srgb, var(--c-accent) 88%, #000);
   }
+  .btn-danger {
+    background: var(--c-danger);
+    color: #fff;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--c-danger) 92%, #000);
+    border-color: transparent;
+  }
   .btn-ghost {
     @apply border-transparent bg-transparent text-ink-dim;
   }
@@ -261,20 +294,110 @@
     border-color: transparent;
   }
 
+  /*
+   * A filter, a tag, a count. Same plate as the chrome above it, one size down:
+   * the row of them under the search field is read as one strip, and a strip
+   * made of two different materials is read as two.
+   */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2
-           px-2.5 py-1 text-xs text-ink-dim;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line
+           px-2.5 py-1 text-xs text-ink-dim transition-colors duration-fast ease-out;
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    box-shadow: inset 0 1px 0 0 var(--plate-rim);
+  }
+  button.chip:hover {
+    color: var(--c-ink);
+    border-color: var(--c-line-strong);
   }
   .chip-active {
     color: var(--c-canvas);
     border-color: transparent;
   }
-  /* A filter that is holding a value: accent border and a wash of the same,
+  /* A filter that is holding a value: the same accent inlay as the view switch,
      because the border alone is a hairline and easy to miss in a row of ten. */
   .chip-on {
     color: var(--c-ink);
-    border-color: var(--c-accent);
-    background: color-mix(in srgb, var(--c-accent) 16%, var(--c-surface-2));
+    border-color: transparent;
+    background: color-mix(in srgb, var(--c-accent) 24%, var(--c-surface));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 48%, transparent),
+      inset 0 1px 0 0 var(--plate-rim);
+  }
+
+  /*
+   * A text field. The ring on focus is the accent rather than the browser's
+   * outline: the field is a capsule and a rectangle drawn around it is the one
+   * thing on the screen that is not.
+   */
+  .field {
+    @apply flex items-center gap-2 rounded-full border border-line px-4 py-2
+           transition-colors duration-fast ease-out;
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    box-shadow: inset 0 1px 0 0 var(--plate-rim);
+  }
+  .field:focus-within {
+    border-color: color-mix(in srgb, var(--c-accent) 55%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 var(--plate-rim),
+      0 0 0 3px color-mix(in srgb, var(--c-accent) 18%, transparent);
+  }
+  /* The one over the map, which has open water behind it rather than a page. */
+  .field-floating {
+    @apply px-4 py-2.5;
+    box-shadow:
+      inset 0 1px 0 0 var(--plate-rim),
+      var(--plate-shadow);
+    backdrop-filter: blur(12px) saturate(1.3);
+  }
+  .field-floating:focus-within {
+    border-color: color-mix(in srgb, var(--c-accent) 55%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 var(--plate-rim),
+      var(--plate-shadow),
+      0 0 0 3px color-mix(in srgb, var(--c-accent) 18%, transparent);
+  }
+
+  /* A bare input that is its own field — the search line inside a popover. */
+  .input {
+    @apply w-full rounded-full border border-line px-3 py-1 text-sm text-ink outline-none
+           placeholder:text-ink-faint transition-colors duration-fast ease-out;
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    box-shadow: inset 0 1px 0 0 var(--plate-rim);
+  }
+  .input:focus {
+    border-color: color-mix(in srgb, var(--c-accent) 55%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 var(--plate-rim),
+      0 0 0 3px color-mix(in srgb, var(--c-accent) 18%, transparent);
+  }
+
+  /* A field that holds more than a line, so it keeps the card's corner rather
+     than the capsule's. */
+  .field-area {
+    @apply w-full rounded-card border border-line p-2 outline-none
+           placeholder:text-ink-faint transition-colors duration-fast ease-out;
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    box-shadow: inset 0 1px 0 0 var(--plate-rim);
+  }
+  .field-area:focus {
+    border-color: color-mix(in srgb, var(--c-accent) 55%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 var(--plate-rim),
+      0 0 0 3px color-mix(in srgb, var(--c-accent) 18%, transparent);
+  }
+
+  /* A native select, dressed as a field. */
+  .select {
+    @apply rounded-full border border-line px-3 py-1 text-sm text-ink
+           transition-colors duration-fast ease-out;
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    box-shadow: inset 0 1px 0 0 var(--plate-rim);
+  }
+
+  /* The keyboard hint inside a field — a key, so it is drawn as one. */
+  .kbd {
+    @apply rounded-md border border-line px-1.5 font-mono text-[11px] text-ink-faint;
+    background: color-mix(in srgb, var(--c-ink) 5%, transparent);
   }
 
   .num {
@@ -321,14 +444,185 @@
     background: color-mix(in srgb, var(--c-canvas) 90%, transparent);
   }
 
-  /* The chosen half of a segmented control: a shade of the ink, so it reads on
-     whatever plate the group is sitting on. Same reason as `.glass` for not
-     writing it as `bg-ink/10`. */
-  .seg-on {
-    background: color-mix(in srgb, var(--c-ink) 13%, transparent);
+  /*
+   * The header chrome: one plate language for every control that floats above
+   * the content.
+   *
+   * A capsule with a lit top edge and a shadow under it — the same two devices
+   * that make a continent read as a slab lying on the water rather than as a
+   * hole cut through it. Grouping the controls onto as few plates as possible is
+   * the point: a row of four separate white rectangles is what a toolbar looks
+   * like when nobody decided anything, and the map deserves better than a
+   * toolbar.
+   */
+  .plate {
+    border-radius: 999px;
+    border: 1px solid var(--c-line);
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 var(--plate-rim),
+      var(--plate-shadow);
+    backdrop-filter: blur(12px) saturate(1.3);
   }
-  .seg-off:hover {
-    background: color-mix(in srgb, var(--c-ink) 6%, transparent);
+  /* Several controls sharing one plate. The padding is the plate's margin, so
+     nothing inside it ever touches the rim. */
+  .plate-row {
+    @apply flex items-center gap-0.5 p-[2px];
+  }
+  /* One control that is its own plate — the way back to the map. Two pixels
+     taller than a `.seg-item` so that it ends up exactly as tall as a plate
+     with a row of controls inside it. */
+  .plate-cap {
+    @apply inline-flex h-[32px] items-center justify-center gap-1.5 px-3.5
+           font-mono text-[11px] font-semibold uppercase tracking-[0.08em]
+           transition-colors duration-fast ease-out;
+  }
+  .plate-divider {
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 2px;
+    background: var(--c-line);
+  }
+
+  /*
+   * A tab in a row of them. The chosen one is the same accent inlay as the
+   * chosen half of the view switch — there are five of these and their widths
+   * all differ, which is the one case a sliding pill cannot serve.
+   */
+  .tab {
+    @apply inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-sm
+           text-ink-faint transition-colors duration-fast ease-out;
+  }
+  .tab:hover {
+    color: var(--c-ink-dim);
+  }
+  .tab[aria-selected='true'],
+  .tab[aria-pressed='true'] {
+    color: var(--c-ink);
+    background: color-mix(in srgb, var(--c-accent) 24%, var(--c-surface));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 48%, transparent),
+      inset 0 1px 0 0 var(--plate-rim);
+  }
+
+  /* A glyph-only control living on a plate: no border and no fill of its own,
+     since the plate under it already provides both. */
+  .icon-btn {
+    @apply inline-flex h-[28px] w-[28px] items-center justify-center rounded-full
+           text-ink-dim transition-colors duration-fast ease-out;
+  }
+  .icon-btn:hover {
+    color: var(--c-ink);
+    background: color-mix(in srgb, var(--c-ink) 7%, transparent);
+  }
+
+  /*
+   * The view switch.
+   *
+   * The state is one pill that slides between the halves instead of two halves
+   * that light up: the movement is what says these are two views of the same
+   * thing, and it costs one transform. The pill is a wash of the accent rather
+   * than a shade of the ink — on a near-white plate over bright water a grey
+   * fill reads as a disabled half, and this one has to read as the live one.
+   *
+   * The labels are set like the map's own lettering, mono and spaced caps, so
+   * the chrome speaks in the same voice as the thing it is steering.
+   */
+  .seg {
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: 2px;
+  }
+  .seg-thumb {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    width: calc(50% - 2px);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--c-accent) 24%, var(--c-surface));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 48%, transparent),
+      inset 0 1px 0 0 var(--plate-rim);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  .seg-item {
+    /* The same 30px as `.icon-btn` and the profile disc: the switch and the
+       plate beside it are one row, and one pixel of difference between two
+       capsules sitting side by side is visible. */
+    @apply relative z-10 inline-flex h-[28px] items-center justify-center gap-1.5 rounded-full px-3
+           font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint
+           transition-colors duration-fast ease-out;
+  }
+  .seg-item:hover {
+    color: var(--c-ink-dim);
+  }
+  .seg-item[aria-pressed='true'] {
+    color: var(--c-ink);
+  }
+  .seg-item[aria-pressed='true'] svg {
+    color: var(--c-accent);
+  }
+
+  /*
+   * Two glyphs in one slot, one of them showing. Whatever leaves turns a quarter
+   * out of the way as it goes and whatever arrives turns into place — a swap
+   * that is legible as a swap even at 18px, which a cross-fade is not.
+   */
+  .swap {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+  }
+  .swap > * {
+    grid-area: 1 / 1;
+    display: flex;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+  }
+  .swap > [data-on='false'] {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.4);
+  }
+
+  /*
+   * The way into the profile: the glyph sits in a disc of the accent, which is
+   * the one control here that stands for a person rather than for a view of the
+   * catalogue, and an avatar is the shape everyone already reads that way.
+   */
+  .profile-btn {
+    @apply inline-flex items-center gap-2 rounded-full p-[2px]
+           font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-dim
+           transition-colors duration-fast ease-out;
+  }
+  .profile-btn:hover {
+    color: var(--c-ink);
+  }
+  .profile-disc {
+    @apply inline-flex h-[28px] w-[28px] items-center justify-center rounded-full
+           transition-colors duration-fast ease-out;
+    /* The same split the `--c-*-soft` washes make, for the same reason: on a
+       near-black plate a solid accent disc is a lamp in the corner of the
+       screen, and on a white one a wash of it is a grey circle. So dark gets
+       the wash and light gets the fill. */
+    background: color-mix(in srgb, var(--c-accent) 22%, transparent);
+    color: var(--c-accent);
+  }
+  .profile-btn:hover .profile-disc {
+    background: color-mix(in srgb, var(--c-accent) 34%, transparent);
+  }
+  :root[data-theme='light'] .profile-disc {
+    /* The glyph takes the surface colour rather than the canvas — on the map
+       the canvas is the sea, and a sea-blue mark on a teal disc is nothing. */
+    background: var(--c-accent);
+    color: var(--c-surface);
+  }
+  :root[data-theme='light'] .profile-btn:hover .profile-disc {
+    background: color-mix(in srgb, var(--c-accent) 88%, var(--c-ink));
   }
 
   /*
@@ -363,6 +657,9 @@
     --shadow-card: 0 6px 18px rgb(8 42 58 / 0.16);
     --shadow-pop: 0 12px 30px rgb(8 42 58 / 0.2);
     --shadow-modal: 0 18px 44px rgb(8 42 58 / 0.22);
+    /* Over open water a plate has nothing to be read against, so it casts the
+       same long shadow the continents do. */
+    --plate-shadow: 0 8px 20px rgb(8 42 58 / 0.18);
   }
 
   .panel-scroll {
@@ -404,6 +701,15 @@
     mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
   }
   .scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+  /* The same, without the fade — for a row that ends in its own edge rather
+     than in empty space, where a fade would eat the border it ends with. */
+  .scroll-x-plain {
+    @apply overflow-x-auto overflow-y-hidden overscroll-x-contain;
+    scrollbar-width: none;
+  }
+  .scroll-x-plain::-webkit-scrollbar {
     display: none;
   }
 

@@ -198,14 +198,13 @@ export default function SearchBox({
                 <div className="flex shrink-0 items-center gap-2 border-b border-line px-2 py-2">
                   <button
                     type="button"
-                    className="btn-ghost tap rounded p-2"
+                    className="icon-btn tap"
                     onClick={closeSheet}
                     aria-label={t('ui.common.back')}
                   >
                     <Icon name="arrow-left" />
                   </button>
-                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-chip border
-                                  border-line bg-surface-2 px-3 py-2">
+                  <div className="field min-w-0 flex-1 px-3 py-2">
                     <Icon name="search" className="text-ink-faint" />
                     <input
                       ref={inputRef}
@@ -228,7 +227,7 @@ export default function SearchBox({
                     {query ? (
                       <button
                         type="button"
-                        className="btn-ghost rounded p-1 text-ink-faint"
+                        className="icon-btn"
                         onClick={() => {
                           onQueryChange('');
                           inputRef.current?.focus();
@@ -264,11 +263,7 @@ export default function SearchBox({
   return (
     <div ref={boxRef} className={`relative ${className}`}>
       <div
-        className={
-          floating
-            ? 'glass flex items-center gap-2 rounded-full border border-line px-4 py-2.5 shadow-[var(--shadow-pop)] backdrop-blur-xl'
-            : 'flex items-center gap-2 rounded-chip border border-line bg-surface-2 px-3 py-1.5'
-        }
+        className={floating ? 'field field-floating' : 'field px-3 py-1.5'}
       >
         <Icon name="search" className="text-ink-faint" />
         <input
@@ -300,7 +295,7 @@ export default function SearchBox({
         {query ? (
           <button
             type="button"
-            className="btn-ghost rounded p-1 text-ink-faint hover:text-ink"
+            className="icon-btn"
             onClick={() => {
               onQueryChange('');
               inputRef.current?.focus();
@@ -310,9 +305,7 @@ export default function SearchBox({
             <Icon name="close" size={14} />
           </button>
         ) : (
-          <kbd className="hidden rounded border border-line px-1.5 text-[11px] text-ink-faint sm:block">
-            /
-          </kbd>
+          <kbd className="kbd hidden sm:block">/</kbd>
         )}
       </div>
 

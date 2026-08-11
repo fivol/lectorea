@@ -97,7 +97,7 @@ export default function RecentTab() {
               </button>
               <button
                 type="button"
-                className="btn-ghost shrink-0 rounded p-1"
+                className="icon-btn shrink-0"
                 onClick={() => removeRecent(entry.id)}
                 aria-label={`${t('ui.recent.remove')}: ${entry.title}`}
                 title={t('ui.recent.remove')}

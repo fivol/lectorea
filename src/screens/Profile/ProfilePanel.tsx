@@ -64,7 +64,7 @@ export default function ProfilePanel() {
           <h2 className="font-display text-lg">{t('ui.profile.title')}</h2>
           <button
             type="button"
-            className="btn-ghost ml-auto rounded p-1.5"
+            className="icon-btn ml-auto"
             onClick={close}
             aria-label={t('ui.a11y.closePanel')}
           >
@@ -72,25 +72,23 @@ export default function ProfilePanel() {
           </button>
         </header>
 
-        <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-line px-2" role="tablist">
-          {TABS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              role="tab"
-              aria-selected={tab === item}
-              onClick={() => setTab(item)}
-              className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors
-                          duration-fast ease-out
-                          ${
-                            tab === item
-                              ? 'border-accent text-ink'
-                              : 'border-transparent text-ink-faint hover:text-ink-dim'
-                          }`}
-            >
-              {t(`ui.profile.tab.${item}`)}
-            </button>
-          ))}
+        {/* One plate holding all five, as in the header: an underlined word is
+            the tab bar of a document, and this is a control panel. */}
+        <nav className="shrink-0 border-b border-line px-4 py-3" role="tablist">
+          <div className="plate plate-row scroll-x-plain w-fit max-w-full">
+            {TABS.map((item) => (
+              <button
+                key={item}
+                type="button"
+                role="tab"
+                aria-selected={tab === item}
+                onClick={() => setTab(item)}
+                className="tab"
+              >
+                {t(`ui.profile.tab.${item}`)}
+              </button>
+            ))}
+          </div>
         </nav>
 
         <div className="panel-scroll min-h-0 flex-1" role="tabpanel">

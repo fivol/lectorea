@@ -27,14 +27,23 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   return (
     <button
       type="button"
-      className={`btn px-2 ${className}`}
+      className={`icon-btn ${className}`}
       onClick={() => setSetting('theme', next)}
       aria-label={label}
       title={label}
     >
       {/* The glyph is the destination, not the current state — it is what the
-          label says, so the two cannot be read against each other. */}
-      <Icon name={next === 'dark' ? 'moon' : 'sun'} />
+          label says, so the two cannot be read against each other. Both are
+          mounted and one is turned out of the slot, so the change of theme is
+          also a small change of weather in the corner of the screen. */}
+      <span className="swap">
+        <span data-on={next === 'dark'} className="text-formal">
+          <Icon name="moon" size={17} />
+        </span>
+        <span data-on={next === 'light'} className="text-warning">
+          <Icon name="sun" size={17} />
+        </span>
+      </span>
     </button>
   );
 }

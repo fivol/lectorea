@@ -94,7 +94,7 @@ function HelpSheet({ onClose, label }: { onClose: () => void; label: string }) {
           <h2 className="text-h3">{label}</h2>
           <button
             type="button"
-            className="btn-ghost ml-auto rounded p-1"
+            className="icon-btn ml-auto"
             onClick={onClose}
             aria-label={t('ui.common.close')}
           >
@@ -105,7 +105,7 @@ function HelpSheet({ onClose, label }: { onClose: () => void; label: string }) {
           {KEYS.map((key) => (
             <div key={key} className="flex items-baseline gap-3">
               <dt className="w-16 shrink-0">
-                <kbd className="num rounded border border-line bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-dim">
+                <kbd className="kbd num py-0.5">
                   {t(`ui.shortcuts.key.${key}`)}
                 </kbd>
               </dt>

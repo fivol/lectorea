@@ -6,11 +6,11 @@ import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
 import { useIsMobile } from '@/lib/hooks';
 import { useProfile } from '@/store/profile';
-import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import GlobalFilters from '@/components/GlobalFilters';
-import Icon from '@/components/Icon';
 import ThemeToggle from '@/components/ThemeToggle';
+import ViewSwitch from '@/components/ViewSwitch';
+import ProfileButton from '@/components/ProfileButton';
 import MapView, { MAP_SEA } from './MapView';
 import BlocksView from './BlocksView';
 
@@ -19,7 +19,6 @@ export default function MapScreen() {
   const { t } = useT();
   const params = useCatalogParams();
   const isMobile = useIsMobile();
-  const openProfile = useUi((state) => state.openProfile);
   const [scrolled, setScrolled] = useState(false);
 
   const mapView = useProfile((state) => state.profile.settings.mapView);
@@ -85,43 +84,17 @@ export default function MapScreen() {
           )}
         </div>
 
+        {/* Two plates rather than four buttons: what you are looking at on the
+            left, and who is looking on the right. */}
         <div className="flex items-center gap-2">
           {isMobile ? null : (
-            /* The group carries the plate, not the buttons: with only the
-               active half filled, the other half was a hole showing the water
-               through a white outline. */
-            <div
-              className={`glass-strong flex overflow-hidden rounded-lg border border-line
-                          ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`}
-              role="group"
-            >
-              <ViewButton
-                active={mapView === 'map'}
-                onClick={() => setSetting('mapView', 'map')}
-                icon="map"
-                label={t('ui.view.map')}
-              />
-              <ViewButton
-                active={mapView === 'blocks'}
-                onClick={() => setSetting('mapView', 'blocks')}
-                icon="grid"
-                label={t('ui.view.blocks')}
-              />
-            </div>
+            <ViewSwitch value={mapView} onChange={(next) => setSetting('mapView', next)} />
           )}
-          {/* On the water the controls need to sit on something. A shadow is
-              what makes a white plate read as floating over the sea rather than
-              as a hole cut through it. */}
-          <ThemeToggle className={`tap ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`} />
-          <button
-            type="button"
-            className={`btn tap ${showMap ? 'shadow-[var(--shadow-card)]' : ''}`}
-            onClick={openProfile}
-            aria-label={t('ui.nav.profile')}
-          >
-            <Icon name="profile" />
-            <span className="hidden sm:inline">{t('ui.nav.profile')}</span>
-          </button>
+          <div className="plate plate-row">
+            <ThemeToggle className="tap" />
+            <span className="plate-divider" aria-hidden="true" />
+            <ProfileButton label className="tap" />
+          </div>
         </div>
       </header>
 
@@ -188,29 +161,3 @@ export default function MapScreen() {
   );
 }
 
-function ViewButton({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: 'map' | 'grid';
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      // The selected half is the darker one. On a white plate an even whiter
-      // fill is not a state, and that is what «Карта» looked like.
-      className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors
-                  ${active ? 'seg-on text-ink' : 'seg-off text-ink-faint hover:text-ink'}`}
-    >
-      <Icon name={icon} size={14} />
-      {label}
-    </button>
-  );
-}

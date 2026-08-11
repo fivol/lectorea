@@ -4,13 +4,14 @@ import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { unlocksOf, useCatalog } from '@/lib/catalog';
 import { formatHours, inkOn, withAlpha } from '@/lib/format';
+import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
 import { courseHref } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import PathBlock from './PathBlock';
 import CourseLinkCard from './CourseLinkCard';
-import PlaylistList, { fixDataUrl, suggestPlaylistUrl } from './PlaylistList';
+import PlaylistList from './PlaylistList';
 
 type Props = {
   course: BuiltCourse;
@@ -69,7 +70,7 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
           {onClose ? (
             <button
               type="button"
-              className="btn-ghost ml-auto rounded p-1"
+              className="icon-btn ml-auto"
               onClick={onClose}
               aria-label={t('ui.course.deselect')}
               title={t('ui.course.deselect')}

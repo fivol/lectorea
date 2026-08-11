@@ -75,8 +75,7 @@ export default function DataTab() {
           onChange={(event) => inspect(event.target.value)}
           placeholder={t('ui.profile.data.importPaste')}
           rows={5}
-          className="mt-2 w-full rounded-lg border border-line bg-surface-2 p-2 font-mono text-xs
-                     outline-none placeholder:text-ink-faint"
+          className="field-area mt-2 font-mono text-xs"
         />
 
         {invalid ? (

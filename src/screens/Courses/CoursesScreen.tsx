@@ -15,6 +15,7 @@ import GlobalFilters from '@/components/GlobalFilters';
 import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import ThemeToggle from '@/components/ThemeToggle';
+import ProfileButton from '@/components/ProfileButton';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -30,7 +31,6 @@ export default function CoursesScreen() {
   const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
 
-  const openProfile = useUi((state) => state.openProfile);
   const requestFocus = useUi((state) => state.requestFocus);
   const splitRatio = useProfile((state) => state.profile.settings.splitRatio);
   const setSetting = useProfile((state) => state.setSetting);
@@ -122,12 +122,15 @@ export default function CoursesScreen() {
   return (
     <div className="flex h-full flex-col">
       <header className="z-30 flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-3 py-2">
+        {/* The way back is set like the switch it came from — same plate, same
+            spaced caps, so the two screens read as two views and not as two
+            sites. */}
         <Link
           to="/"
-          className="btn-ghost tap flex items-center gap-1.5 rounded px-2 py-1 text-sm"
+          className="plate plate-cap tap text-ink-dim hover:text-ink"
           aria-label={t('ui.nav.backToMap')}
         >
-          <Icon name="arrow-left" size={14} />
+          <Icon name="arrow-left" size={13} />
           <span className="hidden sm:inline">{t('ui.nav.backToMap')}</span>
         </Link>
 
@@ -146,15 +149,13 @@ export default function CoursesScreen() {
             variant="compact"
             className="w-40 sm:w-64"
           />
-          <ThemeToggle className="tap" />
-          <button
-            type="button"
-            className="btn tap px-2"
-            onClick={openProfile}
-            aria-label={t('ui.nav.profile')}
-          >
-            <Icon name="profile" />
-          </button>
+          {/* The same plate as on the map, so crossing between the two screens
+              does not change what the corner of the window is. */}
+          <div className="plate plate-row">
+            <ThemeToggle className="tap" />
+            <span className="plate-divider" aria-hidden="true" />
+            <ProfileButton className="tap" />
+          </div>
         </div>
 
         <GlobalFilters className="w-full" />
@@ -189,7 +190,7 @@ export default function CoursesScreen() {
                   <span className="h-1 w-10 rounded-full bg-line" aria-hidden="true" />
                   <button
                     type="button"
-                    className="btn-ghost tap rounded p-1"
+                    className="icon-btn tap"
                     onClick={() => navigate(`/courses${params.search}`)}
                     aria-label={t('ui.common.close')}
                   >

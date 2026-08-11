@@ -79,7 +79,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
           </h2>
           <button
             type="button"
-            className="btn-ghost rounded p-1.5"
+            className="icon-btn"
             onClick={close}
             aria-label={t('ui.common.close')}
           >

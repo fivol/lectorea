@@ -136,8 +136,7 @@ export default function Dropdown({
                     value={search.value}
                     onChange={(event) => search.onChange(event.target.value)}
                     placeholder={search.placeholder}
-                    className="w-full rounded border border-line bg-surface-2 px-2 py-1 text-sm
-                               text-ink outline-none placeholder:text-ink-faint focus:border-accent"
+                    className="input"
                   />
                 </div>
               ) : null}

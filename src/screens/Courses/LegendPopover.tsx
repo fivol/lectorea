@@ -124,7 +124,7 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
                 <h2 className="text-h3 text-ink">{t('ui.legend.title')}</h2>
                 <button
                   type="button"
-                  className="btn-ghost ml-auto rounded p-1"
+                  className="icon-btn ml-auto"
                   onClick={() => setOpen(false)}
                   aria-label={t('ui.common.close')}
                 >
