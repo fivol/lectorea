@@ -3,7 +3,7 @@ import type { BuiltPlaylist } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
-import { useEscape, useFocusTrap, useIsMobile, useScrollLock } from '@/lib/hooks';
+import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import { Button, ButtonLink, IconButton } from '@/components/ui';
@@ -16,9 +16,8 @@ type Props = {
 };
 
 export default function PlaylistModal({ playlist, onClose }: Props) {
-  const { t, count, lang } = useT();
+  const { t, lang } = useT();
   const catalog = useCatalog();
-  const isMobile = useIsMobile();
 
   const watched = useProfile((state) => state.profile.playlists[playlist.id]?.watched ?? false);
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
@@ -63,36 +62,57 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
         aria-hidden="true"
       />
 
+      {/*
+        A sheet that fills the phone and a dialog that floats on everything
+        else. The switch is a media query rather than a measured viewport,
+        because the layout is the browser's job and doing it in JavaScript costs
+        a first frame in the wrong shape on every open.
+      */}
       <div
         ref={trapRef}
         role="dialog"
         aria-modal="true"
         aria-label={playlist.title}
         tabIndex={-1}
-        className={`relative flex animate-scale-in flex-col overflow-hidden bg-surface
-                    shadow-[var(--shadow-modal)]
-                    ${isMobile ? 'h-full w-full' : 'max-h-[88vh] w-[min(1080px,92vw)] rounded-pop border border-line'}`}
+        className="relative flex h-full w-full animate-scale-in flex-col overflow-hidden
+                   bg-surface shadow-[var(--shadow-modal)]
+                   md:h-auto md:max-h-[88svh] md:w-[min(64rem,92vw)] md:rounded-pop
+                   md:border md:border-line"
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
-          <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {/* Two lines rather than one: these titles carry the term and the
+              lecturer at the end, and a single truncated line drops both. */}
+          <h2 className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-snug">
             {playlist.title}
             {provider ? <span className="text-ink-faint"> — {provider.title}</span> : null}
           </h2>
           <IconButton icon="close" label={t('ui.common.close')} onClick={close} />
         </header>
 
-        <div className={`flex min-h-0 flex-1 ${isMobile ? 'flex-col overflow-y-auto' : ''}`}>
-          <div className="flex min-h-0 flex-1 flex-col">
+        {/*
+          One scroll region until there is room for two columns, then the player
+          and the sidebar scroll on their own. `minmax(0,1fr)` is what lets the
+          lecture titles truncate: an `auto` track takes its width from the
+          longest title and pushes the sidebar off the dialog.
+        */}
+        <div
+          className="grid min-h-0 flex-1 overflow-y-auto overscroll-contain
+                     lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] lg:overflow-hidden"
+        >
+          <div className="flex min-w-0 flex-col lg:min-h-0">
             {/*
-              `min-h-0` matters: as a flex item this box would otherwise take an
-              automatic minimum from the poster image and squeeze the lecture
-              list underneath it down to nothing.
+              A ratio box with nothing in flow inside it: the poster is 480×360
+              and in flow it hands the box a content-based minimum height of its
+              own, which stretches the player past 16:9 and shoves the lecture
+              list off the screen. Out of flow, the height is the ratio and
+              nothing else — capped against the viewport so the list always
+              keeps about half the dialog.
             */}
-            <div className="relative aspect-video max-h-[46vh] w-full min-h-0 shrink-0 bg-black">
+            <div className="relative aspect-video w-full shrink-0 bg-black lg:max-h-[42svh]">
               {playing === null ? (
                 <button
                   type="button"
-                  className="group relative h-full w-full"
+                  className="group absolute inset-0"
                   onClick={() => setPlaying(playlist.videos[0]?.id ?? '')}
                   aria-label={t('ui.playlist.play')}
                 >
@@ -111,7 +131,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                   key={playing}
                   src={embedSrc}
                   title={playlist.title}
-                  className="h-full w-full"
+                  className="absolute inset-0 h-full w-full"
                   allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
                   referrerPolicy="strict-origin-when-cross-origin"
@@ -120,11 +140,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
             </div>
 
             {/* The lecture list comes from the shard, not from the API. */}
-            <ol
-              className={`panel-scroll flex-1 divide-y divide-line ${
-                isMobile ? 'min-h-0' : 'min-h-[140px] max-h-[38vh]'
-              }`}
-            >
+            <ol className="divide-y divide-line lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
               {playlist.videos.length ? (
                 playlist.videos.map((video, index) => (
                   <li key={video.id}>
@@ -154,77 +170,92 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
           </div>
 
           <aside
-            className={`panel-scroll shrink-0 border-line p-4 ${
-              isMobile ? 'border-t' : 'w-[300px] border-l'
-            }`}
+            className="flex min-w-0 flex-col border-t border-line
+                       lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-t-0"
           >
-            <p className="text-sm font-medium text-ink">{playlist.lecturer ?? playlist.channelTitle}</p>
-            <p className="num mt-1 text-xs text-ink-faint">
-              {[provider?.title, playlist.year, playlist.lang].filter(Boolean).join(' · ')}
-            </p>
+            <div className="min-w-0 p-4">
+              <p className="text-sm font-medium text-ink">
+                {playlist.lecturer ?? playlist.channelTitle}
+              </p>
+              <p className="num mt-1 text-xs text-ink-faint">
+                {[provider?.title, playlist.year, playlist.lang].filter(Boolean).join(' · ')}
+              </p>
 
-            <dl className="num mt-4 space-y-1 text-xs text-ink-dim">
-              <div className="flex justify-between">
-                <dt>{count(playlist.videoCount, 'lecture')}</dt>
-                <dd>{formatHours(hoursFromSeconds(playlist.totalSeconds))} ч</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>{t('ui.playlist.avgLecture', { n: formatMinutes(playlist.medianSeconds) })}</dt>
-                <dd>{t(`ui.playlist.length.${playlist.lectureLength}`)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>{t(`ui.playlist.completeness.${playlist.completeness}`)}</dt>
-                <dd>{t(`ui.playlist.kind.${playlist.kind}`)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>{t('ui.playlist.captions')}</dt>
-                <dd>
-                  {playlist.captions.length
-                    ? playlist.captions.join(', ')
-                    : t('ui.playlist.noCaptions')}
-                </dd>
-              </div>
-            </dl>
+              <dl className="num mt-4 space-y-1 text-xs">
+                <Fact
+                  label={t('ui.playlist.label.lectures')}
+                  value={String(playlist.videoCount)}
+                />
+                <Fact
+                  label={t('ui.playlist.label.total')}
+                  value={t('ui.playlist.hours', {
+                    n: formatHours(hoursFromSeconds(playlist.totalSeconds)),
+                  })}
+                />
+                <Fact
+                  label={t('ui.playlist.label.avg')}
+                  value={`${t('ui.playlist.avgLecture', {
+                    n: formatMinutes(playlist.medianSeconds),
+                  })} · ${t(`ui.playlist.length.${playlist.lectureLength}`)}`}
+                />
+                <Fact
+                  label={t('ui.playlist.label.completeness')}
+                  value={t(`ui.playlist.completeness.${playlist.completeness}`)}
+                />
+                <Fact
+                  label={t('ui.playlist.label.kind')}
+                  value={t(`ui.playlist.kind.${playlist.kind}`)}
+                />
+                <Fact
+                  label={t('ui.playlist.label.captions')}
+                  value={
+                    playlist.captions.length
+                      ? playlist.captions.join(', ')
+                      : t('ui.playlist.noCaptions')
+                  }
+                />
+              </dl>
 
-            <div className="mt-4 space-y-1.5">
-              <StatBar
-                label={t('ui.playlist.views')}
-                value={formatCompact(playlist.stats.views, lang)}
-                fraction={1}
-                hint={t('ui.playlist.relativeHint')}
-              />
-              <StatBar
-                label={t('ui.playlist.likes')}
-                value={formatCompact(playlist.stats.likes, lang)}
-                fraction={playlist.stats.views ? playlist.stats.likes / playlist.stats.views * 12 : 0}
-                hint={t('ui.playlist.relativeHint')}
-              />
-              <StatBar
-                label={t('ui.playlist.comments')}
-                value={formatCompact(playlist.stats.comments, lang)}
-                fraction={
-                  playlist.stats.views ? (playlist.stats.comments / playlist.stats.views) * 60 : 0
-                }
-                hint={t('ui.playlist.relativeHint')}
-              />
-              <div className="flex items-center justify-between pt-1 text-xs text-ink-faint">
-                <span>{t('ui.playlist.score')}</span>
-                <QualityDot playlist={playlist} />
+              <div className="mt-4 space-y-2">
+                <StatBar
+                  label={t('ui.playlist.views')}
+                  value={formatCompact(playlist.stats.views, lang)}
+                  fraction={1}
+                  hint={t('ui.playlist.relativeHint')}
+                />
+                <StatBar
+                  label={t('ui.playlist.likes')}
+                  value={formatCompact(playlist.stats.likes, lang)}
+                  fraction={
+                    playlist.stats.views ? (playlist.stats.likes / playlist.stats.views) * 12 : 0
+                  }
+                  hint={t('ui.playlist.relativeHint')}
+                />
+                <StatBar
+                  label={t('ui.playlist.comments')}
+                  value={formatCompact(playlist.stats.comments, lang)}
+                  fraction={
+                    playlist.stats.views ? (playlist.stats.comments / playlist.stats.views) * 60 : 0
+                  }
+                  hint={t('ui.playlist.relativeHint')}
+                />
+                <div className="flex items-center justify-between gap-3 pt-1 text-xs text-ink-faint">
+                  <span>{t('ui.playlist.score')}</span>
+                  <QualityDot playlist={playlist} />
+                </div>
               </div>
+
+              {course ? (
+                <p className="mt-4 text-xs text-ink-faint">
+                  {t('ui.playlist.forCourse')}:{' '}
+                  <span className="text-ink-dim">{t(`course.${course.id}.title`)}</span>
+                </p>
+              ) : null}
             </div>
 
-            {course ? (
-              <p className="mt-4 text-xs text-ink-faint">
-                {t('ui.playlist.forCourse')}:{' '}
-                <span className="text-ink-dim">{t(`course.${course.id}.title`)}</span>
-              </p>
-            ) : null}
-
-            <div
-              className={`mt-4 space-y-1.5 ${
-                isMobile ? 'sticky bottom-0 bg-surface pb-2 pt-2' : ''
-              }`}
-            >
+            {/* Pinned to the bottom of whichever box scrolls — the dialog on a
+                phone, the sidebar itself once it is a column. */}
+            <div className="sticky bottom-0 mt-auto space-y-1.5 border-t border-line bg-surface p-4">
               <Button
                 variant={favorite ? 'primary' : 'default'}
                 icon={favorite ? 'star-filled' : 'star'}
@@ -259,10 +290,24 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   );
 }
 
+/** One line of the fact sheet. The value wraps rather than truncates — every
+ *  one of them is short, and a clipped «без субтитров» says the opposite. */
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="shrink-0 text-ink-faint">{label}</dt>
+      <dd className="min-w-0 text-right text-ink-dim">{value}</dd>
+    </div>
+  );
+}
+
 /**
  * A metric as a bar. The bar is a relative scale — likes and comments are
  * shown against what a playlist of this size usually gets, not against the raw
  * number — so it has to say so, or it reads as a percentage of something.
+ *
+ * Name and number sit on their own line above the bar: side by side they need
+ * three fixed widths to stay aligned, and the sidebar is not a fixed width.
  */
 function StatBar({
   label,
@@ -278,12 +323,14 @@ function StatBar({
   const width = Math.max(4, Math.min(100, fraction * 100));
   return (
     <Tooltip content={hint}>
-      <div className="flex cursor-help items-center gap-2">
-        <span className="h-1 w-20 shrink-0 overflow-hidden rounded-full bg-surface-2">
+      <div className="cursor-help">
+        <div className="flex items-baseline justify-between gap-2 text-xs">
+          <span className="min-w-0 truncate text-ink-faint">{label}</span>
+          <span className="num shrink-0 text-ink-dim">{value}</span>
+        </div>
+        <span className="mt-1 block h-1 overflow-hidden rounded-full bg-surface-2">
           <span className="block h-full rounded-full bg-formal" style={{ width: `${width}%` }} />
         </span>
-        <span className="flex-1 text-xs text-ink-faint">{label}</span>
-        <span className="num text-xs text-ink-dim">{value}</span>
       </div>
     </Tooltip>
   );

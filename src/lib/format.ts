@@ -6,15 +6,18 @@ export function hoursFromSeconds(seconds: number): number {
   return Math.round((seconds / 3600) * 10) / 10;
 }
 
-/** `5040` → `1:24`, `320` → `5:20`. Lecture lengths read better as clock time. */
+/**
+ * `5040` → `1:24:00`, `320` → `5:20`. Lecture lengths read better as clock time.
+ * An hour-long lecture keeps its seconds: `1:24` alone reads as a minute and a
+ * half just as easily as an hour and a half, and the third group settles it.
+ */
 export function formatDuration(seconds: number): string {
   if (!seconds || seconds < 0) return '—';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const rest = Math.floor(seconds % 60);
-  return hours
-    ? `${hours}:${String(minutes).padStart(2, '0')}`
-    : `${minutes}:${String(rest).padStart(2, '0')}`;
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return hours ? `${hours}:${pad(minutes)}:${pad(rest)}` : `${minutes}:${pad(rest)}`;
 }
 
 export function formatHours(hours: number): string {
