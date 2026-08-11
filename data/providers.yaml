@@ -98,6 +98,12 @@
   type: university
   country: RU
 
+- id: unsw
+  title: UNSW Sydney
+  type: university
+  country: AU
+  site: https://www.unsw.edu.au/
+
 - id: sms
   title: Computer Science Center
   type: university
@@ -144,6 +150,21 @@
   country: IN
   site: https://nptel.ac.in/
 
+- id: aops
+  title: Art of Problem Solving
+  type: platform
+  site: https://artofproblemsolving.com/
+
+- id: deeplearningai
+  title: DeepLearning.AI
+  type: platform
+  site: https://www.deeplearning.ai/
+
+- id: socratica
+  title: Socratica
+  type: platform
+  site: https://www.socratica.com/
+
 # ───────────────────────────────  Individuals  ─────────────────────────────
 
 - id: 3blue1brown
@@ -161,16 +182,79 @@
   type: individual
   country: RU
 
+- id: statquest
+  title: StatQuest
+  type: individual
+
+- id: brunton
+  title: Steve Brunton
+  type: individual
+  country: US
+
+- id: brightsideofmaths
+  title: The Bright Side of Mathematics
+  type: individual
+  site: https://thebrightsideofmathematics.com/
+
+- id: borcherds
+  title: Richard E. Borcherds
+  type: individual
+
+- id: wildberger
+  title: N J Wildberger
+  type: individual
+  country: AU
+
+- id: bazett
+  title: Trefor Bazett
+  type: individual
+  country: CA
+
+- id: maththebeautiful
+  title: MathTheBeautiful
+  type: individual
+
+- id: mathmajor
+  title: MathMajor
+  type: individual
+
+- id: facultyofkhan
+  title: Faculty of Khan
+  type: individual
+
+- id: leonard
+  title: Professor Leonard
+  type: individual
+
+- id: vanbiezen
+  title: Michel van Biezen
+  type: individual
+
+- id: octutor
+  title: The Organic Chemistry Tutor
+  type: individual
+
+- id: lewin
+  title: Walter Lewin
+  type: individual
+
+- id: karpathy
+  title: Andrej Karpathy
+  type: individual
+
+- id: sentdex
+  title: sentdex
+  type: individual
+
+# Veritasium, Mathologer and ПостНаука are no longer crawled — see the note at
+# the top of channels.yaml — but the ids stay so that playlists already in
+# cache.db keep their attribution instead of falling back to `unknown`.
 - id: veritasium
   title: Veritasium
   type: individual
 
 - id: mathologer
   title: Mathologer
-  type: individual
-
-- id: statquest
-  title: StatQuest
   type: individual
 
 - id: unknown

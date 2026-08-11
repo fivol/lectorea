@@ -114,6 +114,14 @@ ring renders fine, so nothing else would notice.
 Do not edit playlist data by hand. Playlists are crawled; add the channel to
 `data/channels.yaml` and let the pipeline find them.
 
+A channel belongs there only if it publishes **courses as playlists** — several
+playlists of roughly ten lectures or more, each named after a subject. Channels
+of excellent standalone videos do not qualify, however good they are: their
+playlists are topic bins ("Physics", "Popular videos") that no course can be
+pointed at. Check before adding rather than after: `channels.list?forHandle`
+resolves the handle and `playlists.list` shows what is actually there, at a cost
+of two quota units.
+
 To bind a specific playlist to a course, run `pnpm data:review` — a local server
 that shows one playlist at a time with keyboard shortcuts and writes decisions
 to `data/overrides.yaml`. That file is committed and is the reviewed record.
