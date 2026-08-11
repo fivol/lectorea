@@ -59,9 +59,23 @@ jobs:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
+      # An interrupted crawl is still worth keeping — the queue lives in the
+      # database and the next run resumes from it. A run that died before it
+      # ever opened the database is not: it leaves an empty file, and saving
+      # that would hand the deploy a cache with no tables in it.
+      - name: Is there a crawl worth keeping?
+        id: crawl
+        if: always()
+        run: |
+          if pnpm exec tsx -e "import { dbExists } from './scripts/lib/db.ts'; process.exit(dbExists() ? 0 : 1)"; then
+            echo 'keep=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'keep=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Save crawl cache
         uses: actions/cache/save@v4
-        if: always()
+        if: always() && steps.crawl.outputs.keep == 'true'
         with:
           path: data/cache.db
           key: cache-db-${{ github.run_id }}

@@ -101,8 +101,28 @@ export function openDb(options: { readonly?: boolean } = {}): Db {
   return db;
 }
 
+/**
+ * True when there is a crawl worth reading. The file existing is not enough:
+ * a run that died before it opened the database for writing leaves an empty
+ * one behind, and a build that trusts the filename then dies on the first
+ * query instead of falling back to a catalogue without playlists.
+ */
 export function dbExists(): boolean {
-  return fs.existsSync(paths.cacheDb);
+  if (!fs.existsSync(paths.cacheDb)) return false;
+  try {
+    const db = new Database(paths.cacheDb, { readonly: true });
+    try {
+      const table = db
+        .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'playlists'`)
+        .get();
+      return table !== undefined;
+    } finally {
+      db.close();
+    }
+  } catch {
+    // Not a readable SQLite file at all — same answer, for the same reason.
+    return false;
+  }
 }
 
 /* ─────────────────────────────  Raw responses  ─────────────────────────── */
