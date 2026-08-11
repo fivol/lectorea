@@ -90,6 +90,7 @@ export default function MobileCourseList({ courses, selectedId, onSelect }: Prop
                       <CourseArt
                         courseId={course.id}
                         color={domain?.color ?? 'var(--c-formal)'}
+                        domain={domain}
                         className="h-full w-full"
                       />
                     </span>

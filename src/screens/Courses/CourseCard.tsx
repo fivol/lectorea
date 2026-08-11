@@ -93,7 +93,7 @@ function CourseCardInner({
       }}
     >
       <div className="relative w-full" style={{ height: CARD_ART_HEIGHT }}>
-        <CourseArt courseId={course.id} color={colour} className="h-full w-full" />
+        <CourseArt courseId={course.id} color={colour} domain={domain} className="h-full w-full" />
         {/* Done is a property of the picture, not of the metadata row: it has to
             survive being read at a glance across a column of forty cards. */}
         {status === 'done' ? (

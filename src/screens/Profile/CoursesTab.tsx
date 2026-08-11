@@ -130,6 +130,7 @@ function GoalCard({ course }: { course: BuiltCourse }) {
         <CourseArt
           courseId={course.id}
           color={domain?.color ?? 'var(--c-formal)'}
+          domain={domain}
           className="h-full w-full"
         />
       </span>
@@ -178,6 +179,7 @@ function PlainCard({ course }: { course: BuiltCourse }) {
         <CourseArt
           courseId={course.id}
           color={domain?.color ?? 'var(--c-formal)'}
+          domain={domain}
           className="h-full w-full"
         />
       </span>

@@ -63,7 +63,11 @@ async function main(): Promise<void> {
         continue;
       }
       const domain = sources.domains.find((item) => item.id === course.domains[0]);
-      const svg = courseArtSvg(course.id, domain?.color ?? '#4CC9F0', visual);
+      const svg = courseArtSvg(
+        course.id,
+        { id: domain?.id, continent: domain?.continent, color: domain?.color ?? '#4CC9F0' },
+        visual
+      );
       fs.writeFileSync(file, svg, 'utf8');
       written += 1;
     }

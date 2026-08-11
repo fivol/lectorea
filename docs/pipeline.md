@@ -171,6 +171,19 @@ between builds and are not stored in git. The generator lives in
 `shared/procedural.ts`; the frontend inlines the same markup rather than firing
 500 requests while the graph is scrolled.
 
+Two different things decide what a card looks like. **The field** gives the hue
+— from its biome, see [biomes.md](biomes.md) — and the *set of motifs* the
+picture may be drawn with: the `MOTIFS` table in `shared/procedural.ts` reads as
+*motif → the fields it suits*, and gives each domain three or so. **The course
+id** picks which of those it gets, and every number inside it. So a domain reads
+as a family and no two courses in it are the same card — a motif tied to the id
+alone would put a double helix on a course in logic, one tied to the domain
+alone would make forty identical cards in a column.
+
+A domain added to `data/domains.yaml` and forgotten in that table falls back to
+its continent, so it is never blank, and `tests/motifs.test.ts` names the line
+that is missing.
+
 `scripts/lib/visual.config.ts` controls the look. Changing `seedSalt`
 regenerates everything — a redesign is one string edit, not 500 API calls.
 

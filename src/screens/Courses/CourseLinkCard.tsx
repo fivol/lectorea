@@ -57,7 +57,7 @@ export default function CourseLinkCard({
         style={{ borderColor: withAlpha(colour, 0.4) }}
       >
         <span className="h-9 w-12 shrink-0 overflow-hidden rounded">
-          <CourseArt courseId={courseId} color={colour} className="h-full w-full" />
+          <CourseArt courseId={courseId} color={colour} domain={domain} className="h-full w-full" />
         </span>
         <span className="min-w-0 flex-1">
           <span ref={titleRef} className="block line-clamp-2 text-caption leading-snug text-ink">
