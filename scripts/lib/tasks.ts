@@ -33,6 +33,28 @@ function isDue(value: string | null, days: number): boolean {
   return new Date(value).getTime() + days * 86_400_000 <= Date.now();
 }
 
+/** A scheduled moment that has arrived. Unset means it never was scheduled. */
+function isPast(value: string | null): boolean {
+  return !value || new Date(value).getTime() <= Date.now();
+}
+
+/**
+ * Whether a playlist's video list is worth walking again.
+ *
+ * Walking one is the most expensive thing the pipeline does — two units per
+ * fifty videos, some 2400 for the whole catalogue — and the answer only changes
+ * when the playlist gains or loses a video. So the question is asked of the
+ * item count the cheap `playlists.list` already returned, and a list that has
+ * never been walked always qualifies.
+ */
+function videoListStale(
+  before: { video_count: number | null; videos_fetched_at: string | null } | undefined,
+  itemCount: number
+): boolean {
+  if (!before?.videos_fetched_at) return true;
+  return before.video_count !== itemCount;
+}
+
 /* ────────────────────────────────  Discover  ───────────────────────────── */
 
 export type ChannelSeed = { id: string; title: string; providerId: string; lang: string };
@@ -82,6 +104,10 @@ export async function discoverChannel(
        checked_at = excluded.checked_at`
   );
 
+  // Read before the upsert overwrites it: what the queue needs to know is
+  // whether the count moved, and after the insert both sides read the new one.
+  const before = knownPlaylists(db, playlists.map((playlist) => playlist.id));
+
   const write = db.transaction(() => {
     for (const playlist of playlists) {
       // Playlists of one or two videos are almost never courses; skipping them
@@ -98,12 +124,35 @@ export async function discoverChannel(
         nowIso(),
         inDays(REFRESH_DAYS.playlistMetadata)
       );
-      enqueue(db, 'videos', playlist.id);
+      // A monthly re-discovery finds mostly the same playlists. Queuing every
+      // one of them again would re-crawl the whole catalogue's videos for the
+      // sake of the handful that actually changed.
+      if (videoListStale(before.get(playlist.id), playlist.contentDetails.itemCount)) {
+        enqueue(db, 'videos', playlist.id);
+      }
     }
   });
   write();
 
   return playlists.length;
+}
+
+/** id → what is already stored, for the playlists in one batch. */
+function knownPlaylists(
+  db: Db,
+  ids: string[]
+): Map<string, { video_count: number | null; videos_fetched_at: string | null }> {
+  const known = new Map<string, { video_count: number | null; videos_fetched_at: string | null }>();
+  const select = db.prepare(
+    `SELECT video_count, videos_fetched_at FROM playlists WHERE id = ?`
+  );
+  for (const id of ids) {
+    const row = select.get(id) as
+      | { video_count: number | null; videos_fetched_at: string | null }
+      | undefined;
+    if (row) known.set(id, row);
+  }
+  return known;
 }
 
 /* ──────────────────────────  Playlist metadata  ────────────────────────── */
@@ -116,8 +165,13 @@ const SCAN_LIMIT = 5000;
  * often — their numbers move, and they are the ones people actually sort by.
  *
  * `limit` caps how many playlists this run refreshes; the ones left over stay
- * due and are picked up by the next call, since `stats_fetched_at` is what
+ * due and are picked up by the next call, since `next_refresh_at` is what
  * decides due-ness and only the refreshed rows get a new one.
+ *
+ * Due-ness reads the same column the refresh writes. It used to be asked of
+ * `stats_fetched_at`, which nothing here sets — that column is filled by the
+ * video pass — so every playlist stayed due forever and each run re-bought
+ * metadata it already had.
  */
 export async function refreshPlaylistMetadata(
   db: Db,
@@ -129,25 +183,32 @@ export async function refreshPlaylistMetadata(
   const allDue = (
     db
       .prepare(
-        `SELECT id, views, stats_fetched_at FROM playlists
+        `SELECT id, views, video_count, videos_fetched_at, next_refresh_at FROM playlists
          WHERE alive = 1 ORDER BY views DESC LIMIT ?`
       )
       .all(SCAN_LIMIT) as Array<{
       id: string;
       views: number | null;
-      stats_fetched_at: string | null;
+      video_count: number | null;
+      videos_fetched_at: string | null;
+      next_refresh_at: string | null;
     }>
-  ).filter((row) =>
-    isDue(
-      row.stats_fetched_at,
-      (row.views ?? 0) >= popularCutoff ? REFRESH_DAYS.statsPopular : REFRESH_DAYS.statsRegular
-    )
-  );
+  ).filter((row) => isPast(row.next_refresh_at));
 
   const due = allDue.slice(0, limit);
   const remaining = allDue.length - due.length;
 
   if (!due.length) return { refreshed: 0, quotaExhausted: false, remaining };
+
+  const before = new Map(due.map((row) => [row.id, row]));
+  // Popular playlists come round sooner: their numbers move, and they are the
+  // ones people sort by. The tier is carried by the date this run writes.
+  const nextRefreshFor = (id: string): string =>
+    inDays(
+      (before.get(id)?.views ?? 0) >= popularCutoff
+        ? REFRESH_DAYS.statsPopular
+        : REFRESH_DAYS.statsRegular
+    );
 
   const update = db.prepare(
     `UPDATE playlists SET title = ?, description = ?, video_count = ?, published_at = ?,
@@ -169,17 +230,21 @@ export async function refreshPlaylistMetadata(
     const seen = new Set(items.map((item) => item.id));
     const write = db.transaction(() => {
       for (const item of items) {
+        // Asked before the update writes the new count over the old one.
+        const stale = videoListStale(before.get(item.id), item.contentDetails.itemCount);
         update.run(
           item.snippet.title,
           item.snippet.description ?? '',
           item.contentDetails.itemCount,
           item.snippet.publishedAt,
           nowIso(),
-          inDays(REFRESH_DAYS.playlistMetadata),
+          nextRefreshFor(item.id),
           item.id
         );
-        // Item count changed — the video list is stale too.
-        enqueue(db, 'videos', item.id);
+        // Only when the item count moved — the comment used to say as much
+        // while the code queued every playlist it looked at, which handed the
+        // expensive step the whole catalogue on every metadata run.
+        if (stale) enqueue(db, 'videos', item.id);
       }
       // Anything the API did not return in a batch it was asked for is gone.
       for (const id of chunk) if (!seen.has(id)) markDead.run(nowIso(), id);

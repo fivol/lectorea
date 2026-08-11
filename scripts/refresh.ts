@@ -1,8 +1,8 @@
 import { parseLimit } from './lib/config.js';
 import { openDb } from './lib/db.js';
-import { reportSourceError } from './lib/sources.js';
+import { loadSources, reportSourceError } from './lib/sources.js';
 import { createClient } from './lib/youtube.js';
-import { pendingCount, runWorker } from './lib/queue.js';
+import { pendingCount, preferTargets, runWorker } from './lib/queue.js';
 import { checkLiveness, fetchPlaylistVideos, refreshPlaylistMetadata } from './lib/tasks.js';
 
 /**
@@ -26,13 +26,20 @@ async function main(): Promise<void> {
 
   if (!exhausted) {
     console.log(`· videos: ${pendingCount(db, ['videos'])} queued`);
+    preferTargets(
+      db,
+      Object.entries(loadSources().overrides.matches)
+        .filter(([, courseId]) => courseId !== null)
+        .map(([playlistId]) => playlistId)
+    );
     const videos = await runWorker(
       db,
       ['videos'],
       async (job) => {
         await fetchPlaylistVideos(db, api, job.target);
       },
-      limit
+      limit,
+      'matched-first'
     );
     console.log(
       `· videos: ${videos.done} done, ${videos.failed} failed, ` +

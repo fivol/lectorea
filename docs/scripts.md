@@ -306,11 +306,22 @@ then optionally the LLM, then a human.
 ```bash
 pnpm data:match          # rules only, free, no network beyond the database
 pnpm data:match --llm    # adds the model pass; needs OPENAI_API_KEY
+pnpm data:match --force  # re-read everything, after a change to the rules
 ```
 
 Anything that lands below confidence 0.75 — including every case where two
 courses claim the same title, which is *declined* rather than guessed — is left
-for `data:review`. Results go into the `matches` table, not into YAML.
+for `data:review`. A below-threshold guess is not an answer, so it is passed on
+to the model as a hint rather than kept to itself; the model's answer is only
+taken when it beats what the rules already had. Results go into the `matches`
+table, not into YAML.
+
+`--force` re-reads the playlists earlier passes already bound confidently, which
+is otherwise the one thing this step leaves alone — so a change to
+`lib/rules.ts` or to `keywords/{lang}.json` reaches nothing already in the
+catalogue, which is exactly what such a change is usually written to correct. It
+can take a binding back as well as add one. Hand decisions are never touched:
+`reviewed` rows and `overrides.yaml` outrank every pass.
 
 Model choice is `OPENAI_CLASSIFY_MODEL` (default `gpt-5-mini`).
 
@@ -325,32 +336,59 @@ Four things shape the answer.
 **Word boundaries, not substrings.** A keyword has to match as a word, with a
 short tail allowed for Russian inflection — «алгебра» still finds «алгебры», but
 `logic` no longer finds «bio**logic**al Chemistry» and `evolution` no longer
-finds «The American R**evolution**». Both were real bindings before this.
+finds «The American R**evolution**». Both were real bindings before this. The
+tail is letters only: an ending is inflection, a digit is another course, so
+`algebra 1` does not find «ALGEBRA 16».
 
-**Course codes and terms are stripped first.** `MIT 18.06SC Linear Algebra, Fall
-2011` is measured as `mit linear algebra`. This happens before normalisation,
-while the dots are still there — otherwise `18.02` becomes `18 02` and is
-indistinguishable from the `2` in «Математический анализ 2», which decides which
-course that is.
+**Noise is stripped first.** `MIT 18.06SC Linear Algebra, Fall 2011` is measured
+as `linear algebra`. Course codes, terms and years go, and so do the words that
+say who is teaching rather than what — `mit`, `stanford`, `мфти` — and the ones
+every syllabus shares: `introduction`, `of`, `the`, `course`. All of it happens
+before normalisation, while the dots are still there — otherwise `18.02` becomes
+`18 02` and is indistinguishable from the `2` in «Математический анализ 2», which
+decides which course that is. «часть» is stripped and its number is kept, because
+«Матанализ. Часть 2» *is* «Матанализ 2»; «2 курс» is stripped whole, because it
+says which year a student takes the course, not which course it is.
 
-**Confidence follows coverage.** How much of the cleaned title the keyword
-accounts for: the whole title is 0.95, most of it 0.92, about half 0.82–0.88, a
-quarter 0.68–0.78, a passing mention 0.6. So «MIT 18.100A Real Analysis» is
-taken automatically and «Introduction to Ancient Greek History with Donald
-Kagan» — which merely contains `ancient greek` — is not.
+The same stripping runs over the keywords themselves. Both sides have to agree,
+or a keyword written «theory of computation» stops matching every title that has
+just had its `of` taken out.
+
+**A title is read in clauses.** «Дискретная математика | Роман Глинских | осень
+2021» is a subject, a lecturer and a term, and coverage is asked of the first
+alone. Commas, brackets, pipes, dashes and a full stop before a word all divide;
+so do `with` and `by`, which introduce a name. Without this the measure answers
+the wrong question — a real subject padded out with a lecturer scores like a
+passing mention, while «линейное программирование», which really is a passing
+resemblance, scores like a subject.
+
+**Confidence follows coverage of the clause.** Nearly all of it is 0.92, most of
+it 0.82–0.88, about half 0.68–0.72, a passing mention 0.6; a clause that is
+exactly the keyword is 0.95. The bar sits high because names and years are
+already gone: what is left beside the keyword is usually a word that renames it.
+«Линейное программирование» is not programming, «pre-algebra» is not algebra and
+«tensor calculus» is not calculus — all three used to clear the bar.
 
 **Two subjects mean no answer.** When another course claims a different span of
-the same title, the playlist goes to a human: «Psychology and Economics», «Graph
-Theory and Additive Combinatorics». Adjacent words are exempt, since in
-«multivariable calculus» the two keywords describe one thing rather than two.
+the same clause, or another clause names a second subject just as convincingly,
+the playlist goes to a human: «Psychology and Economics», «Graph Theory and
+Additive Combinatorics». Adjacent words are exempt, since in «multivariable
+calculus» the two keywords describe one thing rather than two. The same applies
+to a word two courses share outright: `algebra` is deliberately a keyword of both
+`school-algebra` and `abstract-algebra`, so a bare English «Algebra» is declined
+while «Algebra II» and «Алгебра» each still go where they belong.
 
 On top of that a title that names support material rather than a course —
-homework help, exam prep, office hours, seminar series, podcasts, shorts, open
-days — is refused outright.
+homework help, exam prep, test review, office hours, seminar series, podcasts,
+shorts, open days — is refused outright.
 
-Against the crawl in `cache.db` at the time of writing (1120 playlists) this
-took automatic bindings from 17 to 63 while dropping 25 bindings the old rule
-made, almost all of them wrong.
+Against the crawl in `cache.db` at the time of writing (7940 playlists) the rule
+pass binds about a thousand automatically. The clause reading replaced some 380
+of the bindings the previous version made with about 400 others; the ones it gave
+up were «Project Management» under management, «Эволюция Земли» under evolution
+and «Bioinformatics Research Symposium» under bioinformatics, and the ones it
+gained were most of MIT's own flagship courses, whose titles are a fifth
+university by weight.
 
 ### `pnpm data:review`
 

@@ -150,12 +150,25 @@ export function readRaw<T>(db: Db, endpoint: string, requestKey: string): T | nu
 
 /* ────────────────────────────────  Quota  ──────────────────────────────── */
 
-/** Quota resets at midnight Pacific time, which is what this date key tracks. */
+/**
+ * Quota resets at midnight Pacific time, which is what this date key tracks.
+ *
+ * Formatted straight to `YYYY-MM-DD` in the Pacific zone. Reading the wall
+ * clock back through `new Date(…)` and `toISOString()` looks equivalent and is
+ * not: the Pacific time is reparsed as *local* time and then converted to UTC,
+ * so from a zone ahead of UTC the first hours after the reset still key to
+ * yesterday — the crawler would read yesterday's spend and refuse to start at
+ * exactly the hour the nightly job runs.
+ */
+const PACIFIC_DAY = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Los_Angeles',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
 export function quotaDateKey(now = new Date()): string {
-  const pacific = new Date(
-    now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
-  );
-  return pacific.toISOString().slice(0, 10);
+  return PACIFIC_DAY.format(now);
 }
 
 export function spentToday(db: Db): number {
@@ -210,6 +223,20 @@ export type MatchRow = {
   method: string;
   reviewed: number;
 };
+
+/**
+ * How sure an automatic binding has to be before the catalogue shows it.
+ *
+ * One number, shared: the matcher decides what to hand to a human by it, the
+ * build decides what to publish by it, and the queue decides what is worth
+ * spending quota on by it. Three copies of `0.75` would drift.
+ */
+export const MATCH_THRESHOLD = 0.75;
+
+/** A binding the catalogue can show: reviewed by hand, or confident enough. */
+export function isBindingConfident(match: Pick<MatchRow, 'confidence' | 'reviewed'>): boolean {
+  return match.reviewed === 1 || match.confidence >= MATCH_THRESHOLD;
+}
 
 export type ChannelRow = {
   id: string;

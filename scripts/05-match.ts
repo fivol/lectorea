@@ -1,5 +1,5 @@
 import { nowIso, parseLimit, reportRemaining } from './lib/config.js';
-import { openDb, type Db, type PlaylistRow } from './lib/db.js';
+import { MATCH_THRESHOLD, openDb, type Db, type PlaylistRow } from './lib/db.js';
 import { loadSources, reportSourceError, type Sources } from './lib/sources.js';
 import { hasOpenAI, MODELS, openai } from './lib/openai.js';
 import { buildKeywordIndex, matchByRules } from './lib/rules.js';
@@ -12,19 +12,25 @@ import { buildKeywordIndex, matchByRules } from './lib/rules.js';
  *   1. rules  — the synonym dictionary from keywords/{lang}.json, see lib/rules.ts
  *   2. LLM    — title, description and the first lecture names, in batches of 20
  *   3. human  — anything under the confidence threshold lands in `06-review.ts`
+ *
+ * `--force` re-reads everything the passes decided before, which is what a
+ * change to the rules or the keywords needs to reach the catalogue.
  */
-
-const CONFIDENCE_THRESHOLD = 0.75;
 
 async function main(): Promise<void> {
   const useLlm = process.argv.includes('--llm');
+  const force = process.argv.includes('--force');
   const limit = parseLimit();
   const sources = loadSources();
   const db = openDb();
 
-  const allPending = unmatchedPlaylists(db, sources);
+  const allPending = unmatchedPlaylists(db, sources, force);
   const pending = allPending.slice(0, limit);
-  console.log(`· ${allPending.length} playlists without a confident match`);
+  console.log(
+    force
+      ? `· ${allPending.length} playlists to re-read against the current rules`
+      : `· ${allPending.length} playlists without a confident match`
+  );
   if (!pending.length) {
     db.close();
     return;
@@ -57,18 +63,33 @@ async function main(): Promise<void> {
 
   let byRule = 0;
   const unresolved: PlaylistRow[] = [];
+  /** What the rules got, for the ones too weak to ship. The model has to beat it. */
+  const ruleFloor = new Map<string, number>();
 
   for (const playlist of pending) {
     const candidate = matchByRules(playlist, index);
     if (candidate) {
       write.run(playlist.id, candidate.courseId, candidate.confidence, 'rule', nowIso());
       byRule += 1;
-    } else {
-      touch.run(playlist.id, 'rules-none', nowIso());
+    }
+    // A forced pass must be able to take a binding back: the rule that made it
+    // may be the one that changed. Without this an improved matcher can only
+    // ever add, and the wrong bindings it was written to remove stay put.
+    if (!candidate && force) write.run(playlist.id, null, 0, 'rules-none', nowIso());
+    else if (!candidate) touch.run(playlist.id, 'rules-none', nowIso());
+    // A guess under the threshold does not reach the catalogue, so it is not an
+    // answer — it is a hint, and the model gets it too. Passing on only outright
+    // refusals left every «passing mention» title for a human, which is the tier
+    // the cascade is meant to spend last.
+    if (!candidate || candidate.confidence < MATCH_THRESHOLD) {
       unresolved.push(playlist);
+      if (candidate) ruleFloor.set(playlist.id, candidate.confidence);
     }
   }
-  console.log(`· rules matched ${byRule}, ${unresolved.length} left`);
+  console.log(
+    `· rules matched ${byRule} (${byRule - ruleFloor.size} confident), ` +
+      `${unresolved.length} left`
+  );
   reportRemaining(allPending.length - pending.length, limit);
 
   if (!unresolved.length) {
@@ -96,7 +117,9 @@ async function main(): Promise<void> {
     const batch = unresolved.slice(i, i + 20);
     const answers = await classifyBatch(db, batch, courses);
     for (const answer of answers) {
-      if (!answer.courseId) {
+      // A weaker answer than the rules already gave is not an improvement, and
+      // overwriting would lose the better guess a reviewer is shown first.
+      if (!answer.courseId || answer.confidence <= (ruleFloor.get(answer.playlistId) ?? 0)) {
         touch.run(answer.playlistId, 'llm-none', nowIso());
         continue;
       }
@@ -107,7 +130,7 @@ async function main(): Promise<void> {
   }
 
   console.log(`✓ data:match: ${byRule} by rule, ${byLlm} by model`);
-  console.log('· anything below 0.75 stays out of the catalogue until reviewed');
+  console.log(`· anything below ${MATCH_THRESHOLD} stays out of the catalogue until reviewed`);
   db.close();
 }
 
@@ -176,18 +199,24 @@ async function classifyBatch(
  * Never-tried playlists first, then the ones tried longest ago. Without an
  * order a limited run would keep re-reading the same head of the list, and
  * `pnpm data:match 20` twice would classify the same twenty twice.
+ *
+ * `force` also re-reads the ones an earlier pass bound confidently. A change to
+ * the rules is otherwise invisible to everything already in the catalogue —
+ * exactly the bindings a rule was improved to correct — since a confident row
+ * is the one thing this query normally leaves alone. Hand decisions are still
+ * never touched: `reviewed` rows and `overrides.yaml` outrank any pass.
  */
-function unmatchedPlaylists(db: Db, sources: Sources): PlaylistRow[] {
+function unmatchedPlaylists(db: Db, sources: Sources, force = false): PlaylistRow[] {
   const overridden = new Set(Object.keys(sources.overrides.matches));
   const rows = db
     .prepare(
       `SELECT p.* FROM playlists p
        LEFT JOIN matches m ON m.playlist_id = p.id
        WHERE p.alive = 1
-         AND (m.playlist_id IS NULL OR (m.reviewed = 0 AND m.confidence < ?))
+         AND (m.playlist_id IS NULL OR m.reviewed = 0 AND (? OR m.confidence < ?))
        ORDER BY m.updated_at IS NULL DESC, m.updated_at, p.id`
     )
-    .all(CONFIDENCE_THRESHOLD) as PlaylistRow[];
+    .all(force ? 1 : 0, MATCH_THRESHOLD) as PlaylistRow[];
   return rows.filter((row) => !overridden.has(row.id));
 }
 

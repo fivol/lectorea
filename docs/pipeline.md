@@ -24,6 +24,7 @@ scripts/
     db.ts             sqlite
     queue.ts          job queue
     tasks.ts          the individual steps
+    rules.ts          binding a playlist to a course by its title
     sources.ts        load and validate data/, with file and line
     graph.ts          build-time checks over shared/graph.ts
     classify.ts       language, lecturer, kind, completeness from a title
@@ -59,6 +60,15 @@ Which steps go through the job queue is a quota decision. Anything the API
 answers 50 at a time — playlist metadata, liveness — runs in direct batches,
 because one job per playlist would turn one unit into fifty. Only genuinely
 per-target work is queued.
+
+**The order the video queue drains in is a quota decision too.** Walking a
+playlist's videos is the most expensive thing here, and a playlist no course
+claims is never shown, so the work buys nothing. Matching is free and needs only
+the title that discovery already stored. So the order is: discover, match, then
+crawl the ones that matched — playlists decided by hand in `overrides.yaml`
+first of all, then the ones the passes bound confidently, then the rest. With
+7900 playlists queued and a day of quota buying some 4500, which 4500 is the
+whole question.
 
 `lib/youtube.ts` counts spent units in the `quota(date, spent)` table and stops
 at 9500, leaving a margin. The date key follows Pacific midnight, which is when
@@ -99,6 +109,18 @@ A full crawl happens once. After that everything is driven by `next_refresh_at`:
 
 Without this every run burns the quota again and half the jobs never finish.
 
+Two things carry it: `next_refresh_at` says when a playlist is next due, and the
+item count says whether its video list is worth walking again. A metadata
+refresh queues the video crawl only for the playlists whose count actually
+moved — queuing every playlist it looked at would hand the expensive step the
+whole catalogue each cycle, which is a day of quota to re-read lists that did
+not change.
+
+The quota ledger is keyed by the Pacific date, formatted in that zone rather
+than derived from a local clock. From a zone ahead of UTC the two disagree for
+the first hours after the reset, which is exactly when the nightly job runs: the
+crawler would read yesterday's spend and stop before it started.
+
 ## Matching
 
 The most laborious step, and the one that does not fully automate. A cascade,
@@ -109,9 +131,10 @@ cheapest first:
    two courses claim the same title the match is *declined*, not guessed — an
    ambiguous case is exactly what a human should see
 2. **LLM** — title, description and the first five lecture names, in batches of
-   20, with the instruction to pick one course or answer `none`
-3. **Manual review** — anything below 0.75 goes into the queue for
-   `pnpm data:review`
+   20, with the instruction to pick one course or answer `none`. It is shown the
+   rule's own below-threshold guesses too, and has to beat them to replace them
+3. **Manual review** — anything still below 0.75 goes into the queue for
+   `pnpm data:review`, and what it decides is crawled first next time round
 
 The review server shows one playlist at a time: the playlist on the left, course
 search and buttons on the right. Keyboard: `1`–`9` for the top suggestions, `n`

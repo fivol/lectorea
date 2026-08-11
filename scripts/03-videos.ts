@@ -1,8 +1,8 @@
 import { parseLimit, reportRemaining } from './lib/config.js';
 import { openDb } from './lib/db.js';
-import { reportSourceError } from './lib/sources.js';
+import { loadSources, reportSourceError } from './lib/sources.js';
 import { createClient } from './lib/youtube.js';
-import { pendingCount, reportWorker, runWorker } from './lib/queue.js';
+import { pendingCount, preferTargets, reportWorker, runWorker } from './lib/queue.js';
 import { fetchPlaylistVideos } from './lib/tasks.js';
 
 /**
@@ -21,6 +21,15 @@ async function main(): Promise<void> {
   const pending = pendingCount(db, ['videos']);
   console.log(`· ${pending} playlists queued for video fetch`);
 
+  // Hand decisions come first of all — someone already spent attention saying
+  // this playlist belongs in the catalogue, and the crawl is what makes it
+  // show anything.
+  const bound = Object.entries(loadSources().overrides.matches)
+    .filter(([, courseId]) => courseId !== null)
+    .map(([playlistId]) => playlistId);
+  preferTargets(db, bound);
+  console.log(`· ${bound.length} of them decided by hand, crawled first`);
+
   let processed = 0;
   const result = await runWorker(
     db,
@@ -32,7 +41,10 @@ async function main(): Promise<void> {
         console.log(`  ${processed} playlists · last ${count} videos · quota ${api.spent()}`);
       }
     },
-    limit
+    limit,
+    // Playlists a course already claims first: this is the step that costs, and
+    // the ones nothing claims are not shown even once they are crawled.
+    'matched-first'
   );
 
   reportWorker('data:videos', result);

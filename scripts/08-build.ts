@@ -26,7 +26,15 @@ import {
 import { layoutColumns } from './lib/layout.js';
 import { bayesianScore, engagementOf, meanEngagement, median, scoreToPercent } from './lib/score.js';
 import { loadSources, reportSourceError, SourceError, type Sources } from './lib/sources.js';
-import { dbExists, openDb, type MatchRow, type PlaylistRow, type VideoRow, type ChannelRow } from './lib/db.js';
+import {
+  dbExists,
+  isBindingConfident,
+  openDb,
+  type MatchRow,
+  type PlaylistRow,
+  type VideoRow,
+  type ChannelRow,
+} from './lib/db.js';
 import { detectCompleteness, detectKind, detectLang, detectLecturer } from './lib/classify.js';
 
 /**
@@ -302,7 +310,7 @@ function resolveCourse(
   const match = matches.get(playlistId);
   if (!match?.course_id) return null;
   // Unreviewed low-confidence guesses stay out of the catalogue.
-  if (!match.reviewed && match.confidence < 0.75) return null;
+  if (!isBindingConfident(match)) return null;
   return match.course_id;
 }
 

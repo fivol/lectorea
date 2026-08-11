@@ -1,5 +1,5 @@
 import { nowIso } from './config.js';
-import type { Db } from './db.js';
+import { MATCH_THRESHOLD, type Db } from './db.js';
 import { QuotaExceededError, NotFoundError, TransientError } from './youtube.js';
 
 /**
@@ -16,6 +16,59 @@ export type Job = {
   target: string;
   attempts: number;
 };
+
+/**
+ * The order the queue is drained in.
+ *
+ * `fifo` is insertion order, which is right when every job costs the same and
+ * every result is worth the same.
+ *
+ * `matched-first` is for the video crawl, where neither holds. Walking a
+ * playlist's videos is the most expensive thing the pipeline does, and a
+ * playlist no course claims never reaches the catalogue — the work is spent
+ * and nothing is shown for it. Matching is free and needs only the title that
+ * discovery already stored, so binding first and crawling second turns the
+ * day's quota into catalogue instead of into rows nobody reads. With 7 900
+ * playlists queued and one day of quota buying about 4 500 of them, which 4 500
+ * is the whole question.
+ */
+export type JobOrder = 'fifo' | 'matched-first';
+
+const ORDER_BY: Record<JobOrder, string> = {
+  fifo: 'jobs.id',
+  'matched-first': `
+    CASE WHEN EXISTS (SELECT 1 FROM preferred p WHERE p.target = jobs.target) THEN 0 ELSE
+      COALESCE((
+        SELECT CASE WHEN m.course_id IS NOT NULL
+                     AND (m.reviewed = 1 OR m.confidence >= ${MATCH_THRESHOLD})
+                    THEN 0 ELSE 1 END
+        FROM matches m WHERE m.playlist_id = jobs.target
+      ), 1)
+    END, jobs.id`,
+};
+
+/**
+ * Targets to put at the head of a `matched-first` queue whatever the `matches`
+ * table says.
+ *
+ * Hand decisions live in `overrides.yaml`, not in the database — the reviewed
+ * record is a file in git, which is what makes it reviewable. So the queue
+ * cannot see them, and the playlists a person went to the trouble of binding
+ * would be the last ones the crawl paid for. This is how the caller hands them
+ * over: a temporary table, dropped with the connection.
+ */
+export function preferTargets(db: Db, targets: Iterable<string>): number {
+  db.exec(`CREATE TEMP TABLE IF NOT EXISTS preferred (target TEXT PRIMARY KEY)`);
+  const insert = db.prepare(`INSERT OR IGNORE INTO preferred (target) VALUES (?)`);
+  let n = 0;
+  db.transaction(() => {
+    for (const target of targets) {
+      insert.run(target);
+      n += 1;
+    }
+  })();
+  return n;
+}
 
 /** 1m, 4m, 16m, 64m — quadratic, which is gentle at first and gives up by the fifth try. */
 export function backoffMinutes(attempts: number): number {
@@ -50,7 +103,7 @@ export function recoverStale(db: Db): number {
 }
 
 /** Claims one job atomically, so two workers never take the same one. */
-function claim(db: Db, types: JobType[]): Job | null {
+function claim(db: Db, types: JobType[], order: JobOrder): Job | null {
   const placeholders = types.map(() => '?').join(',');
   const take = db.transaction((): Job | null => {
     const row = db
@@ -58,7 +111,7 @@ function claim(db: Db, types: JobType[]): Job | null {
         `SELECT id, type, target, attempts FROM jobs
          WHERE status = 'pending' AND type IN (${placeholders})
            AND (next_retry_at IS NULL OR next_retry_at <= ?)
-         ORDER BY id LIMIT 1`
+         ORDER BY ${ORDER_BY[order]} LIMIT 1`
       )
       .get(...types, nowIso()) as Job | undefined;
     if (!row) return null;
@@ -128,8 +181,12 @@ export async function runWorker(
   db: Db,
   types: JobType[],
   handle: (job: Job) => Promise<void>,
-  limit = Infinity
+  limit = Infinity,
+  order: JobOrder = 'fifo'
 ): Promise<WorkerResult> {
+  // The ordering reads this table whether or not the caller filled it.
+  if (order === 'matched-first') preferTargets(db, []);
+
   const recovered = recoverStale(db);
   if (recovered) console.log(`· recovered ${recovered} jobs left running by a previous crash`);
 
@@ -147,7 +204,7 @@ export async function runWorker(
       result.stoppedAtLimit = pendingCount(db, types) > 0;
       break;
     }
-    const job = claim(db, types);
+    const job = claim(db, types, order);
     if (!job) break;
     taken += 1;
 
