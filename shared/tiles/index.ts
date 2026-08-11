@@ -9,7 +9,19 @@
  * the viewer draws.
  */
 
-import { corner, DIRECTIONS, EDGE_NAMES, hexPath, HEX_H, HEX_R, HEX_W, round } from './hex.js';
+import {
+  corner,
+  DIRECTIONS,
+  EDGE_NAMES,
+  flatHexPath,
+  GROUND,
+  hexPath,
+  HEX_H,
+  HEX_R,
+  HEX_W,
+  round,
+  SLAB,
+} from './hex.js';
 import { terrain, type Palette } from './ink.js';
 import { reliefTiles } from './atlas/relief.js';
 import { coastTiles } from './atlas/coast.js';
@@ -96,6 +108,16 @@ export type Manifest = {
     corners: Array<{ index: number; x: number; y: number }>;
     edges: Array<{ index: number; name: string; step: { q: number; r: number } }>;
   };
+  /** The angle the map is seen at, and what a consumer has to do about it. */
+  view: {
+    /** A unit of north-south ground is this much screen. */
+    ground: number;
+    /** How thick one cell of ground is, in hex radii. */
+    slab: number;
+    project: string;
+    /** The cell as it lands on the screen: the clip for anything laid flat. */
+    flatClipPath: string;
+  };
   howToUse: Record<string, string>;
   groups: typeof GROUPS;
   tiles: ManifestTile[];
@@ -136,15 +158,34 @@ export function buildManifest(options: ManifestOptions = {}): Manifest {
         step: { q: step.q, r: step.r },
       })),
     },
+    view: {
+      ground: GROUND,
+      slab: SLAB,
+      project: 'screen.x = x, screen.y = y * view.ground − z',
+      flatClipPath: flatHexPath(),
+    },
     howToUse: {
       space:
         'Каждая плитка нарисована в единичном гексагоне: центр в нуле, радиус 1, вершина вверх.',
+      view:
+        'На карту смотрят сверху и немного сбоку. Земля сжата по вертикали в view.ground раз, ' +
+        'высота идёт прямо вверх, сетка не повёрнута — соседи, углы и середины граней остаются ' +
+        'теми же. Клетка (q, r) на экране: x = s·√3·(q + r/2), y = s·1.5·r·view.ground.',
       place:
         'Клетка (q, r) при радиусе s: <g transform="translate(cx cy) scale(s)">…body…</g>, ' +
-        'где cx, cy считаются по формуле hex.centre.',
+        'где cx, cy — центр клетки на экране.',
+      lay:
+        'Если clip = true, плитка лежит на земле: добавьте scale(1 view.ground) сразу после ' +
+        'scale(s), до поворота и отражения. Если clip = false, у плитки есть высота — она ' +
+        'нарисована уже в экранных координатах и сжимать её нельзя.',
       clip:
         'Если clip = true, оберните body во внутренний <g clip-path> с hex.clipPath — ' +
-        'обрезка обязана считаться уже в масштабированной системе координат.',
+        'обрезка обязана считаться уже в масштабированной системе координат, внутри сжатия. ' +
+        'Снаружи сжатия тот же контур — view.flatClipPath.',
+      slab:
+        'Клетка суши — не пятно, а плита толщиной view.slab радиуса. Стена рисуется по граням ' +
+        '1 (ЮВ) и 2 (ЮЗ) и только там, где соседней клетки нет: грани 0 и 3 при этом угле ' +
+        'смотрят ребром, а стена внутри материка — забор поперёк поля.',
       stack:
         'На одну клетку кладётся несколько плиток. Порядок снизу вверх: plate, surface, ' +
         'relief, overlay; внутри слоя — порядок в стопке.',

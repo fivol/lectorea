@@ -3,10 +3,11 @@ import {
   assemblyBox,
   assemblyMarkup,
   buildManifest,
-  centreOf,
+  cellAt,
   EDGE_NAMES,
-  edgeCorners,
   findTile,
+  flatCorner,
+  flatHexPath,
   GROUPS,
   gridMarkup,
   hexClipDefs,
@@ -14,13 +15,19 @@ import {
   placedSeams,
   placementMarkup,
   round,
+  slabMarkup,
+  slabPath,
+  SLAB,
   sortStack,
   spriteSvg,
   stackMarkup,
   tally,
+  terrain,
+  tileBox,
   tiles,
   tileSvg,
   type Assembly,
+  type Cell,
   type Meets,
   type Placement,
   type Tile,
@@ -90,13 +97,44 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-/** An SVG document dropped straight into the page, on the chosen backdrop. */
+/**
+ * An SVG document dropped straight into the page.
+ *
+ * The land backdrop used to be the whole plate: a rectangle of a territory
+ * colour with the piece drawn on it. Since the map is looked at from the side,
+ * the ground is a thing with an edge and a thickness, and the colour belongs to
+ * *that* — so it moved inside the picture, and what is left out here is only
+ * the paper the picture is printed on.
+ */
 function figure(markup: string, over: 'land' | 'water', className = 'plate'): HTMLElement {
   const box = el('div', { class: className });
-  // Water carries its own colour; land shows whatever the territory is.
-  box.style.background = over === 'water' ? '#2b3a44' : state.backdrop.colour;
+  box.style.background = over === 'water' ? '#2b3a44' : '#e9e4d8';
   box.innerHTML = markup;
   return box;
+}
+
+/**
+ * The cells a land piece stands on, in the territory's own colour: the side of
+ * the ground and then the ground.
+ *
+ * Only the colour. The shading of the wall belongs to the collection — it is
+ * the same mark relief uses, and `slabMarkup` draws it — so what a field's hue
+ * does when its ground gains a side is answered in one place: the same colour,
+ * with the collection's own shade over it.
+ */
+function groundMarkup(cells: Cell[], size: number): string {
+  const colour = state.backdrop.colour;
+  const wall = slabPath(cells, size);
+  const tops = cells
+    .map((cell) => {
+      const centre = cellAt(cell.q, cell.r, size);
+      return (
+        `<path d="${flatHexPath(size)}" fill="${colour}" ` +
+        `transform="translate(${round(centre.x)} ${round(centre.y)})"/>`
+      );
+    })
+    .join('');
+  return (wall ? `<path d="${wall}" fill="${colour}"/>` : '') + tops;
 }
 
 const SEAM_COLOUR: Record<Meets, string> = {
@@ -125,10 +163,13 @@ function seamMarkup(
   size: number
 ): string {
   if (!state.seams) return '';
+  // Along the cell's edges as the reader sees them, not as the plan has them:
+  // a marker drawn on the unprojected hex sits off the piece it is marking.
   return placedSeams(tile, placement)
     .flatMap((seam) =>
       seam.edges.map((index) => {
-        const [a, b] = edgeCorners(index, size * 0.88);
+        const a = flatCorner(index, size * 0.88);
+        const b = flatCorner(index + 1, size * 0.88);
         return (
           `<path d="M${round(at.x + a.x)} ${round(at.y + a.y)}L${round(at.x + b.x)} ${round(at.y + b.y)}" ` +
           `stroke="${SEAM_COLOUR[seam.meets]}" stroke-width="${round(size * 0.07)}" ` +
@@ -141,25 +182,29 @@ function seamMarkup(
 
 /* ────────────────────────────────  Gallery  ────────────────────────────── */
 
-/** One tile in a hex, on the sea if it belongs there and on nothing if not. */
+/** One tile on its cell: land on a slab of the territory, sea on the sea. */
 function tilePlate(tile: Tile, variant: number, size: number): string {
-  const width = (HEX_W + tile.bleed * 2) * size;
-  const height = (2 + tile.bleed * 2) * size;
+  const box = tileBox(tile, size);
+  // Room under the piece for the wall of the cell it stands on.
+  const foot = tile.over === 'land' ? SLAB * size : 0;
+  const cells: Cell[] = [{ q: 0, r: 0, stack: [] }];
   const at = { x: 0, y: 0 };
   const sea =
     tile.over === 'water' && tile.layer !== 'plate' ? findTile('water-plain') : undefined;
 
   const draw = options();
   const layers = [
+    tile.over === 'land' ? groundMarkup(cells, size) + slabMarkup(cells, size, terrain) : '',
     sea ? placementMarkup(sea, { variant }, at, size, draw) : '',
     placementMarkup(tile, { variant }, at, size, draw),
-    state.grid ? gridMarkup([{ q: 0, r: 0, stack: [] }], size) : '',
+    state.grid ? gridMarkup(cells, size) : '',
     seamMarkup(tile, { variant }, at, size),
   ];
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${round(-width / 2)} ${round(-height / 2)} ` +
-    `${round(width)} ${round(height)}" width="${round(width)}" height="${round(height)}">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${round(box.x)} ${round(box.y)} ` +
+    `${round(box.width)} ${round(box.height + foot)}" ` +
+    `width="${round(box.width)}" height="${round(box.height + foot)}">` +
     hexClipDefs(draw.clipId) +
     layers.join('') +
     `</svg>`
@@ -242,7 +287,7 @@ function assemblySvgFor(assembly: Assembly, size: number, overlays: boolean): st
       (state.seams
         ? assembly.cells
             .flatMap((cell) => {
-              const centre = centreOf(cell.q, cell.r, size);
+              const centre = cellAt(cell.q, cell.r, size);
               return cell.stack.map((placement) => {
                 const tile = findTile(placement.tile);
                 return tile ? seamMarkup(tile, placement, centre, size) : '';
@@ -255,6 +300,7 @@ function assemblySvgFor(assembly: Assembly, size: number, overlays: boolean): st
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${round(box.x)} ${round(box.y)} ` +
     `${round(box.width)} ${round(box.height)}" width="${round(box.width)}" height="${round(box.height)}">` +
     hexClipDefs(draw.clipId) +
+    (assembly.over === 'land' ? groundMarkup(assembly.cells, size) : '') +
     assemblyMarkup(assembly, findTile, size, draw) +
     overlay +
     `</svg>`

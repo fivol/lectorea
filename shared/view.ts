@@ -39,14 +39,20 @@ export type Point = { x: number; y: number };
 export const GROUND = 0.82;
 
 /**
- * The land's thickness, in hex radii.
+ * How thick one cell of ground is, in hex radii.
  *
- * The continents are slabs standing in the water rather than pools of colour
- * poured onto it, and this is the height of the cliff between the ground on top
- * and the waterline. One radius: enough that the coast reads as an edge with a
- * side to it, little enough that the wall never hides the field behind it.
+ * A cell is a slab standing in the water rather than a patch of colour poured
+ * onto it, and this is the wall between the ground on top and whatever it
+ * stands in. Around a third: enough that the edge reads as an edge with a side
+ * to it, and no more, because the wall of the cell in front hides the ground of
+ * the cell behind — at a full radius a row of cells is a row of columns and the
+ * only thing left to look at is the wall.
+ *
+ * The map draws its coastline thicker than this, and says why where it does. It
+ * is a whole continent seen from across the room, where the true edge of one
+ * cell would be a hairline nobody would read as an edge at all.
  */
-export const SLAB = 1;
+export const SLAB = 0.34;
 
 /** A point on the ground, `z` units above it, as it lands on the screen. */
 export function project(x: number, y: number, z = 0): Point {

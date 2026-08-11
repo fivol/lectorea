@@ -6,15 +6,29 @@
  * writes is what the viewer showed. Size is applied as a transform rather than
  * baked into the coordinates: stroke widths then scale with the drawing, which
  * is the whole reason tiles are authored in a unit hex.
+ *
+ * The angle is applied here too, and where it is applied is the whole design.
+ * A piece that lies on the ground — a plate, a river, a shoal, anything cut to
+ * the cell — is drawn as a plan and laid back by the placement transform, so
+ * its author never thinks about the projection at all. A piece with volume is
+ * not: it is authored standing up, in screen coordinates, because the one thing
+ * it is for is the height that the projection would otherwise flatten. `clip`
+ * is the switch, and it already meant exactly this — cut to the cell, or
+ * sticking out of it.
  */
 
 import {
-  centreOf,
+  cellAt,
+  DIRECTIONS,
+  flatCorner,
+  flatHexPath,
   flipEdge,
+  GROUND,
   hexPath,
   HEX_W,
   rotateEdge,
   round,
+  SLAB,
   type Point,
 } from './hex.js';
 import { hash, rng, terrain, type Palette } from './ink.js';
@@ -80,13 +94,19 @@ export function placementMarkup(
   size: number,
   options: RenderOptions = {}
 ): string {
+  // Read right to left, which is the order the geometry goes through them: the
+  // piece is mirrored, then turned — both on the ground, where the six edges
+  // are still six equal edges and a turn is still a turn — and only then is the
+  // ground laid back. Squashing first and turning after would swing a river arm
+  // off the edge midpoint it is supposed to leave through.
+  const lay = tile.clip ? ` scale(1 ${round(GROUND)})` : '';
   const turn = placement.rotate ? ` rotate(${round(60 * placement.rotate)})` : '';
   const mirror = placement.flip ? ' scale(-1 1)' : '';
   const body = tileBody(tile, placement, options);
   const clip = options.clipId ?? DEFAULTS.clipId;
   const inner = tile.clip ? `<g clip-path="url(#${clip})">${body}</g>` : body;
   return (
-    `<g transform="translate(${round(at.x)} ${round(at.y)}) scale(${round(size)})${turn}${mirror}" ` +
+    `<g transform="translate(${round(at.x)} ${round(at.y)}) scale(${round(size)})${lay}${turn}${mirror}" ` +
     `data-tile="${tile.id}">${inner}</g>`
   );
 }
@@ -138,10 +158,78 @@ type Box = { x: number; y: number; width: number; height: number };
 const viewBoxOf = (box: Box) =>
   `${round(box.x)} ${round(box.y)} ${round(box.width)} ${round(box.height)}`;
 
+/**
+ * How far above and below its cell centre a piece reaches, in hex radii.
+ *
+ * Not symmetrical any more, and that is the projection showing through: a piece
+ * lying on the ground is as squat as the cell is, while one with volume keeps
+ * its full height upwards and gains nothing downwards, because height only ever
+ * goes up. A single number for both would give every mountain an equal band of
+ * empty sky under its feet.
+ */
+export function tileReach(tile: Tile): { up: number; down: number } {
+  return {
+    up: (tile.clip ? GROUND : 1) + tile.bleed,
+    down: GROUND + tile.bleed,
+  };
+}
+
 export function tileBox(tile: Tile, size: number): Box {
+  const reach = tileReach(tile);
   const width = (HEX_W + tile.bleed * 2) * size;
-  const height = (2 + tile.bleed * 2) * size;
-  return { x: -width / 2, y: -height / 2, width, height };
+  return {
+    x: -width / 2,
+    y: -reach.up * size,
+    width,
+    height: (reach.up + reach.down) * size,
+  };
+}
+
+/* ───────────────────────────────  The slab  ─────────────────────────────── */
+
+/**
+ * The wall of ground a run of land cells shows where the earth beside it ends.
+ *
+ * Only the two edges facing the reader — south-east and south-west — are ever
+ * drawn. Under a squash with no turn an east or west edge is exactly side-on:
+ * sweeping it downwards produces a line with no width, so a wall there would be
+ * an invisible shape at best and a stray hairline at worst.
+ *
+ * And only where nothing is next to it. A land cell has no plate of its own —
+ * the ground is already the territory's colour, and painting over it is the one
+ * thing the collection does not do — so a wall drawn between two cells of one
+ * landmass has nothing to hide behind and shows up as a fence across the middle
+ * of the field.
+ */
+export function slabPath(cells: Cell[], size: number, depth = SLAB): string {
+  const present = new Set(cells.map((cell) => `${cell.q},${cell.r}`));
+  const drop = depth * size;
+  const faces: string[] = [];
+
+  for (const cell of cells) {
+    const centre = cellAt(cell.q, cell.r, size);
+    for (const edge of [1, 2]) {
+      const step = DIRECTIONS[edge];
+      if (present.has(`${cell.q + step.q},${cell.r + step.r}`)) continue;
+      const a = flatCorner(edge, size);
+      const b = flatCorner(edge + 1, size);
+      faces.push(
+        `M${round(centre.x + a.x)} ${round(centre.y + a.y)}` +
+          `L${round(centre.x + b.x)} ${round(centre.y + b.y)}` +
+          `L${round(centre.x + b.x)} ${round(centre.y + b.y + drop)}` +
+          `L${round(centre.x + a.x)} ${round(centre.y + a.y + drop)}Z`
+      );
+    }
+  }
+  // One path rather than one per face: neighbouring faces share an edge, and
+  // two translucent quads meeting there draw a seam down every join.
+  return faces.join('');
+}
+
+/** The wall, shaded. Over ground already carrying the territory's colour. */
+export function slabMarkup(cells: Cell[], size: number, ink: Palette, depth = SLAB): string {
+  const d = slabPath(cells, size, depth);
+  return d ? `<path d="${d}" fill="${ink.shade}" opacity="0.42"/>` : '';
 }
 
 /** A standalone file for one tile — what `--formats=svg` writes. */
@@ -171,14 +259,17 @@ export function assemblyBox(
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
+  // Land stands on its wall, and the wall hangs below the southernmost cell.
+  const foot = assembly.over === 'land' ? SLAB : 0;
   for (const cell of assembly.cells) {
-    const centre = centreOf(cell.q, cell.r, size);
-    const bleed =
-      Math.max(0, ...cell.stack.map((placement) => find(placement.tile)?.bleed ?? 0)) * size;
-    minX = Math.min(minX, centre.x - (HEX_W / 2) * size - bleed);
-    maxX = Math.max(maxX, centre.x + (HEX_W / 2) * size + bleed);
-    minY = Math.min(minY, centre.y - size - bleed);
-    maxY = Math.max(maxY, centre.y + size + bleed);
+    const centre = cellAt(cell.q, cell.r, size);
+    const stack = cell.stack.flatMap((placement) => find(placement.tile) ?? []);
+    const bleed = Math.max(0, ...stack.map((tile) => tile.bleed));
+    const up = Math.max(GROUND, ...stack.map((tile) => tileReach(tile).up));
+    minX = Math.min(minX, centre.x - (HEX_W / 2 + bleed) * size);
+    maxX = Math.max(maxX, centre.x + (HEX_W / 2 + bleed) * size);
+    minY = Math.min(minY, centre.y - up * size);
+    maxY = Math.max(maxY, centre.y + (GROUND + bleed + foot) * size);
   }
   const margin = size * pad;
   return {
@@ -199,16 +290,21 @@ export function assemblyMarkup(
   // North to south, so that anything rising out of a cell is painted over its
   // northern neighbour rather than sliced by it.
   const cells = [...assembly.cells].sort((a, b) => a.r - b.r || a.q - b.q);
-  return cells
-    .map((cell) => {
-      const centre = centreOf(cell.q, cell.r, size);
-      return (
-        `<g data-cell="${cell.q},${cell.r}">` +
-        stackMarkup(cell.stack, find, centre, size, options) +
-        `</g>`
-      );
-    })
-    .join('');
+  const ink = options.palette ?? DEFAULTS.palette;
+  const wall = assembly.over === 'land' ? slabMarkup(assembly.cells, size, ink) : '';
+  return (
+    wall +
+    cells
+      .map((cell) => {
+        const centre = cellAt(cell.q, cell.r, size);
+        return (
+          `<g data-cell="${cell.q},${cell.r}">` +
+          stackMarkup(cell.stack, find, centre, size, options) +
+          `</g>`
+        );
+      })
+      .join('')
+  );
 }
 
 export function assemblySvg(
@@ -231,9 +327,9 @@ export function assemblySvg(
 export function gridMarkup(cells: Cell[], size: number, colour = '#6b7a86'): string {
   return cells
     .map((cell) => {
-      const centre = centreOf(cell.q, cell.r, size);
+      const centre = cellAt(cell.q, cell.r, size);
       return (
-        `<path d="${hexPath(size)}" transform="translate(${round(centre.x)} ${round(centre.y)})" ` +
+        `<path d="${flatHexPath(size)}" transform="translate(${round(centre.x)} ${round(centre.y)})" ` +
         `fill="none" stroke="${colour}" stroke-width="${round(size * 0.02)}" opacity="0.45"/>`
       );
     })

@@ -2,7 +2,7 @@
 
 The map is a field of hexagons with no borders drawn: territories coloured by
 domain, sea between them. This is the set of pieces that go on those cells —
-30 tiles at the altitude of a mountain range, a river, a reef, stacked several
+36 tiles at the altitude of a mountain range, a river, a reef, stacked several
 to a cell and joined across cells into larger objects.
 
 ```bash
@@ -15,6 +15,58 @@ commands in `scripts/tiles-build.ts` and `scripts/tiles-view.ts`. Nothing in the
 frontend depends on it yet — like `pnpm map:preview`, it is a workshop, not a
 build step.
 
+## The angle
+
+The map is looked at from above and a little to the side, and the collection is
+drawn for that view. The projection is `shared/view.ts`, one file shared with
+the map screen so that a mountain cannot end up standing at a different angle
+from the coast it stands on:
+
+```
+screen.x = x
+screen.y = y · GROUND − z
+```
+
+The ground is squashed north to south by `GROUND`, height goes straight up, and
+**nothing is turned**. That last part is the whole reason it is this projection
+and not a real isometric: a rotated grid would invalidate every hex formula in
+`mapgen.ts`, every coastline in `public/map.svg` and every seam below. Squashing
+leaves all of them exact — a cell's neighbours, a river's crossing point, a
+coast pinned to a corner — and changes only distances.
+
+Which means each piece is authored in one of two spaces, and `clip` is the
+switch that says which:
+
+- **Lying on the ground** (`clip: true`) — a plate, a river, a shoal. Drawn as a
+  plan, in the plain unit hex, and laid back by the placement transform. The
+  author never thinks about the angle at all.
+- **Standing up** (`clip: false`) — anything with volume. Drawn already in
+  screen coordinates, because height is the one thing the squash must not
+  touch. A ground position in one of these goes through `flat()` or comes from
+  `rim()`; a height is a plain number subtracted from one.
+
+`rim(x)` is where the ground ends nearest the reader, and it is what standing
+pieces stand on. A foot drawn level instead floats above the cell in the middle
+and hangs over its edge at the sides.
+
+## The slab
+
+A cell of land is a slab, not a patch of colour: `SLAB` radii thick, with a wall
+between the ground on top and whatever it stands in. `slabMarkup` draws it, and
+two rules keep it honest.
+
+**Only the near edges.** The wall goes on edges 1 (SE) and 2 (SW). At this angle
+an east or west edge is exactly side-on, so sweeping it downwards gives a shape
+with no width.
+
+**Only at a boundary.** A land cell has no plate of its own — the ground is
+already the territory's colour — so a wall between two cells of one landmass has
+nothing to hide behind and reads as a fence across the middle of the field.
+
+The map draws its coastline about twice this thick, and says why where it does:
+a continent is seen from across the room, where one cell's true edge is a
+hairline.
+
 ## Two rules the whole collection follows
 
 **Land is not painted.** A land cell already has a colour — the territory it
@@ -26,9 +78,9 @@ behind everything.
 
 **The cell is about 30 px across.** `defaultConfig.hexR` in `shared/mapgen.ts`
 is 16, so a hex is 27 px wide on the finished map. That fixes the altitude: a
-range, a scarp, a river, a reef — never a tree, never a tuft of grass. Five or
-six shapes per piece; anything finer is mud. The viewer draws every object a
-second time at 16 px for exactly this reason.
+range, a scarp, a river, a reef, a stand of forest — never one tree, never a
+tuft of grass. Five or six shapes per piece; anything finer is mud. The viewer
+draws every object a second time at 16 px for exactly this reason.
 
 Water stays at the edge. There are no inland lakes: a river is a line and does
 not cover the territory, a coast is the seam at a landmass boundary, and
@@ -145,15 +197,25 @@ Tiles are authored in a **unit hex**: circumradius 1, centred on the origin,
 corner pointing up. Nothing is stored in pixels. Placing one is
 
 ```html
-<g transform="translate(cx cy) scale(s)">
+<!-- lying on the ground: clip: true -->
+<g transform="translate(cx cy) scale(s) scale(1 GROUND) rotate(60·r)">
   <g clip-path="url(#hex-clip)">…body…</g>
 </g>
+
+<!-- standing up: clip: false -->
+<g transform="translate(cx cy) scale(s)">…body…</g>
 ```
 
-with `cx = s·√3·(q + r/2)`, `cy = s·1.5·r`. Stroke widths scale with the
+with `cx = s·√3·(q + r/2)`, `cy = s·1.5·r·GROUND`. Stroke widths scale with the
 drawing, so one file serves a 16 px map cell and a 160 px close-up.
 
-The clip is only for flat tiles (`clip: true`). Relief is left unclipped and
+Read the transform right to left, which is the order the geometry goes through
+it: the piece is mirrored, then turned — both on the ground, where the six edges
+are still six equal edges — and only then laid back. Squash first and turn after
+and a river arm swings off the edge midpoint it is supposed to leave through.
+
+The clip is only for flat tiles, and so is the squash: they are the same
+question. Relief is left unclipped, is already drawn in screen coordinates, and
 declares `bleed`, the room it needs outside the cell.
 
 > One clip id per document. Several inline SVGs on one HTML page share an id
@@ -186,10 +248,10 @@ What comes out:
 
 - **`collection.json`** — the manifest. Metadata for every tile, each variant's
   drawing in unit-hex coordinates, the hex geometry, the clip path, the edge
-  numbering, the object recipes, and a `howToUse` block spelling out the
-  placement rules. `--only` narrows the loose files, never the manifest or the
-  objects: either of those, cut down to one group, would point at tiles it no
-  longer carries.
+  numbering, a `view` block with the projection and the slab, the object
+  recipes, and a `howToUse` block spelling out the placement rules. `--only`
+  narrows the loose files, never the manifest or the objects: either of those,
+  cut down to one group, would point at tiles it no longer carries.
 - **`svg/<group>/<id>-<variant>.svg`** — one standalone file per picture.
 - **`objects/<id>.svg`** — each assembled object.
 - **`sprite.svg`** — every variant as a `<symbol>`, for `<use href="#tile-…">`.
@@ -218,10 +280,14 @@ without a document skeleton, for a host that supplies its own.
 1. Pick the atlas file by group — `shared/tiles/atlas/{relief,coast,hydro,water}.ts`.
 2. `defineTile({ … })`. The layer implies `kind`, `clip` and `upright`; declare
    only what is peculiar to the piece.
-3. Draw in the unit hex. On land use `lit()`, `dim()` and `edge()` from
-   `shared/tiles/ink.ts` — never a solid fill, or the territory colour is gone.
-   At sea the palette's blues are yours.
-4. If it is a fragment, give it `seams`. If it belongs at sea, set
+3. Decide which space it is in. Flat on the ground — leave `clip` alone and draw
+   a plan in the unit hex; the placement lays it back for you. With volume —
+   `clip: false`, draw in screen coordinates, put the foot on `rim(x)` and
+   measure height straight up.
+4. Draw. On land use `lit()`, `dim()` and `edge()` from `shared/tiles/ink.ts` —
+   never a solid fill, or the territory colour is gone. At sea the palette's
+   blues are yours.
+5. If it is a fragment, give it `seams`. If it belongs at sea, set
    `over: 'water'`.
-5. `pnpm tiles:view`, then press **Как на карте**. If it does not read at
+6. `pnpm tiles:view`, then press **Как на карте**. If it does not read at
    16 px it does not belong in the collection.

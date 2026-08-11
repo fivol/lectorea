@@ -56,12 +56,19 @@ const SHORE_BLUR = 9;
 /**
  * How thick the land is, in map units.
  *
- * `SLAB` is the thickness in cells and `mapgen`'s `hexR` is 16, which is what
- * makes this a number rather than an import: pulling the generator into the
- * client bundle to read one constant off it would cost far more than restating
- * it here does.
+ * Two thirds of a cell — `mapgen`'s `hexR` is 16 — and so about twice what the
+ * tile collection gives one cell of ground. Deliberately: the collection draws
+ * a cell you are standing next to, and this is a continent seen from across the
+ * room, where the true edge of a single cell comes out at four units and reads
+ * as a slightly soft coastline rather than as a coast with a side to it. The
+ * cliff is the one thing on this map saying it is not a plan, so it is drawn
+ * loud enough to be heard.
+ *
+ * `SLAB` is still what it is measured against, so the two cannot drift into
+ * different worlds — if the collection ever decides the ground is twice as deep
+ * as it thought, the coast follows.
  */
-const DEPTH = SLAB * 16;
+const DEPTH = SLAB * 2 * 16;
 
 /**
  * The cliff, drawn as a stack of copies of the coastline rather than as a

@@ -38,7 +38,10 @@ each sized by how many courses it holds and carrying an icon, so the empty
 outskirts are visible as work still to be done. It is one drawing,
 `public/map.svg`: coastlines and territory outlines and nothing else, with the
 colours, the lettering and the sea painted by the app, so the whole map follows
-the light and dark themes. Pick a territory to enter the
+the light and dark themes. It is a plan on disk and a view on screen — the app
+lays the ground back a little and stands the continents in the water as slabs
+with a cliff at the coast, which is the same projection the tile collection
+draws in ([docs/tiles.md](docs/tiles.md)). Pick a territory to enter the
 columns filtered to it, or search — the search box matches titles, abbreviations
 and slang (`теорвер`, `линал`), because morphology here is a list of forms, not a
 stemmer. It opens on focus rather than on the first keystroke, and before
@@ -158,7 +161,7 @@ Detailed documents:
 - [docs/layout.md](docs/layout.md) — levels, the topological sort, and how the columns are ordered
 - [docs/pipeline.md](docs/pipeline.md) — the crawl scripts, the queue and the quota
 - [docs/scripts.md](docs/scripts.md) — every command: what it does, its flags, when to run it
-- [docs/tiles.md](docs/tiles.md) — the hex tile collection: what a piece is, how pieces join, how to export them
+- [docs/tiles.md](docs/tiles.md) — the hex tile collection: the angle everything is seen at, what a piece is, how pieces join, how to export them
 - [CONTRIBUTING.md](CONTRIBUTING.md) — the rules external edits must follow
 
 ## The two entities
