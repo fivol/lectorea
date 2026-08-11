@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SearchEntry } from '@shared/schema';
+import { SEARCH_SECTION_ORDER } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useCatalogParams } from '@/lib/url';
-import type { SearchResults } from '@/lib/search';
+import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
 import MarkedText from './MarkedText';
 
@@ -205,7 +206,12 @@ export default function SearchBox({
         >
           <div id="search-results" role="listbox" className="panel-scroll min-h-0 flex-1 p-2">
             {results.empty ? (
-              <p className="px-3 py-4 text-center text-sm text-ink-faint">{t('ui.search.empty')}</p>
+              /* Nothing was asked for yet, so «ничего не найдено» would be
+                 answering a question nobody put: the slice is empty, and that
+                 is what the columns behind the panel say too. */
+              <p className="px-3 py-4 text-center text-sm text-ink-faint">
+                {results.suggested ? t('ui.graph.empty') : t('ui.search.empty')}
+              </p>
             ) : (
               results.sections.map((section) => (
                 <section key={section.type} className="mb-1 last:mb-0">
@@ -246,18 +252,41 @@ export default function SearchBox({
             )}
           </div>
 
-          {/* The two kinds the default list leaves out are still findable —
-              said once, under the list rather than as two more sections. It
-              sits outside the scroll area, or the one line explaining what else
-              there is would itself be the thing you have to scroll to find. */}
-          {results.suggested && !results.empty ? (
-            <p className="shrink-0 border-t border-line px-3 py-2 text-[11px] text-ink-faint">
-              {t('ui.search.hint')}
-            </p>
-          ) : null}
+          {results.suggested && !results.empty ? <Hint sections={results.sections} /> : null}
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * What the default list leaves out is still findable, said in one line under it
+ * rather than in three more sections — and read off the sections actually on
+ * screen, so the sentence cannot drift from them: the map offers areas, courses
+ * and universities, the columns offer the current slice, and each says what the
+ * other one has.
+ *
+ * It sits outside the scroll area, or the line explaining what else there is
+ * would itself be the thing you have to scroll to find.
+ */
+function Hint({ sections }: { sections: SearchSection[] }) {
+  const { t } = useT();
+
+  const shown = new Set(sections.map((section) => section.type));
+  const rest = SEARCH_SECTION_ORDER.filter((type) => !shown.has(type)).map((type) =>
+    t(`ui.search.kind.${type}`)
+  );
+  if (!rest.length) return null;
+
+  const kinds =
+    rest.length === 1
+      ? rest[0]
+      : `${rest.slice(0, -1).join(', ')} ${t('ui.common.and')} ${rest[rest.length - 1]}`;
+
+  return (
+    <p className="shrink-0 border-t border-line px-3 py-2 text-[11px] text-ink-faint">
+      {t('ui.search.hint', { kinds })}
+    </p>
   );
 }
 

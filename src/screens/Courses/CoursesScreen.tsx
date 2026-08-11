@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
-import { useSearchResults } from '@/lib/search';
+import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
 import { courseHref, useCatalogParams } from '@/lib/url';
@@ -36,11 +36,19 @@ export default function CoursesScreen() {
   const setSetting = useProfile((state) => state.setSetting);
 
   const [query, setQuery] = useState('');
-  const results = useSearchResults(query);
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
   const visible = useFilteredCourses(params.domains, params.providers, maxStage);
+
+  /*
+   * Whoever is here has already picked a field, a stage, a university — the
+   * question is no longer «what is there», it is «what is there in this». So
+   * the field offers this slice before anything is typed, and the largest
+   * fields of knowledge overall, which is what the map opens with, stay on the
+   * map. Typing still reaches the whole catalogue, filter or no filter.
+   */
+  const results = useSearchResults(query, { kinds: SUGGEST_IN_SLICE, courses: visible });
 
   const path = useMemo(
     () => (selected ? pathTo(catalog, selected.id) : []),

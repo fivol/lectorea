@@ -74,6 +74,12 @@ every field and in the next session too, because it says something about the
 reader rather than about the view. **Область** and **Вуз** are per-view and
 searchable, and both name what is selected instead of counting it.
 
+The search field beside them opens on that slice: before anything is typed it
+offers the courses and the recordings that survive the filters, not the largest
+fields of knowledge the map opens with — once a field has been picked, «the
+biggest area» is no longer an answer to anything. Typing still reaches the whole
+catalogue; a filter says what to look at, not what exists.
+
 A domain filter shows that field and nothing else — not even a prerequisite from
 elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead: «Требует знания» and «Даст

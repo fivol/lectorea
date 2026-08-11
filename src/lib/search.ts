@@ -5,23 +5,27 @@ import { useCatalog } from './catalog';
 import type { Catalog } from './data';
 
 export const PER_SECTION = 5;
-/**
- * The panel before anything is typed is a menu, not a result list. Three rows
- * a section is what keeps all three sections — and the line under them — on
- * screen at once on a laptop, which is the whole point of the default list.
- */
-export const PER_SUGGESTED_SECTION = 3;
 
 /**
- * What the empty panel offers, in the order it shows them.
+ * What the empty panel offers, and in what order — it depends on where the
+ * field is, because so does the question being asked.
  *
- * Exactly the three kinds the placeholder promises, so the field proves its own
- * claim instead of asking to be trusted. Playlists and lecturers are found by
- * name rather than browsed — a top four of either says nothing about what the
- * catalogue holds — so that they are searchable at all is said in one line
- * under the list instead of in two more sections.
+ * On the map nothing has been chosen yet, so the panel names the three kinds
+ * the placeholder promises and the field proves its own claim instead of asking
+ * to be trusted. In the columns the choosing has already happened: the screen
+ * is a slice of the catalogue, and the largest field of knowledge overall is
+ * not an answer to anything there — what is in *this* slice is.
  */
-const SUGGESTED_TYPES: Array<SearchEntry['t']> = ['d', 'c', 'v'];
+export const SUGGEST_ON_MAP: Array<SearchEntry['t']> = ['d', 'c', 'v'];
+export const SUGGEST_IN_SLICE: Array<SearchEntry['t']> = ['c', 'p'];
+
+/**
+ * The panel before anything is typed is a menu, not a result list, and it
+ * should be about one size wherever it opens — so fewer kinds means longer
+ * sections. Three sections of three, or two of five, both leave the line under
+ * them on screen at once on a laptop.
+ */
+const perSuggestedSection = (kinds: number): number => (kinds > 2 ? 3 : 5);
 
 export type SearchSection = {
   type: SearchEntry['t'];
@@ -59,18 +63,38 @@ function reachable(catalog: Catalog, entry: SearchEntry): boolean {
 /**
  * The default panel: the biggest of each kind, by the same weight the index
  * already carries — courses per domain, playlists per course, playlists per
- * provider. Ranking suggestions by anything else would need a second index.
+ * provider, rating for a playlist. Ranking suggestions by anything else would
+ * need a second index.
+ *
+ * `courses`, when given, is the slice the screen is currently showing: the
+ * suggestions stay inside it, so they are the same catalogue the columns
+ * behind the panel are. Typing still searches everything — the filter says
+ * what to look at, not what exists.
  */
-function useSuggested(catalog: Catalog): SearchResults {
+function useSuggested(
+  catalog: Catalog,
+  kinds: Array<SearchEntry['t']>,
+  courses: Set<string> | undefined
+): SearchResults {
   return useMemo(() => {
-    const sections = SUGGESTED_TYPES.map((type) => {
-      const items = catalog.search
-        .filter((entry) => entry.t === type && reachable(catalog, entry))
-        .map((entry) => ({ entry, score: entry.s ?? 0 }))
-        .sort((a, b) => b.score - a.score || a.entry.n.localeCompare(b.entry.n))
-        .slice(0, PER_SUGGESTED_SECTION);
-      return { type, items, more: 0 };
-    }).filter((section) => section.items.length > 0);
+    const inSlice = (entry: SearchEntry): boolean => {
+      if (!courses) return true;
+      if (entry.t === 'c') return courses.has(entry.id);
+      if (entry.t === 'p') return Boolean(entry.c && courses.has(entry.c));
+      return true;
+    };
+
+    const limit = perSuggestedSection(kinds.length);
+    const sections = kinds
+      .map((type) => {
+        const items = catalog.search
+          .filter((entry) => entry.t === type && reachable(catalog, entry) && inSlice(entry))
+          .map((entry) => ({ entry, score: entry.s ?? 0 }))
+          .sort((a, b) => b.score - a.score || a.entry.n.localeCompare(b.entry.n))
+          .slice(0, limit);
+        return { type, items, more: 0 };
+      })
+      .filter((section) => section.items.length > 0);
 
     return {
       query: '',
@@ -82,12 +106,19 @@ function useSuggested(catalog: Catalog): SearchResults {
       empty: sections.length === 0,
       suggested: true,
     };
-  }, [catalog]);
+  }, [catalog, kinds, courses]);
 }
 
-export function useSearchResults(query: string): SearchResults {
+/**
+ * @param suggest what the panel offers before anything is typed — which kinds,
+ * and the slice of courses the screen is currently showing.
+ */
+export function useSearchResults(
+  query: string,
+  suggest: { kinds?: Array<SearchEntry['t']>; courses?: Set<string> } = {}
+): SearchResults {
   const catalog = useCatalog();
-  const suggested = useSuggested(catalog);
+  const suggested = useSuggested(catalog, suggest.kinds ?? SUGGEST_ON_MAP, suggest.courses);
 
   const found = useMemo(() => {
     if (!query.trim()) return null;
