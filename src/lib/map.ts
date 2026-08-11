@@ -9,7 +9,17 @@
  * coastline of every landmass those territories tile. Colour, lettering and the
  * sea are the screen's, so a territory can change colour when a filter runs
  * without the map being redrawn. `pnpm map:import` writes the file.
+ *
+ * The file is a plan, drawn straight down; the screen is a view from above and
+ * to the side. The angle is applied here, once, as the geometry is read — the
+ * shapes that come out of this module are already where they will be drawn, so
+ * everything downstream goes on measuring, placing labels and hit-testing in
+ * plain screen coordinates and never has to know the map is tilted. Height is
+ * the one thing the projection leaves to the screen: how thick the land is, and
+ * what stands on it, are drawing decisions rather than facts about the file.
  */
+
+import { flat, flattenPath, GROUND } from '@shared/view';
 
 export type MapShape = {
   shapeId: string;
@@ -18,8 +28,18 @@ export type MapShape = {
   /** Where a label sits — the point inside with the most room around it. */
   cx: number;
   cy: number;
-  /** Distance from that point to the nearest border: how tall a label can be. */
+  /**
+   * Distance from that point to the nearest border: how big the territory is
+   * around its label point, and so how loudly it may be named. Unprojected —
+   * it is a measure of the field, not of the room on screen.
+   */
   room: number;
+  /**
+   * The same distance as the reader sees it, once the ground has been laid
+   * back. What a name or an icon actually has to fit into vertically: `room`
+   * says a field is large, `headroom` says how much of that survived the angle.
+   */
+  headroom: number;
   /** Width of the territory at that point: how long a line of it can be. */
   span: number;
   d: string;
@@ -76,6 +96,8 @@ function extentOf(d: string): { width: number; height: number; x: number; y: num
 export function parseMapSvg(text: string): ParsedMap {
   const viewBox = /viewBox="([^"]+)"/.exec(text)?.[1] ?? '0 0 1680 980';
   const [, , widthRaw, heightRaw] = viewBox.split(/\s+/).map(Number);
+  const width = widthRaw || 1680;
+  const height = flat(heightRaw || 980);
 
   const shapes: MapShape[] = [];
   const landmasses: MapLandmass[] = [];
@@ -86,28 +108,35 @@ export function parseMapSvg(text: string): ParsedMap {
     }
     if (!attributes.id || !attributes.d) continue;
 
+    // Laid back onto the ground plane before anything is measured off it: an
+    // extent taken from the plan would be the wrong shape by the time it was
+    // used, and the label placer works in nothing but extents.
+    const d = flattenPath(attributes.d);
+
     if (attributes.class === LAND_CLASS) {
       landmasses.push({
         continent: attributes['data-continent'] ?? 'formal',
         kind: attributes['data-kind'] === 'island' ? 'island' : 'continent',
-        d: attributes.d,
-        ...extentOf(attributes.d),
+        d,
+        ...extentOf(d),
       });
       continue;
     }
 
+    const room = Number(attributes['data-room'] ?? 0);
     shapes.push({
       shapeId: attributes.id,
       domainId: attributes['data-domain'] ?? attributes.id.replace(/^shape-/, ''),
       continent: attributes['data-continent'] ?? 'formal',
       cx: Number(attributes['data-cx'] ?? 0),
-      cy: Number(attributes['data-cy'] ?? 0),
-      room: Number(attributes['data-room'] ?? 0),
+      cy: flat(Number(attributes['data-cy'] ?? 0)),
+      room,
+      headroom: room * GROUND,
       span: Number(attributes['data-span'] ?? 0),
-      d: attributes.d,
-      ...extentOf(attributes.d),
+      d,
+      ...extentOf(d),
     });
   }
 
-  return { viewBox, width: widthRaw || 1680, height: heightRaw || 980, shapes, landmasses };
+  return { viewBox: `0 0 ${width} ${height}`, width, height, shapes, landmasses };
 }

@@ -6,6 +6,7 @@ import { loadMapSvg } from '@/lib/data';
 import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
 import { useReducedMotion } from '@/lib/hooks';
 import { DomainGlyph } from '@/components/DomainIcon';
+import { SLAB } from '@shared/view';
 
 /**
  * The map's own colours live in `index.css` next to every other theme colour —
@@ -51,6 +52,33 @@ const COAST = 2.8;
  * blur reads as a sticker on a page — the one thing a map must never look like.
  */
 const SHORE_BLUR = 9;
+
+/**
+ * How thick the land is, in map units.
+ *
+ * `SLAB` is the thickness in cells and `mapgen`'s `hexR` is 16, which is what
+ * makes this a number rather than an import: pulling the generator into the
+ * client bundle to read one constant off it would cost far more than restating
+ * it here does.
+ */
+const DEPTH = SLAB * 16;
+
+/**
+ * The cliff, drawn as a stack of copies of the coastline rather than as a
+ * second outline offset down.
+ *
+ * A shape and one copy of it `DEPTH` lower do not add up to the shape swept
+ * that far: everywhere the land is thinner north to south than the wall is
+ * deep — a spit, a cape, the neck between two lobes — the two copies miss each
+ * other and a hole opens in the middle of the cliff. Copies close enough
+ * together that nothing on this map can fall between them are the cheapest
+ * honest answer, and they are opaque, so the overlap is invisible.
+ */
+const CLIFF_STEPS = 12;
+const CLIFF = Array.from(
+  { length: CLIFF_STEPS },
+  (_, index) => (DEPTH * (CLIFF_STEPS - 1 - index)) / CLIFF_STEPS
+);
 
 /**
  * The continent titles: the largest lettering on the map, and the one set
@@ -155,7 +183,9 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         ? placeLabels(
             map.shapes,
             (domainId) => t(`domain.${domainId}.title`),
-            map,
+            // The cliffs hang below the southern coasts, and the water a name
+            // may stand in goes down with them.
+            { width: map.width, height: map.height + DEPTH },
             continents.map((continent) => continent.box)
           )
         : new Map<string, Placement>(),
@@ -215,30 +245,53 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   return (
     <div className="relative h-full w-full">
       <svg
-        viewBox={map.viewBox}
+        // Room under the map for the cliffs to hang in. The ground itself ends
+        // at `map.height`; the land stands on top of the water rather than in
+        // the middle of it, so the whole slab is below that line.
+        viewBox={`0 0 ${map.width} ${map.height + DEPTH}`}
         className="h-full w-full"
         role="group"
         aria-label={t('ui.a11y.mapRegion')}
         onPointerLeave={() => setHovered(null)}
       >
-        {/* The land itself, under everything: first the water brightening as it
-            shallows towards every shore, then the pale ground the territories
-            are washed over. Nothing here is a picture — the same paths the
-            territories tile, so the coast and the borders can never drift apart
-            at some window size. */}
         <defs>
           <filter id="map-shore" x="-6%" y="-6%" width="112%" height="112%">
             <feGaussianBlur stdDeviation={SHORE_BLUR} />
           </filter>
         </defs>
-        <g filter="url(#map-shore)">
-          {map.landmasses.map((mass, index) => (
-            <path key={`shore-${index}`} d={mass.d} style={{ fill: 'var(--map-surf)' }} />
+
+        {/* Every landmass as the slab it is: the water brightening around its
+            foot, the cliff, and the ground on top. Nothing here is a picture —
+            all three are the same coastline path the territories tile, so the
+            wall, the shore and the borders can never drift apart at some window
+            size.
+
+            North to south, because a wall hangs southward across whatever is
+            behind it: an island lying just off a coast has to be painted after
+            the coast whose cliff comes down towards it. */}
+        {[...map.landmasses]
+          .sort((a, b) => a.y - b.y)
+          .map((mass, index) => (
+            <g key={`mass-${index}`}>
+              <g filter="url(#map-shore)" transform={`translate(0 ${DEPTH})`}>
+                <path d={mass.d} style={{ fill: 'var(--map-surf)' }} />
+              </g>
+              <path
+                d={mass.d}
+                transform={`translate(0 ${DEPTH})`}
+                style={{ fill: 'var(--map-cliff-foot)' }}
+              />
+              {CLIFF.map((drop) => (
+                <path
+                  key={drop}
+                  d={mass.d}
+                  transform={`translate(0 ${drop})`}
+                  style={{ fill: 'var(--map-cliff)' }}
+                />
+              ))}
+              <path d={mass.d} style={{ fill: 'var(--map-land)' }} />
+            </g>
           ))}
-        </g>
-        {map.landmasses.map((mass, index) => (
-          <path key={`land-${index}`} d={mass.d} style={{ fill: 'var(--map-land)' }} />
-        ))}
 
         <g>
           {ordered.map((shape) => {
@@ -558,12 +611,15 @@ function placeLabels(
 ): Map<string, Placement> {
   const placements = new Map<string, Placement>();
   // The land is an obstacle for a name that has been pushed off its territory:
-  // out at sea is the only place such a name is not on top of something.
+  // out at sea is the only place such a name is not on top of something. Its
+  // cliff counts as land — the wall under a southern coast is the one part of a
+  // territory that stands in the water, and a name written across it is written
+  // on rock.
   const land: Rect[] = shapes.map((shape) => ({
     x: shape.x,
     y: shape.y,
     w: shape.width,
-    h: shape.height,
+    h: shape.height + DEPTH,
   }));
   const taken: Rect[] = [...reserved];
 
@@ -590,7 +646,11 @@ function placeLabels(
       // The icon takes what the name leaves, down to a size below which it stops
       // being a picture of anything — a territory that cannot hold both at once
       // gets a smaller icon rather than none.
-      const spare = shape.room * 2 - textHeight - gap - size * 0.4;
+      //
+      // Against the headroom, not the field's size: the ground is laid back, so
+      // a territory that is round on the plan is an oval on screen and only the
+      // short way across it says what will actually fit.
+      const spare = shape.headroom * 2 - textHeight - gap - size * 0.4;
       const glyphSize = Math.min(glyphAlone, spare);
       const withGlyph = glyphSize >= MIN_GLYPH;
       const blockHeight = (withGlyph ? glyphSize + gap : 0) + textHeight;
@@ -618,7 +678,7 @@ function placeLabels(
     // Too small to write on. The icon stays where it was — a territory with an
     // icon and no name still says what it is — and only the name goes looking
     // for water.
-    const glyph = shape.room * 2 > glyphAlone + 4 ? glyphAlone : null;
+    const glyph = shape.headroom * 2 > glyphAlone + 4 ? glyphAlone : null;
     const iconOnly: Placement = {
       lines: [],
       size,
@@ -646,7 +706,14 @@ function placeLabels(
     for (const reach of [1, 2.2]) {
       for (const dx of [0, -w * 0.45, w * 0.45]) {
         const gap = SEA_LABEL_GAP * reach;
-        candidates.push({ x: shape.cx - w / 2 + dx, y: shape.y + shape.height + gap, w, h });
+        // Below the territory is below its cliff: the water on that side starts
+        // a wall's height further down than the ground does.
+        candidates.push({
+          x: shape.cx - w / 2 + dx,
+          y: shape.y + shape.height + DEPTH + gap,
+          w,
+          h,
+        });
         candidates.push({ x: shape.cx - w / 2 + dx, y: shape.y - gap - h, w, h });
       }
     }

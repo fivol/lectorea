@@ -58,6 +58,18 @@
   --map-coast: rgb(230 243 249 / 0.42);
   /* The shallows: the water as it lightens on its way up to a shore. */
   --map-surf: rgb(122 190 222 / 0.34);
+  /*
+   * The side of the land, and the strip of it standing in the water.
+   *
+   * The map is seen from above and a little to the side, so a continent is a
+   * slab with a lit top and a shaded wall, and these are the wall. In the dark
+   * theme they are darker than the sea rather than lighter: there is no room
+   * between this ground and this water for a third value that reads as neither,
+   * and what separates the cliff from the sea is not its own colour but the
+   * bright band of shallows the water throws around its foot.
+   */
+  --map-cliff: #071820;
+  --map-cliff-foot: #041016;
   --map-ink: #eaf3f8;
   --map-halo: #08161e;
   /*
@@ -111,6 +123,10 @@
   --map-border-strong: #ffffff;
   --map-coast: #ffffff;
   --map-surf: rgb(255 255 255 / 0.62);
+  /* Rock rather than deep water: greyer than the sea it stands in, or the
+     cliff reads as the shadow of the land instead of as its side. */
+  --map-cliff: #8ba9b9;
+  --map-cliff-foot: #6d8b9c;
   --map-ink: #172433;
   --map-halo: #ffffff;
   --map-halo-sea: #62b9d1;
