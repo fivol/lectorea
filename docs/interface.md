@@ -31,6 +31,21 @@ outlines rather than stored, so a redrawn map keeps its ground.
 
 Pick a territory to enter the columns filtered to it, or search.
 
+The map is moved rather than looked at: two fingers on a trackpad carry it, a
+pinch or `⌘`/`Ctrl` and the wheel magnifies about the pointer, and dragging does
+what dragging a map does. A press that turns into a drag stops being a press, so
+the territory under it is not opened. Three buttons in the corner do the same
+for a pointer with no second gesture in it, and the last of them puts the map
+back.
+
+The lettering does not follow. Everything written on the map holds its size on
+screen while the ground under it grows, which is what makes going in worth
+doing: the names shrink against the territories, more of them fit, and fields
+that had to leave their names out at sea — or go unnamed until pointed at —
+take them back. The same rule sets where the map comes to rest. It is fitted to
+the window up to a comfortable width and no further, so a large display gets the
+map at a readable size with open water around it rather than a wall map.
+
 On a small screen the map falls back to a grid of blocks carrying the same
 icons; on a wide one the switch in the header does the same by hand.
 

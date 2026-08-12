@@ -148,8 +148,11 @@ export default function MapScreen() {
         page background — which reads as a picture pinned to a page rather than
         as a map you are looking at.
       */}
+      {/* The map is moved rather than scrolled — it answers a wheel itself, and
+          a scroll container around it would take the two-finger swipe that is
+          meant to carry the drawing. */}
       <main
-        className={`min-h-0 flex-1 overflow-auto ${showMap ? 'pt-16' : ''}`}
+        className={`min-h-0 flex-1 ${showMap ? 'overflow-hidden pt-16' : 'overflow-auto'}`}
         style={showMap ? { background: MAP_SEA } : undefined}
         onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 8)}
       >

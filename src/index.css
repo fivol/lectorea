@@ -441,6 +441,19 @@
     stroke: var(--c-accent);
     stroke-width: 4;
   }
+  .map-territory {
+    cursor: pointer;
+  }
+  /*
+   * While the map is being dragged the whole drawing is one thing being moved,
+   * so the hand keeps its grip over the territories too: a pointer finger over
+   * a field halfway through a drag says the reader is about to open it, which
+   * is the one thing that is not going to happen.
+   */
+  .map-grabbing .map-territory,
+  .map-grabbing .map-label-hit {
+    cursor: grabbing;
+  }
 
   /*
    * A translucent panel over whatever it floats on.
