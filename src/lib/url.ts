@@ -94,3 +94,17 @@ export function courseHref(courseId: string, search: string): string {
 export function coursesHref(search: string): string {
   return `/courses${search}`;
 }
+
+/**
+ * The same course, read in another field: the domain filter is pointed at one
+ * domain and everything else about the view is left alone.
+ *
+ * This is the way out of a course that was opened from outside the current
+ * filter — the card says which field it came from, and one press moves the
+ * columns there with the course still selected.
+ */
+export function domainHref(courseId: string, search: string, domainId: string): string {
+  const query = new URLSearchParams(search);
+  query.set('domain', domainId);
+  return courseHref(courseId, `?${query.toString()}`);
+}

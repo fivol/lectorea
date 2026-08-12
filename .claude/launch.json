@@ -12,6 +12,13 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev", "--port", "5199", "--strictPort"],
       "port": 5199
+    },
+    {
+      "name": "stats",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["stats", "--serve"],
+      "port": 5180,
+      "autoPort": true
     }
   ]
 }

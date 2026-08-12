@@ -361,5 +361,63 @@ matches:
   PLq3E5oubNNoD3u12IWx1CEbjQwAW_kn9V: null
   PLcsjsqLLSfNC7GTTCsKar-GSTZkkN22oA: null
   PLcsjsqLLSfNDnEo0eP5FCwFjivBS_SKfN: null
+
+  # Reviewed by hand against the crawl of 2026-08-12, going after the courses
+  # that had no material at all. Comments name the channel and the size.
+  PLSQl0a2vh4HD-pTNMfHlOjw8TXTpWWalH: cosmology
+  PL2186CFB2CE12A8B5: cosmology
+  PLbMVogVj5nJROKq6v6sZq74sjty86dAQ2: cosmology
+  PLKnIA16_RmvZo7fp5kkIth6nRTeQQsjfX: nlp
+  PLp6ek2hDcoNDDRINFiWGDlPKUwW-g1Hjk: nlp
+  PLoROMvodv4rObv1FMizXqumgVVdzX4_05: nlp
+  PLPTV0NXA_ZSgsLAr8YCgCwhPIJNNtexWu: nlp
+  PLPTV0NXA_ZSijcbUrRZHm6BrdinLuelPs: nlp
+  PLHovUGJUgy1DvJoaJuBWdF_maE1-YzOfm: control-theory
+  PLEqoHzpnmTfCiJpMPccTWXD9DB4ERQkyw: bayesian-statistics
+  PLBqnAso5Dy7O0IVoVn2b-WtetXQk5CDk6: bayesian-statistics
+  PLFW6lRTa1g814GrwAAoc410B5BOwG3Qnz: bayesian-statistics
+  PL-_cKNuVAYAU0vPERG07V2B_fykSxiL7z: bayesian-statistics
+  PLl0FT6O_WWDBm-4W-eoK34omYmEMseQDX: time-series
+  PLtiTxpFJ4k6TZ0g496fVcQpt_-XJRNkbi: time-series
+  PLOzRYVm0a65e8s29NCmih-Aww81ax0A0H: time-series
+  PL3N9eeOlCrP5cK0QRQxeJd6GrQvhAtpBK: time-series
+  PLFW6lRTa1g81QUAbs7KaqzBWJzMKNx96j: time-series
+  PLbMVogVj5nJRjLrXp3kMtrIO8kZl1D1Jp: condensed-matter
+  PLwdnzlV3ogoUVyxRs7-mmHu0qzNIU-gj1: condensed-matter
+  PLwdnzlV3ogoUuESlsiF5wKr7Lof-Dp9dR: condensed-matter
+  PLOzRYVm0a65fMzMtq2nE1CaiJI-CH0cNF: condensed-matter
+  PLcsjsqLLSfNAg2B7oHIxhdQzlnIFFr99B: celestial-mechanics
+  PLcsjsqLLSfNBGA0tEMRMQ_0mMFrvE6Fau: meteorology
+  PLcsjsqLLSfNCdGP_idljbnbwMvdfF22p9: meteorology
+  PLcsjsqLLSfNBvR2qhdwSzzb6hlnNaJLD8: enzymology
+  PLOzRYVm0a65emPcoORCTLKblep4dAf4uO: epidemiology
+  PLcsjsqLLSfNBpFK4SbSVPhh_Qj0jLPYTT: pathology
+  PLeNbGOow-rndp3EWjctX8FVtWP_tf0Gio: russian-literature
+  PLthfp5exSWEqCRffNXE_oBRKh1N9oToev: pedagogy-intro
+  PLthfp5exSWEp4oJfnV6wGbFjvn72CVcnz: pedagogy-intro
+  PLcsjsqLLSfNAGF8trDL5rg1plyoFEZHwY: ancient-philosophy
+  PLcsjsqLLSfNBl6XG2zluHXIl72rDTfQYX: ancient-philosophy
+  PLcsjsqLLSfNA7vwc8udRnarw_7TKhdsg_: semantics
+  PLwdnzlV3ogoUFGg-wnX-2-llkUcdo2Bpk: phonetics
+  PLyqSpQzTE6M_e1fi74KcCZzVh458jzWWJ: sociolinguistics
+  PLlp18pgkl6U_Dfv59jF-NlAW6dwqYKZim: psycholinguistics
+  PLLy_2iUCG87C-5uZUnKx1T_9W9hIhLa9r: social-psychology
+  PLLy_2iUCG87CkY7I5v8GEXkIbdCe3eqaW: behavioral-economics
+  PLUl4u3cNGP62vSB2sI0W8lQFKsmS2-A6R: music-theory
+  PLxGo9dxQkqWCqSQkQnij4K5az-3Z8ibmI: renaissance-art
+  PLxGo9dxQkqWBgeMjc7b_rxWBiH4IBzBbd: renaissance-art
+  PLeNbGOow-rne33WzsIuvv_JcJEHZ9_YYP: modern-art
+  PLcsjsqLLSfNANl10KEkqvxMmNT5Xv34wH: modern-art
+  PL3WBTTmyCOttTwLggsDcx0FoCZsopTigX: historiography
+  PL023BCE5134243987: ancient-history
+  PLOzRYVm0a65dyQGV8flUzL0N819nUssxT: organic-chemistry
+  PLEqoHzpnmTfB5FCYzXogFlzRvJjpTejlO: null
+  PLSE8ODhjZXjY0GMWN4X8FIkYNfiu8_Wl9: null
+  PLrjRyqN-7Kw4nmxbWhKNaLBwR5w4Ur9lQ: null
+  PLdTniHoWI25xTMCwAhDHhoZVIXENVkpJO: null
+  PLeNbGOow-rndbgZ15ITdtQVGV8YksfX2N: null
+  PL8_xPU5epJdffROMjxwdAfiWrCfUDoHID: null
+  PL1iwBJ9vqBRZq4-pSkxPOAvD1SFbBTZnV: null
+
 playlists: {}
 channels: {}

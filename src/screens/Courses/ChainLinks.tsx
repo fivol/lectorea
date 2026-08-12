@@ -30,7 +30,6 @@ type Curve = { key: string; d: string; length: number; depth: number };
  */
 export default function ChainLinks({ scrollRef, links, revision, animate }: Props) {
   const [curves, setCurves] = useState<Curve[]>([]);
-  const [size, setSize] = useState({ width: 0, height: 0 });
 
   const measure = useCallback(() => {
     const container = scrollRef.current;
@@ -73,7 +72,6 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
     }
 
     setCurves(next);
-    setSize({ width: container.scrollWidth, height: container.scrollHeight });
   }, [scrollRef, links]);
 
   useEffect(() => {
@@ -107,9 +105,15 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
       // say. The column headers stay above them: they carry the same z and come
       // later in the document, so a curve passes behind the sticky label rather
       // than across it.
-      className="pointer-events-none absolute left-0 top-0 z-20"
-      width={size.width}
-      height={size.height}
+      //
+      // A layer with no size of its own, drawing outside itself. Sized to the
+      // scroller it covers, it became part of what the scroller had to scroll,
+      // and the next measurement read its own width back: switch to a field with
+      // three courses in it and the canvas stayed as wide as the field before
+      // it, three cards adrift in an empty page that could not shrink.
+      className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible"
+      width={0}
+      height={0}
       aria-hidden="true"
     >
       {curves.map((curve) => (

@@ -7,7 +7,6 @@ import { AS_SHAPE, inkOn, withAlpha } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import Icon from '@/components/Icon';
 import DomainIcon from '@/components/DomainIcon';
-import Tooltip from '@/components/Tooltip';
 import { Chip } from '@/components/ui';
 
 type Props = {
@@ -134,16 +133,15 @@ function DomainCard({
         {domain.bridge ? (
           /* A bridge, not an hourglass: the badge means "this field spans two
              continents", which an hourglass never managed to say. */
-          <Tooltip content={t('ui.map.bridgeHint')}>
-            <Chip
-              icon="bridge"
-              className="shrink-0 px-1.5 py-0.5"
-              ariaLabel={t('ui.map.bridge')}
-              style={{ color: glyphColour, borderColor: withAlpha(domain.color, 0.4) }}
-            >
-              {null}
-            </Chip>
-          </Tooltip>
+          <Chip
+            icon="bridge"
+            hint={t('ui.map.bridgeHint')}
+            className="shrink-0 px-1.5 py-0.5"
+            ariaLabel={t('ui.map.bridge')}
+            style={{ color: glyphColour, borderColor: withAlpha(domain.color, 0.4) }}
+          >
+            {null}
+          </Chip>
         ) : null}
       </div>
       {/* One line on a full-width card cut every description mid-sentence and

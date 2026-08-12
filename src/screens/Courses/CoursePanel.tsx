@@ -56,15 +56,24 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
             <Chip
               key={domain.id}
               to={`/courses?domain=${encodeURIComponent(domain.id)}`}
+              hint={t('ui.legend.domain')}
               style={{ color: inkOn(domain.color, scheme), borderColor: withAlpha(domain.color, 0.4) }}
             >
               {t(`domain.${domain.id}.title`)}
             </Chip>
           ))}
-          <Chip className="num">{t(`ui.stage.${course.stage}`)}</Chip>
-          <Chip className="num">{t('ui.course.level', { n: course.level + 1 })}</Chip>
+          {/* Four chips in a row, each a number or a word out of context — every
+              one of them says what it is when the pointer stops on it. */}
+          <Chip className="num" hint={t('ui.legend.stage')}>
+            {t(`ui.stage.${course.stage}`)}
+          </Chip>
+          <Chip className="num" hint={t('ui.legend.level')}>
+            {t('ui.course.level', { n: course.level + 1 })}
+          </Chip>
           {course.hours ? (
-            <Chip className="num">{t('ui.course.hoursShort', { n: formatHours(course.hours) })}</Chip>
+            <Chip className="num" hint={t('ui.legend.hours')}>
+              {t('ui.course.hoursShort', { n: formatHours(course.hours) })}
+            </Chip>
           ) : null}
           {onClose ? (
             <IconButton
@@ -147,10 +156,8 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="text-sm text-ink-faint">{t('ui.unlocks.empty')}</p>
-        )}
-      </section>
+        </section>
+      ) : null}
 
       <PathBlock course={course} search={search} outsideFilter={outsideFilter} />
 

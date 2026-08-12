@@ -1,6 +1,7 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Icon, { type IconName } from '../Icon';
+import Tooltip from '../Tooltip';
 import { cx } from './cx';
 
 type Props = {
@@ -13,6 +14,13 @@ type Props = {
   onClick?: () => void;
   /** A chip that leads somewhere — a domain tag pointing at its filtered list. */
   to?: string;
+  /**
+   * What the chip means, in a sentence. A chip that says «2 курс» or
+   * «Сложность 5» names a value without saying what the value is of, and the
+   * legend that explains it is three screens away by the time the question
+   * comes up.
+   */
+  hint?: ReactNode;
   title?: string;
   ariaLabel?: string;
   ariaExpanded?: boolean;
@@ -35,6 +43,7 @@ export default function Chip({
   iconSize = 12,
   onClick,
   to,
+  hint,
   title,
   ariaLabel,
   ariaExpanded,
@@ -50,8 +59,14 @@ export default function Chip({
     </>
   );
 
+  // The tooltip goes around the finished element rather than inside each branch:
+  // it clones whatever it is given, and a link, a button and a span all take the
+  // handlers the same way.
+  const explained = (chip: ReactElement) =>
+    hint ? <Tooltip content={hint}>{chip}</Tooltip> : chip;
+
   if (to) {
-    return (
+    return explained(
       <Link to={to} className={classes} title={title} aria-label={ariaLabel} style={style}>
         {inner}
       </Link>
@@ -59,14 +74,14 @@ export default function Chip({
   }
 
   if (!onClick) {
-    return (
+    return explained(
       <span className={classes} title={title} style={style}>
         {inner}
       </span>
     );
   }
 
-  return (
+  return explained(
     <button
       type="button"
       className={classes}

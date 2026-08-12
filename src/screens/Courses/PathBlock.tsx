@@ -10,6 +10,7 @@ import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
+import Tooltip from '@/components/Tooltip';
 import { Button } from '@/components/ui';
 
 type Props = {
@@ -203,9 +204,43 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
   );
 }
 
+/**
+ * Where the reader stands on this step: the goal, done, started, untouched.
+ *
+ * Four glyphs in a column of twenty, and not one of them says what it is on its
+ * own — a ring and a half-filled dot are the same shape to anyone who has not
+ * been told the difference. So each carries its sentence.
+ */
 function StatusMark({ status, goal }: { status: string | null; goal: boolean }) {
-  if (goal) return <span className="w-3.5 text-center text-accent">●</span>;
-  if (status === 'done') return <Icon name="check" size={13} className="text-accent" />;
-  if (status === 'in_progress') return <Icon name="half" size={13} className="text-formal" />;
-  return <span className="w-3.5 text-center text-ink-faint">○</span>;
+  const { t } = useT();
+  if (goal) {
+    return (
+      <Tooltip content={t('ui.legend.goal')}>
+        <span className="w-3.5 shrink-0 text-center text-accent">●</span>
+      </Tooltip>
+    );
+  }
+  if (status === 'done') {
+    return (
+      <Tooltip content={t('ui.legend.done')}>
+        <span className="inline-flex shrink-0 text-accent">
+          <Icon name="check" size={13} />
+        </span>
+      </Tooltip>
+    );
+  }
+  if (status === 'in_progress') {
+    return (
+      <Tooltip content={t('ui.legend.inProgress')}>
+        <span className="inline-flex shrink-0 text-formal">
+          <Icon name="half" size={13} />
+        </span>
+      </Tooltip>
+    );
+  }
+  return (
+    <Tooltip content={t('ui.legend.notStarted')}>
+      <span className="w-3.5 shrink-0 text-center text-ink-faint">○</span>
+    </Tooltip>
+  );
 }

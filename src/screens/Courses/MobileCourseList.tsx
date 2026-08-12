@@ -5,6 +5,7 @@ import { useCatalog } from '@/lib/catalog';
 import { useProfile } from '@/store/profile';
 import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
+import { FavoriteMark, StatusMark } from './CourseMarks';
 
 type Props = {
   courses: BuiltCourse[];
@@ -16,6 +17,11 @@ type Props = {
  * A graph is unreadable on a phone. The replacement is a vertical list grouped
  * by level, which keeps the one thing the graph is for — what comes before what
  * — and drops the part that needs a mouse.
+ *
+ * A course opened from outside the filter needs no mark of its own here, unlike
+ * the cards: on a phone the panel covers the list for as long as such a course
+ * is selected, and closing the panel is what sends it away again — so the row
+ * is never on screen without its own panel over it explaining what it is.
  */
 export default function MobileCourseList({ courses, selectedId, onSelect }: Props) {
   const { t, count } = useT();
@@ -106,8 +112,10 @@ export default function MobileCourseList({ courses, selectedId, onSelect }: Prop
                       ) : null}
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
-                      {favorite ? <Icon name="star-filled" size={12} className="text-warning" /> : null}
-                      {status === 'done' ? <Icon name="check" size={12} className="text-accent" /> : null}
+                      {/* Same plates as the cards. There is no hover on a phone,
+                          so the mark has to be readable rather than explainable. */}
+                      {favorite ? <FavoriteMark /> : null}
+                      {status ? <StatusMark status={status} /> : null}
                       <span className="num text-xs text-ink-faint">
                         {course.playlistCount || t('ui.course.noMaterials')}
                       </span>

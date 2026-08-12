@@ -4,6 +4,7 @@ import { useT } from '@/i18n';
 import { placeBy, samePlace, type Placement } from '@/lib/popover';
 import Icon from '@/components/Icon';
 import { IconButton } from '@/components/ui';
+import { FavoriteMark, StatusMark } from './CourseMarks';
 
 const SEEN_KEY = 'lectorea.legend.seen.v1';
 
@@ -149,20 +150,20 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
                     >
                       {t('ui.legend.inPath')}
                     </Row>
+                    <Row
+                      mark={
+                        <span className="h-4 w-6 rounded border border-dashed border-ink-faint bg-surface" />
+                      }
+                    >
+                      {t('ui.legend.guest')}
+                    </Row>
                   </>
                 ) : null}
-                <Row
-                  mark={
-                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-canvas">
-                      <Icon name="check" size={10} />
-                    </span>
-                  }
-                >
-                  {t('ui.legend.done')}
+                <Row mark={<StatusMark status="done" explain={false} />}>{t('ui.legend.done')}</Row>
+                <Row mark={<StatusMark status="in_progress" explain={false} />}>
+                  {t('ui.legend.inProgress')}
                 </Row>
-                <Row mark={<Icon name="star-filled" size={14} className="text-warning" />}>
-                  {t('ui.legend.favorite')}
-                </Row>
+                <Row mark={<FavoriteMark explain={false} />}>{t('ui.legend.favorite')}</Row>
                 {columns ? (
                   <>
                     <Row mark={<Icon name="bridge" size={14} className="text-ink-dim" />}>
@@ -204,7 +205,7 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
 function Row({ mark, children }: { mark: ReactNode; children: ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <dt className="flex w-16 shrink-0 items-center justify-start pt-0.5">{mark}</dt>
+      <dt className="flex w-[86px] shrink-0 items-center justify-start pt-0.5">{mark}</dt>
       <dd className="min-w-0 flex-1 text-ink-dim">{children}</dd>
     </div>
   );

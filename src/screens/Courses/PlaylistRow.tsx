@@ -71,8 +71,20 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
       </span>
 
       <span className="flex shrink-0 items-center gap-1.5">
-        {favorite ? <Icon name="star-filled" size={13} className="text-warning" /> : null}
-        {watched ? <Icon name="check" size={13} className="text-accent" /> : null}
+        {favorite ? (
+          <Tooltip content={t('ui.course.favoriteOn')}>
+            <span className="inline-flex text-warning">
+              <Icon name="star-filled" size={13} />
+            </span>
+          </Tooltip>
+        ) : null}
+        {watched ? (
+          <Tooltip content={t('ui.playlist.watchedOn')}>
+            <span className="inline-flex text-accent">
+              <Icon name="check" size={13} />
+            </span>
+          </Tooltip>
+        ) : null}
         <QualityDot playlist={playlist} />
       </span>
     </button>

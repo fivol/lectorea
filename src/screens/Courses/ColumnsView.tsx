@@ -14,6 +14,8 @@ import ChainLinks, { type Link } from './ChainLinks';
 type Props = {
   courses: BuiltCourse[];
   visible: Set<string>;
+  /** Of the visible ones, those the filter does not actually cover — see below. */
+  guests: Set<string>;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDeselect: () => void;
@@ -43,6 +45,7 @@ const COLUMN_STEP = CARD_WIDTH + 24;
 export default function ColumnsView({
   courses,
   visible,
+  guests,
   selectedId,
   onSelect,
   onDeselect,
@@ -102,24 +105,42 @@ export default function ColumnsView({
    *
    * A selection's, and nothing else's — pointing at a card asks a question of
    * the cards, not of the curves already on screen.
+   *
+   * Two sides, and only two: the tree of prerequisites that leads to the
+   * selection, and one hop out to what it opens. Every edge therefore touches
+   * the selected course or something on the way to it. Drawing *every* edge
+   * between lit cards also caught the links among the courses it opens to each
+   * other — biochemistry into molecular biology while cell biology was the one
+   * selected — and those are both the longest sweeps on screen and the ones
+   * that answer a question nobody asked.
    */
   const links = useMemo<Link[]>(() => {
-    if (!pinnedChain.active) return [];
-    const chain = new Set<string>();
+    const focus = pinnedChain.focusId;
+    if (!pinnedChain.active || !focus) return [];
+
+    const upstream = new Set<string>();
+    const opened = new Set<string>();
     for (const column of columns) {
       for (const course of column.courses) {
         const emphasis = pinnedChain.emphasisOf(course.id);
-        if (emphasis !== 'soft' && emphasis !== 'related' && emphasis !== 'muted') {
-          chain.add(course.id);
+        if (emphasis === 'self' || emphasis === 'direct' || emphasis === 'transitive') {
+          upstream.add(course.id);
+        } else if (emphasis === 'downstream') {
+          opened.add(course.id);
         }
       }
     }
+
     const out: Link[] = [];
-    for (const id of chain) {
+    for (const id of upstream) {
       for (const dep of catalog.courseById.get(id)?.deps ?? []) {
-        if (chain.has(dep)) out.push({ from: dep, to: id, depth: pinnedChain.depthOf(dep) });
+        if (upstream.has(dep)) out.push({ from: dep, to: id, depth: pinnedChain.depthOf(dep) });
       }
     }
+    // Downstream is a fan, not a graph: the selection is a prerequisite of each
+    // of these by definition, and nothing further is drawn.
+    for (const id of opened) out.push({ from: focus, to: id, depth: 0 });
+
     return out.sort((a, b) => a.depth - b.depth);
   }, [pinnedChain, columns, catalog]);
 
@@ -139,7 +160,16 @@ export default function ColumnsView({
    * then pulse its ring once. A smooth scroll that ends somewhere in a field of
    * identical cards leaves you looking for what moved; the pulse says which one
    * the trip was for.
+   *
+   * The columns are in the dependencies because a request often arrives with a
+   * new set of them — pressing the field tag on a borrowed card asks for the
+   * course and changes the filter under it in the same click. Scrolling once,
+   * against the columns that were there when the click landed, aimed at where
+   * the card used to be and finished at the end of a page that had meanwhile
+   * become three cards long.
    */
+  const pulsed = useRef(0);
+
   useEffect(() => {
     if (!focusRequest) return;
     const card = scrollRef.current?.querySelector(`[data-course="${CSS.escape(focusRequest.courseId)}"]`);
@@ -148,10 +178,15 @@ export default function ColumnsView({
       block: 'center',
       inline: 'center',
     });
+    // The scroll is repeated whenever the columns settle again; the pulse is
+    // not — it answers the press, and a card that flashes every time a filter
+    // changes is a card asking for attention it has no news to justify.
+    if (pulsed.current === focusRequest.nonce) return;
+    pulsed.current = focusRequest.nonce;
     setPulsingId(focusRequest.courseId);
     const timer = setTimeout(() => setPulsingId(null), 700);
     return () => clearTimeout(timer);
-  }, [focusRequest, reducedMotion]);
+  }, [focusRequest, columns, reducedMotion]);
 
   /** Which way there is more to see — drives both the fades and the arrows. */
   const readEdges = useCallback(() => {
@@ -264,6 +299,9 @@ export default function ColumnsView({
                           reducedMotion || !highlight.pinned ? 0 : highlight.depthOf(course.id) * 30
                         }
                         selected={course.id === selectedId}
+                        // Standing in a column it does not belong to: the card
+                        // says which field it came from and leads back to it.
+                        guest={guests.has(course.id)}
                         inPath={
                           highlight.pinned &&
                           course.id !== selectedId &&

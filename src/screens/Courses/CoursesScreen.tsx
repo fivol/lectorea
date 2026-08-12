@@ -58,18 +58,56 @@ export default function CoursesScreen() {
     [catalog, selected]
   );
 
-  /** Courses the path needs but the filter excludes — the panel says so. */
-  const pathOutsideFilter = useMemo(
-    () => path.filter((step) => !visible.has(step.id)).length,
-    [path, visible]
-  );
+  /**
+   * Courses from outside the filter that the reader has opened, in the order
+   * they were opened.
+   *
+   * Following «что откроет дальше» out of the current field used to show the
+   * course you had just clicked and quietly drop the one before it, so walking
+   * two steps along a chain left you with a single foreign card and no way back
+   * to the last one. They accumulate instead: an excursion out of the filter is
+   * one trail, not a series of unrelated visits.
+   *
+   * The whole trail ends the moment the selection is back inside the filter or
+   * gone altogether — these cards are guests of a selection, and without it
+   * they are simply courses the filter says should not be here.
+   */
+  const [guests, setGuests] = useState<string[]>([]);
 
-  const visibleWithSelection = useMemo(() => {
-    if (!selected || visible.has(selected.id)) return visible;
-    const next = new Set(visible);
-    next.add(selected.id);
-    return next;
-  }, [visible, selected]);
+  useEffect(() => {
+    setGuests((current) => {
+      if (!selected || visible.has(selected.id)) return current.length ? [] : current;
+      // A filter change can take a guest in — then it is no longer a guest but
+      // an ordinary card, and the trail must not keep a second claim on it.
+      const kept = current.filter((id) => id !== selected.id && !visible.has(id));
+      const next = [...kept, selected.id];
+      const same =
+        next.length === current.length && next.every((id, index) => id === current[index]);
+      return same ? current : next;
+    });
+  }, [selected, visible]);
+
+  /**
+   * The trail as it stands this render. The selection is in it directly rather
+   * than waiting for the effect above, or the card would land a frame late —
+   * one frame in which the course you just clicked is not on the canvas at all.
+   */
+  const guestIds = useMemo(() => {
+    const ids = new Set(guests.filter((id) => !visible.has(id)));
+    if (selected && !visible.has(selected.id)) ids.add(selected.id);
+    return ids;
+  }, [guests, visible, selected]);
+
+  const onCanvas = useMemo(() => {
+    if (!guestIds.size) return visible;
+    return new Set([...visible, ...guestIds]);
+  }, [visible, guestIds]);
+
+  /** Courses the path needs that are nowhere on the canvas — the panel says so. */
+  const pathOutsideFilter = useMemo(
+    () => path.filter((step) => !onCanvas.has(step.id)).length,
+    [path, onCanvas]
+  );
 
   const onSelect = useCallback(
     (id: string) => {
@@ -118,8 +156,8 @@ export default function CoursesScreen() {
   }, [dragging, setSetting]);
 
   const mobileCourses = useMemo(
-    () => catalog.courses.filter((course) => visibleWithSelection.has(course.id)),
-    [catalog.courses, visibleWithSelection]
+    () => catalog.courses.filter((course) => onCanvas.has(course.id)),
+    [catalog.courses, onCanvas]
   );
 
   return (
@@ -245,7 +283,8 @@ export default function CoursesScreen() {
               <div className="min-h-0 flex-1">
                 <ColumnsView
                   courses={catalog.courses}
-                  visible={visibleWithSelection}
+                  visible={onCanvas}
+                  guests={guestIds}
                   selectedId={selected?.id ?? null}
                   onSelect={onSelect}
                   onDeselect={onDeselect}
