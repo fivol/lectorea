@@ -3,14 +3,19 @@ import { upstreamOf } from '@shared/graph';
 import { useCatalog } from './catalog';
 
 /**
- * Three levels of highlighting, because with fewer everything blends together:
+ * What a selection says about every other course:
  *
- *   direct      — immediate `deps`, lit on hover and on click
- *   transitive  — the rest of the upstream closure, click only, at 45 %
- *   downstream  — what opens up next, click only, in the accent colour
- *   everything else drops to 20 %
+ *   direct      — immediate `deps`
+ *   transitive  — the rest of the upstream closure
+ *   downstream  — what the selection opens up next
+ *   soft, related — the weaker ties a course names
+ *   everything else drops away
  *
- * Hover is temporary; a click pins the highlight until another course is picked.
+ * A click, and only a click. Hover used to move the whole reading with it,
+ * which meant dragging the pointer across the columns repainted three quarters
+ * of the screen card by card — a strobe over a question nobody had asked. What
+ * a pointer gets now is the card under it lifting; the reading belongs to the
+ * course the reader actually picked, and holds still until they pick another.
  */
 
 export type Emphasis = 'self' | 'direct' | 'transitive' | 'downstream' | 'soft' | 'related' | 'muted';
@@ -32,27 +37,15 @@ const INERT: Highlight = {
   pinned: false,
 };
 
-export function useHighlight(
-  selectedId: string | null,
-  hoveredId: string | null
-): Highlight {
+export function useHighlight(selectedId: string | null): Highlight {
   const catalog = useCatalog();
 
   return useMemo(() => {
-    // Hover wins while it lasts, so pointing at a card always answers
-    // "what does this need" without losing the pinned selection underneath.
-    const focusId = hoveredId ?? selectedId;
+    const focusId = selectedId;
     if (!focusId) return INERT;
 
     const course = catalog.courseById.get(focusId);
     if (!course) return INERT;
-
-    // Pointing at the card you just clicked is not a different question, so it
-    // must not take the chain away again: the pin holds while the pointer is on
-    // the selection itself. Without this, clicking a card left the curves
-    // waiting for the mouse to move off it, which reads as the click being slow.
-    const showFullChain = Boolean(selectedId) && (!hoveredId || hoveredId === selectedId);
-    const pinned = showFullChain;
 
     const direct = new Set(course.deps);
     const soft = new Set(course.soft);
@@ -60,12 +53,10 @@ export function useHighlight(
     const transitive = new Set<string>();
     const downstream = new Set<string>();
 
-    if (showFullChain) {
-      for (const id of upstreamOf(catalog.courseById, focusId)) {
-        if (!direct.has(id)) transitive.add(id);
-      }
-      for (const id of catalog.dependants.get(focusId) ?? []) downstream.add(id);
+    for (const id of upstreamOf(catalog.courseById, focusId)) {
+      if (!direct.has(id)) transitive.add(id);
     }
+    for (const id of catalog.dependants.get(focusId) ?? []) downstream.add(id);
 
     // Distance in dependency hops, for the right-to-left cascade.
     const depth = new Map<string, number>([[focusId, 0]]);
@@ -83,18 +74,9 @@ export function useHighlight(
     return {
       active: true,
       focusId,
-      pinned,
+      pinned: true,
       emphasisOf: (courseId: string): Emphasis => {
         if (courseId === focusId) return 'self';
-        // The selection is never dimmed, whatever the pointer is doing.
-        //
-        // Hover moves the question — «what does *this* need» — but it does not
-        // move what the reader is working on, and the panel on the right is
-        // still about the selected course. Pointing at a link inside that panel
-        // used to grey out the very card the panel was describing: the course
-        // is not in the hovered one's chain, so it fell to `muted` along with
-        // everything else, and the answer to a click looked switched off.
-        if (courseId === selectedId) return 'self';
         if (direct.has(courseId)) return 'direct';
         if (downstream.has(courseId)) return 'downstream';
         if (transitive.has(courseId)) return 'transitive';
@@ -104,7 +86,7 @@ export function useHighlight(
       },
       depthOf: (courseId: string) => depth.get(courseId) ?? 0,
     };
-  }, [catalog, selectedId, hoveredId]);
+  }, [catalog, selectedId]);
 }
 
 /**

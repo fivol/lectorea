@@ -55,25 +55,19 @@ export default function ColumnsView({
   const reducedMotion = useReducedMotion();
   const isDesktop = useIsDesktop();
 
-  const hoveredId = useUi((state) => state.hoveredCourseId);
-  const setHovered = useUi((state) => state.setHovered);
+  /**
+   * The card a name in the panel is pointing at.
+   *
+   * Set by hovering a prerequisite, a next course or a step of the path — the
+   * one case where something outside the columns has to say «this one». It
+   * lifts that card and nothing else: the reading of the screen belongs to the
+   * selection, and a glance at a list on the right is not a new selection.
+   */
   const echoId = useUi((state) => state.echoCourseId);
   const focusRequest = useUi((state) => state.focusRequest);
 
   const profile = useProfile((state) => state.profile);
-  const highlight = useHighlight(selectedId, hoveredId ?? echoId);
-  /**
-   * The same reading of the graph with the pointer taken out of it — what the
-   * curves are drawn from.
-   *
-   * Hover is allowed to repaint the cards, because that is a glance and it ends
-   * when the pointer moves on. It is not allowed to touch the lines: they are
-   * drawn, and a drawing that erases and redraws itself every time the pointer
-   * crosses a card is a strobe. Keeping this separate is also what keeps its
-   * identity stable across a hover, so the curves are not remounted and do not
-   * play their draw-in again.
-   */
-  const pinnedChain = useHighlight(selectedId, null);
+  const highlight = useHighlight(selectedId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: true, end: true });
@@ -115,14 +109,14 @@ export default function ColumnsView({
    * that answer a question nobody asked.
    */
   const links = useMemo<Link[]>(() => {
-    const focus = pinnedChain.focusId;
-    if (!pinnedChain.active || !focus) return [];
+    const focus = highlight.focusId;
+    if (!highlight.active || !focus) return [];
 
     const upstream = new Set<string>();
     const opened = new Set<string>();
     for (const column of columns) {
       for (const course of column.courses) {
-        const emphasis = pinnedChain.emphasisOf(course.id);
+        const emphasis = highlight.emphasisOf(course.id);
         if (emphasis === 'self' || emphasis === 'direct' || emphasis === 'transitive') {
           upstream.add(course.id);
         } else if (emphasis === 'downstream') {
@@ -134,7 +128,7 @@ export default function ColumnsView({
     const out: Link[] = [];
     for (const id of upstream) {
       for (const dep of catalog.courseById.get(id)?.deps ?? []) {
-        if (upstream.has(dep)) out.push({ from: dep, to: id, depth: pinnedChain.depthOf(dep) });
+        if (upstream.has(dep)) out.push({ from: dep, to: id, depth: highlight.depthOf(dep) });
       }
     }
     // Downstream is a fan, not a graph: the selection is a prerequisite of each
@@ -142,18 +136,7 @@ export default function ColumnsView({
     for (const id of opened) out.push({ from: focus, to: id, depth: 0 });
 
     return out.sort((a, b) => a.depth - b.depth);
-  }, [pinnedChain, columns, catalog]);
-
-  /**
-   * A card that unmounts under the cursor — a filter change, a domain switch —
-   * never gets its `pointerleave`, and the hover highlight would stay pinned to
-   * a course that is no longer on screen.
-   */
-  useEffect(() => {
-    if (hoveredId && !columns.some((column) => column.courses.some((c) => c.id === hoveredId))) {
-      setHovered(null);
-    }
-  }, [columns, hoveredId, setHovered]);
+  }, [highlight, columns, catalog]);
 
   /**
    * Bring a course into view when the path list or the search box asks for it,
@@ -308,10 +291,12 @@ export default function ColumnsView({
                           (emphasis === 'direct' || emphasis === 'transitive')
                         }
                         pulsing={course.id === pulsingId}
+                        // A name in the panel is being pointed at, and this is
+                        // the card it means.
+                        echoed={course.id === echoId}
                         status={profile.courses[course.id]?.status ?? null}
                         favorite={profile.courses[course.id]?.favorite ?? false}
                         onSelect={onSelect}
-                        onHover={setHovered}
                       />
                     </li>
                   );

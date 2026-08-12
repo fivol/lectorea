@@ -13,8 +13,15 @@ import { useIsMobile } from '@/lib/hooks';
 export type MapView = 'map' | 'blocks';
 
 export type UiStore = {
-  hoveredCourseId: string | null;
-  /** Set by the path list on hover, to light up the matching card in the columns. */
+  /**
+   * Set by the panel and the path list on hover, to lift the matching card in
+   * the columns.
+   *
+   * There is no companion for the columns' own hover any more: pointing at a
+   * card used to repaint the whole screen around it, and what it answered —
+   * "what does this one need" — is the question a click already answers, in a
+   * reading that then holds still.
+   */
   echoCourseId: string | null;
   profileOpen: boolean;
   /** Bumped when a course should be scrolled into view. */
@@ -30,7 +37,6 @@ export type UiStore = {
    */
   mapView: MapView;
 
-  setHovered: (id: string | null) => void;
   setEcho: (id: string | null) => void;
   openProfile: () => void;
   closeProfile: () => void;
@@ -39,13 +45,11 @@ export type UiStore = {
 };
 
 export const useUi = create<UiStore>((set, get) => ({
-  hoveredCourseId: null,
   echoCourseId: null,
   profileOpen: false,
   focusRequest: null,
   mapView: 'map',
 
-  setHovered: (id) => set({ hoveredCourseId: id }),
   setEcho: (id) => set({ echoCourseId: id }),
   openProfile: () => set({ profileOpen: true }),
   closeProfile: () => set({ profileOpen: false }),

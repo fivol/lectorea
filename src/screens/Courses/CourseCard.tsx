@@ -28,10 +28,11 @@ type Props = {
   guest: boolean;
   /** Set for one pulse after the card has been scrolled to. */
   pulsing: boolean;
+  /** A name in the panel is being pointed at, and it is this course. */
+  echoed: boolean;
   status: CourseStatus | null;
   favorite: boolean;
   onSelect: (id: string) => void;
-  onHover: (id: string | null) => void;
 };
 
 function CourseCardInner({
@@ -43,10 +44,10 @@ function CourseCardInner({
   inPath,
   guest,
   pulsing,
+  echoed,
   status,
   favorite,
   onSelect,
-  onHover,
 }: Props) {
   const { t } = useT();
   const scheme = useResolvedTheme();
@@ -69,8 +70,12 @@ function CourseCardInner({
      */
     <div
       data-course={course.id}
+      // The echo lifts the card exactly as a pointer on it would: a name in the
+      // panel and a card in the columns are the same course, and the reader is
+      // pointing at it — the only difference is which end they are touching.
       className={`relative shrink-0 transition-[opacity,transform,filter] duration-base ease-inout
                   hover:z-10 hover:scale-[1.03] motion-reduce:hover:scale-100
+                  ${echoed ? 'z-10 scale-[1.03] motion-reduce:scale-100' : ''}
                   ${selected ? 'z-10' : ''}`}
       style={{
         width: CARD_WIDTH,
@@ -85,10 +90,6 @@ function CourseCardInner({
     <button
       type="button"
       onClick={() => onSelect(course.id)}
-      onPointerEnter={() => onHover(course.id)}
-      onPointerLeave={() => onHover(null)}
-      onFocus={() => onHover(course.id)}
-      onBlur={() => onHover(null)}
       // `aria-current`, not `aria-selected`: the latter is only valid inside a
       // listbox or a grid, and turning a card full of interactive detail into
       // an `option` would cost more than the attribute name is worth. Both say
@@ -103,13 +104,17 @@ function CourseCardInner({
         // In-path cards carry a wash of the accent — present, clearly weaker
         // than the ring on the selected card, and readable in both themes.
         background: inPath && !selected ? 'var(--c-accent-soft)' : 'var(--c-surface)',
-        borderColor: selected
+        borderColor: selected || echoed
           ? accent
           : inPath
             ? 'var(--c-accent)'
             : withAlpha(accent, muted ? 0.2 : 0.45),
         borderWidth: selected ? 2 : 1,
-        boxShadow: selected ? `0 0 0 3px ${withAlpha(accent, 0.2)}, var(--shadow-card)` : undefined,
+        boxShadow: selected
+          ? `0 0 0 3px ${withAlpha(accent, 0.2)}, var(--shadow-card)`
+          : echoed
+            ? 'var(--shadow-card)'
+            : undefined,
       }}
     >
       <div className="relative w-full" style={{ height: CARD_ART_HEIGHT }}>
