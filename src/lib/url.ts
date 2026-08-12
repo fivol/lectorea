@@ -110,6 +110,27 @@ export function withDomains(search: string, domainIds: string[]): string {
 }
 
 /**
+ * The columns opened on one field of knowledge — what a territory on the map,
+ * a block, and a field in the search panel all lead to.
+ *
+ * Each of the three used to write `/courses?domain=…` by hand, which threw away
+ * the query string it was standing in: the provider and lecturer chips are set
+ * on the map, live above both screens and are meant to survive the crossing,
+ * and pressing a continent silently cleared them. A filter that vanishes
+ * without being asked is worse than one that is forgotten — nothing on the next
+ * screen says it ever existed.
+ *
+ * The open playlist does not come along: it belongs to a course, and a field is
+ * entered with nothing selected in it.
+ */
+export function fieldHref(search: string, domainId: string): string {
+  const query = new URLSearchParams(withDomains(search, [domainId]));
+  query.delete('playlist');
+  const serialised = query.toString();
+  return coursesHref(serialised ? `?${serialised}` : '');
+}
+
+/**
  * The same course, read in another field: the domain filter is pointed at one
  * domain and everything else about the view is left alone.
  *

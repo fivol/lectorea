@@ -4,6 +4,7 @@ import type { BuiltDomain, Continent } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { AS_SHAPE, inkOn, withAlpha } from '@/lib/format';
+import { fieldHref, useCatalogParams } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import Icon from '@/components/Icon';
 import DomainIcon from '@/components/DomainIcon';
@@ -102,6 +103,9 @@ function DomainCard({
   dimmed: boolean;
 }) {
   const { t, count } = useT();
+  // The card carries the filters standing above it into the field it opens —
+  // the university and lecturer chips are set on this very screen.
+  const { search } = useCatalogParams();
   // Three jobs, three bars. The stripe and the border are washes behind
   // something else and wear the raw hue. The glyph is a shape, read by its
   // outline, so it takes the hue at 3:1. The counter is text and takes it at
@@ -112,7 +116,7 @@ function DomainCard({
 
   return (
     <Link
-      to={`/courses?domain=${encodeURIComponent(domain.id)}`}
+      to={fieldHref(search, domain.id)}
       className={`surface group relative flex flex-col gap-2 overflow-hidden p-3.5 sm:p-4
                   transition-all duration-fast ease-out hover:-translate-y-0.5
                   hover:border-line-strong hover:shadow-[var(--shadow-pop)]
