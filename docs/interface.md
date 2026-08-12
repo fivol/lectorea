@@ -107,11 +107,14 @@ survive the filters, since once a field has been picked, «the biggest area» is
 no longer an answer to anything. Typing still reaches the whole catalogue; a
 filter says what to look at, not what exists.
 
-On a phone that field is a search icon. The row is three filters deep already,
-and an input wedged into the 160px left between two buttons is a target you have
-to aim at, dropping a list read through a letterbox. Tapping the icon opens the
-search as its own screen instead — back arrow, full-width field, the whole
-height for the list — and backing out of it leaves nothing typed behind.
+On a phone the search is its own screen — back arrow, full-width field, the
+whole height for the list — and backing out of it leaves nothing typed behind.
+Above the columns what opens it is a search icon: that row is three filters deep
+already, and an input wedged into the 160px left between two buttons is a target
+you have to aim at, dropping a list read through a letterbox. On the first
+screen there is room for the field itself, so the field is what you tap — the
+same screen opens, and course names arrive with the width to be read whole
+rather than cut at «Дифференциальные уравне…».
 
 ## The course panel
 

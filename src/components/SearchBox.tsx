@@ -22,6 +22,9 @@ type Props = {
    * Floating pill on the map screen; inline field otherwise. `compact` is the
    * inline field on a wide screen and a search icon on a phone, where the field
    * would be a 160px slot in an already crowded toolbar.
+   *
+   * On a phone every variant opens the search screen — only what you tap to get
+   * there differs: an icon for `compact`, the field itself for the other two.
    */
   variant?: 'floating' | 'inline' | 'compact';
   className?: string;
@@ -55,8 +58,13 @@ export default function SearchBox({
    * wedged between two icons is a target you aim at, and what it drops down is
    * a list read through a letterbox — the pattern every phone already teaches
    * is to leave the toolbar behind entirely while searching.
+   *
+   * The wide field on the first screen had the same letterbox under it: a
+   * dropdown as wide as the phone truncates course names, ends up half covered
+   * by the keyboard, and leaves the page scrolling behind it. Same screen there,
+   * then — the field is wide enough to keep being the thing you tap.
    */
-  const asSheet = variant === 'compact' && isMobile;
+  const asSheet = isMobile;
   const [sheet, setSheet] = useState(false);
 
   const closeSheet = useCallback(() => {
@@ -177,9 +185,13 @@ export default function SearchBox({
       }
       // A row was chosen, so the search is over — including the screen it was
       // filling, or the filter it just switched on would be hidden behind it.
-      setSheet(false);
+      // The screen takes the query with it: a vendor row leaves the query
+      // standing, which is right under a dropdown that still shows it and wrong
+      // once the field behind is a button reading «Область, курс, вуз…».
+      if (sheet) closeSheet();
+      else setSheet(false);
     },
-    [navigate, onQueryChange, params]
+    [navigate, onQueryChange, params, sheet, closeSheet]
   );
 
   /** ↑/↓/Enter over the list. Escape is the caller's, because backing out of a
@@ -214,15 +226,35 @@ export default function SearchBox({
   if (asSheet) {
     return (
       <>
-        <Button
-          icon="search"
-          iconSize={16}
-          tap
-          className="px-2"
-          onClick={() => setSheet(true)}
-          aria-label={t('ui.search.open')}
-          aria-expanded={sheet}
-        />
+        {variant === 'compact' ? (
+          <Button
+            icon="search"
+            iconSize={16}
+            tap
+            className="px-2"
+            onClick={() => setSheet(true)}
+            aria-label={t('ui.search.open')}
+            aria-expanded={sheet}
+          />
+        ) : (
+          /* Dressed as the field it replaces, so the first screen still opens
+             with a search line across it rather than an icon in the corner —
+             only taller, because now the whole line is the tap target. Its own
+             text names it; an `aria-label` on top would give the screen reader
+             one name and the eye another. */
+          <button
+            type="button"
+            onClick={() => setSheet(true)}
+            aria-haspopup="dialog"
+            aria-expanded={sheet}
+            className={`field w-full px-4 py-2.5 text-left ${className}`}
+          >
+            <Icon name="search" className="text-ink-faint" />
+            <span className="min-w-0 flex-1 truncate text-base text-ink-dim">
+              {t('ui.search.placeholder')}
+            </span>
+          </button>
+        )}
 
         {sheet
           ? createPortal(
