@@ -119,10 +119,14 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
       {/* The two directions of one relation, so: one card, mirrored headings,
           and adjacent — one of them used to be stranded below the playlists.
           The full chain follows both rather than splitting them, since it is
-          the first one expanded and belongs after the pair, not inside it. */}
-      <section className="border-t border-line px-4 py-4">
-        <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
-        {course.deps.length ? (
+          the first one expanded and belongs after the pair, not inside it.
+
+          An empty side is dropped whole, heading and all: "nothing depends on
+          this course yet" is a sentence about the catalogue, not about the
+          course, and it took the same space as two real links. */}
+      {course.deps.length ? (
+        <section className="border-t border-line px-4 py-4">
+          <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
           <ul className="grid gap-1.5 sm:grid-cols-2">
             {course.deps.map((id) => (
               <li key={id}>
@@ -130,14 +134,12 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="text-sm text-ink-faint">{t('ui.path.empty')}</p>
-        )}
-      </section>
+        </section>
+      ) : null}
 
-      <section className="border-t border-line px-4 py-4">
-        <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
-        {unlocks.length ? (
+      {unlocks.length ? (
+        <section className="border-t border-line px-4 py-4">
+          <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
           <ul className="grid gap-1.5 sm:grid-cols-2">
             {unlocks.map((step) => (
               <li key={step.id}>

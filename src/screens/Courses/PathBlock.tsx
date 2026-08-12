@@ -45,13 +45,10 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
     .filter((step) => profile.courses[step.id]?.status !== 'done')
     .reduce((sum, step) => sum + step.hours, 0);
 
-  if (steps.length < 2) {
-    return (
-      <section className="border-t border-line px-4 py-3">
-        <p className="text-sm text-ink-faint">{t('ui.path.empty')}</p>
-      </section>
-    );
-  }
+  // A course with no prerequisites has no path: the block would be a heading
+  // over a single line saying so, right where the prerequisite section itself
+  // has already been dropped for being empty.
+  if (steps.length < 2) return null;
 
   const exportPlan = async (): Promise<void> => {
     setExportState('working');

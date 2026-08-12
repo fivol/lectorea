@@ -156,12 +156,10 @@
   "ui.path.hideDone": "Hide what is done",
   "ui.path.export": "Export the plan",
   "ui.path.goal": "goal",
-  "ui.path.empty": "A starting course — it requires nothing",
   "ui.path.breaksFilter": "Part of the path is outside the current filter — those courses are not in the columns",
 
   "ui.prereq.title": "Builds on",
   "ui.unlocks.title": "Opens the way to",
-  "ui.unlocks.empty": "Leads nowhere further yet",
   "ui.unlocks.behind": "and {n} more behind it",
 
   "ui.playlists.title": "Playlists",

@@ -153,12 +153,10 @@
   "ui.path.hideDone": "Скрыть пройденное",
   "ui.path.export": "Экспорт плана",
   "ui.path.goal": "цель",
-  "ui.path.empty": "Базовый курс — ничего не требует",
   "ui.path.breaksFilter": "Часть пути вне текущего фильтра — этих курсов нет в колонках",
 
   "ui.prereq.title": "Опирается на",
   "ui.unlocks.title": "Открывает путь к",
-  "ui.unlocks.empty": "Пока никуда дальше не ведёт",
   "ui.unlocks.behind": "и ещё {n} дальше",
 
   "ui.playlists.title": "Плейлисты",
