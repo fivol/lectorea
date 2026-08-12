@@ -152,9 +152,9 @@
   "ui.path.empty": "Базовый курс — ничего не требует",
   "ui.path.breaksFilter": "Часть пути вне текущего фильтра — этих курсов нет в колонках",
 
-  "ui.prereq.title": "Требует знания",
-  "ui.unlocks.title": "Даст понимание курсов",
-  "ui.unlocks.empty": "Пока ничего не зависит от этого курса",
+  "ui.prereq.title": "Опирается на",
+  "ui.unlocks.title": "Открывает путь к",
+  "ui.unlocks.empty": "Пока никуда дальше не ведёт",
   "ui.unlocks.behind": "и ещё {n} дальше",
 
   "ui.playlists.title": "Плейлисты",
