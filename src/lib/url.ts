@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useCatalog } from './catalog';
 
 /**
  * Everything shareable lives in the URL: the domain filter, the global provider
@@ -118,4 +119,33 @@ export function withDomains(search: string, domainIds: string[]): string {
  */
 export function domainHref(courseId: string, search: string, domainId: string): string {
   return courseHref(courseId, withDomains(search, [domainId]));
+}
+
+/**
+ * The view a course reached from outside the columns — the search panel, the
+ * profile — should open in: its own fields of knowledge, filter and all.
+ *
+ * Without it the columns opened on the whole catalogue: the one course asked
+ * for, and every other one around it, which is the screen you get for asking
+ * nothing at all. Its domains are the smallest slice that still holds it, and
+ * all of them go in rather than the primary one alone — «Теория графов» is
+ * maths *and* computer science, and dropping the second would put half of what
+ * it leads to outside the filter it was just opened in.
+ *
+ * A filter already set is left alone. On the columns it is something someone
+ * chose, and arriving from a search or a favourite is a look at one card rather
+ * than a request to move the whole screen — the guest card is what carries a
+ * course in from outside the filter.
+ */
+export function useCourseSlice(): (courseId: string) => string {
+  const catalog = useCatalog();
+  const { domains, search } = useCatalogParams();
+
+  return useCallback(
+    (courseId: string) =>
+      domains.length
+        ? search
+        : withDomains(search, catalog.courseById.get(courseId)?.domains ?? []),
+    [catalog, domains, search]
+  );
 }

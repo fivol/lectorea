@@ -4,6 +4,7 @@ import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { pathTo, useCatalog } from '@/lib/catalog';
 import { formatHours } from '@/lib/format';
+import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import CourseArt from '@/components/CourseArt';
@@ -98,10 +99,14 @@ function useCourseNavigation() {
   const navigate = useNavigate();
   const closeProfile = useUi((state) => state.closeProfile);
   const requestFocus = useUi((state) => state.requestFocus);
+  const sliceAround = useCourseSlice();
 
   return (courseId: string): void => {
     closeProfile();
-    navigate(`/courses/${encodeURIComponent(courseId)}`);
+    // Into the course's own fields rather than onto the whole catalogue: the
+    // profile is opened over either screen, and «продолжить путь» that lands on
+    // a hundred and eighty unrelated cards has answered a different question.
+    navigate(courseHref(courseId, sliceAround(courseId)));
     requestFocus(courseId);
   };
 }

@@ -8,7 +8,7 @@ import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { EDGE, placeBy, samePlace, type Placement } from '@/lib/popover';
 import { suggestCourseUrl } from '@/lib/repo';
-import { courseHref, coursesHref, useCatalogParams, withDomains } from '@/lib/url';
+import { courseHref, coursesHref, useCatalogParams, useCourseSlice, withDomains } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
 import MarkedText from './MarkedText';
@@ -43,7 +43,7 @@ export default function SearchBox({
   const { t } = useT();
   const navigate = useNavigate();
   const params = useCatalogParams();
-  const catalog = useCatalog();
+  const sliceAround = useCourseSlice();
   const isMobile = useIsMobile();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -165,30 +165,6 @@ export default function SearchBox({
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [asSheet, open, leave]);
-
-  /**
-   * The view a course found by name should open in: its own fields of
-   * knowledge, filter and all.
-   *
-   * Searching from the map used to land on the whole catalogue — the one course
-   * asked for, and every other one around it, which is the screen you get for
-   * asking nothing at all. Its domains are the smallest slice that still holds
-   * it, and all of them go in rather than the primary one alone: «Теория
-   * графов» is maths *and* computer science, and dropping the second would put
-   * half of what it leads to outside the filter it was just opened in.
-   *
-   * A filter already set is left alone. On the columns it is something someone
-   * chose, and a search there is a look at one card rather than a request to
-   * move the whole screen — the guest card is what carries a course from
-   * outside the filter.
-   */
-  const sliceAround = useCallback(
-    (courseId: string): string =>
-      params.domains.length
-        ? params.search
-        : withDomains(params.search, catalog.courseById.get(courseId)?.domains ?? []),
-    [catalog, params.domains, params.search]
-  );
 
   const select = useCallback(
     (entry: SearchEntry) => {
@@ -568,11 +544,6 @@ function Results({
               </button>
             );
           })}
-          {section.more > 0 ? (
-            <p className="px-3 pb-1 text-xs text-ink-faint">
-              {t('ui.search.more', { n: section.more })}
-            </p>
-          ) : null}
         </section>
       ))}
     </>

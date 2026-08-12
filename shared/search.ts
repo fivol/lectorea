@@ -206,19 +206,26 @@ export function searchEntries(entries: SearchEntry[], raw: string, limit = 200):
   return [];
 }
 
-/** Groups ranked hits into the sections the dropdown renders. */
+/**
+ * Groups ranked hits into the sections the dropdown renders.
+ *
+ * What does not fit `perSection` is simply not there. A count of the rest —
+ * «и ещё 39» — named a number nothing could be done about: no row to press,
+ * and a query that already found its answer at the top of the list read as
+ * having missed thirty-nine better ones.
+ */
 export function groupBySection(
   hits: Scored[],
   perSection: number
-): Array<{ type: SearchEntry['t']; items: Scored[]; more: number }> {
+): Array<{ type: SearchEntry['t']; items: Scored[] }> {
   const buckets = new Map<SearchEntry['t'], Scored[]>();
   for (const hit of hits) {
     const list = buckets.get(hit.entry.t) ?? [];
     list.push(hit);
     buckets.set(hit.entry.t, list);
   }
-  return SEARCH_SECTION_ORDER.filter((type) => buckets.has(type)).map((type) => {
-    const all = buckets.get(type)!;
-    return { type, items: all.slice(0, perSection), more: Math.max(0, all.length - perSection) };
-  });
+  return SEARCH_SECTION_ORDER.filter((type) => buckets.has(type)).map((type) => ({
+    type,
+    items: buckets.get(type)!.slice(0, perSection),
+  }));
 }

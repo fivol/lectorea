@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatDate } from '@/lib/format';
+import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import EmptyState from '@/components/EmptyState';
@@ -21,6 +22,7 @@ export default function RecentTab() {
   const catalog = useCatalog();
   const navigate = useNavigate();
   const closeProfile = useUi((state) => state.closeProfile);
+  const sliceAround = useCourseSlice();
 
   const recent = useProfile((state) => state.profile.recent);
   const removeRecent = useProfile((state) => state.removeRecent);
@@ -40,7 +42,11 @@ export default function RecentTab() {
 
   const open = (courseId: string, playlistId: string): void => {
     closeProfile();
-    navigate(`/courses/${encodeURIComponent(courseId)}?playlist=${encodeURIComponent(playlistId)}`);
+    // With the course's own fields, so what is behind the playlist is the
+    // field it sits in and not the catalogue entire.
+    const query = new URLSearchParams(sliceAround(courseId));
+    query.set('playlist', playlistId);
+    navigate(courseHref(courseId, `?${query.toString()}`));
   };
 
   return (

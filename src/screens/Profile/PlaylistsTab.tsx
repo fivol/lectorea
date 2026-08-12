@@ -5,6 +5,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { loadPlaylistsCached } from '@/lib/data';
 import { formatHours, hoursFromSeconds } from '@/lib/format';
+import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
@@ -23,6 +24,7 @@ export default function PlaylistsTab() {
   const { t } = useT();
   const navigate = useNavigate();
   const closeProfile = useUi((state) => state.closeProfile);
+  const sliceAround = useCourseSlice();
   const favorites = useProfile((state) => state.profile.playlists);
 
   const [groupBy, setGroupBy] = useState<GroupBy>('course');
@@ -79,8 +81,11 @@ export default function PlaylistsTab() {
 
   const openCourse = (courseId: string, playlistId?: string): void => {
     closeProfile();
-    const query = playlistId ? `?playlist=${encodeURIComponent(playlistId)}` : '';
-    navigate(`/courses/${encodeURIComponent(courseId)}${query}`);
+    // The course's own fields come along, so the columns behind the playlist
+    // are the field it belongs to rather than the entire catalogue.
+    const query = new URLSearchParams(sliceAround(courseId));
+    if (playlistId) query.set('playlist', playlistId);
+    navigate(courseHref(courseId, query.toString() ? `?${query.toString()}` : ''));
   };
 
   return (

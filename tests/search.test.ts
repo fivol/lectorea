@@ -106,7 +106,7 @@ describe('search', () => {
 });
 
 describe('sections', () => {
-  it('caps each section and reports the overflow', () => {
+  it('caps each section and drops the overflow', () => {
     const many: SearchEntry[] = Array.from({ length: 9 }, (_, index) => ({
       t: 'c' as const,
       id: `c${index}`,
@@ -115,7 +115,6 @@ describe('sections', () => {
     }));
     const [section] = groupBySection(searchEntries(many, 'курс'), 5);
     expect(section.items).toHaveLength(5);
-    expect(section.more).toBe(4);
   });
 
   it('keeps the section order: domains, courses, playlists, vendors, lecturers', () => {

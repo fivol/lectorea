@@ -46,7 +46,6 @@
   "ui.search.open": "Search",
   "ui.search.empty": "Nothing found",
   "ui.search.suggestCourse": "Suggest a course",
-  "ui.search.more": "and {n} more",
   "ui.search.clear": "Clear search",
   "ui.search.section.d": "Fields",
   "ui.search.section.c": "Courses",

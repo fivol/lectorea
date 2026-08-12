@@ -30,7 +30,6 @@ const perSuggestedSection = (kinds: number): number => (kinds > 2 ? 3 : 5);
 export type SearchSection = {
   type: SearchEntry['t'];
   items: Scored[];
-  more: number;
 };
 
 export type SearchResults = {
@@ -92,7 +91,7 @@ function useSuggested(
           .map((entry) => ({ entry, score: entry.s ?? 0 }))
           .sort((a, b) => b.score - a.score || a.entry.n.localeCompare(b.entry.n))
           .slice(0, limit);
-        return { type, items, more: 0 };
+        return { type, items };
       })
       .filter((section) => section.items.length > 0);
 

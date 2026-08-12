@@ -46,7 +46,6 @@
   "ui.search.open": "Поиск",
   "ui.search.empty": "Ничего не найдено",
   "ui.search.suggestCourse": "Предложить курс",
-  "ui.search.more": "и ещё {n}",
   "ui.search.clear": "Очистить поиск",
   "ui.search.section.d": "Области",
   "ui.search.section.c": "Курсы",
