@@ -4,7 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
-import { useIsMobile } from '@/lib/hooks';
+import { useIsMobile, useIsPortrait } from '@/lib/hooks';
 import { useMapView, useUi } from '@/store/ui';
 import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
@@ -44,6 +44,16 @@ export default function MapScreen() {
   }, [catalog, params.providers]);
 
   const showMap = mapView === 'map';
+
+  /**
+   * Which drawing of the world the window is the right shape for.
+   *
+   * Decided here rather than inside the map because it is a fact about the
+   * window, and it is also the key the map is remounted on: the two files are
+   * different worlds, and carrying a reader's zoom from one into the other
+   * would land them somewhere else entirely.
+   */
+  const variant = useIsPortrait() ? 'portrait' : 'wide';
 
   return (
     /*
@@ -95,11 +105,14 @@ export default function MapScreen() {
         </div>
 
         {/* Two plates rather than four buttons: what you are looking at on the
-            left, and who is looking on the right. */}
+            left, and who is looking on the right.
+
+            The left one is not in this row on a phone — there is no room for it
+            beside the wordmark, and a switch that decides what the whole screen
+            is belongs under the thumb rather than in the far corner. It floats
+            at the foot of the screen instead; see below. */}
         <div className="flex items-center gap-2">
-          {isMobile ? null : (
-            <ViewSwitch value={mapView} onChange={setMapView} />
-          )}
+          {isMobile ? null : <ViewSwitch value={mapView} onChange={setMapView} />}
           <Plate row>
             <LangToggle />
             <ThemeToggle />
@@ -157,11 +170,16 @@ export default function MapScreen() {
         to carry the drawing.
       */}
       <main
-        className={`min-h-0 flex-1 ${showMap ? 'overflow-hidden' : 'overflow-auto'}`}
+        className={`relative min-h-0 flex-1 ${showMap ? 'overflow-hidden' : 'overflow-auto'}`}
         style={showMap ? { background: MAP_SEA } : undefined}
       >
         {showMap ? (
           <MapView
+            // The two maps are two worlds. Remounted rather than reloaded, so a
+            // reader who turns the phone gets the other one fitted to the
+            // window rather than the last one's zoom applied to it.
+            key={variant}
+            variant={variant}
             matched={results.matchedDomains}
             searchActive={Boolean(query.trim())}
             allowed={allowed}
@@ -173,6 +191,32 @@ export default function MapScreen() {
             allowed={allowed}
           />
         )}
+
+        {/*
+          The switch on a phone: one control, always in the same place, in the
+          band a thumb reaches without the hand moving. It floats over both
+          views rather than living inside either — what it says is "the same
+          catalogue, drawn the other way", and a control that moved between the
+          two would be saying they are two screens.
+
+          `sticky` rather than `fixed`, so that in the blocks view it rides the
+          bottom of the scrolling column instead of standing over the middle of
+          a card. The zero-height row is what keeps it out of the flow: the grid
+          under it does not have to leave a gap for something that floats.
+        */}
+        {isMobile ? (
+          <div
+            className="pointer-events-none sticky bottom-0 z-30 flex h-0 items-end justify-center
+                       pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          >
+            <ViewSwitch
+              large
+              value={mapView}
+              onChange={setMapView}
+              className="pointer-events-auto shadow-[var(--shadow-pop)]"
+            />
+          </div>
+        ) : null}
       </main>
 
       {/*
