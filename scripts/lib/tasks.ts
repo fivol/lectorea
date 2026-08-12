@@ -334,6 +334,26 @@ function popularThreshold(db: Db): number {
 /* ─────────────────────────────────  Videos  ────────────────────────────── */
 
 /**
+ * Walking a playlist is all-or-nothing: the ids are listed page by page, then
+ * the videos are detailed, and a run that hits the ceiling halfway has bought
+ * nothing — tomorrow starts the same playlist at the first page again. So the
+ * last of a day's quota must not be poured into a walk that cannot finish.
+ *
+ * Two units per fifty videos, one to list and one to detail. Where the count is
+ * missing the walk goes ahead: a playlist the metadata pass has not reached is
+ * usually a small one, and guessing high would stall the queue on its own
+ * caution. Refusing here throws the ordinary end-of-day error, so the job is
+ * put back and the worker stops the way it always does.
+ */
+function assertAffordable(db: Db, api: YoutubeClient, playlistId: string): void {
+  const row = db.prepare(`SELECT video_count FROM playlists WHERE id = ?`).get(playlistId) as
+    | { video_count: number | null }
+    | undefined;
+  const count = row?.video_count ?? 0;
+  if (count && 2 * Math.ceil(count / 50) > api.remaining()) throw new QuotaExceededError();
+}
+
+/**
  * Walks a playlist and stores its videos, then rolls the durations and
  * statistics up onto the playlist row. This is where a playlist's views, likes
  * and comments come from — the API reports statistics per video, not per list.
@@ -343,6 +363,7 @@ export async function fetchPlaylistVideos(
   api: YoutubeClient,
   playlistId: string
 ): Promise<number> {
+  assertAffordable(db, api, playlistId);
   const ids = await api.playlistVideoIds(playlistId);
   if (!ids.length) {
     db.prepare(`UPDATE playlists SET alive = 0, checked_at = ? WHERE id = ?`).run(
@@ -452,17 +473,30 @@ export function videoQueueTiers(
 
   const queued = db
     .prepare(
-      `SELECT p.id, p.title FROM playlists p
+      `SELECT p.id, p.title, p.video_count FROM playlists p
        JOIN jobs j ON j.type = 'videos' AND j.target = p.id AND j.status = 'pending'
        WHERE p.alive = 1`
     )
-    .all() as Array<{ id: string; title: string }>;
+    .all() as Array<{ id: string; title: string; video_count: number | null }>;
   for (const row of queued) {
-    if (cleanSegments(row.title).some(isNotACourse)) last.push(row.id);
+    if (cleanSegments(row.title).some(isNotACourse) || (row.video_count ?? 0) > HUGE_PLAYLIST) {
+      last.push(row.id);
+    }
   }
 
   return { first, last };
 }
+
+/**
+ * Videos past which a playlist is treated like a refusal for ordering.
+ *
+ * Nothing this long is a course — a semester is thirty lectures, and the ones
+ * that reach here are channel dumps, television and «Good music». They are also
+ * the expensive end: at two units per fifty videos a 3000-video bin is 120
+ * units, which is fifty real courses. Ordering alone is enough, so the cap is
+ * generous: a genuine 400-lecture sequence still gets crawled, just last.
+ */
+const HUGE_PLAYLIST = 500;
 
 /* ────────────────────────────────  Liveness  ───────────────────────────── */
 
