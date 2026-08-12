@@ -14,7 +14,8 @@ scripts/
   06-review.ts         local review server
   07-images.ts         image generation
   08-build.ts          assemble public/data
-  09-import-github.ts  import courses from awesome-lists
+  09-import.ts         import courses from lists and catalogues
+  11-mine.ts           playlists linked from what is already crawled
   10-map.ts            regenerate public/map.svg
   refresh.ts           the nightly job: 02 → 03 → 04
   dev-seed.ts          synthetic playlists for development

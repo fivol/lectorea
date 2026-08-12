@@ -2,10 +2,13 @@
 
 [← docs](README.md) · [pipeline.md](pipeline.md) for what the crawl does with them
 
-`data/channels.yaml` is the crawl's whole input, and the bar it states is
-narrow: *structured courses* — several playlists of ~10+ lectures that name a
-subject. This is the record of how the list was filled and, just as usefully,
-what was looked at and refused, so the same ground is not covered twice.
+`data/channels.yaml` is the crawl's whole input. This is the record of how the
+list was filled and, just as usefully, what was looked at and refused, so the
+same ground is not covered twice.
+
+The bar a candidate has to clear — *a structured course on a subject the
+catalogue has*, which is not the same as a university lecture course — and the
+other seams playlists can be dug out of are in [harvest.md](harvest.md).
 
 ## The method
 

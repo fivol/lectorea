@@ -114,6 +114,50 @@ export function enqueue(db: Db, type: JobType, target: string): void {
 }
 
 /**
+ * The one door every discovered playlist comes through, whatever found it —
+ * an awesome-list, a course catalogue, a mined description, a GitHub sweep.
+ *
+ * The row is written with no metadata and `next_refresh_at` already due, so the
+ * next refresh fetches the title and the owning channel before anything decides
+ * what the playlist is. `channelId` is a placeholder naming the finder, which
+ * survives exactly until that refresh and is worth having until then: a
+ * playlist that never resolves is traceable to whatever suggested it.
+ *
+ * The limit applies to genuinely new rows, so running the same command again
+ * continues where it stopped instead of redoing the same head of the list.
+ */
+export function queuePlaylists(
+  db: Db,
+  items: Iterable<{ id: string; title?: string }>,
+  origin: string,
+  limit = Infinity
+): { added: number; skipped: number } {
+  const insert = db.prepare(
+    `INSERT INTO playlists (id, channel_id, title, video_count, alive, checked_at, next_refresh_at)
+     VALUES (?, ?, ?, 0, 1, ?, ?)
+     ON CONFLICT(id) DO NOTHING`
+  );
+  const exists = db.prepare(`SELECT 1 FROM playlists WHERE id = ?`);
+
+  let added = 0;
+  let skipped = 0;
+  db.transaction(() => {
+    for (const item of items) {
+      if (added >= limit) {
+        if (!exists.get(item.id)) skipped += 1;
+        continue;
+      }
+      if (insert.run(item.id, origin, item.title || null, nowIso(), nowIso()).changes) {
+        enqueue(db, 'videos', item.id);
+        added += 1;
+      }
+    }
+  })();
+
+  return { added, skipped };
+}
+
+/**
  * Jobs left `running` by a crashed process are returned to the pool.
  * Ten minutes is longer than any single job legitimately takes.
  */

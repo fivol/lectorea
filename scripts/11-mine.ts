@@ -1,0 +1,89 @@
+import { parseLimit, reportRemaining } from './lib/config.js';
+import { openDb } from './lib/db.js';
+import { queuePlaylists } from './lib/queue.js';
+import { reportSourceError } from './lib/sources.js';
+
+/**
+ * Mines the crawl for playlists the crawl itself paid for and never noticed.
+ *
+ * Lecturers link their own courses: "full playlist here", "part 2 of the
+ * series", "prerequisites in my linear algebra course". Those links sit in
+ * video and playlist descriptions, and `raw_responses` keeps every API body
+ * verbatim — so they are already on disk. This costs **no quota and no
+ * network**: it is a regex over a table.
+ *
+ * Worth re-running after every crawl. Each newly walked playlist arrives with
+ * the descriptions of its videos attached, so the seam refills itself; see
+ * docs/harvest.md.
+ */
+
+/**
+ * `PL` only, and deliberately so. `UU…` is a channel's entire uploads — the
+ * most expensive bin there is and never a course; `OLAK5uy…` is an
+ * auto-generated music album; `RD`, `LL` and `WL` are mixes and private lists
+ * that resolve to nothing. Ids are 16 or 32 characters after the prefix, the
+ * legacy hex form and the current one.
+ */
+const PLAYLIST_ID = /(?:list=|playlist\/)(PL[A-Za-z0-9_-]{16,32})(?![A-Za-z0-9_-])/g;
+
+function main(): void {
+  const limit = parseLimit();
+  const db = openDb();
+
+  const known = new Set(
+    (db.prepare(`SELECT id FROM playlists`).all() as Array<{ id: string }>).map((row) => row.id)
+  );
+
+  /** id → where it was seen, for the report and for nothing else. */
+  const found = new Map<string, string>();
+
+  const scan = (text: string | null, origin: string): void => {
+    if (!text) return;
+    for (const match of text.matchAll(PLAYLIST_ID)) {
+      const id = match[1];
+      if (known.has(id) || found.has(id)) continue;
+      found.set(id, origin);
+    }
+  };
+
+  // `LIKE` first so the scan reads the few thousand bodies that can possibly
+  // match rather than every response ever stored.
+  for (const row of db
+    .prepare(`SELECT endpoint, body FROM raw_responses WHERE body LIKE '%list=%'`)
+    .iterate() as Iterable<{ endpoint: string; body: string }>)
+    scan(row.body, row.endpoint);
+
+  for (const row of db
+    .prepare(`SELECT description FROM playlists WHERE description LIKE '%list=%'`)
+    .iterate() as Iterable<{ description: string }>)
+    scan(row.description, 'playlist description');
+
+  if (!found.size) {
+    console.log('✓ data:mine: nothing new in what is already stored');
+    db.close();
+    return;
+  }
+
+  const byOrigin = new Map<string, number>();
+  for (const origin of found.values()) byOrigin.set(origin, (byOrigin.get(origin) ?? 0) + 1);
+  for (const [origin, count] of [...byOrigin].sort((a, b) => b[1] - a[1]))
+    console.log(`· ${origin}: ${count}`);
+
+  const { added, skipped } = queuePlaylists(
+    db,
+    [...found.keys()].map((id) => ({ id })),
+    'mined',
+    limit
+  );
+
+  db.close();
+  console.log(`✓ data:mine: ${added} new playlists queued, ${found.size} found`);
+  reportRemaining(skipped, limit);
+  console.log('· run `pnpm data:refresh` to fetch them, then `pnpm data:match`');
+}
+
+try {
+  main();
+} catch (error) {
+  reportSourceError(error);
+}

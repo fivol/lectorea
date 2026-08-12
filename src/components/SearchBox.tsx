@@ -8,7 +8,7 @@ import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { EDGE, placeBy, samePlace, type Placement } from '@/lib/popover';
 import { suggestCourseUrl } from '@/lib/repo';
-import { useCatalogParams } from '@/lib/url';
+import { courseHref, coursesHref, useCatalogParams, withDomains } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
 import MarkedText from './MarkedText';
@@ -43,6 +43,7 @@ export default function SearchBox({
   const { t } = useT();
   const navigate = useNavigate();
   const params = useCatalogParams();
+  const catalog = useCatalog();
   const isMobile = useIsMobile();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -165,24 +166,55 @@ export default function SearchBox({
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [asSheet, open, leave]);
 
+  /**
+   * The view a course found by name should open in: its own fields of
+   * knowledge, filter and all.
+   *
+   * Searching from the map used to land on the whole catalogue — the one course
+   * asked for, and every other one around it, which is the screen you get for
+   * asking nothing at all. Its domains are the smallest slice that still holds
+   * it, and all of them go in rather than the primary one alone: «Теория
+   * графов» is maths *and* computer science, and dropping the second would put
+   * half of what it leads to outside the filter it was just opened in.
+   *
+   * A filter already set is left alone. On the columns it is something someone
+   * chose, and a search there is a look at one card rather than a request to
+   * move the whole screen — the guest card is what carries a course from
+   * outside the filter.
+   */
+  const sliceAround = useCallback(
+    (courseId: string): string =>
+      params.domains.length
+        ? params.search
+        : withDomains(params.search, catalog.courseById.get(courseId)?.domains ?? []),
+    [catalog, params.domains, params.search]
+  );
+
   const select = useCallback(
     (entry: SearchEntry) => {
       switch (entry.t) {
-        case 'd':
-          navigate(`/courses?domain=${encodeURIComponent(entry.id)}`);
+        case 'd': {
+          // Through `withDomains`, so the provider and lecturer chips standing
+          // above both screens survive the crossing. The open playlist does
+          // not — it belongs to a course, and a field is entered with nothing
+          // selected in it.
+          const search = new URLSearchParams(withDomains(params.search, [entry.id]));
+          search.delete('playlist');
+          navigate(coursesHref(`?${search.toString()}`));
           setOpen(false);
           onQueryChange('');
           break;
+        }
         case 'c':
-          navigate(`/courses/${encodeURIComponent(entry.id)}${params.search}`);
+          navigate(courseHref(entry.id, sliceAround(entry.id)));
           setOpen(false);
           onQueryChange('');
           break;
         case 'p': {
           if (!entry.c) break;
-          const search = new URLSearchParams(params.search.replace(/^\?/, ''));
+          const search = new URLSearchParams(sliceAround(entry.c));
           search.set('playlist', entry.id);
-          navigate(`/courses/${encodeURIComponent(entry.c)}?${search.toString()}`);
+          navigate(courseHref(entry.c, `?${search.toString()}`));
           setOpen(false);
           onQueryChange('');
           break;
@@ -206,7 +238,7 @@ export default function SearchBox({
       if (sheet) closeSheet();
       else setSheet(false);
     },
-    [navigate, onQueryChange, params, sheet, closeSheet]
+    [navigate, onQueryChange, params, sliceAround, sheet, closeSheet]
   );
 
   /** ↑/↓/Enter over the list. Escape is the caller's, because backing out of a

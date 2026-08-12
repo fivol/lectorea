@@ -1,4 +1,8 @@
-# Awesome-lists mined by `09-import-github.ts` for YouTube playlist links.
+# Lists and catalogues mined by `09-import.ts` for YouTube playlist links.
+#
+# Two shapes of entry: a GitHub repository (`repo` + `path`, read raw) or a
+# plain `url` for anything else on the web. Both are free — quota is only spent
+# resolving the ids that come out, fifty to a unit.
 #
 # The importer never creates courses. Anything it cannot map to an existing
 # course lands in data/proposed-courses.yaml for a human to add with real
@@ -7,7 +11,8 @@
 # These lists link *playlists* rather than channels — a course at a time —
 # which is why they are worth reading even where the channel behind them is
 # already crawled: a curated link is a course somebody vouched for.
-# docs/channel-hunt.md records what each one yielded.
+# docs/harvest.md is the full list of seams; docs/channel-hunt.md records what
+# each of these yielded the first time round.
 
 - id: awesome-courses
   repo: prakhar1989/awesome-courses
@@ -73,3 +78,18 @@
 - id: romulomourao-courses
   repo: romulomourao/awesome-courses
   path: README.md
+
+# ── Course catalogues on the open web ────────────────────────────────────────
+# Not GitHub, and not lists of links somebody collected: institutions and
+# editors publishing curricula, one playlist per course. Probed before being
+# listed — a page whose listing is built by JavaScript (Open Yale, NPTEL,
+# Class Central) has no links in its HTML and is not worth a request.
+
+- id: openculture-courses
+  url: https://www.openculture.com/freeonlinecourses
+
+- id: openculture-cs
+  url: https://www.openculture.com/computer_science_free_courses
+
+- id: openculture-languages
+  url: https://www.openculture.com/freelanguagelessons

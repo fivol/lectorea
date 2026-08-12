@@ -90,7 +90,8 @@ already work one item at a time by hand.
 | [`pnpm data:liveness`](crawl.md#the-three-steps) | `04-liveness.ts` | API key | `cache.db` |
 | [`pnpm data:refresh`](crawl.md#pnpm-datarefresh) | `refresh.ts` | API key | `cache.db` |
 | [`pnpm data:images`](crawl.md#pnpm-dataimages) | `07-images.ts` | — | `public/images/` |
-| [`pnpm data:import`](crawl.md#pnpm-dataimport) | `09-import-github.ts` | network | `data/proposed-courses.yaml` |
+| [`pnpm data:import`](crawl.md#pnpm-dataimport) | `09-import.ts` | network | `data/proposed-courses.yaml` |
+| [`pnpm data:mine`](crawl.md#pnpm-datamine) | `11-mine.ts` | — | `cache.db` |
 | [`pnpm data:match`](matching.md#pnpm-datamatch) | `05-match.ts` | `cache.db` | `cache.db` |
 | [`pnpm data:review`](matching.md#pnpm-datareview) | `06-review.ts` | `cache.db` | `data/overrides.yaml` |
 

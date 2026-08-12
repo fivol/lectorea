@@ -126,6 +126,8 @@ the matching, the map generators — is under [scripts/](scripts/README.md).
 - [layout.md](layout.md) — levels, the topological sort, and how the columns are
   ordered
 - [pipeline.md](pipeline.md) — the crawl, the queue and the quota
+- [harvest.md](harvest.md) — the bar a course has to clear, and every seam more
+  playlists can be dug out of, with what each one costs
 - [channel-hunt.md](channel-hunt.md) — where the crawled channels came from, how
   a candidate is checked, and what was refused
 

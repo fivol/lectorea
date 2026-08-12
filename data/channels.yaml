@@ -8,16 +8,18 @@
 # Adding a channel here is cheap; removing one does not delete already-collected
 # playlists, it only stops refreshing them.
 #
-# The bar for being listed here is *structured courses*: playlists that are one
-# course each, in lecture order. A channel of excellent standalone videos —
-# Veritasium, Mathologer — has nothing this catalogue can point a course at, and
-# every playlist it does have ("Physics", "Popular videos") is a topic bin that
-# matching would have to throw away. Verified with the API before adding:
-# a channel earns its line by having several playlists of ~10+ lectures that
-# name a subject.
+# The bar for being listed here is *structured courses on subjects the catalogue
+# has*: playlists that are one course each, in teaching order. Not necessarily a
+# university, and not necessarily lectures — a teacher's 25-part course on music
+# theory counts, and the fields this catalogue is emptiest in are exactly the
+# ones universities publish least. A channel of excellent standalone videos —
+# Veritasium, Mathologer — has nothing to point a course at, and every playlist
+# it does have ("Physics", "Popular videos") is a topic bin that matching would
+# have to throw away. Verified with the API before adding: a channel earns its
+# line by having several playlists of ~10+ videos that name a subject.
 #
-# Where these came from, and which plausible-looking channels were refused and
-# why, is in docs/channel-hunt.md.
+# The bar in full is docs/harvest.md; where these came from, and which
+# plausible-looking channels were refused and why, is docs/channel-hunt.md.
 
 # ─────────────────────────  Universities — courseware  ─────────────────────────
 

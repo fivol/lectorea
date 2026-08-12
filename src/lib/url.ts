@@ -96,6 +96,19 @@ export function coursesHref(search: string): string {
 }
 
 /**
+ * The current query string with the domain filter pointed at `domainIds` and
+ * everything else about the view left alone — the provider and lecturer
+ * filters live above both screens, so moving between fields must not drop them.
+ */
+export function withDomains(search: string, domainIds: string[]): string {
+  const query = new URLSearchParams(search);
+  if (domainIds.length) query.set('domain', domainIds.join(','));
+  else query.delete('domain');
+  const serialised = query.toString();
+  return serialised ? `?${serialised}` : '';
+}
+
+/**
  * The same course, read in another field: the domain filter is pointed at one
  * domain and everything else about the view is left alone.
  *
@@ -104,7 +117,5 @@ export function coursesHref(search: string): string {
  * columns there with the course still selected.
  */
 export function domainHref(courseId: string, search: string, domainId: string): string {
-  const query = new URLSearchParams(search);
-  query.set('domain', domainId);
-  return courseHref(courseId, `?${query.toString()}`);
+  return courseHref(courseId, withDomains(search, [domainId]));
 }
