@@ -234,6 +234,23 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   /** One unit of lettering, in map units, at the magnification now showing. */
   const scale = letteringScale(viewport.zoom, viewport.rest);
 
+  /**
+   * Entering a field — and a press that moved the map is not a press on
+   * whatever it started over.
+   *
+   * Held still between renders because the whole drawing hangs off it: a fresh
+   * function every render would rebuild the map on every frame of a pinch,
+   * which is the one thing the drawing's own memo exists to prevent.
+   */
+  const moved = viewport.moved;
+  const open = useCallback(
+    (domainId: string): void => {
+      if (moved()) return;
+      navigate(`/courses?domain=${encodeURIComponent(domainId)}`);
+    },
+    [moved, navigate]
+  );
+
   useEffect(() => {
     let cancelled = false;
     loadMapSvg()
@@ -326,126 +343,69 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
     [map, t, continents, scale]
   );
 
-  if (!map) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-ink-faint">
-        {t('ui.common.loading')}
-      </div>
-    );
-  }
-
   /**
-   * The lettering, with the territory under the pointer written last: its name
-   * grows and gains a course count, and neither may end up under a neighbour's.
-   */
-  const labelled = map.shapes
-    .flatMap((shape) => {
-      const placement = placements.get(shape.domainId);
-      return placement ? [{ shape, placement }] : [];
-    })
-    .sort((a, b) => Number(a.shape.domainId === hovered) - Number(b.shape.domainId === hovered));
-
-  /**
-   * SVG has no z-index — paint order is document order, so a territory drawn
-   * earlier sits under its neighbours. The one under the pointer is moved to
-   * the end, or the heavier border it takes is painted over from both sides by
-   * whatever is drawn after it and the highlight shows on one edge only.
-   */
-  const ordered = hovered
-    ? [
-        ...map.shapes.filter((shape) => shape.domainId !== hovered),
-        ...map.shapes.filter((shape) => shape.domainId === hovered),
-      ]
-    : map.shapes;
-
-  /**
-   * Dimming answers a filter, never a cursor.
+   * The drawing itself, built once and held.
    *
-   * Hovering used to grey out every territory except the one under the pointer
-   * and the ones it draws from — which made moving the mouse across the map
-   * flash three quarters of it on and off, and told you about a dependency
-   * graph nobody had asked to see. Pointing at something is not a question; it
-   * gets a slightly stronger fill and a heavier border on that one territory,
-   * and nothing else on the map moves.
+   * Nothing in here answers the viewport: where the map has been moved to and
+   * how far in are one transform on the group around it, and a frame of a
+   * pinch changes that attribute and nothing else. Without this the whole
+   * map — every hex of relief, every cliff, every name — was reconsidered
+   * sixty times a second while the reader zoomed, which is what made the
+   * gesture stutter under its own weight.
+   *
+   * What it does answer is on the list below: the pointer, the filters, the
+   * language, the theme, and the size the lettering is currently written at.
    */
-  const emphasisOf = (domainId: string): Emphasis => {
-    if (allowed && !allowed.has(domainId)) return 'dim';
-    // Zero results must not black out the whole map — the "nothing found" line
-    // says it instead.
-    if (searchActive && matched.size) return matched.has(domainId) ? 'full' : 'dim';
-    return 'full';
-  };
+  const drawing = useMemo(() => {
+    if (!map) return null;
 
-  /** A press that moved the map is not a press on whatever it started over. */
-  const open = (domainId: string): void => {
-    if (viewport.moved()) return;
-    navigate(`/courses?domain=${encodeURIComponent(domainId)}`);
-  };
+    /**
+     * Dimming answers a filter, never a cursor.
+     *
+     * Hovering used to grey out every territory except the one under the
+     * pointer and the ones it draws from — which made moving the mouse across
+     * the map flash three quarters of it on and off, and told you about a
+     * dependency graph nobody had asked to see. Pointing at something is not a
+     * question; it gets a slightly stronger fill and a heavier border on that
+     * one territory, and nothing else on the map moves.
+     */
+    const emphasisOf = (domainId: string): Emphasis => {
+      if (allowed && !allowed.has(domainId)) return 'dim';
+      // Zero results must not black out the whole map — the "nothing found"
+      // line says it instead.
+      if (searchActive && matched.size) return matched.has(domainId) ? 'full' : 'dim';
+      return 'full';
+    };
 
-  const shore = shoreRegion(viewport.window, { width: map.width, height: map.height + DEPTH });
+    /**
+     * The lettering, with the territory under the pointer written last: its
+     * name grows and gains a course count, and neither may end up under a
+     * neighbour's.
+     */
+    const labelled = map.shapes
+      .flatMap((shape) => {
+        const placement = placements.get(shape.domainId);
+        return placement ? [{ shape, placement }] : [];
+      })
+      .sort(
+        (a, b) => Number(a.shape.domainId === hovered) - Number(b.shape.domainId === hovered)
+      );
 
-  return (
-    <div className="relative h-full w-full">
-      <svg
-        ref={viewport.ref}
-        // Room under the map for the cliffs to hang in. The ground itself ends
-        // at `map.height`; the land stands on top of the water rather than in
-        // the middle of it, so the whole slab is below that line.
-        viewBox={`0 0 ${map.width} ${map.height + DEPTH}`}
-        // `touch-none` hands the browser's own pan and pinch over to this
-        // component: without it a finger on the map scrolls the page, and two
-        // fingers zoom the document rather than the drawing.
-        className={`h-full w-full touch-none select-none ${viewport.panning ? 'map-grabbing' : ''}`}
-        style={{ cursor: viewport.panning ? 'grabbing' : 'grab' }}
-        role="group"
-        aria-label={t('ui.a11y.mapRegion')}
-        onPointerLeave={() => setHovered(null)}
-        {...viewport.handlers}
-      >
-        <defs>
-          {/*
-            Room for the blur to finish in, given in map units rather than as a
-            share of what is being filtered.
+    /**
+     * SVG has no z-index — paint order is document order, so a territory drawn
+     * earlier sits under its neighbours. The one under the pointer is moved to
+     * the end, or the heavier border it takes is painted over from both sides
+     * by whatever is drawn after it and the highlight shows on one edge only.
+     */
+    const ordered = hovered
+      ? [
+          ...map.shapes.filter((shape) => shape.domainId !== hovered),
+          ...map.shapes.filter((shape) => shape.domainId === hovered),
+        ]
+      : map.shapes;
 
-            A share cannot serve both: a continent is a thousand units across
-            and a few percent of it is plenty of margin, while an island is
-            forty across and the same few percent cut the shallows off square a
-            third of the way out — which is exactly what it looked like. Stated
-            once in absolute terms, the region covers the whole sea and every
-            shore in it fades out properly.
-
-            No larger than what the reader can see, though. A filter region is
-            rasterised at the resolution it is displayed at, so a region the
-            size of the whole map is a surface sixty-four times its own area
-            once the reader is eight deep — for shallows that are almost all off
-            screen. Shore that cannot be seen does not have to be worked out.
-          */}
-          <filter id="map-shore" filterUnits="userSpaceOnUse" {...shore}>
-            <feGaussianBlur stdDeviation={SHORE_BLUR} />
-          </filter>
-
-          {/* The cell a flat tile is cut to. Written in the collection's unit
-              hex rather than in map units: the clip is resolved inside the
-              placement's own transform, where one radius is one cell. */}
-          <clipPath id={HEX_CLIP}>
-            <path d={hexPath(1.001)} />
-          </clipPath>
-        </defs>
-
-        {/*
-          The whole drawing under one transform: where the reader has moved the
-          map to, and how far in. One group rather than a viewBox that moves,
-          because the viewBox is also what the browser fits to the element — and
-          the viewport needs that fitting to stay put underneath it to have
-          anything to measure a gesture against.
-        */}
-        <g
-          transform={viewport.transform}
-          style={{
-            transition:
-              viewport.eased && !reducedMotion ? 'transform 260ms cubic-bezier(.2,.7,.3,1)' : 'none',
-          }}
-        >
+    return (
+      <>
           {/*
             The sea itself, in the collection's own pieces: shoals and reefs and
             rocks where the bottom comes up near a coast, swell and the odd
@@ -694,7 +654,96 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
               );
             })}
           </g>
-        </g>
+      </>
+    );
+  }, [
+    map,
+    ground,
+    placements,
+    continents,
+    scale,
+    hovered,
+    allowed,
+    matched,
+    searchActive,
+    catalog,
+    t,
+    count,
+    open,
+    reducedMotion,
+  ]);
+
+  if (!map) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-ink-faint">
+        {t('ui.common.loading')}
+      </div>
+    );
+  }
+
+  const shore = shoreRegion(viewport.window, { width: map.width, height: map.height + DEPTH });
+
+  return (
+    <div className="relative h-full w-full">
+      <svg
+        ref={viewport.ref}
+        // Room under the map for the cliffs to hang in. The ground itself ends
+        // at `map.height`; the land stands on top of the water rather than in
+        // the middle of it, so the whole slab is below that line.
+        viewBox={`0 0 ${map.width} ${map.height + DEPTH}`}
+        // `touch-none` hands the browser's own pan and pinch over to this
+        // component: without it a finger on the map scrolls the page, and two
+        // fingers zoom the document rather than the drawing.
+        className={`h-full w-full touch-none select-none ${viewport.panning ? 'map-grabbing' : ''}`}
+        style={{ cursor: viewport.panning ? 'grabbing' : 'grab' }}
+        role="group"
+        aria-label={t('ui.a11y.mapRegion')}
+        onPointerLeave={() => setHovered(null)}
+        {...viewport.handlers}
+      >
+        <defs>
+          {/*
+            Room for the blur to finish in, given in map units rather than as a
+            share of what is being filtered.
+
+            A share cannot serve both: a continent is a thousand units across
+            and a few percent of it is plenty of margin, while an island is
+            forty across and the same few percent cut the shallows off square a
+            third of the way out — which is exactly what it looked like. Stated
+            once in absolute terms, the region covers the whole sea and every
+            shore in it fades out properly.
+
+            No larger than what the reader can see, though. A filter region is
+            rasterised at the resolution it is displayed at, so a region the
+            size of the whole map is a surface sixty-four times its own area
+            once the reader is eight deep — for shallows that are almost all off
+            screen. Shore that cannot be seen does not have to be worked out.
+          */}
+          <filter id="map-shore" filterUnits="userSpaceOnUse" {...shore}>
+            <feGaussianBlur stdDeviation={SHORE_BLUR} />
+          </filter>
+
+          {/* The cell a flat tile is cut to. Written in the collection's unit
+              hex rather than in map units: the clip is resolved inside the
+              placement's own transform, where one radius is one cell. */}
+          <clipPath id={HEX_CLIP}>
+            <path d={hexPath(1.001)} />
+          </clipPath>
+        </defs>
+
+        {/*
+          The whole drawing under one transform: where the reader has moved the
+          map to, and how far in. One group rather than a viewBox that moves,
+          because the viewBox is also what the browser fits to the element — and
+          the viewport needs that fitting to stay put underneath it to have
+          anything to measure a gesture against.
+
+          One attribute, and nothing inside it, is what a frame of a pinch
+          changes: the drawing is built once and held (see `drawing` below), so
+          moving the map is a matrix on seven thousand nodes rather than seven
+          thousand nodes reconsidered.
+        */}
+        <g transform={viewport.transform}>{drawing}</g>
       </svg>
 
       {/* Kept clear of the plate in the other corner, which on a narrow window

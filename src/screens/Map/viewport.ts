@@ -15,6 +15,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useReducedMotion } from '@/lib/hooks';
+
 /** Where the map has been moved to: `translate(x y) scale(k)`, in map units. */
 export type Viewport = { x: number; y: number; k: number };
 
@@ -51,7 +53,7 @@ export const MAX_MAGNIFICATION = 4;
  * where the drawing merely stops being uncomfortable leaves the names smaller
  * than they need to be on exactly the displays that had room for them.
  */
-const COMFORTABLE_WIDTH = 2000;
+const COMFORTABLE_WIDTH = 2400;
 
 /** One press of the plus button. A quarter of a doubling reads as a step. */
 export const ZOOM_STEP = 2 ** 0.25;
@@ -72,11 +74,30 @@ const SLOP = 5;
  * A trackpad pinch arrives as a wheel event with `ctrlKey` set and a delta of a
  * few pixels per frame, so this has to be small enough to feel continuous under
  * the fingers. A mouse wheel with the same modifier arrives in notches of a
- * hundred, which is why the factor is capped afterwards: without the cap one
- * notch of a real wheel crossed half the range.
+ * hundred, which is why the factor is capped afterwards: a notch has to be a
+ * step rather than a leap, and the glide is what carries it across.
  */
 const ZOOM_PER_PIXEL = 0.0085;
-const ZOOM_PER_NOTCH = 1.3;
+const ZOOM_PER_NOTCH = 1.18;
+
+/**
+ * How much of the way to where it is going the map travels each frame.
+ *
+ * Magnification is the one thing here that does not arrive continuously. A
+ * trackpad pinch does — a few pixels a frame, and following it exactly is what
+ * makes it feel like the map is being pulled apart. A wheel notch and a press
+ * of the plus button do not: they are a fifth of a doubling arriving in one
+ * instant, and applied as they arrive the map jumps rather than moves. So every
+ * gesture writes down where the map should be and this walks it there, a fifth
+ * of the remaining distance each frame — invisible under a pinch, which is
+ * never more than a frame behind, and the whole difference between a step and a
+ * jump for everything else.
+ *
+ * Carrying rather than magnifying is exempt: a hand on the map has to be obeyed
+ * to the pixel, and a drag that lags behind the finger by four frames feels
+ * like the map is stuck to something.
+ */
+const GLIDE = 0.2;
 
 /** A wheel delta in pixels, whatever unit the browser chose to send it in. */
 function wheelPixels(event: WheelEvent): { x: number; y: number } {
@@ -131,8 +152,6 @@ export type MapViewport = {
   window: Frame | null;
   /** True while the map is being dragged. */
   panning: boolean;
-  /** The last change came from a button, and so may be eased rather than tracked. */
-  eased: boolean;
   /** Nothing has been moved: the whole map is in the window. */
   fitted: boolean;
   /** As far in as the map goes. */
@@ -158,7 +177,17 @@ export function useMapViewport(content: { width: number; height: number } | null
   const ref = useRef<SVGSVGElement>(null);
   const [view, setView] = useState<Viewport>({ x: 0, y: 0, k: 1 });
   const [panning, setPanning] = useState(false);
-  const [eased, setEased] = useState(false);
+  const reducedMotion = useReducedMotion();
+
+  /**
+   * Where the map is, and where it is going. They are the same thing except
+   * during a glide, and every gesture reads the second: two wheel notches in one
+   * frame have to compound into one journey rather than the second overwriting
+   * the first halfway through the first.
+   */
+  const shown = useRef<Viewport>(view);
+  const wanted = useRef<Viewport>(view);
+  const walking = useRef<number | null>(null);
 
   /**
    * How the browser fitted the drawing into the element: the part of the map's
@@ -225,21 +254,68 @@ export function useMapViewport(content: { width: number; height: number } | null
     [content]
   );
 
+  /** Put the map somewhere now, with nothing left to walk towards. */
+  const land = useCallback((next: Viewport): void => {
+    if (walking.current !== null) cancelAnimationFrame(walking.current);
+    walking.current = null;
+    shown.current = next;
+    wanted.current = next;
+    setView(next);
+  }, []);
+
+  /** One frame of the walk towards wherever the last gesture asked for. */
+  const walk = useCallback((): void => {
+    const goal = wanted.current;
+    const from = shown.current;
+    const dx = goal.x - from.x;
+    const dy = goal.y - from.y;
+    const dk = goal.k - from.k;
+    // Near enough is the end of it: a walk that only ever covers a fifth of
+    // what is left never arrives, and a map creeping the last hundredth of a
+    // pixel forever is a repaint every frame for nothing.
+    const there = Math.abs(dk) <= goal.k * 0.0008 && Math.abs(dx) < 0.2 && Math.abs(dy) < 0.2;
+    const next = there
+      ? goal
+      : { x: from.x + dx * GLIDE, y: from.y + dy * GLIDE, k: from.k + dk * GLIDE };
+    shown.current = next;
+    setView(next);
+    walking.current = there ? null : requestAnimationFrame(walk);
+  }, []);
+
+  /** Ask for somewhere, and let the map walk there over the next few frames. */
+  const glide = useCallback(
+    (next: Viewport): void => {
+      if (reducedMotion) return land(next);
+      wanted.current = next;
+      if (walking.current === null) walking.current = requestAnimationFrame(walk);
+    },
+    [land, walk, reducedMotion]
+  );
+
+  useEffect(
+    () => () => {
+      if (walking.current !== null) cancelAnimationFrame(walking.current);
+    },
+    []
+  );
+
   /**
    * Fitting the map when the window is first measured, and again whenever it
    * changes shape — but only for a reader who has not moved it. Someone who has
    * zoomed into a corner and then resized the window wants that corner back,
    * not the whole map; all that is owed to them is the clamp, so the piece they
    * were looking at cannot end up hanging off an edge.
+   *
+   * Landed rather than walked to. A window changing shape is not a gesture, and
+   * a map that slides into place afterwards reads as though it were still
+   * settling from whatever the reader last did.
    */
   const fittedTo = useRef(1);
   useEffect(() => {
     const previous = fittedTo.current;
     fittedTo.current = rest;
-    setView((current) =>
-      settle(current.k <= previous * 1.001 ? { x: 0, y: 0, k: rest } : current)
-    );
-  }, [frame, rest, settle]);
+    land(settle(wanted.current.k <= previous * 1.001 ? { x: 0, y: 0, k: rest } : wanted.current));
+  }, [frame, rest, settle, land]);
 
   /** Where a point of the screen falls on the drawing, before the map was moved. */
   const at = useCallback((clientX: number, clientY: number) => {
@@ -261,29 +337,34 @@ export function useMapViewport(content: { width: number; height: number } | null
     (clientX: number, clientY: number, factor: number): void => {
       const point = at(clientX, clientY);
       if (!point) return;
-      setView((current) => {
-        const k = clamp(current.k * factor, rest, rest * MAX_MAGNIFICATION);
-        const ratio = k / current.k;
-        return settle({
+      const from = wanted.current;
+      const k = clamp(from.k * factor, rest, rest * MAX_MAGNIFICATION);
+      const ratio = k / from.k;
+      glide(
+        settle({
           k,
-          x: point.x - ratio * (point.x - current.x),
-          y: point.y - ratio * (point.y - current.y),
-        });
-      });
+          x: point.x - ratio * (point.x - from.x),
+          y: point.y - ratio * (point.y - from.y),
+        })
+      );
     },
-    [at, settle, rest]
+    [at, settle, glide, rest]
   );
 
-  /** Move the map by a distance on the screen, not on the drawing. */
+  /**
+   * Move the map by a distance on the screen, not on the drawing — and now,
+   * not over the next few frames. Carrying is the one thing a hand does
+   * directly, so it also puts an end to any glide still in flight by landing on
+   * wherever that glide was headed.
+   */
   const panBy = useCallback(
     (dx: number, dy: number): void => {
       const window = frameRef.current;
       if (!window) return;
-      setView((current) =>
-        settle({ ...current, x: current.x + dx * window.unit, y: current.y + dy * window.unit })
-      );
+      const from = wanted.current;
+      land(settle({ ...from, x: from.x + dx * window.unit, y: from.y + dy * window.unit }));
     },
-    [settle]
+    [settle, land]
   );
 
   /*
@@ -298,7 +379,6 @@ export function useMapViewport(content: { width: number; height: number } | null
 
     const onWheel = (event: WheelEvent): void => {
       event.preventDefault();
-      setEased(false);
       const delta = wheelPixels(event);
       // A trackpad pinch is a wheel event with `ctrlKey` set — the browser
       // decided that years ago and every one of them still does it. The command
@@ -354,7 +434,6 @@ export function useMapViewport(content: { width: number; height: number } | null
         const dy = event.clientY - track.y;
         track.x = event.clientX;
         track.y = event.clientY;
-        setEased(false);
 
         // Two fingers do both things at once, because a hand does: the map is
         // magnified by however much they spread and carried by however far
@@ -406,7 +485,6 @@ export function useMapViewport(content: { width: number; height: number } | null
     (factor: number): void => {
       const box = ref.current?.getBoundingClientRect();
       if (!box) return;
-      setEased(true);
       // About the middle of the window: a button has no pointer to zoom about,
       // and the centre of what is on screen is what the reader is looking at.
       zoomAt(box.left + box.width / 2, box.top + box.height / 2, factor);
@@ -415,9 +493,8 @@ export function useMapViewport(content: { width: number; height: number } | null
   );
 
   const reset = useCallback((): void => {
-    setEased(true);
-    setView(settle({ x: 0, y: 0, k: rest }));
-  }, [settle, rest]);
+    glide(settle({ x: 0, y: 0, k: rest }));
+  }, [glide, settle, rest]);
 
   const window = useMemo(
     () =>
@@ -439,7 +516,6 @@ export function useMapViewport(content: { width: number; height: number } | null
     rest,
     window,
     panning,
-    eased,
     // At the resting size the map is smaller than the window on both axes, so
     // it is centred by the clamp and there is no position left to compare.
     fitted: view.k <= rest * 1.001,

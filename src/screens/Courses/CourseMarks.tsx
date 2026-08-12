@@ -36,7 +36,10 @@ export function FavoriteMark({ explain = true }: Props) {
       role="img"
       aria-label={t('ui.course.favoriteOn')}
     >
-      <Icon name="star-filled" size={11} />
+      {/* Nearly the full plate: the star is the shape being recognised, and the
+          ring around it is only there to hold it — padding it down made the
+          mark read as a dot with something in it. */}
+      <Icon name="star-filled" size={14} />
     </span>
   );
   return explain ? <Tooltip content={t('ui.legend.favorite')}>{mark}</Tooltip> : mark;
