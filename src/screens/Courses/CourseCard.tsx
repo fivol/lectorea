@@ -109,10 +109,6 @@ function CourseCardInner({
             ? 'var(--c-accent)'
             : withAlpha(accent, muted ? 0.2 : 0.45),
         borderWidth: selected ? 2 : 1,
-        // A card the filter does not cover is drawn on a dashed edge: it is
-        // standing in this column on loan, and the outline says so before any
-        // label is read.
-        borderStyle: guest ? 'dashed' : undefined,
         boxShadow: selected ? `0 0 0 3px ${withAlpha(accent, 0.2)}, var(--shadow-card)` : undefined,
       }}
     >

@@ -115,7 +115,7 @@
   "ui.legend.domain": "The field the course belongs to — opens the catalogue of that field",
   "ui.legend.quality": "Playlist quality: high, average, little data",
   "ui.legend.noMaterials": "The course is in the catalogue, but no playlists have been found for it yet",
-  "ui.legend.guest": "A dashed card is a course from another field. It stays in the columns while you are reading it; the tag on it leads to its field",
+  "ui.legend.guest": "A field tag on the artwork means a course from another field, kept in the columns while you are reading it; pressing it moves you to that field along with the course",
 
   "ui.shortcuts.title": "Keyboard shortcuts",
   "ui.shortcuts.key.slash": "/",

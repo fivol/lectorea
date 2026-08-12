@@ -150,9 +150,18 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
                     >
                       {t('ui.legend.inPath')}
                     </Row>
+                    {/* The tag itself, at its own size: it is the only mark on
+                        a card that is not a state but a place, and drawing it
+                        here is cheaper than describing it in words. */}
                     <Row
                       mark={
-                        <span className="h-4 w-6 rounded border border-dashed border-ink-faint bg-surface" />
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border border-line
+                                     bg-surface px-1.5 py-[3px] text-[10px] leading-none text-ink-dim"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-ink-faint" />
+                          <Icon name="chevron-right" size={9} />
+                        </span>
                       }
                     >
                       {t('ui.legend.guest')}
