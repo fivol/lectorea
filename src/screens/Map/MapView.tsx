@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
@@ -670,6 +670,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
     t,
     count,
     open,
+    navigate,
     reducedMotion,
   ]);
 
