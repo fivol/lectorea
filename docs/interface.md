@@ -96,6 +96,24 @@ one into the other would land them somewhere else entirely. The cell size, the
 depth of the cliffs and the chrome the land is kept clear of all follow the file
 that actually loaded rather than the one that happened to be written first.
 
+The tall map also does not open on the whole of its world. Stacking the
+continents fixes the shape of the paper but not the arithmetic: three continents
+fitted into a phone still puts every name at four pixels. So the plan carries a
+third box beside the land — where the map *opens*, measured down from the
+northern coast, far enough to hold the first continent, the whole of the second,
+and the northern shore of the third, which is what says there is more below. The
+corner button still shows the world entire, and out is still bounded by it; what
+changed is only where the map starts. On a wide window the two boxes are the
+same box and nothing about the map moves.
+
+Lettering is measured in cells rather than in map units, so a field of eight
+hexes is named the same way on both maps whatever grid each is drawn on. The
+tall one is then set larger still, and that part is a decision rather than a
+correction: it is read on a phone at arm's length, where a name wants eleven
+pixels and not eight. Fewer names fit inside their own borders at that size and
+more go out to sea or wait for the reader to come closer — on a screen that size
+the better trade, and the same one the map has always made.
+
 The blocks are still there, and are still the same catalogue drawn as a grid of
 cards.
 
