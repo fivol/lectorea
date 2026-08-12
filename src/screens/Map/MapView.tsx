@@ -4,6 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { loadMapSvg, type MapVariant } from '@/lib/data';
 import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
+import { fieldHref, useCatalogParams } from '@/lib/url';
 import { useReducedMotion } from '@/lib/hooks';
 import { DomainGlyph } from '@/components/DomainIcon';
 import { useResolvedTheme } from '@/store/profile';
@@ -173,6 +174,24 @@ const letteringScale = (zoom: number, rest: number): number => {
 };
 
 /**
+ * How large the lettering is set against the ground it stands on.
+ *
+ * Every size below is a number of map units calibrated on the wide map, whose
+ * cell is `CELL_FALLBACK` across — so on a map drawn with larger cells the same
+ * number is a smaller name over a bigger territory. Measuring in cells instead
+ * is what keeps a field of eight hexes named the same way on both maps.
+ *
+ * The tall map is then set larger still, and that part is not a correction but
+ * a decision: it is read on a phone held at arm's length, where the comfortable
+ * floor for a name is around eleven pixels rather than the eight a desk can get
+ * away with. Bigger names mean fewer of them fit inside their own borders and
+ * more are pushed out to sea or wait for the reader to come closer — which on a
+ * screen this size is the better trade. A map with every name on it and half of
+ * them unreadable is worth less than a map with fewer.
+ */
+const LETTERING: Record<MapVariant, number> = { wide: 1, portrait: 1.3 };
+
+/**
  * The chrome the map is drawn under but not fitted under, in screen pixels.
  *
  * The drawing runs edge to edge — the sea has to carry on behind the header or
@@ -199,13 +218,37 @@ const CHROME: Record<MapVariant, { top: number; bottom: number }> = {
  * below, so the drawing overruns its own coastlines by more underneath than on
  * top and hardly at all to the sides.
  */
-const CONTENT_AIR = { x: 0.03, top: 0.075, bottom: 0.08 };
+const CONTENT_AIR: Record<MapVariant, { x: number; top: number; bottom: number }> = {
+  wide: { x: 0.03, top: 0.075, bottom: 0.08 },
+  // Wider to the sides on a phone, where the offshore islands sit out on the
+  // flanks and their names are the only thing on the map written past the last
+  // coast. The names may not leave this box — see `placeLabels` — so a box cut
+  // to the coastline would leave those islands unnamed.
+  portrait: { x: 0.08, top: 0.06, bottom: 0.06 },
+};
+
+/**
+ * How far down its world the tall map opens, as a share of the land.
+ *
+ * Not all of it. Three continents fitted into a phone is the whole catalogue at
+ * four pixels a letter — and it is not what a map is for either: a map opens
+ * where you are standing and the rest is a drag away. This much puts the first
+ * continent and the whole of the second on the screen and leaves the third
+ * showing its northern coast, which is what says there is more below.
+ *
+ * The number is also what stops the tall map wasting its width. The land is
+ * about six parts wide to ten tall, a phone's map area about nine to ten, so
+ * fitting the whole of the land to it fills the height and leaves a third of the
+ * screen in open water. Four fifths of the land is nearly the shape of the room
+ * it is going into.
+ */
+const PORTRAIT_OPENING = 0.72;
 
 /**
  * What the map asks the viewport for: the box it covers, the box it is worth
- * showing, and the chrome in between.
+ * showing, where it opens, and the chrome in between.
  *
- * The two boxes differ by a third of the drawing's width. `map.svg` is a
+ * `extent` and `content` differ by a third of the drawing's width. The file is a
  * rectangle with the continents in the middle of it and open water all round,
  * and fitting the rectangle to the window is what left the land at two thirds
  * the size of the room it had. The water is scenery — it may run off the edges,
@@ -219,15 +262,28 @@ function planOf(map: ParsedMap, depth: number, variant: MapVariant): MapPlan {
   // The cliffs hang below the southern coasts, and what a reader has to see
   // goes down with them.
   const y1 = Math.max(...land.map((mass) => mass.y + mass.height)) + depth;
-  const air = { x: (x1 - x0) * CONTENT_AIR.x, top: (y1 - y0) * CONTENT_AIR.top, bottom: (y1 - y0) * CONTENT_AIR.bottom };
+  const share = CONTENT_AIR[variant];
+  const air = {
+    x: (x1 - x0) * share.x,
+    top: (y1 - y0) * share.top,
+    bottom: (y1 - y0) * share.bottom,
+  };
+  const content = {
+    x: x0 - air.x,
+    y: y0 - air.top,
+    w: x1 - x0 + air.x * 2,
+    h: y1 - y0 + air.top + air.bottom,
+  };
   return {
     extent: { width: map.width, height: map.height + depth },
-    content: {
-      x: x0 - air.x,
-      y: y0 - air.top,
-      w: x1 - x0 + air.x * 2,
-      h: y1 - y0 + air.top + air.bottom,
-    },
+    content,
+    // Measured down from the northern coast rather than from the middle: the
+    // first continent is the one the reader lands on, and it keeps the air over
+    // its own title.
+    opening:
+      variant === 'portrait'
+        ? { ...content, h: air.top + (y1 - y0) * PORTRAIT_OPENING }
+        : content,
     inset: CHROME[variant],
   };
 }
@@ -299,8 +355,18 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
   );
   const viewport = useMapViewport(plan);
 
-  /** One unit of lettering, in map units, at the magnification now showing. */
-  const scale = letteringScale(viewport.zoom, viewport.rest);
+  /**
+   * One unit of lettering, in map units, at the magnification now showing.
+   *
+   * Three things in it: how far the reader has gone in, how big this map's own
+   * cells are, and how large this map wants its lettering set — see
+   * `LETTERING`. Everything written on the map is a multiple of this, so all
+   * three arrive everywhere at once.
+   */
+  const scale =
+    letteringScale(viewport.zoom, viewport.rest) *
+    ((map?.grid?.r ?? CELL_FALLBACK) / CELL_FALLBACK) *
+    LETTERING[variant];
 
   /**
    * Entering a field — and a press that moved the map is not a press on
@@ -311,12 +377,13 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
    * which is the one thing the drawing's own memo exists to prevent.
    */
   const moved = viewport.moved;
+  const search = useCatalogParams().search;
   const open = useCallback(
     (domainId: string): void => {
       if (moved()) return;
-      navigate(`/courses?domain=${encodeURIComponent(domainId)}`);
+      navigate(fieldHref(search, domainId));
     },
-    [moved, navigate]
+    [moved, navigate, search]
   );
 
   useEffect(() => {
@@ -397,19 +464,20 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
    */
   const placements = useMemo(
     () =>
-      map
+      map && plan
         ? placeLabels(
             map.shapes,
             (domainId) => t(`domain.${domainId}.title`),
             // The cliffs hang below the southern coasts, and the water a name
-            // may stand in goes down with them.
-            { width: map.width, height: map.height + depth },
+            // may stand in goes down with them — `content` already allows for
+            // that.
+            plan.content,
             continents.map((continent) => continent.box),
             scale,
             depth
           )
         : new Map<string, Placement>(),
-    [map, t, continents, scale, depth]
+    [map, plan, t, continents, scale, depth]
   );
 
   /**
@@ -560,10 +628,13 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
                     setHovered((current) => (current === domain.id ? null : current))
                   }
                   onClick={() => open(domain.id)}
+                  // Through the same `open` as the pointer. It used to build its
+                  // own address, which is how the two drifted: the keyboard kept
+                  // writing a bare `?domain=` long after the pointer had stopped.
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
-                      navigate(`/courses?domain=${encodeURIComponent(domain.id)}`);
+                      open(domain.id);
                     }
                   }}
                   tabIndex={0}
@@ -1009,7 +1080,14 @@ const NAME_FIT = 0.95;
 function placeLabels(
   shapes: MapShape[],
   titleOf: (domainId: string) => string,
-  bounds: { width: number; height: number },
+  /**
+   * The water a name may stand in: the part of the drawing the window is fitted
+   * to, not the whole file. The file carries a fifth of its own width in open
+   * water past every edge, and a name written out there is a name nobody ever
+   * sees — or, once the map opens closer in than the file is wide, half a name
+   * hanging off the side of the screen.
+   */
+  bounds: Rect,
   /** Space already spoken for — the continents' own names, written first. */
   reserved: Rect[],
   /**
@@ -1037,10 +1115,10 @@ function placeLabels(
   const taken: Rect[] = [...reserved];
 
   const free = (rect: Rect, against: Rect[]): boolean =>
-    rect.x >= 0 &&
-    rect.y >= 0 &&
-    rect.x + rect.w <= bounds.width &&
-    rect.y + rect.h <= bounds.height &&
+    rect.x >= bounds.x &&
+    rect.y >= bounds.y &&
+    rect.x + rect.w <= bounds.x + bounds.w &&
+    rect.y + rect.h <= bounds.y + bounds.h &&
     !against.some((other) => overlaps(rect, other));
 
   for (const shape of [...shapes].sort((a, b) => b.room - a.room)) {

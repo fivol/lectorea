@@ -26,15 +26,15 @@ export type Frame = { x: number; y: number; w: number; h: number };
 /**
  * How far in the reader may go.
  *
- * Four times the resting size, and counted from it rather than from the
- * drawing's own scale, so that every screen gets the same journey: from the
- * whole map down to about one continent filling the window. That is where the
+ * Four times the size the map opened at, and counted from it rather than from
+ * the drawing's own scale, so that every screen gets the same journey: from the
+ * opening view down to about one continent filling the window. That is where the
  * map runs out of things to say — past it a reader is looking at two territories
  * and a lot of hexagons, which is a worse view of the catalogue than the one
  * they started from, not a better one.
  *
- * Out is bounded by the resting size. The whole map is already there, and there
- * is no page behind it to reveal.
+ * Out is bounded by the whole of the land, which on a tall window is further out
+ * than the map opened. There is no page behind that to reveal.
  */
 export const MAX_MAGNIFICATION = 4;
 
@@ -149,16 +149,25 @@ function spanOf(points: Track[]): { distance: number; x: number; y: number } {
 /**
  * What the viewport has to know about the map to place it.
  *
- * Two boxes, and they are not the same box. `extent` is everything the drawing
- * covers, and it is what the map may not be dragged off the window; `content`
- * is the part a reader came for — the land and the names on it — and it is what
- * the map is sized and centred by. Between them lies the open water the file
- * carries round its edges, which is scenery: it may run off the screen, and on
- * most windows it should.
+ * Three boxes, and no two of them are the same box.
+ *
+ * `extent` is everything the drawing covers, and it is what the map may not be
+ * dragged off the window. `content` is the part a reader came for — the land and
+ * the names on it — and it is as far out as the map will go: between the two
+ * lies the open water the file carries round its edges, which is scenery and may
+ * run off the screen.
+ *
+ * `opening` is where the map starts. On a wide window it is the whole of the
+ * land, because the whole of the land is readable there. On a tall one it is
+ * not: three continents fitted into a phone is the entire catalogue drawn at
+ * four pixels a letter, which is not a map of anything. So the tall map opens
+ * on part of its world and the rest is a drag away — which is what every map on
+ * a phone has always done.
  */
 export type MapPlan = {
   extent: { width: number; height: number };
-  content: { x: number; y: number; w: number; h: number };
+  content: Frame;
+  opening: Frame;
   /**
    * Bands of the window, in screen pixels, that the drawing passes under but
    * does not come to rest under — whatever floats over the map.
@@ -170,20 +179,22 @@ export type MapViewport = {
   ref: React.RefObject<SVGSVGElement>;
   /** What to put on the group the whole drawing lives in. */
   transform: string;
-  /** How far in the reader is; `rest` is the whole map in the window. */
+  /** How far in the reader is; `rest` is where the map opened. */
   zoom: number;
   /**
-   * The magnification the map settles at on this screen: the one that fits the
-   * land into whatever is not covered by the chrome, unless that would draw it
-   * wider than is comfortable to read. Everything written on the map is sized
-   * against it, so a name is the same size on a laptop and on a wall display.
+   * The magnification the map opens at on this screen: the one that fits
+   * `opening` into whatever is not covered by the chrome, unless that would
+   * draw it wider than is comfortable to read. Everything written on the map is
+   * sized against it, so a name is the same size on a laptop and on a wall
+   * display — and on a phone, where the map opens closer in, the names it opens
+   * with are the ones it was drawn for.
    */
   rest: number;
   /** The part of the drawing the window shows, in map units — null until measured. */
   window: Frame | null;
   /** True while the map is being dragged. */
   panning: boolean;
-  /** Nothing has been moved: the whole map is in the window. */
+  /** The whole map is in the window — there is nothing further to come out to. */
   fitted: boolean;
   /** As far in as the map goes. */
   deepest: boolean;
@@ -284,36 +295,52 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
   roomRef.current = room;
 
   /**
-   * Where the map comes to rest on this screen: the magnification at which the
-   * land fills that room, or the one that keeps it under `COMFORTABLE_WIDTH`,
-   * whichever is smaller.
+   * The magnification at which a given box of the drawing fills that room — or
+   * the one that keeps it under `COMFORTABLE_WIDTH`, whichever is smaller.
    */
-  const rest = useMemo(() => {
-    if (!frame || !room || !plan) return 1;
-    const { content } = plan;
-    if (content.w <= 0 || content.h <= 0) return 1;
-    const fits = Math.min(room.w / content.w, room.h / content.h);
-    const comfortable = (COMFORTABLE_WIDTH * frame.unit) / content.w;
-    return Math.min(fits, comfortable);
-  }, [frame, room, plan]);
+  const fitTo = useCallback(
+    (box: Frame): number => {
+      if (!frame || !room || box.w <= 0 || box.h <= 0) return 1;
+      const fits = Math.min(room.w / box.w, room.h / box.h);
+      const comfortable = (COMFORTABLE_WIDTH * frame.unit) / box.w;
+      return Math.min(fits, comfortable);
+    },
+    [frame, room]
+  );
+
+  /** As far out as the map goes: the whole of the land in the room. */
+  const floor = useMemo(() => (plan ? fitTo(plan.content) : 1), [plan, fitTo]);
+
+  /** Where the map opens. The same thing on a wide window; closer in on a tall one. */
+  const rest = useMemo(() => (plan ? fitTo(plan.opening) : 1), [plan, fitTo]);
 
   /**
-   * Where the map sits when nothing has been asked of it: the land centred in
-   * the room, not the drawing centred in the window. Those are different points
-   * whenever the chrome is thicker on one side than the other, and the second
-   * one puts the continents behind the header.
+   * A box of the drawing centred in the room — not in the window. Those are
+   * different points whenever the chrome is thicker on one side than the other,
+   * and the second one puts the continents behind the header.
    */
-  const home = useCallback(
-    (k: number): Viewport => {
-      if (!room || !plan) return { x: 0, y: 0, k };
-      const { content } = plan;
+  const centreOn = useCallback(
+    (box: Frame, k: number): Viewport => {
+      if (!room) return { x: 0, y: 0, k };
       return {
         k,
-        x: room.x + room.w / 2 - k * (content.x + content.w / 2),
-        y: room.y + room.h / 2 - k * (content.y + content.h / 2),
+        x: room.x + room.w / 2 - k * (box.x + box.w / 2),
+        y: room.y + room.h / 2 - k * (box.y + box.h / 2),
       };
     },
-    [room, plan]
+    [room]
+  );
+
+  /** Where the map sits when nothing has been asked of it. */
+  const home = useCallback(
+    (): Viewport => (plan ? centreOn(plan.opening, rest) : { x: 0, y: 0, k: rest }),
+    [plan, centreOn, rest]
+  );
+
+  /** The whole map in the window, which is what the corner button offers. */
+  const whole = useCallback(
+    (): Viewport => (plan ? centreOn(plan.content, floor) : { x: 0, y: 0, k: floor }),
+    [plan, centreOn, floor]
   );
 
   /** The map back over the window, after anything that may have moved it off. */
@@ -391,7 +418,7 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
   useLayoutEffect(() => {
     const previous = fittedTo.current;
     fittedTo.current = rest;
-    land(settle(wanted.current.k <= previous * 1.001 ? home(rest) : wanted.current));
+    land(settle(wanted.current.k <= previous * 1.001 ? home() : wanted.current));
   }, [frame, rest, settle, land, home]);
 
   /** Where a point of the screen falls on the drawing, before the map was moved. */
@@ -415,7 +442,7 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
       const point = at(clientX, clientY);
       if (!point) return;
       const from = wanted.current;
-      const k = clamp(from.k * factor, rest, rest * MAX_MAGNIFICATION);
+      const k = clamp(from.k * factor, floor, rest * MAX_MAGNIFICATION);
       const ratio = k / from.k;
       glide(
         settle({
@@ -425,7 +452,7 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
         })
       );
     },
-    [at, settle, glide, rest]
+    [at, settle, glide, floor, rest]
   );
 
   /**
@@ -570,8 +597,8 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
   );
 
   const reset = useCallback((): void => {
-    glide(settle(home(rest)));
-  }, [glide, settle, home, rest]);
+    glide(settle(whole()));
+  }, [glide, settle, whole]);
 
   const window = useMemo(
     () =>
@@ -595,7 +622,7 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
     panning,
     // At the resting size the map is smaller than the window on both axes, so
     // it is centred by the clamp and there is no position left to compare.
-    fitted: view.k <= rest * 1.001,
+    fitted: view.k <= floor * 1.001,
     deepest: view.k >= rest * MAX_MAGNIFICATION * 0.999,
     moved: useCallback(() => dragged.current, []),
     zoomBy,
