@@ -30,7 +30,7 @@ export default function LangToggle({ className = '' }: { className?: string }) {
   return (
     <button
       type="button"
-      className={`lang-btn tap ${className}`}
+      className={`lang-btn ${className}`}
       lang={next.id}
       aria-label={label}
       title={label}

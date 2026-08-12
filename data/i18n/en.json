@@ -290,7 +290,7 @@
   "ui.profile.versionBanner": "This profile was saved by a newer version of the site. It is untouched but not shown — reload the page",
 
   "ui.mobile.levelGroup": "Difficulty {n}",
-  "ui.mobile.legend": "Groups go by difficulty: the further down the group, the longer the chain you have to work through to reach the course",
+  "ui.mobile.legend": "Groups go by difficulty: further on, longer to reach",
 
   "ui.a11y.closePanel": "Close the panel",
   "ui.a11y.dragSplitter": "Resize the panel",

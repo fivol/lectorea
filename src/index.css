@@ -539,6 +539,17 @@
            font-mono text-[11px] font-semibold uppercase tracking-[0.08em]
            transition-colors duration-fast ease-out;
   }
+  /* The same plate holding one glyph and no word — the search on a phone, where
+     a labelled control would take a third of the row. Exactly as tall as
+     `.plate-cap` and as a plate with a row of controls inside it, so the three
+     of them side by side read as one strip rather than as three sizes. */
+  .plate-disc {
+    @apply inline-flex h-[32px] w-[32px] items-center justify-center
+           text-ink-dim transition-colors duration-fast ease-out;
+  }
+  .plate-disc:hover {
+    color: var(--c-ink);
+  }
   .plate-divider {
     width: 1px;
     align-self: stretch;
@@ -786,6 +797,73 @@
       min-height: 44px;
       min-width: 44px;
       justify-content: center;
+    }
+  }
+
+  /*
+   * The chrome at one height, sized for a thumb.
+   *
+   * A header is read as a strip, and a strip is only a strip while everything
+   * in it is the same height. On a pointer that is 32px — the plate and what
+   * sits on it; under a finger every control grows by the same eight, so the
+   * row grows without any part of it changing rank. The controls sharing a
+   * plate stop four short of their neighbours' 40 because the plate's own
+   * padding makes up the difference, and what the finger lands on is the plate.
+   */
+  @media (pointer: coarse) {
+    .plate-cap,
+    .plate-disc {
+      height: 40px;
+    }
+    .plate-disc {
+      width: 40px;
+    }
+    /* 34 and not 40: with the plate's 2px of padding and its own rim around
+       them, a row of these comes to exactly the 40 of the plates beside it. */
+    .icon-btn,
+    .lang-btn,
+    .seg-item {
+      height: 34px;
+    }
+    .icon-btn {
+      width: 34px;
+    }
+    /* The disc takes the whole slot, like every other control on the plate —
+       the 2px it was inset by is the plate's own padding twice over. */
+    .profile-btn {
+      padding: 0;
+    }
+    .profile-disc {
+      height: 34px;
+      width: 34px;
+    }
+    /* The filter strip is how this catalogue is steered and the first thing a
+       thumb goes for, so the chips get six pixels they do not need under a
+       mouse. Still a strip and not a second toolbar: they grow to a third of
+       the chrome's height, not to it. */
+    .chip {
+      min-height: 32px;
+    }
+  }
+
+  /*
+   * The same finger-sized target, taken out of the layout.
+   *
+   * Where a control stands in a row with others — the way back beside the
+   * search, the search beside the plate — growing it to 44px makes it the
+   * largest thing in the row and the row stops reading as one strip. The halo
+   * catches the finger instead: 6px on every side of a 32px capsule is the same
+   * 44px, and none of it is visible or takes any width. Six, not more, so two
+   * controls a `gap-2` apart never share a pixel.
+   */
+  @media (pointer: coarse) {
+    .tap-soft {
+      position: relative;
+    }
+    .tap-soft::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
     }
   }
 

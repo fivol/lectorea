@@ -12,7 +12,7 @@ import { courseHref, coursesHref, useCatalogParams, useCourseSlice, withDomains 
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
 import MarkedText from './MarkedText';
-import { Button, Field, IconButton, Kbd } from './ui';
+import { Field, IconButton, Kbd } from './ui';
 
 type Props = {
   query: string;
@@ -250,15 +250,18 @@ export default function SearchBox({
     return (
       <>
         {variant === 'compact' ? (
-          <Button
-            icon="search"
-            iconSize={16}
-            tap
-            className="px-2"
+          /* A plate, like everything else in that corner of the header: as a
+             button it was the one control in the row cut from a different
+             material and a head taller than the rest. */
+          <button
+            type="button"
+            className="plate plate-disc tap-soft"
             onClick={() => setSheet(true)}
             aria-label={t('ui.search.open')}
             aria-expanded={sheet}
-          />
+          >
+            <Icon name="search" size={16} />
+          </button>
         ) : (
           /* Dressed as the field it replaces, so the first screen still opens
              with a search line across it rather than an icon in the corner —

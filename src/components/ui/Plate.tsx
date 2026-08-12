@@ -58,7 +58,10 @@ export function Cap({
   ariaLabel?: string;
   className?: string;
 }) {
-  const classes = cx('plate plate-cap tap text-ink-dim hover:text-ink', className);
+  // `tap-soft`, not `tap`: it stands in a row of plates and a 44px capsule in
+  // the middle of them is read as the important one. The halo is the same
+  // target without the height.
+  const classes = cx('plate plate-cap tap-soft text-ink-dim hover:text-ink', className);
   const inner = (
     <>
       {icon ? <Icon name={icon} size={13} /> : null}

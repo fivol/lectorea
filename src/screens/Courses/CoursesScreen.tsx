@@ -162,25 +162,48 @@ export default function CoursesScreen() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="z-30 flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-3 py-2">
+      {/*
+        Two rows until the whole toolbar genuinely fits on one — and the two are
+        decided rather than left to the wrap: chrome above, filters below.
+        Wrapping put the last filter and the corner plate on the same line with a
+        hole between them, and the line moved every time a label changed length.
+      */}
+      <header className="z-30 flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-4 py-2 sm:px-3">
         {/* The way back is set like the switch it came from — same plate, same
             spaced caps, so the two screens read as two views and not as two
             sites. It names the view it returns to rather than always saying
             «Карта»: whoever entered the columns from the blocks left a screen
-            of blocks behind, and that is the screen they get back. */}
+            of blocks behind, and that is the screen they get back.
+
+            With no room for the word, the plate closes up around the arrow
+            instead of keeping the width the word would have had. */}
         <Cap
           to="/"
           icon="arrow-left"
           ariaLabel={t(`ui.nav.backTo.${mapView}`)}
           label={<span className="hidden sm:inline">{t(`ui.nav.backTo.${mapView}`)}</span>}
+          className="aspect-square px-0 sm:aspect-auto sm:px-3.5"
         />
 
         {/* No breadcrumb trail: with «Карта» already on the left and the domain
             filter naming the field it leads to, the path repeated both of them
-            and left the row too loud to read at a glance. */}
-        <StageFilter />
-        <DomainFilter />
-        <ProviderFilter />
+            and left the row too loud to read at a glance.
+
+            Below `xl` the three of them are a strip of their own that scrolls
+            sideways: the labels are the values, so their widths change as the
+            filters are set, and a row that reflows under you is a different
+            toolbar every time. `xl` is where the back, the filters, the search
+            field and the plate genuinely fit on one line — there `contents`
+            takes this wrapper back out of the layout and they are members of
+            the header row again. */}
+        <div
+          className="scroll-x order-last -mx-4 flex w-full items-center gap-2 px-4
+                     [&>*]:shrink-0 sm:-mx-3 sm:px-3 xl:contents"
+        >
+          <StageFilter />
+          <DomainFilter />
+          <ProviderFilter />
+        </div>
 
         <div className="ml-auto flex min-w-0 items-center gap-2">
           <SearchBox
@@ -200,7 +223,10 @@ export default function CoursesScreen() {
           </Plate>
         </div>
 
-        <GlobalFilters className="w-full" />
+        {/* Under the filters it belongs to, at either width — which on a phone
+            it only is if it is ordered there too, the strip above having left
+            the flow. */}
+        <GlobalFilters className="order-last w-full" />
       </header>
 
       {isMobile ? (
@@ -428,9 +454,12 @@ function DomainFilter() {
     t('ui.filter.domain.all')
   );
 
+  // Narrower on a phone: the label is the value, and two filters showing their
+  // values beat one filter showing all of its and pushing the other off the
+  // strip.
   return (
     <Dropdown
-      label={<span className="max-w-[210px] truncate">{label}</span>}
+      label={<span className="max-w-[140px] truncate sm:max-w-[210px]">{label}</span>}
       active={params.domains.length > 0}
       search={{ value: query, onChange: setQuery, placeholder: t('ui.filter.searchDomain') }}
     >
@@ -488,9 +517,12 @@ function ProviderFilter() {
     t('ui.filter.provider.all')
   );
 
+  // Narrower on a phone: the label is the value, and two filters showing their
+  // values beat one filter showing all of its and pushing the other off the
+  // strip.
   return (
     <Dropdown
-      label={<span className="max-w-[210px] truncate">{label}</span>}
+      label={<span className="max-w-[140px] truncate sm:max-w-[210px]">{label}</span>}
       active={params.providers.length > 0}
       search={{ value: query, onChange: setQuery, placeholder: t('ui.filter.searchProvider') }}
     >

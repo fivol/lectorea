@@ -26,12 +26,11 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   const label = next === 'dark' ? t('ui.theme.toDark') : t('ui.theme.toLight');
 
   return (
-    <IconButton
-      label={label}
-      className={className}
-      tap
-      onClick={() => setSetting('theme', next)}
-    >
+    /* No `tap`: it shares a plate with the language and the profile, and one
+       control growing to 44 inside it is what made the corner of the header a
+       head taller than the row it sits in. Under a finger the whole plate is
+       40 and the plate is what you aim at. */
+    <IconButton label={label} className={className} onClick={() => setSetting('theme', next)}>
       {/* The glyph is the destination, not the current state — it is what the
           label says, so the two cannot be read against each other. Both are
           mounted and one is turned out of the slot, so the change of theme is
