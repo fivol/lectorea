@@ -40,14 +40,30 @@ Vetting a candidate playlist costs **one fiftieth of a unit** — `playlists.lis
 resolves fifty ids per unit. A thousand bad ids is twenty units, about two
 minutes of a day's quota.
 
-That single number reframes the whole search. A source does not have to be
-clean; it has to be *large*. Reddit threads, Notion dumps, a listicle of
-questionable taste — all worth reading, because the cost of being wrong rounds
-to nothing. What is genuinely expensive is walking a playlist's videos (~2.3
-units each), and the tiered queue in [pipeline.md](pipeline.md) already defends
-that: nothing unclaimed is crawled until everything claimed has been.
+That single number reframes the search. A source does not have to be clean; it
+has to be *large*. Reddit threads, Notion dumps, a listicle of questionable
+taste — all worth **reading**, because the cost of being wrong rounds to
+nothing.
 
-So the ranking below is by **yield per unit of effort**, not by precision.
+**But only for reading.** Walking a playlist's videos costs ~2.3 units, and the
+tiered queue in [pipeline.md](pipeline.md) defends that by crawling unclaimed
+playlists last — which protects nothing on the day a wide harvest lands, because
+then *everything* is unclaimed and gold and rubbish are crawled in arbitrary
+order. The sweep of 2026-08-12 paid real quota for nursery rhymes, music-video
+compilations and Indian television, all of them linked in passing from a
+description or a reading list. Two things follow, and neither is optional:
+
+1. **Match before you crawl.** Titles are free, `playlists.list` is 1/50 of a
+   unit, and matching turns an undifferentiated queue back into tiers. The order
+   is metadata → match → videos, never refresh-everything.
+2. **Teach `lib/rules.ts` to refuse what a wide seam drags in.** Its
+   `NOT_A_COURSE` list knew about homework and open days because every playlist
+   used to come from a vetted teaching channel; it now also knows about official
+   music videos, nursery rhymes and full episodes. A refusal is tier 4, behind
+   every real course, so the quota never reaches it.
+
+So the ranking below is by **yield per unit of effort** — but a new seam is not
+finished until the rubbish it brings has a rule that refuses it.
 
 ## Seam 1 — what the crawl already bought
 

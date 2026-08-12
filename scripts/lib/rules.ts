@@ -151,6 +151,19 @@ const NOT_A_COURSE: RegExp[] = [
   /(?<![\p{L}\p{N}])(?:день открытых дверей|дни открытых дверей|приемная кампания)(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:интервью|конференци\p{L}*|коллоквиум|colloquium|seminar series)(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:recent videos|popular videos|все видео|новые видео|остальное)(?![\p{L}\p{N}])/u,
+
+  // Entertainment. Until the wide seams of docs/harvest.md existed, every
+  // playlist came from a channel somebody had vetted, and this list had no need
+  // of the category. A description saying «music I play before the lecture» and
+  // a GitHub reading list with one stray link both bring it in, and the damage
+  // is not a wrong binding but a wrong *crawl*: the tier queue defends the
+  // quota by putting unclaimed playlists last, which protects nothing on a day
+  // when everything is unclaimed. Refusing here puts them in tier 4 instead,
+  // behind every real course.
+  /(?<![\p{L}\p{N}])(?:official (?:music )?video|official audio|lyric video|music videos?|клип)(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:nursery rhymes?|kids songs?|детские песенки|мультик\p{L}*|cartoons? for (?:kids|children))(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:full episodes?|season \d+|greatest hits|soundtracks?|top \d+ songs)(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:gameplay|let's play|unboxing|reaction video|prank|memes?)(?![\p{L}\p{N}])/u,
 ];
 
 export function isNotACourse(cleaned: string): boolean {
