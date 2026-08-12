@@ -106,14 +106,32 @@ what is done and the file is the record. That is what makes the limit work
 also what keeps a re-run from paying for the same pictures twice. A changed
 `seedSalt` or prompt therefore needs `--force`, which regenerates regardless.
 
+## `pnpm data:mine`
+
+```bash
+pnpm data:mine
+```
+
+The one command here that spends nothing at all — no quota, no network. It
+re-reads what the crawl already stored, looking for playlists it linked to and
+never followed: lecturers put "full course here" in a video description, and
+`raw_responses` keeps every API body verbatim, so those links are already on
+disk.
+
+Run it after every crawl. Each newly walked playlist arrives with the
+descriptions of its videos attached, so the seam refills itself. Its first run
+against the crawl of 2026-08-12 found 948 playlists nobody had asked for.
+
 ## `pnpm data:import`
 
 ```bash
 pnpm data:import
 ```
 
-Pulls YouTube playlist links out of the awesome-lists declared in
-`data/sources.yaml` and queues them for the normal crawl.
+Pulls YouTube playlist links out of the lists and course catalogues declared in
+`data/sources.yaml` and queues them for the normal crawl. A source is either a
+GitHub repository or a plain URL — institutions publishing their own curricula
+are the richest kind, one playlist per course.
 
 Courses are **never** created automatically. Titles that match nothing in
 `data/courses/` are dropped into `data/proposed-courses.yaml` (gitignored) for a

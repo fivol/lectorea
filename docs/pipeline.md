@@ -15,8 +15,8 @@ scripts/
   07-images.ts         image generation
   08-build.ts          assemble public/data
   09-import.ts         import courses from lists and catalogues
-  11-mine.ts           playlists linked from what is already crawled
   10-map.ts            regenerate public/map.svg
+  11-mine.ts           playlists linked from what is already crawled
   refresh.ts           the nightly job: 02 → 03 → 04
   dev-seed.ts          synthetic playlists for development
   course-new.ts        scaffold a course across its three files
@@ -133,9 +133,10 @@ The queue lives in the same SQLite file as the data, so it survives `kill -9`.
 - jobs left `running` for more than ten minutes are returned to `pending` at
   start-up — that is crash recovery
 - failures retry with backoff: 1m, 4m, 16m, 64m, then the job is marked failed
-- **403 quotaExceeded** stops the worker entirely, prints
-  `квота исчерпана, продолжу завтра` and exits 0. This is not an error, it is
-  the normal end of the working day
+- **403 quotaExceeded** writes off the key it came from and the request goes out
+  again on the next one. Only when every key is spent does the worker stop,
+  print `квота исчерпана, продолжу завтра` and exit 0. This is not an error, it
+  is the normal end of the working day
 - **404 / 403 on a playlist** marks `alive = 0` and is never retried
 - **5xx** retries with backoff
 

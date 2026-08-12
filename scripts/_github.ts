@@ -44,7 +44,16 @@ const subjects = process.argv.slice(2).length ? [process.argv.slice(2).join(' ')
 /** repo/path pairs, deduped — the same README answers a dozen subjects. */
 const files = new Map<string, { repo: string; path: string; branch: string }>();
 
-for (const subject of subjects) {
+/**
+ * Code search allows ten requests a minute, and exceeding it 403s the rest of
+ * the run rather than queuing. Seven seconds between subjects keeps the whole
+ * list inside the allowance; thirty subjects is then three and a half minutes,
+ * which is nothing against the crawl it feeds.
+ */
+const PAUSE_MS = 7000;
+
+for (const [index, subject] of subjects.entries()) {
+  if (index) await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
   const query = `"youtube.com/playlist" ${subject} language:markdown`;
   try {
     const { stdout } = await run('gh', [
