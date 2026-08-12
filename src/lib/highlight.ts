@@ -86,6 +86,15 @@ export function useHighlight(
       pinned,
       emphasisOf: (courseId: string): Emphasis => {
         if (courseId === focusId) return 'self';
+        // The selection is never dimmed, whatever the pointer is doing.
+        //
+        // Hover moves the question — «what does *this* need» — but it does not
+        // move what the reader is working on, and the panel on the right is
+        // still about the selected course. Pointing at a link inside that panel
+        // used to grey out the very card the panel was describing: the course
+        // is not in the hovered one's chain, so it fell to `muted` along with
+        // everything else, and the answer to a click looked switched off.
+        if (courseId === selectedId) return 'self';
         if (direct.has(courseId)) return 'direct';
         if (downstream.has(courseId)) return 'downstream';
         if (transitive.has(courseId)) return 'transitive';
