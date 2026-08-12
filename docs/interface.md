@@ -193,6 +193,11 @@ rather than cut at «Дифференциальные уравне…».
 Selecting a course opens it; the × in the panel, or a click on empty space, puts
 the columns back to full width.
 
+On a phone it is a sheet that comes up over the list and stops with the row it
+was opened from still in sight. Drag it up for the whole card, down to put it
+back, down again to send it away — or tap the grab bar to switch between the
+two, and the × or the dimmed list behind it to close.
+
 - **Требует знания** and **Даст понимание курсов** are the same relation read in
   either direction, so they use the same card and sit next to each other,
   whichever field the neighbour comes from, with the full chain below the pair.

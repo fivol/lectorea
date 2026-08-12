@@ -20,10 +20,22 @@ type Props = {
   outsideFilter?: number;
   /** Clears the selection. Absent on mobile, where the sheet has its own close. */
   onClose?: () => void;
+  /**
+   * Whether the panel is its own scrollport. It is everywhere but in the phone
+   * sheet, which scrolls itself: the sheet's own gesture has to know how far
+   * the text has been scrolled to tell a drag on it from a read of it.
+   */
+  scroll?: boolean;
 };
 
 /** Everything known about the selected course, in the order it is needed. */
-export default function CoursePanel({ course, search, outsideFilter = 0, onClose }: Props) {
+export default function CoursePanel({
+  course,
+  search,
+  outsideFilter = 0,
+  onClose,
+  scroll = true,
+}: Props) {
   const { t, count, has } = useT();
   const catalog = useCatalog();
   const status = useProfile((state) => state.profile.courses[course.id]?.status ?? null);
@@ -49,7 +61,7 @@ export default function CoursePanel({ course, search, outsideFilter = 0, onClose
   const unlocks = unlocksOf(catalog, course.id);
 
   return (
-    <div className="panel-scroll h-full">
+    <div className={scroll ? 'panel-scroll h-full' : ''}>
       <header className="px-4 pb-3 pt-4">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
           {domains.map((domain) => (

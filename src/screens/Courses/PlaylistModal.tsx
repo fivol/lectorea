@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { BuiltPlaylist } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
@@ -54,7 +55,13 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
     ? `https://www.youtube-nocookie.com/embed/${playing}?list=${playlist.id}&autoplay=1&rel=0`
     : `https://www.youtube-nocookie.com/embed/videoseries?list=${playlist.id}&autoplay=1&rel=0`;
 
-  return (
+  /*
+   * Portalled, like every other layer that covers the window: on a phone this
+   * opens from inside the course sheet, and a fixed box inside a transformed
+   * ancestor is no longer fixed to the window but to the sheet — which crops it
+   * to whatever part of the sheet is on screen.
+   */
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="fade-only absolute inset-0 animate-fade-in bg-overlay backdrop-blur-sm"
@@ -286,7 +293,8 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
           </aside>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -9,6 +9,7 @@
  *
  * Documented in docs/design-system.md.
  */
+export { default as BottomSheet } from './BottomSheet';
 export { default as Button, ButtonLink } from './Button';
 export { default as Chip } from './Chip';
 export { default as IconButton } from './IconButton';

@@ -194,6 +194,7 @@ import { Button, Chip, Field, IconButton, Plate, Segmented, Switch } from '@/com
 | `Cap` | one control that is its own plate: «← КАРТА» | `to` \| `onClick`, `icon`, `label` |
 | `Button` / `ButtonLink` | the pressable capsule / the same, navigating | `variant: default·primary·danger·ghost`, `small`, `icon`, `tap` |
 | `IconButton` | a glyph on its own: close, clear, back | `icon`, `label` (name *and* tooltip), `tap` |
+| `BottomSheet` | the panel a phone pulls up from the bottom edge, and pushes back down | `peek` (resting height, as a fraction of the window), `label`, `closeLabel`, `contentKey` |
 | `Chip` | filter, tag, count. `span` without `onClick`, `button` with, `Link` with `to` | `on` (holds a value), `filled` (is a value), `icon` |
 | `Switch` | two or three views of one thing, state sliding between them | `options` with `icon`, `label` for the group |
 | `Segmented` | the same for labels of differing widths — the inlay stays put | `kind: group·tabs` |
@@ -231,7 +232,7 @@ menu, a legend and a search list read as one product rather than three.
 
 | Layer | z | Form |
 | --- | --- | --- |
-| Bottom sheet, backdrop | `z-40` | fills the phone, `88svh` ceiling |
+| Bottom sheet, backdrop | `z-40` | rests part-way up the phone, `92svh` ceiling |
 | Modal, popover, dropdown, search list | `z-50` | centred dialog, or pinned to a trigger |
 | Keyboard help | `z-[55]` | above the modal it was opened over |
 | Tooltip | `z-[60]` | above everything; never interactive |
@@ -251,6 +252,32 @@ menu, a legend and a search list read as one product rather than three.
    ceiling in viewport units and has padding around it, both are held under
    `100%` of the padded box.
 
+### The sheet answers the finger
+
+`BottomSheet` is the one layer that is dragged rather than merely opened, and
+the gesture is the whole point of it: a grab bar over a panel that only a ×
+closes is a modal in fancy dress.
+
+- **Two places to be.** It comes up to `peek` — 62% of the window for the course
+  card — and pulls the rest of the way to `92svh`. Below the peek there is
+  nothing, so pushing it down there sends it away. A sheet shorter than the peek
+  has one position and opens whole.
+- **A flick is a step, not a distance.** Past 0.5 px/ms the throw decides, and it
+  moves the sheet to the next place there is, counted from where the drag began:
+  down from the top is the detent below, down from there is away. Let go slowly
+  and it settles on whichever position it stopped nearest, credited with a little
+  of the movement it still had.
+- **The list wins where it can scroll.** A drag down inside text that has been
+  scrolled is scrolling; at the top of it, it is the sheet. Part-way up, the
+  sheet takes `touch-action: none` — nothing there is scrollable, and the browser
+  must not claim the gesture; open, it is `pan-y` and the list scrolls natively.
+- **The backdrop dims with the sheet**, in proportion to how much of it is left
+  on screen, so a half-completed drag looks like a half-completed drag.
+- **Position is written to the node, not held in state.** This runs on every
+  pointer event, and a render per frame is the difference between the sheet being
+  under the finger and trailing it. React state carries only what changes the
+  markup: which detent it rests at, and whether it is being dragged.
+
 ## Layout
 
 Breakpoints: `<768` phone, `768–1200` tablet, `>1200` desktop
@@ -261,7 +288,9 @@ already the right shape.
 The course panel takes a different form at each: a **draggable split** on
 desktop, a **420px drawer** over the columns on tablet — half of 1024px is
 neither a readable panel nor a usable map — and a **bottom sheet** on a phone,
-where the columns themselves become a vertical list grouped by difficulty.
+where the columns themselves become a vertical list grouped by difficulty. On
+the phone the sheet owns the scrolling rather than the panel (`scroll={false}`),
+because the drag has to know how far the text has been read.
 
 ## Deliberate departures from the written spec
 

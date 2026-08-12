@@ -17,7 +17,7 @@ import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/D
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ProfileButton from '@/components/ProfileButton';
-import { Cap, IconButton, Plate, PlateDivider } from '@/components/ui';
+import { BottomSheet, Cap, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -246,42 +246,28 @@ export default function CoursesScreen() {
               onSelect={onSelect}
             />
           </main>
+          {/*
+            The card comes up over the list rather than replacing it, and stops
+            part-way: the row it was opened from stays in sight, which is what
+            makes it a card about that course rather than a new screen. Pulled
+            up it fills the phone; pushed down it goes away. The sheet owns the
+            scrolling — see `scroll` on the panel.
+          */}
           {selected ? (
-            <div className="fixed inset-0 z-40 flex flex-col">
-              <div
-                className="fade-only flex-1 animate-fade-in bg-overlay"
-                onClick={() => navigate(`/courses${params.search}`)}
-                aria-hidden="true"
+            <BottomSheet
+              label={t(`course.${selected.id}.title`)}
+              closeLabel={t('ui.common.close')}
+              peek={0.62}
+              contentKey={selected.id}
+              onClose={onDeselect}
+            >
+              <CoursePanel
+                course={selected}
+                search={params.search}
+                outsideFilter={pathOutsideFilter}
+                scroll={false}
               />
-              {/*
-                One ceiling, and the panel fills what is left under the grab
-                bar. Two independent caps — the sheet at 88vh, the scroller
-                under it at 80vh — only add up while the bar is thinner than
-                the 8vh between them, and below a screen of about 780px it is
-                not: the tail of the panel ended up under the sheet's own
-                `overflow-hidden`, out of reach of any scroll.
-              */}
-              <div className="flex max-h-[88svh] animate-slide-in-bottom flex-col overflow-hidden rounded-t-2xl border-t border-line bg-surface">
-                <div className="flex shrink-0 items-center justify-between border-b border-line px-3 py-2">
-                  <span className="h-1 w-10 rounded-full bg-line" aria-hidden="true" />
-                  <IconButton
-                    icon="close"
-                    label={t('ui.common.close')}
-                    tap
-                    onClick={() => navigate(`/courses${params.search}`)}
-                  />
-                </div>
-                {/* CoursePanel is `panel-scroll h-full` — it is the scrollport
-                    itself, so this box only has to give it a definite height. */}
-                <div className="min-h-0 flex-1">
-                  <CoursePanel
-                    course={selected}
-                    search={params.search}
-                    outsideFilter={pathOutsideFilter}
-                  />
-                </div>
-              </div>
-            </div>
+            </BottomSheet>
           ) : null}
         </>
       ) : (
