@@ -479,9 +479,11 @@ export function videoQueueTiers(
     )
     .all() as Array<{ id: string; title: string; video_count: number | null }>;
   for (const row of queued) {
-    if (cleanSegments(row.title).some(isNotACourse) || (row.video_count ?? 0) > HUGE_PLAYLIST) {
-      last.push(row.id);
-    }
+    // A playlist queued by a seam has no title until the metadata pass reaches
+    // it, and nothing can be judged about it yet — neither refused nor promoted.
+    // It stays in the middle of the queue, which is where an unknown belongs.
+    const refused = row.title !== null && cleanSegments(row.title).some(isNotACourse);
+    if (refused || (row.video_count ?? 0) > HUGE_PLAYLIST) last.push(row.id);
   }
 
   return { first, last };
