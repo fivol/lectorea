@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -72,6 +73,18 @@ export default function Dropdown({
   const [open, setOpen] = useState(false);
   const [place, setPlace] = useState<Partial<Placement>>({});
 
+  /**
+   * Closing throws the query away. A menu that reopens still filtered shows
+   * three rows out of two hundred with nothing on screen explaining why — the
+   * field is a way to reach a row now, not a setting the control remembers.
+   */
+  const searchRef = useRef(search);
+  searchRef.current = search;
+  const close = useCallback(() => {
+    setOpen(false);
+    searchRef.current?.onChange('');
+  }, []);
+
   // Before paint, so the popover never shows up in the top-left corner first.
   useLayoutEffect(() => {
     if (!open) return;
@@ -100,10 +113,10 @@ export default function Dropdown({
       Boolean(ref.current?.contains(target) || popoverRef.current?.contains(target));
 
     const onPointerDown = (event: PointerEvent): void => {
-      if (!inside(event.target as Node)) setOpen(false);
+      if (!inside(event.target as Node)) close();
     };
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') close();
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKey);
@@ -111,14 +124,14 @@ export default function Dropdown({
       document.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, close]);
 
   return (
     <div ref={ref} className={`relative ${className}`}>
       {/* No dot beside the label: the chip already changes colour when it holds
           a value, and what that value *is* is spelled out in the removable
           chips below — so the dot repeated a signal twice and crowded the row. */}
-      <Chip on={active} onClick={() => setOpen((value) => !value)} ariaExpanded={open}>
+      <Chip on={active} onClick={() => (open ? close() : setOpen(true))} ariaExpanded={open}>
         {label}
         <Icon name="chevron-down" size={12} />
       </Chip>
@@ -150,7 +163,7 @@ export default function Dropdown({
                   phone, and what hangs past the edge of a fixed panel cannot be
                   scrolled to. The field stays put and only the list moves. */}
               <div className="panel-scroll min-h-0 flex-1 p-2">
-                <DropdownContext.Provider value={() => setOpen(false)}>
+                <DropdownContext.Provider value={close}>
                   {children}
                 </DropdownContext.Provider>
               </div>
