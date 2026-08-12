@@ -27,7 +27,8 @@ import {
 import { layoutColumns } from './lib/layout.js';
 import { bayesianScore, engagementOf, meanEngagement, median, scoreToPercent } from './lib/score.js';
 import {
-  loadInterfaceDictionary,
+  loadDictionary,
+  loadKeywords,
   loadSources,
   reportSourceError,
   SourceError,
@@ -140,8 +141,8 @@ async function main(): Promise<void> {
   const providers = buildProviders(sources, assembled, coursesById);
 
   // 6. Search index -------------------------------------------------------
-  const searchIndex = buildSearchIndex(sources, courses, domains, providers, assembled);
-  console.log(`· search index: ${searchIndex.length} entries`);
+  const materials = buildMaterialEntries(sources, providers, assembled);
+  console.log(`· search index: ${materials.length} language-neutral entries`);
 
   // 7. Write --------------------------------------------------------------
   ensureDir(paths.outData);
@@ -155,16 +156,29 @@ async function main(): Promise<void> {
     courses,
   });
   writeJson(path.join(paths.outData, 'providers.json'), providers);
-  writeJson(path.join(paths.outData, 'search-index.json'), searchIndex);
-  // One file per interface language, each a complete dictionary. The content
-  // language ships as it is written; the others are its catalogue with their own
-  // chrome laid over the top, so a missing translation shows the Russian string
-  // rather than a bare key.
-  writeJson(path.join(paths.outData, 'i18n', `${lang}.json`), sources.i18n);
-  for (const other of UI_LANGS.filter((entry) => entry.id !== lang)) {
-    const ui = loadInterfaceDictionary(other.id);
-    writeJson(path.join(paths.outData, 'i18n', `${other.id}.json`), { ...sources.i18n, ...ui });
-    console.log(`· i18n: ${other.id} interface over the ${lang} catalogue`);
+  // Playlists, channels and lecturers are named on YouTube, in whatever
+  // language they were published in; no dictionary touches them. They are also
+  // nine tenths of the index, so they ship once and are never fetched again.
+  writeJson(path.join(paths.outData, 'search-index.json'), materials);
+
+  // Everything that changes with the language lives under i18n/, so switching
+  // costs those two small files rather than the catalogue.
+  for (const entry of UI_LANGS) {
+    const own = entry.id === lang;
+    const dictionary = own ? sources.i18n : loadDictionary(entry.id);
+    // A translated index keeps the content language's keywords as well as its
+    // own. What a course is *called* has to follow the page, but what finds it
+    // does not: the lectures are Russian, and someone reading the English
+    // interface may well type «матан» at it. Only matching is widened —
+    // whatever is found is still named in the language on screen.
+    const keywords = own ? [sources.keywords] : [loadKeywords(entry.id), sources.keywords];
+    const catalogue = buildCatalogueEntries(dictionary, keywords, courses, domains);
+    writeJson(path.join(paths.outData, 'i18n', `${entry.id}.json`), dictionary);
+    writeJson(path.join(paths.outData, 'i18n', `search-${entry.id}.json`), catalogue);
+    console.log(
+      `· i18n: ${entry.id} — ${Object.keys(dictionary).length} keys, ` +
+        `${catalogue.length} searchable courses and fields`
+    );
   }
 
   // Stale shards from courses that no longer exist would be served forever.
@@ -385,25 +399,35 @@ function buildProviders(
 
 /* ────────────────────────────  Search index  ───────────────────────────── */
 
-function buildSearchIndex(
-  sources: Sources,
-  courses: BuiltCourse[],
-  domains: BuiltDomain[],
-  providers: Record<string, BuiltProvider>,
-  assembled: Assembled
-): SearchEntry[] {
-  const entries: SearchEntry[] = [];
-  const t = (key: string, fallback: string): string => sources.i18n[key] ?? fallback;
-
-  /** Keywords are normalised here so the client compares like with like. */
-  const keywordsFor = (key: string, ...extra: string[]): string[] => {
+/** Keywords are normalised at build time so the client compares like with like. */
+function keywordsOf(...sources: Array<Record<string, string[]>>) {
+  return (key: string, ...extra: string[]): string[] => {
     const set = new Set<string>();
-    for (const word of [...(sources.keywords[key] ?? []), ...extra]) {
+    for (const word of [...sources.flatMap((source) => source[key] ?? []), ...extra]) {
       const normalised = normalize(word);
       if (normalised) set.add(normalised);
     }
     return [...set];
   };
+}
+
+/**
+ * The half of the index that is written in a language: courses and fields.
+ *
+ * Built once per interface language, from that language's own dictionary and
+ * its own keyword file. Without this an English reader searching an English
+ * page would be typing at a Russian index — every row a title they cannot read,
+ * and nothing found for the words actually on their screen.
+ */
+function buildCatalogueEntries(
+  dictionary: Record<string, string>,
+  keywords: Array<Record<string, string[]>>,
+  courses: BuiltCourse[],
+  domains: BuiltDomain[]
+): SearchEntry[] {
+  const entries: SearchEntry[] = [];
+  const t = (key: string, fallback: string): string => dictionary[key] ?? fallback;
+  const keywordsFor = keywordsOf(...keywords);
 
   for (const domain of domains) {
     const title = t(`domain.${domain.id}.title`, domain.id);
@@ -426,6 +450,21 @@ function buildSearchIndex(
       s: course.playlistCount,
     });
   }
+
+  return entries;
+}
+
+/**
+ * The half nobody translates: playlists, channels and lecturers, named on
+ * YouTube by whoever published them.
+ */
+function buildMaterialEntries(
+  sources: Sources,
+  providers: Record<string, BuiltProvider>,
+  assembled: Assembled
+): SearchEntry[] {
+  const entries: SearchEntry[] = [];
+  const keywordsFor = keywordsOf(sources.keywords);
 
   const lecturers = new Map<string, number>();
   for (const playlists of assembled.playlistsByCourse.values()) {

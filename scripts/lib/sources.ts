@@ -222,14 +222,8 @@ export function loadSources(lang = 'ru'): Sources {
   const providers = loadYamlList(path.join(paths.data, 'providers.yaml'), ProviderSchema);
   const channels = loadYamlList(path.join(paths.data, 'channels.yaml'), ChannelSchema);
   const overrides = loadYamlObject(path.join(paths.data, 'overrides.yaml'), OverridesSchema);
-  const i18n = loadJson(path.join(paths.i18n, `${lang}.json`), I18nSchema);
-
-  const rawKeywords = loadJson(path.join(paths.keywords, `${lang}.json`), KeywordsSchema);
-  const keywords: Record<string, string[]> = {};
-  for (const [key, value] of Object.entries(rawKeywords)) {
-    if (key.startsWith('_')) continue; // `_comment` and friends
-    keywords[key] = Array.isArray(value) ? value : [value];
-  }
+  const i18n = loadDictionary(lang);
+  const keywords = loadKeywords(lang);
 
   return {
     domains,
@@ -245,21 +239,29 @@ export function loadSources(lang = 'ru'): Sources {
 }
 
 /**
- * The interface dictionary of a language other than the content one.
+ * The dictionary of one language, on its own.
  *
- * Only the catalogue is written once, in `DEFAULT_LANG`: course titles and
- * descriptions are content, and translating them is a data job, not a UI one.
- * The chrome around them is not — `data/i18n/en.json` carries the `ui.*` and
- * `app.*` keys and nothing else, and the build lays it over the full dictionary
- * so an English interface still names the Russian courses it is showing.
+ * Every language carries the whole thing — the `ui.*` chrome and the `course.*`
+ * and `domain.*` catalogue alike. A language that only translated the chrome
+ * would show its own buttons around somebody else's course titles, which is a
+ * worse page than either language alone.
  */
-export function loadInterfaceDictionary(lang: string): Record<string, string> {
+export function loadDictionary(lang: string): Record<string, string> {
   return loadJson(path.join(paths.i18n, `${lang}.json`), I18nSchema);
 }
 
-/** True for the keys that belong to the interface rather than to the catalogue. */
-export function isInterfaceKey(key: string): boolean {
-  return key.startsWith('ui.') || key.startsWith('app.');
+/**
+ * Search keywords of one language: what a title does not contain but people
+ * type anyway — abbreviations, slang, spelling variants, alternative names.
+ */
+export function loadKeywords(lang: string): Record<string, string[]> {
+  const raw = loadJson(path.join(paths.keywords, `${lang}.json`), KeywordsSchema);
+  const keywords: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (key.startsWith('_')) continue; // `_comment` and friends
+    keywords[key] = Array.isArray(value) ? value : [value];
+  }
+  return keywords;
 }
 
 export function reportSourceError(error: unknown): never {

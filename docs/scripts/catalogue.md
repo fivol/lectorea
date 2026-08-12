@@ -26,10 +26,11 @@ explains how.
 is enough for layout, navigation and styling work.
 
 Reads `DEFAULT_LANG` (default `ru`) to pick which `data/i18n/{lang}.json` and
-`data/keywords/{lang}.json` to bake in. Every other language in `UI_LANGS` is
-written out as well — its interface strings laid over that same catalogue, so
-each file in `public/data/i18n/` is a complete dictionary. See
-[data.md](../data.md#interface-language--content-language).
+`data/keywords/{lang}.json` the catalogue itself is built from. Every language in
+`UI_LANGS` is then written out in full: a dictionary and a `search-{lang}.json`
+of courses and fields, both under `public/data/i18n/`. The rest of the search
+index — playlists, channels, lecturers — is written once, because nobody
+translates a YouTube title. See [data.md](../data.md#one-language-whole).
 
 ## `pnpm data:seed-dev`
 
@@ -66,9 +67,9 @@ the data would stop being reproducible.
 
 ## `pnpm course:new`
 
-Adding a course means touching three files — the graph entry, the texts and the
-search keywords — because the course files deliberately carry no prose. This does
-the clerical part.
+Adding a course means touching the graph entry plus the texts and the search
+keywords of every language — five files at two languages — because the course
+files deliberately carry no prose. This does the clerical part.
 
 ```bash
 pnpm course:new probability --domain=math --stage=bachelor-2 --deps=calculus-2
@@ -85,7 +86,8 @@ in (`data/courses/math.yaml`). `--stage=` is required too, from
 `school-8`…`phd`: the schema demands it, and a default would be a guess the
 reviewer could not tell from an answer. `--deps=` and `--soft=` take
 comma-separated course ids, all of which must already exist. `--title=` is
-optional and seeds the title plus a first keyword.
+optional, is read as `DEFAULT_LANG`, and seeds the title plus a first keyword
+there; the other languages get empty slots to fill.
 
 It refuses unknown domains, unknown dependencies and duplicate ids, and it
 appends to the JSON files as text rather than reserialising them — keywords keep
@@ -142,10 +144,11 @@ needs a non-empty `title` and `desc`, and at least one entry in
 `data/keywords/{lang}.json`. An empty string counts as missing — it passes a
 presence check and then renders as nothing.
 
-The other interface languages are held to the content one: each must carry every
-`ui.*` and `app.*` key and nothing beyond them. A translation is a thing that
-rots, and a screen nobody on the project ever opens in English is exactly where
-a stray Russian sentence survives for months.
+The other languages are held to the content one: each must carry every key it
+has — the catalogue as well as the chrome — nothing beyond them, and its own
+keywords for every course. A translation is a thing that rots, and a screen
+nobody on the project ever opens in English is exactly where a stray Russian
+sentence survives for months.
 
 Exits non-zero on any of it, and CI runs it.
 

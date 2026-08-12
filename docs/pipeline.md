@@ -19,7 +19,7 @@ scripts/
   11-mine.ts           playlists linked from what is already crawled
   refresh.ts           the nightly job: 02 → 03 → 04
   dev-seed.ts          synthetic playlists for development
-  course-new.ts        scaffold a course across its three files
+  course-new.ts        scaffold a course across the files it needs
   check-i18n.ts        localisation and course-text gate
   map-poc.ts           run the map generator to an SVG and a metrics report
   map-sandbox.ts       the same, bundled as one HTML file with sliders

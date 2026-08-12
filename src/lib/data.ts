@@ -39,6 +39,7 @@ export type Catalog = {
   /** courseId → how many courses open up behind it, transitively. */
   behind: Map<string, number>;
   providers: Record<string, BuiltProvider>;
+  /** The whole search index: the language-neutral half plus the current language's. */
   search: SearchEntry[];
   meta: Meta;
 };
@@ -51,13 +52,26 @@ async function getJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+export type Language = {
+  lang: string;
+  dict: Dictionary;
+  /** Course and field entries for the search index, named in this language. */
+  search: SearchEntry[];
+};
+
 /**
- * The dictionary is fetched on its own, because it is the one file that changes
- * when the interface language does. Switching language then costs one file
- * rather than the whole catalogue, and nothing on screen has to be torn down.
+ * What changes when the interface language does, and nothing else.
+ *
+ * Two small files rather than the whole catalogue: the dictionary, and the half
+ * of the search index that is written in a language. Switching language costs
+ * those and nothing on screen has to be torn down.
  */
-export function loadDictionary(lang: string): Promise<Dictionary> {
-  return getJson<Dictionary>(`i18n/${lang}.json`);
+export async function loadLanguage(lang: string): Promise<Language> {
+  const [dict, search] = await Promise.all([
+    getJson<Dictionary>(`i18n/${lang}.json`),
+    getJson<SearchEntry[]>(`i18n/search-${lang}.json`),
+  ]);
+  return { lang, dict, search };
 }
 
 export async function loadCatalog(): Promise<Catalog> {
@@ -65,6 +79,8 @@ export async function loadCatalog(): Promise<Catalog> {
     getJson<BuiltDomain[]>('domains.json'),
     getJson<CoursesFile>('courses.json'),
     getJson<Record<string, BuiltProvider>>('providers.json'),
+    // Playlists, channels and lecturers only — the language half arrives with
+    // the dictionary and is merged in by `CatalogProvider`.
     getJson<SearchEntry[]>('search-index.json'),
     getJson<Meta>('meta.json'),
   ]);

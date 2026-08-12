@@ -19,8 +19,9 @@ data/
   overrides.yaml         hand edits on top of the automatic pipeline
   image-prompts.yaml     prompt templates for domain images
   i18n/ru.json           every interface and content string
-  i18n/en.json           the interface strings only, in English
+  i18n/en.json           the same, in English
   keywords/ru.json       search keywords
+  keywords/en.json       …one file per interface language
 ```
 
 YAML rather than JSON for sources: comments, readable diffs, less syntactic
@@ -83,11 +84,13 @@ public/data/
   domains.json           ~39 records
   courses.json           the graph, plus level and row per course
   providers.json         for the global provider filter
-  search-index.json
+  search-index.json      playlists, channels, lecturers — nobody translates those
   playlists/
     probability.json     one file per course, fetched on click
   i18n/ru.json           one complete dictionary per interface language
   i18n/en.json
+  i18n/search-ru.json    courses and fields for the search box, per language
+  i18n/search-en.json
   meta.json              build date, counts, coverage
 ```
 
@@ -195,32 +198,53 @@ Search keywords are a separate file: they are long, only the search needs them,
 and they should not be shipped alongside the interface strings. Morphology is
 solved here by listing forms, not by a stemmer on the client.
 
-The price is that adding a course touches three files. `pnpm course:new` does the
-clerical part — see [scripts/catalogue.md](scripts/catalogue.md#pnpm-coursenew).
+The price is that adding a course touches the graph entry plus two files per
+language. `pnpm course:new` does the clerical part — see
+[scripts/catalogue.md](scripts/catalogue.md#pnpm-coursenew).
 
 `pnpm check:i18n` fails when a key is used but missing, present but unused, or
 left empty, and when a course has no keywords at all. The last two matter most:
 without them, half the catalogue quietly ends up with no description and no way
 to find it.
 
-### Interface language ≠ content language
+### One language, whole
 
-The catalogue is written once, in `DEFAULT_LANG`. Translating four hundred
-course titles is a data job; translating the chrome around them is not, so the
-two are split:
+Every language carries the whole dictionary — the `ui.*` chrome and the
+`course.*` / `domain.*` catalogue alike — plus its own keyword file:
 
-| file | holds | who reads it |
-| --- | --- | --- |
-| `data/i18n/ru.json` | interface **and** catalogue, the whole dictionary | the source of truth |
-| `data/i18n/en.json` | `ui.*` and `app.*` only | laid over the Russian one at build time |
+| file | holds |
+| --- | --- |
+| `data/i18n/{lang}.json` | interface **and** catalogue, the whole dictionary |
+| `data/keywords/{lang}.json` | search keywords for every course and field |
 
-The build writes one complete file per language into `public/data/i18n/`, so
-`en.json` is the English interface over the Russian catalogue and a course with
-no translation shows its Russian title rather than a bare key. Adding a language
-means adding it to `UI_LANGS` in `shared/schema.ts` and dropping a file next to
-these; `check:i18n` then holds it to the same key set — every interface key
-present, nothing beyond them.
+`DEFAULT_LANG` is the source of truth: it is the one a course is written in
+first, and the one every other language is checked against. A language that
+translated only the chrome would put its own buttons around somebody else's
+course titles, which is a worse page than either language alone — so
+`check:i18n` holds each of them to the full key set, nothing beyond it, and
+keywords for every course. Adding a language means adding it to `UI_LANGS` in
+`shared/schema.ts` and dropping those two files next to the others.
 
 The setting lives in the profile (`settings.lang`) and there is a switch in the
-header of both screens. Only the dictionary is refetched when it changes: the
-catalogue is language-independent, so nothing on screen is torn down.
+header of both screens. Switching refetches only what is written in a language:
+the dictionary, and the courses-and-fields half of the search index. The
+catalogue itself — the graph, the playlists, the big half of the index — is
+language-independent and is never torn down.
+
+### Searching in a language
+
+The search index comes in two halves, because only one of them is translated:
+
+| file | holds | ~size |
+| --- | --- | --- |
+| `public/data/search-index.json` | playlists, channels, lecturers — named on YouTube by whoever published them | 540 KB |
+| `public/data/i18n/search-{lang}.json` | courses and fields, named in that language | 40 KB |
+
+The client fetches the first once and concatenates whichever of the second the
+profile asks for. Splitting them is what keeps a language switch cheap: the
+nine tenths nobody translates are not refetched.
+
+A translated index keeps the content language's keywords alongside its own. What
+a course is *called* has to follow the page; what finds it does not. The lectures
+are Russian, so someone reading the English interface may well type «матан» at
+the box — and gets `Calculus 1`, named in the language on screen.

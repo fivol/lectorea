@@ -9,8 +9,8 @@ import {
 } from 'react';
 import { stageRank, type BuiltCourse, type BuiltDomain, type Stage } from '@shared/schema';
 import { upstreamOf } from '@shared/graph';
-import { loadCatalog, loadDictionary, type Catalog } from './data';
-import { I18nProvider, useT, type Dictionary } from '@/i18n';
+import { loadCatalog, loadLanguage, type Catalog, type Language } from './data';
+import { I18nProvider, useT } from '@/i18n';
 import { useProfile } from '@/store/profile';
 import { Button } from '@/components/ui';
 
@@ -25,7 +25,7 @@ export function useCatalog(): Catalog {
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const lang = useProfile((state) => state.profile.settings.lang);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
-  const [dict, setDict] = useState<{ lang: string; dict: Dictionary } | null>(null);
+  const [language, setLanguage] = useState<Language | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -43,25 +43,25 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * The dictionary follows the language on its own, and the previous one stays
-   * on screen until the new one lands. Switching language is a click in the
+   * The language follows the setting on its own, and the previous one stays on
+   * screen until the new one lands. Switching language is a click in the
    * header, and a click in the header must not blank the page it is on.
    */
-  const hasDict = useRef(false);
+  const hasLanguage = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
-    loadDictionary(lang)
+    loadLanguage(lang)
       .then((value) => {
         if (cancelled) return;
-        hasDict.current = true;
-        setDict({ lang, dict: value });
+        hasLanguage.current = true;
+        setLanguage(value);
       })
       .catch((cause: Error) => {
-        // Only the very first dictionary is fatal — without one there is
-        // nothing to render but keys. A failed switch keeps the previous
-        // language, which is a working page in the wrong language.
-        if (!cancelled && !hasDict.current) setError(cause);
+        // Only the very first language is fatal — without one there is nothing
+        // to render but keys. A failed switch keeps the previous one, which is
+        // a working page in the wrong language.
+        if (!cancelled && !hasLanguage.current) setError(cause);
       });
     return () => {
       cancelled = true;
@@ -74,18 +74,30 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
    * on screen, not the setting that may still be loading.
    */
   useEffect(() => {
-    if (!dict) return;
-    document.documentElement.lang = dict.lang;
-    const title = dict.dict['app.documentTitle'];
+    if (!language) return;
+    document.documentElement.lang = language.lang;
+    const title = language.dict['app.documentTitle'];
     if (title) document.title = title;
-  }, [dict]);
+  }, [language]);
+
+  /**
+   * The index the screen searches is the two halves joined: courses and fields
+   * in the language on screen, then everything YouTube named for us. Courses
+   * first, so a tie between a course and a playlist reads the same way it did
+   * when the index was one file.
+   */
+  const value = useMemo(
+    () =>
+      catalog && language ? { ...catalog, search: [...language.search, ...catalog.search] } : null,
+    [catalog, language]
+  );
 
   if (error) return <FatalError error={error} />;
-  if (!catalog || !dict) return <Booting />;
+  if (!value || !language) return <Booting />;
 
   return (
-    <CatalogContext.Provider value={catalog}>
-      <I18nProvider lang={dict.lang} dict={dict.dict}>
+    <CatalogContext.Provider value={value}>
+      <I18nProvider lang={language.lang} dict={language.dict}>
         {children}
       </I18nProvider>
     </CatalogContext.Provider>

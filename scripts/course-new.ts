@@ -3,13 +3,19 @@ import path from 'node:path';
 import { ensureDir, paths } from './lib/config.js';
 import { loadCourseFiles, reportSourceError, SourceError } from './lib/sources.js';
 import { loadYamlList } from './lib/sources.js';
-import { DomainSchema, Stage, STAGE_ORDER, type Stage as StageValue } from '../shared/schema.js';
+import {
+  SourceDomainSchema,
+  Stage,
+  STAGE_ORDER,
+  UI_LANGS,
+  type Stage as StageValue,
+} from '../shared/schema.js';
 
 /**
- * Adding a course means touching three files: the graph entry, the texts and
- * the search keywords. That is the price of keeping prose out of the course
- * files, and it is only tolerable if a script does the clerical part — miss the
- * keywords and the course exists but nobody can find it.
+ * Adding a course means touching the graph entry plus the texts and the search
+ * keywords of every language. That is the price of keeping prose out of the
+ * course files, and it is only tolerable if a script does the clerical part —
+ * miss the keywords and the course exists but nobody can find it.
  *
  *   pnpm course:new probability --domain=math --stage=bachelor-2 --deps=calculus-2
  *
@@ -111,7 +117,9 @@ function yamlEntry(args: Args): string {
 function main(): void {
   const args = parseArgs(process.argv.slice(2));
 
-  const domains = loadYamlList(path.join(paths.data, 'domains.yaml'), DomainSchema);
+  // The source schema, not `DomainSchema`: `color` is not in the YAML at all —
+  // it comes from the domain's biome, and only `loadSources` fills it in.
+  const domains = loadYamlList(path.join(paths.data, 'domains.yaml'), SourceDomainSchema);
   const domainIds = new Set(domains.map((domain) => domain.id));
   const unknown = args.domains.filter((id) => !domainIds.has(id));
   if (unknown.length) {
@@ -137,24 +145,33 @@ function main(): void {
   const body = created ? `# Courses whose primary domain is \`${args.domains[0]}\`.\n` : '';
   fs.appendFileSync(file, `${body}\n${yamlEntry(args)}\n`, 'utf8');
 
-  // 2. and 3. Texts and keywords, as placeholders that CI will reject.
+  // 2. and 3. Texts and keywords, as placeholders that CI will reject — in
+  // every language, because every language is held to the same key set. A slot
+  // waiting to be filled is a job somebody can see; a key that simply is not
+  // there anywhere is one they find out about from a red build.
   const lang = process.env.DEFAULT_LANG ?? 'ru';
   const title = args.title ?? '';
-
-  appendJsonKeys(path.join(paths.i18n, `${lang}.json`), [
-    [`course.${args.id}.title`, title],
-    [`course.${args.id}.desc`, ''],
-  ]);
-  appendJsonKeys(path.join(paths.keywords, `${lang}.json`), [
-    [`course.${args.id}`, title ? [title.toLowerCase()] : []],
-  ]);
 
   const rel = path.relative(paths.root, file);
   console.log(`✓ ${args.id}`);
   console.log(`  ${rel}${created ? ' (new file)' : ''}`);
-  console.log(`  data/i18n/${lang}.json — title${title ? '' : ' (empty)'}, desc (empty)`);
-  console.log(`  data/keywords/${lang}.json — keywords (empty)`);
-  console.log('\nNow fill in the description and keywords, then run:');
+
+  for (const entry of UI_LANGS) {
+    // `--title` is written in the content language, so it is only seeded there.
+    const own = entry.id === lang;
+    appendJsonKeys(path.join(paths.i18n, `${entry.id}.json`), [
+      [`course.${args.id}.title`, own ? title : ''],
+      [`course.${args.id}.desc`, ''],
+    ]);
+    appendJsonKeys(path.join(paths.keywords, `${entry.id}.json`), [
+      [`course.${args.id}`, own && title ? [title.toLowerCase()] : []],
+    ]);
+    const seeded = own && title ? '' : ' (empty)';
+    console.log(`  data/i18n/${entry.id}.json — title${seeded}, desc (empty)`);
+    console.log(`  data/keywords/${entry.id}.json — keywords (empty)`);
+  }
+
+  console.log('\nNow fill in the titles, descriptions and keywords, then run:');
   console.log('  pnpm check:i18n && pnpm data:build');
 }
 
