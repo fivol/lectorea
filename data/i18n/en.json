@@ -104,8 +104,6 @@
   "ui.legend.inPath": "The course is part of the selected one's chain of prerequisites",
   "ui.legend.done": "The course is marked as done",
   "ui.legend.inProgress": "The course is marked as started — you are studying it now",
-  "ui.legend.notStarted": "The course has not been started yet",
-  "ui.legend.goal": "The course this path was built for",
   "ui.legend.favorite": "The course is a favourite — and a goal in your profile",
   "ui.legend.stage": "When this course is usually taken: a school year or a university year",
   "ui.legend.hours": "Roughly how many hours the course takes",
@@ -213,7 +211,7 @@
   "ui.playlist.forCourse": "Course",
 
   "ui.sort.title": "Sorting",
-  "ui.sort.score": "Rating",
+  "ui.sort.score": "Quality",
   "ui.sort.views": "Views",
   "ui.sort.viewsPerLecture": "Views per lecture",
   "ui.sort.engagement": "Engagement",

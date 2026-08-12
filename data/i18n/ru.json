@@ -104,8 +104,6 @@
   "ui.legend.inPath": "Курс входит в цепочку подготовки выбранного",
   "ui.legend.done": "Курс отмечен пройденным",
   "ui.legend.inProgress": "Курс отмечен как начатый — вы его сейчас изучаете",
-  "ui.legend.notStarted": "Курс ещё не начат",
-  "ui.legend.goal": "Курс, ради которого построен этот путь",
   "ui.legend.favorite": "Курс в избранном — он же цель в профиле",
   "ui.legend.stage": "Когда этот курс обычно проходят: класс школы или курс университета",
   "ui.legend.hours": "Примерная длительность курса в часах",
@@ -213,7 +211,7 @@
   "ui.playlist.forCourse": "Курс",
 
   "ui.sort.title": "Сортировка",
-  "ui.sort.score": "Рейтинг",
+  "ui.sort.score": "Качество",
   "ui.sort.views": "Просмотры",
   "ui.sort.viewsPerLecture": "Просмотры на лекцию",
   "ui.sort.engagement": "Вовлечённость",

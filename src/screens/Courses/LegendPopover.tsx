@@ -173,25 +173,27 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
                   {t('ui.legend.inProgress')}
                 </Row>
                 <Row mark={<FavoriteMark explain={false} />}>{t('ui.legend.favorite')}</Row>
-                {columns ? (
-                  <>
-                    <Row
-                      mark={
-                        <span className="flex items-center gap-0.5">
-                          <span className="h-2 w-2 rounded-full bg-accent" />
-                          <span className="h-2 w-2 rounded-full bg-warning" />
-                          <span className="h-2 w-2 rounded-full bg-ink-faint" />
-                        </span>
-                      }
-                    >
-                      {t('ui.legend.quality')}
-                    </Row>
-                  </>
-                ) : (
-                  <Row mark={<span className="num text-xs text-ink-faint">12</span>}>
-                    {t('ui.legend.playlistCount')}
-                  </Row>
-                )}
+                {/* Both of these belong to every variant: the count is on a card
+                    and on a phone row alike, and the quality dot is on every
+                    playlist in the panel, which is the same panel on a phone.
+                    They were split one to each variant, so each legend was
+                    missing something the reader had in front of them — and on a
+                    phone, where nothing explains itself on hover, the legend is
+                    the only place left to ask. */}
+                <Row mark={<span className="num text-xs text-ink-faint">12</span>}>
+                  {t('ui.legend.playlistCount')}
+                </Row>
+                <Row
+                  mark={
+                    <span className="flex items-center gap-0.5">
+                      <span className="h-2 w-2 rounded-full bg-accent" />
+                      <span className="h-2 w-2 rounded-full bg-warning" />
+                      <span className="h-2 w-2 rounded-full bg-ink-faint" />
+                    </span>
+                  }
+                >
+                  {t('ui.legend.quality')}
+                </Row>
                 <Row
                   mark={
                     <span className="text-[10px] text-ink-faint">{t('ui.course.noMaterials')}</span>

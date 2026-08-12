@@ -10,8 +10,8 @@ import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
-import Tooltip from '@/components/Tooltip';
 import { Button } from '@/components/ui';
+import { StatusMark } from './CourseMarks';
 
 type Props = {
   course: BuiltCourse;
@@ -175,10 +175,15 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
                     <span className="num w-5 shrink-0 text-right text-xs text-ink-faint">
                       {index + 1}.
                     </span>
-                    <StatusMark status={status} goal={isGoal} />
                     <span className="min-w-0 flex-1 truncate">
                       {t(`course.${step.id}.title`)}
                     </span>
+                    {/* The same plate the cards wear, on the same side as the
+                        hours: a state worth marking says itself in a word, and
+                        an untouched step says it by carrying no mark at all.
+                        Four dots in a column, told apart by colour and by a
+                        tooltip that a phone never shows, said none of that. */}
+                    {status ? <StatusMark status={status} /> : null}
                     {isGoal ? (
                       <span className="shrink-0 text-[11px] text-accent">← {t('ui.path.goal')}</span>
                     ) : (
@@ -204,43 +209,3 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
   );
 }
 
-/**
- * Where the reader stands on this step: the goal, done, started, untouched.
- *
- * Four glyphs in a column of twenty, and not one of them says what it is on its
- * own — a ring and a half-filled dot are the same shape to anyone who has not
- * been told the difference. So each carries its sentence.
- */
-function StatusMark({ status, goal }: { status: string | null; goal: boolean }) {
-  const { t } = useT();
-  if (goal) {
-    return (
-      <Tooltip content={t('ui.legend.goal')}>
-        <span className="w-3.5 shrink-0 text-center text-accent">●</span>
-      </Tooltip>
-    );
-  }
-  if (status === 'done') {
-    return (
-      <Tooltip content={t('ui.legend.done')}>
-        <span className="inline-flex shrink-0 text-accent">
-          <Icon name="check" size={13} />
-        </span>
-      </Tooltip>
-    );
-  }
-  if (status === 'in_progress') {
-    return (
-      <Tooltip content={t('ui.legend.inProgress')}>
-        <span className="inline-flex shrink-0 text-formal">
-          <Icon name="half" size={13} />
-        </span>
-      </Tooltip>
-    );
-  }
-  return (
-    <Tooltip content={t('ui.legend.notStarted')}>
-      <span className="w-3.5 shrink-0 text-center text-ink-faint">○</span>
-    </Tooltip>
-  );
-}

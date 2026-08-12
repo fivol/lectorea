@@ -5,7 +5,6 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import Dropdown, { Caption, CheckRow, RadioRow, RangeRow } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
-import Tooltip from '@/components/Tooltip';
 import { Button, Chip } from '@/components/ui';
 import {
   activeFilterCount,
@@ -44,6 +43,9 @@ export default function PlaylistFilters({
 
   /** Unfolds the strip into a wrapped block — scrolling is the default, not the only way. */
   const [expanded, setExpanded] = useState(false);
+
+  /** How the score is built, opened by a press — see the note beside it below. */
+  const [scoreHow, setScoreHow] = useState(false);
 
   // Languages the course has, plus whatever the filter is already asking for:
   // the filter defaults to the interface language even for a course that has
@@ -321,15 +323,30 @@ export default function PlaylistFilters({
               {t(`ui.sort.${key}`)}
             </RadioRow>
           ))}
-          {/* «Рейтинг» is the default order, so the question of what a rating is
-              belongs here as much as it does on the number in each row. */}
-          <Tooltip content={t('ui.playlist.scoreTooltip')} side="bottom">
-            <p className="mt-1 flex cursor-help items-center gap-1.5 border-t border-line px-2 pt-2
-                          text-[11px] text-ink-faint">
+          {/* «Качество» is the default order, so the question of what that number
+              is belongs here as much as it does on the number in each row.
+
+              A question opened by a press rather than by hover: this was the one
+              place in the product that said what the score is made of, and it
+              said it in a tooltip — which is to say it said nothing at all to
+              anyone reading on a phone. */}
+          <div className="mt-1 border-t border-line px-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setScoreHow((value) => !value)}
+              aria-expanded={scoreHow}
+              className="flex w-full items-center gap-1.5 text-left text-[11px] text-ink-faint
+                         transition-colors duration-fast ease-out hover:text-ink-dim"
+            >
               <Icon name="help" size={12} />
               {t('ui.playlist.scoreHow')}
-            </p>
-          </Tooltip>
+            </button>
+            {scoreHow ? (
+              <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
+                {t('ui.playlist.scoreTooltip')}
+              </p>
+            ) : null}
+          </div>
         </Dropdown>
       </div>
     </div>
