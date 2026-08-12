@@ -22,7 +22,6 @@ export default function MapScreen() {
   const { t } = useT();
   const params = useCatalogParams();
   const isMobile = useIsMobile();
-  const [scrolled, setScrolled] = useState(false);
 
   const mapView = useMapView();
   const setMapView = useUi((state) => state.setMapView);
@@ -45,7 +44,6 @@ export default function MapScreen() {
   }, [catalog, params.providers]);
 
   const showMap = mapView === 'map';
-  const compact = !showMap && scrolled;
 
   return (
     /*
@@ -60,10 +58,10 @@ export default function MapScreen() {
       style={showMap ? { background: MAP_SEA } : undefined}
     >
       {/*
-        The header is chrome, not content — it never scrolls away. What it does
-        do on the blocks list is shrink once there is something above the fold,
-        and take a shadow, so the row reads as sitting over the grid rather than
-        floating in the same plane as it.
+        The header is chrome, not content — it never scrolls away, and it looks
+        the same the whole time: on the blocks list it sits above the grid in
+        the column, at one size, so nothing in it moves or disappears as the
+        cards go past.
 
         Over the map it is lifted out of the column entirely and floats. The
         drawing then runs the full height of the window and the sea carries on
@@ -73,10 +71,8 @@ export default function MapScreen() {
         dragged.
       */}
       <header
-        className={`z-30 flex items-start justify-between gap-4 px-4 transition-all
-                    duration-base ease-out sm:px-6
-                    ${showMap ? 'absolute inset-x-0 top-0 pt-4' : 'relative'}
-                    ${compact ? 'on-canvas pb-2 pt-2 shadow-[var(--shadow-card)] backdrop-blur' : 'pt-4'}`}
+        className={`z-30 flex items-start justify-between gap-4 px-4 pt-4 sm:px-6
+                    ${showMap ? 'absolute inset-x-0 top-0' : 'relative'}`}
       >
         {/* Over open water and over a continent alike, so the lettering that
             has no plate under it carries the same halo the map's own names do. */}
@@ -86,10 +82,7 @@ export default function MapScreen() {
               blocks, it leads back to the clean drawing. The way back from the
               columns is the other half of that pair: it returns to whichever
               view you left, this one always to the same place. */}
-          <h1
-            className={`font-display tracking-tight transition-all duration-base ease-out
-                        ${compact ? 'text-base' : 'text-xl'}`}
-          >
+          <h1 className="font-display text-xl tracking-tight">
             <Link
               to="/"
               onClick={() => setMapView('map')}
@@ -98,9 +91,7 @@ export default function MapScreen() {
               {t('app.title')}
             </Link>
           </h1>
-          {compact ? null : (
-            <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
-          )}
+          <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
         </div>
 
         {/* Two plates rather than four buttons: what you are looking at on the
@@ -168,7 +159,6 @@ export default function MapScreen() {
       <main
         className={`min-h-0 flex-1 ${showMap ? 'overflow-hidden' : 'overflow-auto'}`}
         style={showMap ? { background: MAP_SEA } : undefined}
-        onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 8)}
       >
         {showMap ? (
           <MapView

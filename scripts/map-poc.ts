@@ -1,63 +1,24 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  generateMap,
-  defaultConfig,
-  templateSvg,
-  bridgeMarkup,
-  type MapConfig,
-} from '../shared/mapgen.js';
-import {
-  buildDomainGraph,
-  classifyLandforms,
-  defaultLandformConfig,
-  domainLevels,
-} from '../shared/domain-graph.js';
-import { loadSources, reportSourceError } from './lib/sources.js';
+import { templateSvg, bridgeMarkup } from '../shared/mapgen.js';
+import { buildWorld, readOverrides } from './lib/map-world.js';
+import { reportSourceError } from './lib/sources.js';
 
 /**
  * Renders the generator to an SVG plus a metrics report, for looking at from a
  * terminal. The sandbox is the same generator with sliders — this exists so the
  * numbers can be diffed between runs.
+ *
+ *   pnpm map:preview --packing=column --width=1040 --height=1780
  */
 
 const OUT = process.env.MAP_POC_OUT ?? '.map-poc';
 
 function main(): void {
-  const sources = loadSources();
-  const counts = new Map<string, number>();
-  for (const course of sources.courses) {
-    for (const domain of course.domains) counts.set(domain, (counts.get(domain) ?? 0) + 1);
-  }
-
-  const overrides: Partial<MapConfig> = {};
-  for (const argument of process.argv.slice(2)) {
-    const match = argument.match(/^--([a-zA-Z]+)=(.+)$/);
-    if (match && match[1] in defaultConfig) {
-      (overrides as Record<string, number>)[match[1]] = Number(match[2]);
-    }
-  }
-
-  const landformConfig = { ...defaultLandformConfig, seed: overrides.seed ?? defaultConfig.seed };
-  const edges = buildDomainGraph(sources.domains, sources.courses, landformConfig);
-  const topology = classifyLandforms(sources.domains, edges, counts, landformConfig);
-  const layers = domainLevels(sources.domains);
+  const { map, levels: layers } = buildWorld(readOverrides(process.argv.slice(2)));
   if (layers.cycle) {
     console.warn(`! цикл в dependsOn: ${layers.cycle.join(' → ')}`);
   }
-
-  const map = generateMap(
-    {
-      domains: sources.domains,
-      courseCounts: counts,
-      landform: new Map([...topology].map(([id, t]) => [id, t.landform])),
-      reaches: new Map([...topology].map(([id, t]) => [id, t.reaches])),
-      edges,
-      levels: layers.level,
-      maxLevel: layers.maxLevel,
-    },
-    overrides
-  );
 
   const titles = JSON.parse(fs.readFileSync(path.join('data', 'i18n', 'ru.json'), 'utf8')) as Record<
     string,

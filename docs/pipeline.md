@@ -24,6 +24,7 @@ scripts/
   map-poc.ts           run the map generator to an SVG and a metrics report
   map-sandbox.ts       the same, bundled as one HTML file with sliders
   map-import.ts        a sandbox export → public/map.svg
+  map-portrait.ts      the generator, stacked → public/map-portrait.svg
   lib/
     youtube.ts        API wrapper with quota accounting
     db.ts             sqlite
@@ -36,6 +37,8 @@ scripts/
     score.ts          bayesian rating
     layout.ts         column order: barycentric sweeps and domain bands
     mapgen.ts         the territory map generator behind `data:map`
+    map-world.ts      run shared/mapgen.ts over this repo's own data
+    map-file.ts       measure outlines and write one of the app's map files
     visual.config.ts  the look of the procedural course art
     openai.ts         optional
     config.ts
@@ -227,6 +230,37 @@ in force, and files written to disk are always the dark one.
 `pnpm data:images --openai --only=math,physics` and **committed** to the
 repository. They are stable and there is no reason to pay for them on every
 build. Without the flag the image API is never called.
+
+## The two maps
+
+The app ships two drawings of one world, both from `shared/mapgen.ts`.
+
+| | file | command |
+|---|---|---|
+| Wide — the continents ranged side by side | `public/map.svg` | tuned in `pnpm map:sandbox`, exported, then `pnpm map:import <export.svg>` |
+| Tall — the same continents stacked | `public/map-portrait.svg` | `pnpm map:portrait` |
+
+They differ in one knob and what it costs. `packing` lays the landmasses out
+along `x` or along `y`; because a continent given more dependency rows than it
+has width is stretched upwards to fit them — which is what a *row* of continents
+can afford and a *column* of them cannot — the stacked map also lowers
+`maxStretch` below 1, so its continents come out a little wider than tall. Not
+much lower: `map:preview` prints the share of dependencies that still run bottom
+to top inside a landmass, and squashing far enough to look tidy is squashing far
+enough to break that claim. It also draws on a larger cell, which is a third
+fewer pieces of relief on the machine least able to draw them.
+
+Both files are written by `scripts/lib/map-file.ts`, which measures what the app
+reads off an outline — the point a name is centred on, the room around it, the
+width of the territory along that line — so a map that came in from the sandbox
+and a map generated headlessly describe themselves identically. The app reads
+the cell size back off the outlines it loads, so nothing downstream has to be
+told which of the two it is looking at.
+
+To try a variant: `pnpm map:portrait --seed=9`, or any other knob. To look
+before writing: `pnpm map:preview --packing=column --width=1180 --height=1560`,
+which renders to `.map-poc/` with a metrics report. The sandbox has a
+**Формат** switch that loads either preset, for art-directing by eye.
 
 ## Automation
 

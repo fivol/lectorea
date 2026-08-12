@@ -124,8 +124,23 @@ export function peekPlaylists(courseId: string): BuiltPlaylist[] | undefined {
   return shardValues.get(courseId);
 }
 
-export async function loadMapSvg(): Promise<string> {
-  const response = await fetch(`${base}/map.svg`);
-  if (!response.ok) throw new Error('Failed to load map.svg');
+/**
+ * Which drawing of the world: the continents ranged side by side, or stacked.
+ *
+ * Two files, one catalogue. Both come out of the same generator — see
+ * `pnpm map:portrait` — so a domain added to `domains.yaml` lands on both, and
+ * neither is a picture anybody has to redraw by hand.
+ */
+export type MapVariant = 'wide' | 'portrait';
+
+const MAP_FILE: Record<MapVariant, string> = {
+  wide: 'map.svg',
+  portrait: 'map-portrait.svg',
+};
+
+export async function loadMapSvg(variant: MapVariant = 'wide'): Promise<string> {
+  const file = MAP_FILE[variant];
+  const response = await fetch(`${base}/${file}`);
+  if (!response.ok) throw new Error(`Failed to load ${file}`);
   return response.text();
 }

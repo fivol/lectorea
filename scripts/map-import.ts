@@ -1,9 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ensureDir, paths } from './lib/config.js';
+import { paths } from './lib/config.js';
+import {
+  anchorOf,
+  describeLandmasses,
+  ringFrom,
+  writeMapFile,
+  type FileTerritory,
+} from './lib/map-file.js';
 import { loadSources, reportSourceError, SourceError } from './lib/sources.js';
-import { insideRing, ringOf, signedDistance, type Point } from '../shared/polygon.js';
-import type { Continent, Domain } from '../shared/schema.js';
 
 /**
  * Imports an SVG exported from the map sandbox (`pnpm map:sandbox`) into
@@ -15,17 +20,16 @@ import type { Continent, Domain } from '../shared/schema.js';
  * writes its own labels. What it cannot recover is the geometry, so this keeps
  * the outlines and the coastline and throws the rest away.
  *
- * It also writes what the export does not carry: the continent each territory
- * belongs to, the point a label can be centred on, and how much room there is
- * around it. That point is the pole of inaccessibility rather than the centroid
- * — these territories are blobs grown around a seed, and a centroid lands
- * outside a crescent-shaped one — and the room is its distance to the border,
- * which is what the screen sizes and drops labels by.
+ * What the export does not carry either — the continent each territory belongs
+ * to, the point a label can be centred on, how much room there is around it — is
+ * measured in `lib/map-file.ts`, which is also what `pnpm map:portrait` uses. The
+ * two maps are drawn by different routes and have to arrive at the same kind of
+ * file.
  *
  *   pnpm map:import '~/Downloads/map (1).svg'
  */
 
-const USAGE = "usage: pnpm map:import <sandbox-export.svg>";
+const USAGE = 'usage: pnpm map:import <sandbox-export.svg>';
 
 /* ──────────────────────────────  Reading  ──────────────────────────────── */
 
@@ -54,150 +58,6 @@ const isCoast = (path: RawPath): boolean =>
   !path.attributes.id &&
   path.attributes.fill === 'none' &&
   !('stroke-dasharray' in path.attributes);
-
-/* ─────────────────────────────  Geometry  ──────────────────────────────── */
-
-/**
- * The outline as a polygon, in this script's terms.
- *
- * `ringOf` handles the absolute `M`/`L`/`Q`/`Z` the sandbox writes — the
- * quadratics are the rounded hex corners — and refuses anything wider. A
- * refusal here is a bad export rather than a bug, so it is reported as one.
- */
-function flatten(d: string): Point[] {
-  try {
-    return ringOf(d);
-  } catch (error) {
-    throw new SourceError(
-      `${error instanceof Error ? error.message : String(error)} in the export`
-    );
-  }
-}
-
-/**
- * The point inside the outline furthest from any edge, and how far that is —
- * where a label goes, and how much of one fits there. Quadtree search (the
- * polylabel algorithm): split the bounding box, always open the cell whose
- * optimistic best is highest, stop when no cell can beat the champion by more
- * than `precision`.
- */
-function poleOfInaccessibility(ring: Point[], precision = 1): Point & { room: number } {
-  const xs = ring.map((p) => p.x);
-  const ys = ring.map((p) => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-
-  const size = Math.min(maxX - minX, maxY - minY);
-  if (size === 0) return { x: minX, y: minY, room: 0 };
-
-  type Cell = { x: number; y: number; half: number; distance: number; bound: number };
-  const cellAt = (x: number, y: number, half: number): Cell => {
-    const distance = signedDistance({ x, y }, ring);
-    // A cell can hold nothing better than its centre plus its own reach.
-    return { x, y, half, distance, bound: distance + half * Math.SQRT2 };
-  };
-
-  let best = cellAt((minX + maxX) / 2, (minY + maxY) / 2, size / 2);
-  const queue: Cell[] = [];
-  const half = size / 2;
-  for (let x = minX + half / 2; x < maxX; x += half) {
-    for (let y = minY + half / 2; y < maxY; y += half) {
-      queue.push(cellAt(x, y, half / 2));
-    }
-  }
-
-  while (queue.length) {
-    // Small queues over few dozen territories — a scan beats a heap here.
-    let index = 0;
-    for (let i = 1; i < queue.length; i++) if (queue[i].bound > queue[index].bound) index = i;
-    const cell = queue.splice(index, 1)[0];
-
-    if (cell.distance > best.distance) best = cell;
-    if (cell.bound - best.distance <= precision) continue;
-
-    const quarter = cell.half / 2;
-    queue.push(cellAt(cell.x - quarter, cell.y - quarter, quarter));
-    queue.push(cellAt(cell.x + quarter, cell.y - quarter, quarter));
-    queue.push(cellAt(cell.x - quarter, cell.y + quarter, quarter));
-    queue.push(cellAt(cell.x + quarter, cell.y + quarter, quarter));
-  }
-
-  return { x: best.x, y: best.y, room: best.distance };
-}
-
-/**
- * How wide a single line of text can be at the label point.
- *
- * The inscribed circle alone is too pessimistic for a territory that is much
- * wider than it is tall — it would drop a name that in fact has plenty of
- * shoreline to run along. This measures the actual gap: the run of the
- * horizontal line through the label point that stays inside the outline.
- */
-function spanAt(point: Point, ring: Point[]): number {
-  const crossings: number[] = [];
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const a = ring[i];
-    const b = ring[j];
-    if (a.y > point.y === b.y > point.y) continue;
-    crossings.push(a.x + ((point.y - a.y) / (b.y - a.y)) * (b.x - a.x));
-  }
-  crossings.sort((left, right) => left - right);
-
-  // The label point is inside, so it falls in one of the inside intervals —
-  // the pairs, counting from the left.
-  for (let i = 0; i + 1 < crossings.length; i += 2) {
-    if (point.x >= crossings[i] && point.x <= crossings[i + 1]) {
-      return crossings[i + 1] - crossings[i];
-    }
-  }
-  return 0;
-}
-
-/* ─────────────────────────────  Landmasses  ────────────────────────────── */
-
-type Landmass = { d: string; continent: Continent; kind: 'continent' | 'island' };
-
-/**
- * Which continent each coastline belongs to, and which of them is that
- * continent's mainland.
- *
- * The export does not say — it draws every coast the same way — so it is read
- * back off the territories: a landmass belongs to whoever holds most of the
- * ground inside it, and the largest of a continent's landmasses is the
- * continent itself. That is what lets the screen write a continent's name over
- * its mainland instead of over the water between its outlying islands.
- */
-function describeLandmasses(
-  coasts: RawPath[],
-  territories: Array<{ domain: Domain; label: Point }>
-): Landmass[] {
-  const described = coasts.map((coast) => {
-    const ring = flatten(coast.d);
-    const held = territories.filter((territory) => insideRing(territory.label, ring));
-    const tally = new Map<Continent, number>();
-    for (const territory of held) {
-      tally.set(territory.domain.continent, (tally.get(territory.domain.continent) ?? 0) + 1);
-    }
-    const [continent] = [...tally].sort((a, b) => b[1] - a[1])[0] ?? [];
-    if (!continent) {
-      throw new SourceError(`a landmass in the export holds no territory: ${coast.d.slice(0, 40)}…`);
-    }
-    return { d: coast.d, continent, held: held.length };
-  });
-
-  const largest = new Map<Continent, number>();
-  for (const mass of described) {
-    largest.set(mass.continent, Math.max(largest.get(mass.continent) ?? 0, mass.held));
-  }
-
-  return described.map(({ d, continent, held }) => ({
-    d,
-    continent,
-    kind: held === largest.get(continent) ? 'continent' : 'island',
-  }));
-}
 
 /* ───────────────────────────────  Import  ──────────────────────────────── */
 
@@ -241,49 +101,28 @@ function main(): void {
     ]);
   }
 
-  const territories = domains.map((domain) => {
+  const territories: FileTerritory[] = domains.map((domain) => {
     const d = shapes.get(domain.shapeId)!.d;
-    const ring = flatten(d);
-    const pole = poleOfInaccessibility(ring);
-    return { domain, d, label: { ...pole, span: spanAt(pole, ring) } };
+    return {
+      shapeId: domain.shapeId,
+      domainId: domain.id,
+      continent: domain.continent,
+      d,
+      anchor: anchorOf(ringFrom(d, `territory ${domain.shapeId} in the export`)),
+    };
   });
 
-  const landmasses = describeLandmasses(coasts, territories);
-
-  const drawnLand = landmasses
-    .map(
-      (mass, index) =>
-        `<path id="land-${index + 1}" class="coastline" ` +
-        `data-continent="${mass.continent}" data-kind="${mass.kind}" d="${mass.d}"/>`
-    )
-    .join('\n  ');
-
-  const drawnTerritories = territories
-    .map(
-      ({ domain, d, label }) =>
-        `<path id="${domain.shapeId}" class="domain-shape" ` +
-        `data-domain="${domain.id}" data-continent="${domain.continent}" ` +
-        `data-cx="${label.x.toFixed(1)}" data-cy="${label.y.toFixed(1)}" ` +
-        `data-room="${label.room.toFixed(1)}" data-span="${label.span.toFixed(1)}" d="${d}"/>`
-    )
-    .join('\n  ');
-
-  const out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet">
-  <!-- Imported from a map sandbox export by \`pnpm map:import\` — geometry only.
-       Colours, labels and the sea belong to the app and are not in here. The
-       territory ids match domain.shapeId; the coastlines are the landmasses
-       those territories tile, one path each. -->
-  ${drawnLand}
-  ${drawnTerritories}
-</svg>
-`;
-
-  ensureDir(paths.publicDir);
-  fs.writeFileSync(paths.mapSvg, out, 'utf8');
-  console.log(
-    `✓ public/map.svg · ${territories.length} territories · ${coasts.length} landmasses · ` +
-      `${(Buffer.byteLength(out) / 1024).toFixed(1)} KB`
-  );
+  writeMapFile(paths.mapSvg, {
+    viewBox,
+    // The export draws every coast the same way and says nothing about who owns
+    // it, so it is read back off the territories inside each one.
+    landmasses: describeLandmasses(
+      coasts.map((coast) => coast.d),
+      territories
+    ),
+    territories,
+    provenance: 'Imported from a map sandbox export by `pnpm map:import` — geometry only.',
+  });
 }
 
 try {

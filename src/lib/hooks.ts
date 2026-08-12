@@ -20,6 +20,17 @@ export function useMediaQuery(query: string): boolean {
 export const useIsMobile = (): boolean => useMediaQuery('(max-width: 767px)');
 export const useIsDesktop = (): boolean => useMediaQuery('(min-width: 1201px)');
 
+/**
+ * A window taller than it is wide.
+ *
+ * The map's own question, and not the same one as `useIsMobile`: there are two
+ * drawings of the world, one ranged and one stacked, and which of them fits is
+ * decided by the shape of the window rather than by the size of the device. A
+ * tablet held upright wants the stacked one; a phone turned on its side wants
+ * the ranged one, and gets it.
+ */
+export const useIsPortrait = (): boolean => useMediaQuery('(orientation: portrait)');
+
 export function useReducedMotion(): boolean {
   return useMediaQuery('(prefers-reduced-motion: reduce)');
 }

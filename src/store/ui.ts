@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { useIsMobile } from '@/lib/hooks';
 
 /**
  * Transient view state. Anything that belongs in a shared link — selected
@@ -59,11 +58,14 @@ export const useUi = create<UiStore>((set, get) => ({
 }));
 
 /**
- * The view actually on screen. A phone has no room for the drawing, so it
- * always gets the blocks — and the way back from the columns has to name the
- * view it returns to, not the one that was picked on a wider screen.
+ * The view on screen.
+ *
+ * A phone used to be sent to the blocks whatever it asked for, because the one
+ * drawing there was is a wide one and a wide drawing on a tall screen is a
+ * strip of land in a lot of water. There are two drawings now — see
+ * `MapVariant` — so the choice belongs to the reader on every screen, and the
+ * way back from the columns lands where it was left.
  */
 export function useMapView(): MapView {
-  const mapView = useUi((state) => state.mapView);
-  return useIsMobile() ? 'blocks' : mapView;
+  return useUi((state) => state.mapView);
 }

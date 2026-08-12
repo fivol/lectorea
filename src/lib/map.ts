@@ -19,6 +19,7 @@
  * what stands on it, are drawing decisions rather than facts about the file.
  */
 
+import { hexGridOf, type HexGrid } from '@shared/tiles';
 import { flat, flattenPath, GROUND } from '@shared/view';
 
 export type MapShape = {
@@ -78,6 +79,17 @@ export type ParsedMap = {
   height: number;
   shapes: MapShape[];
   landmasses: MapLandmass[];
+  /**
+   * The hex grid the map was drawn on, read back off its own outlines, or null
+   * where the file no longer answers.
+   *
+   * A fact about the file rather than a constant, because there is more than
+   * one file: the wide map and the tall one are laid out on cells of different
+   * sizes, and everything measured in cells — the ground, the depth of the
+   * cliffs — has to follow the map it is drawn on rather than the one that
+   * happened to be written first.
+   */
+  grid: HexGrid | null;
 };
 
 /** The paths in the file that are ground rather than a territory. */
@@ -151,5 +163,14 @@ export function parseMapSvg(text: string): ParsedMap {
     });
   }
 
-  return { viewBox: `0 0 ${width} ${height}`, width, height, shapes, landmasses };
+  return {
+    viewBox: `0 0 ${width} ${height}`,
+    width,
+    height,
+    shapes,
+    landmasses,
+    // From the plan, where the grid is still regular — on screen it has been
+    // laid back and the cells are no longer hexagons.
+    grid: hexGridOf(shapes.map((shape) => shape.plan)),
+  };
 }

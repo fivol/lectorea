@@ -12,10 +12,13 @@ type View = 'map' | 'blocks';
 export default function ViewSwitch({
   value,
   onChange,
+  large = false,
   className = '',
 }: {
   value: View;
   onChange: (next: View) => void;
+  /** The thumb-sized flavour, for the one that floats at the foot of a phone. */
+  large?: boolean;
   className?: string;
 }) {
   const { t } = useT();
@@ -31,6 +34,7 @@ export default function ViewSwitch({
       options={options}
       onChange={onChange}
       label={t('ui.view.switch')}
+      large={large}
       className={className}
     />
   );

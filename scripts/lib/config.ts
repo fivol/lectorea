@@ -18,7 +18,10 @@ export const paths = {
   outImages: path.join(ROOT, 'public/images'),
   domainImages: path.join(ROOT, 'public/images/domains'),
   courseImages: path.join(ROOT, 'public/images/courses'),
+  /** The wide map, for a window wider than it is tall. */
   mapSvg: path.join(ROOT, 'public/map.svg'),
+  /** The same world stacked into a tall one, for a phone held upright. */
+  mapPortraitSvg: path.join(ROOT, 'public/map-portrait.svg'),
 };
 
 /** Reads .env once, without pulling dotenv into the frontend bundle. */

@@ -24,10 +24,10 @@ import {
   fillCells,
   fillMarkup,
   findTile,
-  hexGridOf,
   oceanCells,
   terrain as neutral,
   OCEAN,
+  type HexGrid,
   type Palette,
 } from '@shared/tiles';
 import { GROUND } from '@shared/view';
@@ -92,7 +92,9 @@ const SEA: Record<'light' | 'dark', Partial<Palette>> = {
 const SEA_MARGIN = 0.22;
 
 export function groundOf(map: ParsedMap, scheme: 'light' | 'dark'): MapGround {
-  const grid = hexGridOf(map.shapes.map((shape) => shape.plan));
+  // Read when the file was read: the grid is a fact about the map, and the two
+  // maps are not drawn on the same one.
+  const grid = map.grid;
   if (!grid) return { fields: [], ocean: '' };
 
   const fields = map.shapes
@@ -121,7 +123,7 @@ export function groundOf(map: ParsedMap, scheme: 'light' | 'dark'): MapGround {
 
 function oceanMarkup(
   map: ParsedMap,
-  grid: NonNullable<ReturnType<typeof hexGridOf>>,
+  grid: HexGrid,
   scheme: 'light' | 'dark'
 ): string {
   // The map file is a plan; its height on screen is already laid back, so the

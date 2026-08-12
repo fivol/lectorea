@@ -56,8 +56,10 @@ missed.
    sciences, humanities — with the fields of knowledge drawn as territories. The
    bigger the territory, the more courses it holds. Move it as you would any
    map: two fingers to carry it, a pinch to go in — the names grow a little as
-   you do, and more of them appear. Or just search: the box understands
-   abbreviations and student slang, so `теорвер` and `линал` find what you mean.
+   you do, and more of them appear. On a phone the same world is drawn stacked
+   rather than ranged, so it fills a tall screen instead of lying across the
+   middle of it. Or just search: the box understands abbreviations and student
+   slang, so `теорвер` and `линал` find what you mean.
 2. **Pick a field and read the columns.** Each column is a difficulty level:
    the number of courses that have to come before this one. Left is the
    foundation, right is what stands on it. Hovering over a card lights up what

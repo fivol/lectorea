@@ -29,9 +29,22 @@ const TAU = Math.PI * 2;
 
 /* ────────────────────────────────  Config  ─────────────────────────────── */
 
+/**
+ * Which way the world is packed: the continents side by side, or one above the
+ * next.
+ *
+ * Not a question about the data — it is a question about the paper. The
+ * vertical axis *inside* a landmass is the dependency order and never moves;
+ * this only decides where the next landmass goes when the last one has run out
+ * of room. Three continents in a row want a window wider than it is tall, which
+ * is a desk; stacked, they want one taller than it is wide, which is a phone.
+ */
+export type Packing = 'row' | 'column';
+
 export type MapConfig = {
   width: number;
   height: number;
+  packing: Packing;
 
   /** Side of a grid hex, in map units. Big enough that the grid reads. */
   hexR: number;
@@ -55,6 +68,20 @@ export type MapConfig = {
   /** How strongly linked domains pull towards each other while seeding. */
   linkPull: number;
 
+  /**
+   * The tallest a continent may be drawn against its own width, to make room
+   * for its rows.
+   *
+   * 1 keeps every landmass round; below it they come out wider than tall. A
+   * continent given more rows than it has width is stretched upwards to fit
+   * them, which is right when the continents stand in a row and wrong when they
+   * stand in a column — three narrow continents in a tall canvas leave the
+   * paper empty down both sides. So the ceiling belongs to the shape of the
+   * paper rather than to the algorithm: a row of continents can afford the
+   * height, a column of them has to spend it on the stack instead.
+   */
+  maxStretch: number;
+
   /** How far a peninsula is pushed out of its continent's huddle. */
   peninsulaReach: number;
   /** Ocean kept clear around an island. */
@@ -66,6 +93,7 @@ export type MapConfig = {
 export const defaultConfig: MapConfig = {
   width: 1680,
   height: 980,
+  packing: 'row',
   hexR: 16,
   landFraction: 0.44,
   strait: 90,
@@ -74,6 +102,7 @@ export const defaultConfig: MapConfig = {
   cornerRadius: 5,
   layering: 0.7,
   linkPull: 0.55,
+  maxStretch: 1.5,
   peninsulaReach: 0.5,
   islandGap: 34,
   seed: 7,
@@ -176,6 +205,43 @@ type Landmass = {
 const within = (mass: Landmass, x: number, y: number): boolean =>
   ((x - mass.centre.x) / mass.rx) ** 2 + ((y - mass.centre.y) / mass.ry) ** 2 <= 1;
 
+/* ─────────────────────────────  The packing axis  ───────────────────────── */
+
+/**
+ * Packing the world is the same piece of arithmetic whichever way it runs: lay
+ * the landmasses out one after another along one axis, centre them on the
+ * other. Written once in terms of "along" and "across" rather than twice in
+ * terms of x and y, so a row of continents and a column of them cannot drift
+ * into disagreeing about what a strait is.
+ */
+type Axis = { along: 'x' | 'y'; across: 'x' | 'y' };
+
+const axisOf = (packing: Packing): Axis =>
+  packing === 'column' ? { along: 'y', across: 'x' } : { along: 'x', across: 'y' };
+
+/** A point from its two components, whichever way round the axes are. */
+const pointOn = (axis: Axis, along: number, across: number): Point =>
+  axis.along === 'x' ? { x: along, y: across } : { x: across, y: along };
+
+/**
+ * A landmass's half-axis along each direction.
+ *
+ * `ry` is always the vertical one — the stretch that layering puts on a
+ * continent is vertical, because the rows it needs room for are — so which of
+ * the two ends up facing the next landmass is what the packing decides.
+ */
+const halfOn = (axis: Axis, size: { rx: number; ry: number }): { along: number; across: number } =>
+  axis.along === 'x' ? { along: size.rx, across: size.ry } : { along: size.ry, across: size.rx };
+
+/** The canvas, in the same terms. */
+const canvasOn = (
+  axis: Axis,
+  config: { width: number; height: number }
+): { along: number; across: number } =>
+  axis.along === 'x'
+    ? { along: config.width, across: config.height }
+    : { along: config.height, across: config.width };
+
 /** Room for the cluster plus slack for it to take an interesting shape. */
 const ROOM = 1.25;
 
@@ -189,9 +255,6 @@ const ROOM = 1.25;
  */
 const STRETCH = 0.1;
 
-/** Never so tall that the row of continents cannot be packed side by side. */
-const MAX_STRETCH = 1.5;
-
 /**
  * Taller than wide in proportion to how many rows the cluster has to hold.
  * The area is preserved — rx is divided by exactly what ry is multiplied by —
@@ -200,12 +263,19 @@ const MAX_STRETCH = 1.5;
  * Counted in levels rather than in pixels. Pixels would make a small continent
  * spanning many levels stretch to the full height of the canvas on an area
  * that cannot reach that far, and it tears into a string of islands.
+ *
+ * A cap below 1 turns the same arithmetic into a squash, which is what a world
+ * packed into a column wants — see `maxStretch`.
  */
-function aspectFor(members: string[], levelOf: (id: string) => number): number {
+function aspectFor(
+  members: string[],
+  levelOf: (id: string) => number,
+  cap: number
+): number {
   if (members.length < 2) return 1;
   const levels = members.map(levelOf);
   const span = Math.max(...levels) - Math.min(...levels);
-  return Math.min(MAX_STRETCH, 1 + STRETCH * span);
+  return Math.min(cap, 1 + STRETCH * span);
 }
 
 function layoutWorld(
@@ -231,7 +301,7 @@ function layoutWorld(
     );
     const cells = members.reduce((sum, d) => sum + targetOf(d.id), 0);
     const reach = radiusFor(cells);
-    const stretch = aspectFor(members.map((d) => d.id), levelOf);
+    const stretch = aspectFor(members.map((d) => d.id), levelOf, config.maxStretch);
     return {
       continent,
       members: members.map((d) => d.id),
@@ -240,31 +310,34 @@ function layoutWorld(
     };
   });
 
-  const spanX = cores.reduce((sum, c) => sum + c.rx * 2, 0) + config.strait * (cores.length - 1);
+  const axis = axisOf(config.packing);
+  const size = canvasOn(axis, config);
+
+  const span =
+    cores.reduce((sum, c) => sum + halfOn(axis, c).along * 2, 0) +
+    config.strait * (cores.length - 1);
 
   const world: Landmass[] = [];
-  let cursor = (config.width - spanX) / 2;
+  let cursor = (size.along - span) / 2;
   for (const core of cores) {
-    // A continent floats to the height its own content asks for: one built on
-    // foundations everything else rests on sits low, one made of fields that
-    // draw on three other continents sits high. Clamped so it stays on canvas,
-    // which is also what keeps a shallow continent from hugging the edge.
-    // Centred, deliberately. Ranking the landmasses against each other by the
-    // average level of their contents floated every island and the shallowest
-    // continent to the top of the canvas on every variant — and it was a claim
-    // the map has no business making: the order says psychology rests on
-    // biology, not that one continent as a whole sits above another. The
-    // vertical axis is read inside a landmass; between them it means nothing.
+    // Centred across the packing axis, deliberately. Ranking the landmasses
+    // against each other by the average level of their contents floated every
+    // island and the shallowest continent to one edge of the canvas on every
+    // variant — and it was a claim the map has no business making: the order
+    // says psychology rests on biology, not that one continent as a whole sits
+    // above another. The vertical axis is read inside a landmass; between them
+    // it means nothing.
+    const half = halfOn(axis, core);
     world.push({
       id: core.continent,
       kind: 'continent',
       continent: core.continent,
       members: core.members,
-      centre: { x: cursor + core.rx, y: config.height / 2 },
+      centre: pointOn(axis, cursor + half.along, size.across / 2),
       rx: core.rx,
       ry: core.ry,
     });
-    cursor += core.rx * 2 + config.strait;
+    cursor += half.along * 2 + config.strait;
   }
 
   const continentAt = new Map(world.map((m) => [m.continent, m]));
@@ -283,15 +356,22 @@ function layoutWorld(
         }
       : { x: config.width / 2, y: config.height / 2 };
 
+    // Scattered mostly across the packing axis rather than along it: the gaps
+    // between the continents are straits a strait wide, and an island shoved
+    // into one is an island wedged between two coasts. Sideways there is open
+    // water for a third of the canvas.
+    const drift = pointOn(
+      axis,
+      (local() * 2 - 1) * config.strait * 0.5,
+      (local() * 2 - 1) * size.across * 0.3
+    );
+
     return {
       id: `island:${domain.id}`,
       kind: 'island' as const,
       continent: domain.continent,
       members: [domain.id],
-      centre: {
-        x: start.x + (local() * 2 - 1) * config.strait * 0.5,
-        y: start.y + (local() * 2 - 1) * config.height * 0.3,
-      },
+      centre: { x: start.x + drift.x, y: start.y + drift.y },
       rx: radiusFor(targetOf(domain.id)),
       ry: radiusFor(targetOf(domain.id)),
     };
@@ -1105,19 +1185,24 @@ function hexBudget(
     .filter((share) => share > 0);
   if (!shares.length) return 1;
 
-  // Radius of a cluster holding one hex-budget's worth of this share. The row
-  // is packed by the horizontal half-axis, so allow for the widest stretch a
-  // layered continent can take — otherwise the row overflows once the levels
+  // Radius of a cluster holding one hex-budget's worth of this share, before
+  // layering stretches it. Whichever way the world is packed, one of the two
+  // directions carries that stretch and has to allow for the tallest a layered
+  // continent can get — otherwise the packing overflows the moment the levels
   // pull the continents tall and thin.
   const unit = shares.map((share) => Math.sqrt((share / totalWeight) * (hexArea / Math.PI)) * ROOM);
   const margin = 24;
 
-  const acrossX =
-    (config.width - margin * 2 - config.strait * (shares.length - 1)) /
-    (2 * unit.reduce((sum, u) => sum + u, 0));
-  const acrossY = (config.height - margin * 2) / (2 * Math.max(...unit) * MAX_STRETCH);
+  const axis = axisOf(config.packing);
+  const canvas = canvasOn(axis, config);
+  const stretch = halfOn(axis, { rx: 1, ry: config.maxStretch });
 
-  const room = Math.min(acrossX, acrossY) ** 2;
+  const along =
+    (canvas.along - margin * 2 - config.strait * (shares.length - 1)) /
+    (2 * stretch.along * unit.reduce((sum, u) => sum + u, 0));
+  const across = (canvas.across - margin * 2) / (2 * stretch.across * Math.max(...unit));
+
+  const room = Math.min(along, across) ** 2;
   const wanted = (config.width * config.height * config.landFraction) / hexArea;
   return Math.max(12, Math.min(wanted, room));
 }

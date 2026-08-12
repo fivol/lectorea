@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { loadMapSvg } from '@/lib/data';
+import { loadMapSvg, type MapVariant } from '@/lib/data';
 import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
 import { useReducedMotion } from '@/lib/hooks';
 import { DomainGlyph } from '@/components/DomainIcon';
@@ -61,36 +61,37 @@ const SHORE_BLUR = 9;
 /**
  * How thick the land is, in map units.
  *
- * Two thirds of a cell — `mapgen`'s `hexR` is 16 — and so about twice what the
- * tile collection gives one cell of ground. Deliberately: the collection draws
- * a cell you are standing next to, and this is a continent seen from across the
- * room, where the true edge of a single cell comes out at four units and reads
- * as a slightly soft coastline rather than as a coast with a side to it. The
- * cliff is the one thing on this map saying it is not a plan, so it is drawn
- * loud enough to be heard.
+ * Two thirds of a cell, and so about twice what the tile collection gives one
+ * cell of ground. Deliberately: the collection draws a cell you are standing
+ * next to, and this is a continent seen from across the room, where the true
+ * edge of a single cell comes out at four units and reads as a slightly soft
+ * coastline rather than as a coast with a side to it. The cliff is the one
+ * thing on this map saying it is not a plan, so it is drawn loud enough to be
+ * heard.
  *
- * `SLAB` is still what it is measured against, so the two cannot drift into
- * different worlds — if the collection ever decides the ground is twice as deep
- * as it thought, the coast follows.
+ * `SLAB` is what it is measured against, so the two cannot drift into different
+ * worlds — if the collection ever decides the ground is twice as deep as it
+ * thought, the coast follows. The cell is the map's own, read back off its
+ * outlines: the wide map and the tall one are drawn on different grids, and a
+ * wall measured in one of them is the wrong wall on the other.
  */
-const DEPTH = SLAB * 2 * 16;
+const CELL_FALLBACK = 16;
+const depthOf = (map: ParsedMap): number => SLAB * 2 * (map.grid?.r ?? CELL_FALLBACK);
 
 /**
  * The cliff, drawn as a stack of copies of the coastline rather than as a
  * second outline offset down.
  *
- * A shape and one copy of it `DEPTH` lower do not add up to the shape swept
- * that far: everywhere the land is thinner north to south than the wall is
- * deep — a spit, a cape, the neck between two lobes — the two copies miss each
- * other and a hole opens in the middle of the cliff. Copies close enough
+ * A shape and one copy of it a wall's height lower do not add up to the shape
+ * swept that far: everywhere the land is thinner north to south than the wall
+ * is deep — a spit, a cape, the neck between two lobes — the two copies miss
+ * each other and a hole opens in the middle of the cliff. Copies close enough
  * together that nothing on this map can fall between them are the cheapest
  * honest answer, and they are opaque, so the overlap is invisible.
  */
 const CLIFF_STEPS = 12;
-const CLIFF = Array.from(
-  { length: CLIFF_STEPS },
-  (_, index) => (DEPTH * (CLIFF_STEPS - 1 - index)) / CLIFF_STEPS
-);
+const cliffOf = (depth: number): number[] =>
+  Array.from({ length: CLIFF_STEPS }, (_, index) => (depth * (CLIFF_STEPS - 1 - index)) / CLIFF_STEPS);
 
 /**
  * How strongly the ground inside a territory is drawn, and how strongly the
@@ -181,7 +182,13 @@ const letteringScale = (zoom: number, rest: number): number => {
  * and the search field along the top, the legend and the plate of controls
  * along the bottom.
  */
-const CHROME = { top: 132, bottom: 48 };
+const CHROME: Record<MapVariant, { top: number; bottom: number }> = {
+  wide: { top: 132, bottom: 48 },
+  // A tall window carries more of it: the search sits closer to the top of a
+  // narrow screen, and along the bottom there is the view switch under the
+  // plate of map controls, with the contribute line under that again.
+  portrait: { top: 124, bottom: 108 },
+};
 
 /**
  * How much air the land is given on each side when the window is fitted to it,
@@ -204,24 +211,24 @@ const CONTENT_AIR = { x: 0.03, top: 0.075, bottom: 0.08 };
  * the size of the room it had. The water is scenery — it may run off the edges,
  * and on most windows it should.
  */
-function planOf(map: ParsedMap): MapPlan {
+function planOf(map: ParsedMap, depth: number, variant: MapVariant): MapPlan {
   const land = map.landmasses;
   const x0 = Math.min(...land.map((mass) => mass.x));
   const y0 = Math.min(...land.map((mass) => mass.y));
   const x1 = Math.max(...land.map((mass) => mass.x + mass.width));
   // The cliffs hang below the southern coasts, and what a reader has to see
   // goes down with them.
-  const y1 = Math.max(...land.map((mass) => mass.y + mass.height)) + DEPTH;
+  const y1 = Math.max(...land.map((mass) => mass.y + mass.height)) + depth;
   const air = { x: (x1 - x0) * CONTENT_AIR.x, top: (y1 - y0) * CONTENT_AIR.top, bottom: (y1 - y0) * CONTENT_AIR.bottom };
   return {
-    extent: { width: map.width, height: map.height + DEPTH },
+    extent: { width: map.width, height: map.height + depth },
     content: {
       x: x0 - air.x,
       y: y0 - air.top,
       w: x1 - x0 + air.x * 2,
       h: y1 - y0 + air.top + air.bottom,
     },
-    inset: CHROME,
+    inset: CHROME[variant],
   };
 }
 
@@ -254,6 +261,11 @@ type Props = {
   searchActive: boolean;
   /** Domains carrying materials from the active provider filter, or null. */
   allowed: Set<string> | null;
+  /**
+   * Which drawing of the world to open. The screen decides — it is a question
+   * about the shape of the window, and the screen is what the window is.
+   */
+  variant: MapVariant;
 };
 
 type Emphasis = 'full' | 'dim';
@@ -263,7 +275,7 @@ type Emphasis = 'full' | 'dim';
  * is not in the graph — but it still yields to `prefers-reduced-motion`, which
  * leaves colour changes and drops the movement.
  */
-export default function MapView({ matched, searchActive, allowed }: Props) {
+export default function MapView({ matched, searchActive, allowed, variant }: Props) {
   const catalog = useCatalog();
   const navigate = useNavigate();
   const { t, count } = useT();
@@ -279,7 +291,12 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
    * Null until the file has loaded, which is also what tells the viewport the
    * svg now exists to listen on.
    */
-  const plan = useMemo(() => (map ? planOf(map) : null), [map]);
+  /** How deep the cliffs are on the file that actually loaded. */
+  const depth = map ? depthOf(map) : 0;
+  const plan = useMemo(
+    () => (map ? planOf(map, depth, variant) : null),
+    [map, depth, variant]
+  );
   const viewport = useMapViewport(plan);
 
   /** One unit of lettering, in map units, at the magnification now showing. */
@@ -304,7 +321,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    loadMapSvg()
+    loadMapSvg(variant)
       .then((text) => {
         if (!cancelled) setMap(parseMapSvg(text));
       })
@@ -312,7 +329,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [variant]);
 
   /**
    * Where each continent's name goes: centred over its mainland, just off the
@@ -386,12 +403,13 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
             (domainId) => t(`domain.${domainId}.title`),
             // The cliffs hang below the southern coasts, and the water a name
             // may stand in goes down with them.
-            { width: map.width, height: map.height + DEPTH },
+            { width: map.width, height: map.height + depth },
             continents.map((continent) => continent.box),
-            scale
+            scale,
+            depth
           )
         : new Map<string, Placement>(),
-    [map, t, continents, scale]
+    [map, t, continents, scale, depth]
   );
 
   /**
@@ -476,7 +494,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
             className="pointer-events-none"
             aria-hidden="true"
             opacity={OCEAN_INK}
-            transform={`translate(0 ${DEPTH})`}
+            transform={`translate(0 ${depth})`}
             dangerouslySetInnerHTML={{ __html: ground.ocean }}
           />
 
@@ -484,7 +502,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
               in one pass and under all of the land. It belongs to the surface of
               the sea, which is at the foot of the cliffs rather than at the top
               of them — hence the drop. */}
-          <g filter="url(#map-shore)" transform={`translate(0 ${DEPTH})`}>
+          <g filter="url(#map-shore)" transform={`translate(0 ${depth})`}>
             {map.landmasses.map((mass, index) => (
               <path key={`shore-${index}`} d={mass.d} style={{ fill: 'var(--map-surf)' }} />
             ))}
@@ -504,10 +522,10 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
               <g key={`mass-${index}`}>
                 <path
                   d={mass.d}
-                  transform={`translate(0 ${DEPTH})`}
+                  transform={`translate(0 ${depth})`}
                   style={{ fill: 'var(--map-cliff-foot)' }}
                 />
-                {CLIFF.map((drop) => (
+                {cliffOf(depth).map((drop) => (
                   <path
                     key={drop}
                     d={mass.d}
@@ -733,7 +751,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
     );
   }
 
-  const shore = shoreRegion(viewport.window, { width: map.width, height: map.height + DEPTH });
+  const shore = shoreRegion(viewport.window, { width: map.width, height: map.height + depth });
 
   return (
     <div className="relative h-full w-full">
@@ -742,7 +760,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         // Room under the map for the cliffs to hang in. The ground itself ends
         // at `map.height`; the land stands on top of the water rather than in
         // the middle of it, so the whole slab is below that line.
-        viewBox={`0 0 ${map.width} ${map.height + DEPTH}`}
+        viewBox={`0 0 ${map.width} ${map.height + depth}`}
         // `touch-none` hands the browser's own pan and pinch over to this
         // component: without it a finger on the map scrolls the page, and two
         // fingers zoom the document rather than the drawing.
@@ -801,8 +819,12 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
 
       {/* Kept clear of the plate in the other corner, which on a narrow window
           is the only thing between the legend and a sentence written over a row
-          of buttons. */}
-      <p className="pointer-events-none absolute bottom-3 left-4 max-w-[calc(100%-11rem)] text-xs text-ink-faint">
+          of buttons.
+
+          Gone entirely on a phone. Wrapped onto four lines it is a paragraph
+          lying across the bottom of the drawing, and what it says — that a
+          field's area is its course count — the map goes on saying by itself. */}
+      <p className="pointer-events-none absolute bottom-3 left-4 hidden max-w-[calc(100%-11rem)] text-xs text-ink-faint sm:block">
         {t('ui.map.legend')}
       </p>
 
@@ -812,8 +834,12 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         rather press something than pinch. Everything they do, a trackpad
         already does; they are here so that nothing is only reachable by knowing
         a gesture.
+
+        Lifted a row on a phone, where the corner below belongs to the view
+        switch: the switch is what a thumb reaches for, so it gets the bottom of
+        the screen and the map's own controls stand above it.
       */}
-      <Plate row className="absolute bottom-3 right-4">
+      <Plate row className="absolute bottom-[4.25rem] right-4 sm:bottom-3">
         <IconButton
           icon="minus"
           label={t('ui.map.zoomOut')}
@@ -992,7 +1018,9 @@ function placeLabels(
    * find out what will fit now that they have — which is where the map's extra
    * names come from.
    */
-  scale: number
+  scale: number,
+  /** How far the cliffs hang below the coasts — the water starts under them. */
+  depth: number
 ): Map<string, Placement> {
   const placements = new Map<string, Placement>();
   // The land is an obstacle for a name that has been pushed off its territory:
@@ -1004,7 +1032,7 @@ function placeLabels(
     x: shape.x,
     y: shape.y,
     w: shape.width,
-    h: shape.height + DEPTH,
+    h: shape.height + depth,
   }));
   const taken: Rect[] = [...reserved];
 
@@ -1099,7 +1127,7 @@ function placeLabels(
         // a wall's height further down than the ground does.
         candidates.push({
           x: shape.cx - w / 2 + dx,
-          y: shape.y + shape.height + DEPTH + gap,
+          y: shape.y + shape.height + depth + gap,
           w,
           h,
         });

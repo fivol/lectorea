@@ -7,7 +7,6 @@ import { AS_SHAPE, inkOn, withAlpha } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import Icon from '@/components/Icon';
 import DomainIcon from '@/components/DomainIcon';
-import { Chip } from '@/components/ui';
 
 type Props = {
   matched: Set<string>;
@@ -19,8 +18,11 @@ const CONTINENTS: Continent[] = ['formal', 'social', 'humanities'];
 
 /**
  * The same content as the map, as a grid of cards grouped by continent.
- * This is also the only view on narrow screens, where a territory map is
- * unreadable and un-tappable.
+ *
+ * It used to be the only view a narrow screen could have. It is a choice on
+ * every screen now — the map has a drawing that fits a phone — and it is still
+ * the faster way to read the catalogue when what you want is the list rather
+ * than the picture.
  */
 export default function BlocksView({ matched, searchActive, allowed }: Props) {
   const catalog = useCatalog();
@@ -41,7 +43,9 @@ export default function BlocksView({ matched, searchActive, allowed }: Props) {
   }, [catalog.courses, courses]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-4 sm:px-6">
+    /* Room at the foot for the view switch, which floats over this list on a
+       phone rather than taking a row of its own. */
+    <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-4 sm:px-6 sm:pb-16">
       {CONTINENTS.map((continent) => {
         const domains = catalog.domains.filter((domain) => domain.continent === continent);
         if (!domains.length) return null;
@@ -99,9 +103,9 @@ function DomainCard({
 }) {
   const { t, count } = useT();
   // Three jobs, three bars. The stripe and the border are washes behind
-  // something else and wear the raw hue. The glyph and the badge are shapes, read
-  // by their outline, so they take the hue at 3:1. The counter is text and takes
-  // it at 4.5:1. All three come off one palette — see `inkOn`.
+  // something else and wear the raw hue. The glyph is a shape, read by its
+  // outline, so it takes the hue at 3:1. The counter is text and takes it at
+  // 4.5:1. All three come off one palette — see `inkOn`.
   const scheme = useResolvedTheme();
   const counterColour = inkOn(domain.color, scheme);
   const glyphColour = inkOn(domain.color, scheme, AS_SHAPE);
@@ -120,30 +124,15 @@ function DomainCard({
         className="absolute inset-x-0 top-0 h-1 transition-opacity duration-fast group-hover:opacity-100"
         style={{ background: domain.color, opacity: 0.6 }}
       />
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="flex min-w-0 items-center gap-2.5 text-h3 leading-snug text-ink">
-          <DomainIcon
-            domainId={domain.id}
-            size={30}
-            strokeWidth={1.5}
-            style={{ color: glyphColour }}
-          />
-          <span className="min-w-0">{t(`domain.${domain.id}.title`)}</span>
-        </h3>
-        {domain.bridge ? (
-          /* A bridge, not an hourglass: the badge means "this field spans two
-             continents", which an hourglass never managed to say. */
-          <Chip
-            icon="bridge"
-            hint={t('ui.map.bridgeHint')}
-            className="shrink-0 px-1.5 py-0.5"
-            ariaLabel={t('ui.map.bridge')}
-            style={{ color: glyphColour, borderColor: withAlpha(domain.color, 0.4) }}
-          >
-            {null}
-          </Chip>
-        ) : null}
-      </div>
+      <h3 className="flex min-w-0 items-center gap-2.5 text-h3 leading-snug text-ink">
+        <DomainIcon
+          domainId={domain.id}
+          size={30}
+          strokeWidth={1.5}
+          style={{ color: glyphColour }}
+        />
+        <span className="min-w-0">{t(`domain.${domain.id}.title`)}</span>
+      </h3>
       {/* One line on a full-width card cut every description mid-sentence and
           left the card shorter than its own title block. At ~53 characters per
           line the longest description here needs two, so three is the cap that

@@ -24,6 +24,7 @@ export default function Switch<T extends string>({
   options,
   onChange,
   label,
+  large = false,
   className = '',
 }: {
   value: T;
@@ -31,6 +32,8 @@ export default function Switch<T extends string>({
   onChange: (next: T) => void;
   /** Names the group for a screen reader — «Переключить вид». */
   label?: string;
+  /** Sized for a thumb: the touch placement rather than the toolbar one. */
+  large?: boolean;
   className?: string;
 }) {
   const index = Math.max(
@@ -40,7 +43,7 @@ export default function Switch<T extends string>({
   const n = options.length;
 
   return (
-    <div className={cx('plate seg', className)} role="group" aria-label={label}>
+    <div className={cx('plate seg', large && 'seg-lg', className)} role="group" aria-label={label}>
       {/* One element under all the halves, so the browser animates a single
           transform instead of cross-fading n backgrounds. */}
       <span
@@ -59,7 +62,7 @@ export default function Switch<T extends string>({
           onClick={() => onChange(option.value)}
           aria-pressed={value === option.value}
         >
-          {option.icon ? <Icon name={option.icon} size={13} /> : null}
+          {option.icon ? <Icon name={option.icon} size={large ? 16 : 13} /> : null}
           {option.label}
         </button>
       ))}

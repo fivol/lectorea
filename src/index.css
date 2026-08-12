@@ -642,6 +642,18 @@
   }
 
   /*
+   * The same switch, sized for a thumb rather than for a pointer.
+   *
+   * A 28px half is a comfortable click and a coin toss to tap; the platforms
+   * both ask for 44, and a control that decides what the whole screen is has no
+   * business being the one that gets missed. Wider halves too — with the labels
+   * set in spaced caps this is the only place they are read at arm's length.
+   */
+  .seg-lg .seg-item {
+    @apply h-[44px] gap-2 px-5 text-[12px];
+  }
+
+  /*
    * Two glyphs in one slot, one of them showing. Whatever leaves turns a quarter
    * out of the way as it goes and whatever arrives turns into place — a swap
    * that is legible as a swap even at 18px, which a cross-fade is not.

@@ -13,9 +13,12 @@ fields of knowledge marked out on them as territories, each sized by how many
 courses it holds and carrying an icon, so the empty outskirts are visible as
 work still to be done.
 
-It is one drawing, `public/map.svg`: coastlines and territory outlines and
-nothing else, with the colours, the lettering and the sea painted by the app, so
-the whole map follows the light and dark themes. It is a plan on disk and a view
+It is two drawings of one world — `public/map.svg` and `public/map-portrait.svg`
+— carrying coastlines and territory outlines and nothing else, with the colours,
+the lettering and the sea painted by the app, so the whole map follows the light
+and dark themes. Which one loads is decided by the shape of the window and not
+by the size of the device: see [two shapes of paper](#two-shapes-of-paper) below.
+It is a plan on disk and a view
 on screen — the app lays the ground back a little and stands the continents in
 the water as slabs with a cliff at the coast, the same projection the tile
 collection draws in ([tiles.md](tiles.md)). The ground inside a territory comes
@@ -69,10 +72,41 @@ come to rest below the search field even though the water behind it is theirs.
 The lettering with no plate under it takes the same halo the map gives its own
 names.
 
-On a small screen the map falls back to a grid of blocks carrying the same
-icons; on a wide one the switch in the header does the same by hand.
+### Two shapes of paper
+
+A map of three continents ranged side by side wants a window wider than it is
+tall. Fitted into a phone held upright it is a strip of land across the middle of
+a great deal of water, with the names at three pixels — and no amount of zooming
+fixes the shape of the paper. So a phone used to be sent to the blocks whatever
+it asked for.
+
+There are two drawings now. The same generator lays the same territories out
+again with the continents stacked instead of ranged, and writes
+`public/map-portrait.svg` — same areas, same dependency order read bottom to top
+inside each continent, same landforms, a canvas the shape of a phone. Nothing is
+hand-placed and nothing is a second copy of the catalogue: add a domain and both
+files are one command away from carrying it. See
+[the pipeline](pipeline.md#the-two-maps).
+
+Which one loads is a question about the window rather than about the device —
+`(orientation: portrait)`, so a tablet held upright gets the stacked one and a
+phone turned on its side gets the ranged one. Turning the device swaps the file
+and re-fits it: the two are different worlds, and carrying a reader's zoom from
+one into the other would land them somewhere else entirely. The cell size, the
+depth of the cliffs and the chrome the land is kept clear of all follow the file
+that actually loaded rather than the one that happened to be written first.
+
+The blocks are still there, and are still the same catalogue drawn as a grid of
+cards.
 
 ![The blocks fallback](images/blocks.webp)
+
+Both views are now a choice on every screen. On a wide one the switch sits in the
+header; on a phone there is no room for it beside the wordmark — and a control
+that decides what the whole screen is belongs under the thumb rather than in the
+far corner — so it floats at the foot of the screen instead, thumb-sized, in the
+same place over both views. Over the blocks it rides the bottom of the scrolling
+column rather than standing over the middle of a card.
 
 That choice
 lasts the visit and no longer: the map is the front door, so every visit opens

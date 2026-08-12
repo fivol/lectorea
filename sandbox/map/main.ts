@@ -5,6 +5,7 @@ import {
   templateSvg,
   type MapConfig,
   type MapResult,
+  type Packing,
 } from '../../shared/mapgen.js';
 import {
   buildDomainGraph,
@@ -93,6 +94,27 @@ type Slider = {
 
 type Group = { title: string; note?: string; sliders: Slider[] };
 
+/**
+ * The two shapes of paper the app draws on, as presets.
+ *
+ * Packing alone is not a format: three continents stacked on a canvas that is
+ * wider than it is tall are three continents in a puddle, and the proportions
+ * that keep each one readable go with the direction they are packed in. These
+ * are the same numbers `scripts/map-portrait.ts` builds the shipped file from.
+ */
+const FORMATS: Array<{ packing: Packing; label: string; config: Partial<MapConfig> }> = [
+  {
+    packing: 'row',
+    label: 'Ряд',
+    config: { packing: 'row', width: 1680, height: 980, maxStretch: 1.5, hexR: 16, strait: 90 },
+  },
+  {
+    packing: 'column',
+    label: 'Столбец',
+    config: { packing: 'column', width: 1180, height: 1560, maxStretch: 0.8, hexR: 20, strait: 76 },
+  },
+];
+
 const GROUPS: Group[] = [
   {
     title: 'Сетка',
@@ -120,6 +142,7 @@ const GROUPS: Group[] = [
     sliders: [
       { key: 'layering', label: 'Строгость слоёв', min: 0, max: 1, step: 0.05 },
       { key: 'linkPull', label: 'Притяжение по связям', min: 0, max: 1.5, step: 0.05 },
+      { key: 'maxStretch', label: 'Вытянутость материка', min: 0.6, max: 1.6, step: 0.05 },
     ],
   },
   {
@@ -209,6 +232,30 @@ function buildPanel(): void {
         seedValue,
         el('button', { textContent: '▶', onclick: step(1), title: 'Следующий' }),
       ]),
+    ])
+  );
+
+  /* The shape of the paper: the app draws two maps, one for a window wider
+     than it is tall and one for a phone held upright. Both are this generator
+     — see `pnpm map:portrait` — so both are art-directed here. */
+  panel.append(
+    el('div', { class: 'row variant' }, [
+      el('label', { textContent: 'Формат' }),
+      el(
+        'div',
+        { class: 'stepper' },
+        FORMATS.map((format) =>
+          el('button', {
+            textContent: format.label,
+            className: config.packing === format.packing ? 'accent' : '',
+            onclick: () => {
+              config = { ...config, ...format.config };
+              buildPanel();
+              regenerate();
+            },
+          })
+        )
+      ),
     ])
   );
 
