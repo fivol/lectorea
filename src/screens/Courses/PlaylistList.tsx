@@ -14,6 +14,7 @@ import { ButtonLink } from '@/components/ui';
 import {
   applyFilters,
   defaultFilters,
+  langLabel,
   sortPlaylists,
   type PlaylistFilterState,
   type SortKey,
@@ -22,39 +23,60 @@ import {
 type Props = { course: BuiltCourse };
 
 export default function PlaylistList({ course }: Props) {
-  const { t, count } = useT();
+  const { t, count, lang } = useT();
   const catalog = useCatalog();
   const profile = useProfile((state) => state.profile);
   const params = useCatalogParams();
 
   const [playlists, setPlaylists] = useState<BuiltPlaylist[] | null>(null);
-  const [filters, setFilters] = useState<PlaylistFilterState>(defaultFilters([]));
+  const [filters, setFilters] = useState<PlaylistFilterState>(() => defaultFilters(lang));
   const [sort, setSort] = useState<SortKey>('score');
   const lastFocused = useRef<HTMLElement | null>(null);
+
+  // The interface language is the starting point, not a leash: opening another
+  // course starts from it again, but switching the header toggle leaves an open
+  // panel's filters alone — they are the user's, and the chip says which.
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   useEffect(() => {
     let cancelled = false;
     setPlaylists(null);
+    setFilters(defaultFilters(langRef.current));
     loadPlaylistsCached(course.id).then((loaded) => {
       if (cancelled) return;
       setPlaylists(loaded);
-      setFilters(defaultFilters(loaded));
     });
     return () => {
       cancelled = true;
     };
   }, [course.id]);
 
-  const visible = useMemo(() => {
-    if (!playlists) return [];
-    const filtered = applyFilters(
+  /**
+   * What the list shows, and whether the language filter had to be lifted to
+   * show it.
+   *
+   * A course with no recording in your language is a fact worth stating — so
+   * the filter stays on, its chip stays in the strip, and the rest of the shard
+   * comes up under a line that says nothing was found in that language. Only
+   * the language is lifted: every other filter is still the user's answer to
+   * «what am I looking for».
+   */
+  const { rows: visible, otherLangs } = useMemo(() => {
+    if (!playlists) return { rows: [] as BuiltPlaylist[], otherLangs: false };
+    const global = { providers: params.providers, lecturers: params.lecturers };
+    const filtered = applyFilters(playlists, filters, profile, global, catalog.providers);
+    if (filtered.length || !filters.langs.length) {
+      return { rows: sortPlaylists(filtered, sort), otherLangs: false };
+    }
+    const rest = applyFilters(
       playlists,
-      filters,
+      { ...filters, langs: [] },
       profile,
-      { providers: params.providers, lecturers: params.lecturers },
+      global,
       catalog.providers
     );
-    return sortPlaylists(filtered, sort);
+    return { rows: sortPlaylists(rest, sort), otherLangs: rest.length > 0 };
   }, [playlists, filters, profile, params.providers, params.lecturers, catalog.providers, sort]);
 
   /**
@@ -103,7 +125,7 @@ export default function PlaylistList({ course }: Props) {
           onChange={setFilters}
           sort={sort}
           onSortChange={setSort}
-          onReset={() => setFilters(defaultFilters(playlists))}
+          onReset={() => setFilters(defaultFilters(lang))}
         />
       ) : null}
 
@@ -114,17 +136,26 @@ export default function PlaylistList({ course }: Props) {
              and nothing under it jumps when the shard lands. */
           <RowSkeletons n={Math.min(course.playlistCount, 5)} />
         ) : visible.length ? (
-          visible.map((playlist) => (
-            <PlaylistRow
-              key={playlist.id}
-              playlist={playlist}
-              label={labels.get(playlist.id) ?? { heading: playlist.title, detail: null }}
-              onOpen={(id) => {
-                lastFocused.current = document.activeElement as HTMLElement;
-                params.setPlaylist(id);
-              }}
-            />
-          ))
+          <>
+            {/* Above the rows, not instead of them: the sentence and the list
+                it explains have to be read in that order. */}
+            {otherLangs ? (
+              <p className="pb-1 pt-1 text-center text-sm text-ink-faint">
+                {t('ui.playlists.noneInLang', { lang: langLabel(filters.langs) })}
+              </p>
+            ) : null}
+            {visible.map((playlist) => (
+              <PlaylistRow
+                key={playlist.id}
+                playlist={playlist}
+                label={labels.get(playlist.id) ?? { heading: playlist.title, detail: null }}
+                onOpen={(id) => {
+                  lastFocused.current = document.activeElement as HTMLElement;
+                  params.setPlaylist(id);
+                }}
+              />
+            ))}
+          </>
         ) : (
           <p className="py-4 text-center text-sm text-ink-faint">
             {t('ui.playlists.emptyFiltered')}

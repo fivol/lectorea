@@ -38,14 +38,26 @@ export const EMPTY_FILTERS: PlaylistFilterState = {
   onlyFavorite: false,
 };
 
+/** A language names itself: the chip says «Русский» whichever language the interface is in. */
+export const LANG_LABELS: Record<string, string> = { ru: 'Русский', en: 'English' };
+
 /**
- * The language filter defaults to `ru` — but only when the course actually has
- * Russian materials. Defaulting unconditionally would show an empty list for
- * every course whose only recordings are in English, which reads as a bug.
+ * The language filter starts on the language the interface is in, and stays on
+ * it even for a course that has nothing in that language.
+ *
+ * Dropping the filter in that case used to keep the list from looking empty,
+ * but it also hid the fact that there is not a single recording in your
+ * language — the list simply appeared, in English, with no filter to explain
+ * it. The list now says so itself and shows the other languages underneath
+ * (see PlaylistList), so the filter can stay where the user put it.
  */
-export function defaultFilters(playlists: BuiltPlaylist[]): PlaylistFilterState {
-  const hasRussian = playlists.some((playlist) => playlist.lang === 'ru');
-  return { ...EMPTY_FILTERS, langs: hasRussian ? ['ru'] : [] };
+export function defaultFilters(lang: string): PlaylistFilterState {
+  return { ...EMPTY_FILTERS, langs: [lang] };
+}
+
+/** «Русский, English» — what the filter is currently asking for, in one line. */
+export function langLabel(langs: string[]): string {
+  return langs.map((lang) => LANG_LABELS[lang] ?? lang).join(', ');
 }
 
 export function activeFilterCount(state: PlaylistFilterState): number {

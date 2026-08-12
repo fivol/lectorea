@@ -165,6 +165,7 @@
   "ui.playlists.title": "Плейлисты",
   "ui.playlists.empty": "Плейлистов пока нет",
   "ui.playlists.emptyFiltered": "Под фильтрами ничего не осталось",
+  "ui.playlists.noneInLang": "На языке «{lang}» здесь ничего нет — ниже записи на других языках",
 
   "ui.playlist.length.lesson": "урок",
   "ui.playlist.length.pair": "пара",

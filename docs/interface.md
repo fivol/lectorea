@@ -147,7 +147,12 @@ the columns back to full width.
 
 - **Playlists** — the concrete recordings of that course, sorted by a bayesian
   rating rather than raw views. Filter by language, provider, lecturer, lecture
-  length, captions, year, completeness; hide what you have watched. The filters
+  length, captions, year, completeness; hide what you have watched. The language
+  filter starts on the language of the interface and stays there even for a
+  course that has nothing in it: rather than quietly dropping the filter, the
+  list says there is nothing in that language and shows the other languages
+  underneath, so «no Russian lectures on this at all» is something you learn
+  instead of something you infer. The filters
   sit in one strip that scrolls sideways, ordered by how often they are reached
   for, and the button at its end unfolds the lot; sorting has its own row,
   because at the end of that strip it read as one more filter. The provider and

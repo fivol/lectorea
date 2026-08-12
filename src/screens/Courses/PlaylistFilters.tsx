@@ -10,6 +10,7 @@ import { Button, Chip } from '@/components/ui';
 import {
   activeFilterCount,
   facetsOf,
+  LANG_LABELS,
   SORT_KEYS,
   type PlaylistFilterState,
   type SortKey,
@@ -28,8 +29,6 @@ const LECTURE_LENGTHS: LectureLength[] = ['lesson', 'pair', 'double', 'long'];
 const KINDS: BuiltPlaylist['kind'][] = ['lectures', 'seminars', 'mixed'];
 const PROVIDER_TYPES: ProviderType[] = ['university', 'platform', 'individual'];
 
-const LANG_LABELS: Record<string, string> = { ru: 'Русский', en: 'English' };
-
 export default function PlaylistFilters({
   playlists,
   state,
@@ -45,6 +44,12 @@ export default function PlaylistFilters({
 
   /** Unfolds the strip into a wrapped block — scrolling is the default, not the only way. */
   const [expanded, setExpanded] = useState(false);
+
+  // Languages the course has, plus whatever the filter is already asking for:
+  // the filter defaults to the interface language even for a course that has
+  // nothing in it, and a dropdown that cannot untick its own active row is a
+  // dead end.
+  const langOptions = [...new Set([...facets.langs, ...state.langs])].sort();
 
   // The provider list is the only facet long enough to need finding rather than
   // scanning — a popular course pulls in a couple of dozen channels.
@@ -96,7 +101,7 @@ export default function PlaylistFilters({
             label={t('ui.filters.lang')}
             active={state.langs.length > 0}
           >
-            {facets.langs.map((lang) => (
+            {langOptions.map((lang) => (
               <CheckRow
                 key={lang}
                 checked={state.langs.includes(lang)}

@@ -165,6 +165,7 @@
   "ui.playlists.title": "Playlists",
   "ui.playlists.empty": "No playlists yet",
   "ui.playlists.emptyFiltered": "Nothing left under these filters",
+  "ui.playlists.noneInLang": "Nothing here in {lang} — below are the recordings in other languages",
 
   "ui.playlist.length.lesson": "≤40 min",
   "ui.playlist.length.pair": "≤1.5 h",
