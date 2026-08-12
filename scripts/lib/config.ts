@@ -28,6 +28,7 @@ export const paths = {
 function loadEnv(): void {
   const file = path.join(ROOT, '.env');
   if (!fs.existsSync(file)) return;
+  const seen = new Set<string>();
   for (const raw of fs.readFileSync(file, 'utf8').split('\n')) {
     const line = raw.trim();
     if (!line || line.startsWith('#')) continue;
@@ -35,6 +36,12 @@ function loadEnv(): void {
     if (eq === -1) continue;
     const key = line.slice(0, eq).trim();
     const value = line.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
+    // A name written twice keeps its first value and drops the second in
+    // silence. Harmless for a setting one means to override, expensive for the
+    // numbered key slots: a second YOUTUBE_API_KEY3 is a whole project's daily
+    // quota that nothing will ever spend, and nothing anywhere would say so.
+    if (seen.has(key)) console.warn(`! .env: ${key} is set twice — the later value is ignored`);
+    seen.add(key);
     if (!(key in process.env)) process.env[key] = value;
   }
 }
