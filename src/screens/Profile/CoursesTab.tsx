@@ -11,7 +11,6 @@ import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
 import EmptyState from '@/components/EmptyState';
 import ProgressBar from '@/components/ProgressBar';
-import { Button } from '@/components/ui';
 
 /**
  * A favourited course is a goal — there is no third entity and no third icon.
@@ -123,14 +122,29 @@ function GoalCard({ course }: { course: BuiltCourse }) {
     .filter((step) => profile.courses[step.id]?.status !== 'done')
     .reduce((sum, step) => sum + step.hours, 0);
 
-  // "Continue" goes to the first unfinished course by level — the one that can
-  // actually be started right now.
-  const nextId =
-    steps.find((step) => profile.courses[step.id]?.status !== 'done')?.id ?? course.id;
   const domain = catalog.domainById.get(course.domains[0]);
 
   return (
-    <article className="surface flex gap-3 overflow-hidden p-3">
+    <article className="surface relative flex gap-3 overflow-hidden p-3 transition-colors
+                        duration-fast ease-out hover:border-accent">
+      {/*
+        The whole card opens the course, and the card alone. It used to open
+        nothing at all — every part of it was a caption, and the one thing that
+        could be pressed was a button underneath offering to «начать путь»,
+        which went not to the course on the card but to the first unfinished
+        step of the path behind it. A card that names one course and leads to
+        another is a card you learn not to trust; the path itself is in the
+        panel the course opens, one press further on and asked for.
+
+        Laid over the card rather than wrapped around it: the progress bar is a
+        `div`, and a `div` cannot live inside a `button`.
+      */}
+      <button
+        type="button"
+        onClick={() => open(course.id)}
+        aria-label={`${t(`course.${course.id}.title`)} — ${t('ui.profile.openInGraph')}`}
+        className="absolute inset-0 z-10"
+      />
       <span className="h-14 w-20 shrink-0 overflow-hidden rounded">
         <CourseArt
           courseId={course.id}
@@ -140,7 +154,13 @@ function GoalCard({ course }: { course: BuiltCourse }) {
         />
       </span>
       <div className="min-w-0 flex-1">
-        <h4 className="truncate text-sm font-semibold">{t(`course.${course.id}.title`)}</h4>
+        <div className="flex items-start gap-2">
+          <h4 className="min-w-0 flex-1 truncate text-sm font-semibold">
+            {t(`course.${course.id}.title`)}
+          </h4>
+          {/* The one mark that says the card is a door rather than a summary. */}
+          <Icon name="chevron-right" size={13} className="mt-0.5 shrink-0 text-ink-faint" />
+        </div>
         <p className="num mt-0.5 truncate text-xs text-ink-faint">
           {domain ? t(`domain.${domain.id}.title`) : ''} · {t('ui.course.level', { n: course.level + 1 })}
         </p>
@@ -155,13 +175,6 @@ function GoalCard({ course }: { course: BuiltCourse }) {
         <p className="num mt-1 text-xs text-ink-faint">
           {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
         </p>
-
-        {/* One verb for the path, in both of its states — «Изучать» in the
-            panel is about a single course's status and stays there. */}
-        <Button small className="mt-2" onClick={() => open(nextId)}>
-          {doneIds.length ? t('ui.profile.continuePath') : t('ui.profile.startPath')}
-          <Icon name="chevron-right" size={12} />
-        </Button>
       </div>
     </article>
   );

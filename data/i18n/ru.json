@@ -265,8 +265,6 @@
   "ui.profile.group.favorite.hint": "Избранный курс — это цель. Прогресс считается по его пути",
   "ui.profile.progress": "{done} из {total}",
   "ui.profile.remaining": "осталось ≈{hours} ч",
-  "ui.profile.startPath": "Начать путь",
-  "ui.profile.continuePath": "Продолжить путь",
   "ui.profile.noGoal": "Добавьте курс в избранное на карте — он станет целью, и здесь появится прогресс по его пути",
   "ui.profile.toMap": "К карте",
   "ui.profile.openInGraph": "Открыть в каталоге",

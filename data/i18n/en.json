@@ -265,8 +265,6 @@
   "ui.profile.group.favorite.hint": "A favourite course is a goal. Progress is counted along its path",
   "ui.profile.progress": "{done} of {total}",
   "ui.profile.remaining": "≈{hours} h left",
-  "ui.profile.startPath": "Start the path",
-  "ui.profile.continuePath": "Continue the path",
   "ui.profile.noGoal": "Add a course to favourites on the map — it becomes a goal, and progress along its path shows up here",
   "ui.profile.toMap": "To the map",
   "ui.profile.openInGraph": "Open in the catalogue",
