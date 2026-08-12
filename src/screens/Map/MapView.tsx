@@ -11,7 +11,7 @@ import { Plate, PlateDivider, IconButton } from '@/components/ui';
 import { SLAB } from '@shared/view';
 import { hexPath } from '@shared/tiles';
 import { groundOf, HEX_CLIP } from './ground';
-import { useMapViewport, MAX_ZOOM, ZOOM_STEP } from './viewport';
+import { useMapViewport, ZOOM_STEP } from './viewport';
 
 /**
  * The map's own colours live in `index.css` next to every other theme colour —
@@ -132,30 +132,43 @@ const CONTINENT_AIR = { x: 2, y: 0.5 };
  *
  * Everything written on the map — the names, the counts, the icons, the halo
  * behind them — is sized in what the reader sees rather than in what the map
- * measures. Zoom in and the ground grows while the lettering holds still, which
- * is what a map does: magnifying a map is asking to see more of it, not to see
- * the same names written larger. What comes of it is that a territory too small
- * to be named at rest names itself as soon as the reader goes in, and the map
- * gets denser rather than merely bigger.
+ * measures, and it takes only a share of the magnification: go four times in
+ * and the ground is four times bigger while the names are not quite twice.
+ *
+ * Neither end of that is arbitrary. Lettering that grew with the ground would
+ * make zooming useless — the same map at the same density, drawn larger, with
+ * fewer fields on screen. Lettering that held perfectly still is the other
+ * mistake, and the one this started as: standing over a continent that fills
+ * the window and reading it through eight-pixel labels is a magnifying glass
+ * pointed at everything except the words. A share of the growth gets both — the
+ * names shrink against the ground, so a territory too small to be named at rest
+ * names itself as the reader goes in, and they still come up large enough to be
+ * read comfortably at the end of the journey.
  *
  * Measured from the resting size and not from 1, so that a map drawn small
  * because the display is large is still lettered for the size it was drawn at —
  * otherwise the names on a wall display would come out twice the weight of the
  * same names on a laptop.
+ */
+const LETTERING_GROWTH = 0.4;
+
+/**
+ * How often it answers: four steps per doubling of the magnification.
  *
- * It answers in steps — four to a doubling — rather than continuously. Fitting
- * on every frame would have names blinking in and out along the whole travel of
- * a pinch, since a name that only just fits its territory sits on the boundary
- * and crosses it over and over; on steps the map re-letters itself a dozen
- * times across the range and holds still in between. The price is that inside
- * one step the lettering drifts by a tenth of its size, which nobody has ever
- * seen.
+ * Re-fitting on every frame would have names blinking in and out along the
+ * whole travel of a pinch — a name that only just fits its territory sits on
+ * the boundary and crosses it over and over. On steps the map re-letters itself
+ * a handful of times across the range and holds still in between, and the price
+ * is that inside one step the lettering drifts by a few percent of its size,
+ * which nobody has ever seen.
  */
 const LETTERING_STEPS = 4;
 
+/** One unit of lettering, in map units, at a given magnification. */
 const letteringScale = (zoom: number, rest: number): number => {
   const times = Math.max(zoom / rest, 1);
-  return 2 ** (-Math.round(Math.log2(times) * LETTERING_STEPS) / LETTERING_STEPS);
+  const stepped = 2 ** (Math.round(Math.log2(times) * LETTERING_STEPS) / LETTERING_STEPS);
+  return stepped ** (LETTERING_GROWTH - 1);
 };
 
 /**
@@ -709,7 +722,7 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         <IconButton
           icon="plus"
           label={t('ui.map.zoomIn')}
-          disabled={viewport.zoom >= MAX_ZOOM}
+          disabled={viewport.deepest}
           className="disabled:pointer-events-none disabled:opacity-35"
           onClick={() => viewport.zoomBy(ZOOM_STEP)}
         />

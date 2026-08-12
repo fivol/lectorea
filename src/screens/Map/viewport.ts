@@ -24,31 +24,34 @@ export type Frame = { x: number; y: number; w: number; h: number };
 /**
  * How far in the reader may go.
  *
- * Measured against the drawing rather than against where it came to rest,
- * because what runs out at the far end belongs to the drawing: the hexes, the
- * relief and the coastline are all at their own size by then, and more
- * magnification only makes the corners bigger. A display that shows the map
- * small at rest therefore has further to travel, which is right — it had more
- * of the map on screen to begin with.
+ * Four times the resting size, and counted from it rather than from the
+ * drawing's own scale, so that every screen gets the same journey: from the
+ * whole map down to about one continent filling the window. That is where the
+ * map runs out of things to say — past it a reader is looking at two territories
+ * and a lot of hexagons, which is a worse view of the catalogue than the one
+ * they started from, not a better one.
  *
- * Out is bounded by the resting size instead. The whole map is already there,
- * and there is no page behind it to reveal.
+ * Out is bounded by the resting size. The whole map is already there, and there
+ * is no page behind it to reveal.
  */
-export const MAX_ZOOM = 8;
+export const MAX_MAGNIFICATION = 4;
 
 /**
  * The widest the map is ever drawn, in screen pixels.
  *
  * Without a cap the drawing takes whatever it is given, and on a large display
  * that is a wall map: the reader's eye has to travel the width of the desk to
- * get from one continent to the next, and the lettering — which is sized off
- * the drawing — comes out at heading size. Past this the map stops growing and
- * the sea around it grows instead, which is the same picture at a comfortable
- * size rather than a bigger one. Below it nothing happens at all: a laptop and
- * a phone still get the whole window, because on those the room is the
- * constraint and there is none to spare.
+ * get from one continent to the next. Past this the map stops growing and the
+ * sea around it grows instead, which is the same picture at a comfortable size
+ * rather than a bigger one. Below it nothing happens at all: a laptop and a
+ * phone still get the whole window, because on those the room is the constraint
+ * and there is none to spare.
+ *
+ * Generous, because everything written on the map is sized off this: a cap set
+ * where the drawing merely stops being uncomfortable leaves the names smaller
+ * than they need to be on exactly the displays that had room for them.
  */
-const COMFORTABLE_WIDTH = 1600;
+const COMFORTABLE_WIDTH = 2000;
 
 /** One press of the plus button. A quarter of a doubling reads as a step. */
 export const ZOOM_STEP = 2 ** 0.25;
@@ -132,6 +135,8 @@ export type MapViewport = {
   eased: boolean;
   /** Nothing has been moved: the whole map is in the window. */
   fitted: boolean;
+  /** As far in as the map goes. */
+  deepest: boolean;
   /** Whether the press that has just ended moved the map instead of picking something. */
   moved: () => boolean;
   zoomBy: (factor: number) => void;
@@ -257,7 +262,7 @@ export function useMapViewport(content: { width: number; height: number } | null
       const point = at(clientX, clientY);
       if (!point) return;
       setView((current) => {
-        const k = clamp(current.k * factor, rest, MAX_ZOOM);
+        const k = clamp(current.k * factor, rest, rest * MAX_MAGNIFICATION);
         const ratio = k / current.k;
         return settle({
           k,
@@ -438,6 +443,7 @@ export function useMapViewport(content: { width: number; height: number } | null
     // At the resting size the map is smaller than the window on both axes, so
     // it is centred by the clamp and there is no position left to compare.
     fitted: view.k <= rest * 1.001,
+    deepest: view.k >= rest * MAX_MAGNIFICATION * 0.999,
     moved: useCallback(() => dragged.current, []),
     zoomBy,
     reset,

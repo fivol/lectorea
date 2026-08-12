@@ -36,15 +36,24 @@ pinch or `⌘`/`Ctrl` and the wheel magnifies about the pointer, and dragging do
 what dragging a map does. A press that turns into a drag stops being a press, so
 the territory under it is not opened. Three buttons in the corner do the same
 for a pointer with no second gesture in it, and the last of them puts the map
-back.
+back. It goes in four times and no further — that is one continent filling the
+window, and past it a reader is looking at two territories and a lot of
+hexagons.
 
-The lettering does not follow. Everything written on the map holds its size on
-screen while the ground under it grows, which is what makes going in worth
-doing: the names shrink against the territories, more of them fit, and fields
-that had to leave their names out at sea — or go unnamed until pointed at —
-take them back. The same rule sets where the map comes to rest. It is fitted to
-the window up to a comfortable width and no further, so a large display gets the
-map at a readable size with open water around it rather than a wall map.
+The lettering only half follows. Everything written on the map — names, counts,
+icons, the halo behind them — takes a share of the magnification rather than all
+of it, so four times in the ground is four times bigger and the names not quite
+twice. Growing with the ground would make going in pointless: the same map at
+the same density, drawn larger. Holding perfectly still is the other mistake —
+a continent filling the window, read through eight-pixel labels. A share gets
+both: the names shrink against the territories, so fields that had to put their
+names out at sea, or go unnamed until pointed at, take them back — and they are
+still comfortable to read at the far end.
+
+The size the map comes to rest at is what all of that is measured from. It is
+fitted to the window up to a comfortable width and no further, so a large
+display gets the map at a readable size with open water around it rather than a
+wall map, and a name is the same size there as on a laptop.
 
 On a small screen the map falls back to a grid of blocks carrying the same
 icons; on a wide one the switch in the header does the same by hand.

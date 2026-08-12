@@ -55,8 +55,8 @@ missed.
 1. **Start on the map.** Three continents — formal and natural sciences, social
    sciences, humanities — with the fields of knowledge drawn as territories. The
    bigger the territory, the more courses it holds. Move it as you would any
-   map: two fingers to carry it, a pinch to go in — the names hold their size
-   and more of them appear as you do. Or just search: the box understands
+   map: two fingers to carry it, a pinch to go in — the names grow a little as
+   you do, and more of them appear. Or just search: the box understands
    abbreviations and student slang, so `теорвер` and `линал` find what you mean.
 2. **Pick a field and read the columns.** Each column is a difficulty level:
    the number of courses that have to come before this one. Left is the
