@@ -62,7 +62,7 @@ export default function CoursesTab() {
           <p className="mb-3 text-xs text-ink-faint">{t('ui.profile.group.favorite.hint')}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {groups.goals.map((course) => (
-              <GoalCard key={course.id} course={course} />
+              <CourseCard key={course.id} course={course} />
             ))}
           </div>
         </section>
@@ -82,9 +82,10 @@ export default function CoursesTab() {
         return (
           <section key={status}>
             <h3 className="mb-3 text-sm font-medium">{t(`ui.profile.group.${status}`)}</h3>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {/* The same grid as the goals above, because the same card is in it. */}
+            <div className="grid gap-3 sm:grid-cols-2">
               {list.map((course) => (
-                <PlainCard key={course.id} course={course} />
+                <CourseCard key={course.id} course={course} />
               ))}
             </div>
           </section>
@@ -110,7 +111,17 @@ function useCourseNavigation() {
   };
 }
 
-function GoalCard({ course }: { course: BuiltCourse }) {
+/**
+ * One card for all three groups.
+ *
+ * A goal used to be a card with artwork, a path and hours, and a course in
+ * progress a thin strip with a name on it — so the tab read as three lists of
+ * three different things, when a goal, a course being studied and a finished
+ * one are one course in three states. The state is what the heading above the
+ * grid says; the card says what the course is and how far along it you are,
+ * and that is the same question in every group.
+ */
+function CourseCard({ course }: { course: BuiltCourse }) {
   const catalog = useCatalog();
   const { t } = useT();
   const profile = useProfile((state) => state.profile);
@@ -172,42 +183,15 @@ function GoalCard({ course }: { course: BuiltCourse }) {
           label={t('ui.profile.progress', { done: doneIds.length, total: steps.length })}
         />
 
-        <p className="num mt-1 text-xs text-ink-faint">
-          {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
-        </p>
+        {/* Only while there is anything left. A finished path already says so
+            with a full bar reading «3 из 3», and «осталось ≈0 ч» under it is
+            a line that exists to be ignored. */}
+        {remainingHours > 0 ? (
+          <p className="num mt-1 text-xs text-ink-faint">
+            {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
+          </p>
+        ) : null}
       </div>
     </article>
-  );
-}
-
-function PlainCard({ course }: { course: BuiltCourse }) {
-  const catalog = useCatalog();
-  const { t } = useT();
-  const open = useCourseNavigation();
-  const domain = catalog.domainById.get(course.domains[0]);
-
-  return (
-    <button
-      type="button"
-      onClick={() => open(course.id)}
-      aria-label={`${t(`course.${course.id}.title`)} — ${t('ui.profile.openInGraph')}`}
-      className="surface flex items-center gap-3 p-2 text-left hover:border-accent"
-    >
-      <span className="h-10 w-14 shrink-0 overflow-hidden rounded">
-        <CourseArt
-          courseId={course.id}
-          color={domain?.color ?? 'var(--c-formal)'}
-          domain={domain}
-          className="h-full w-full"
-        />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm">{t(`course.${course.id}.title`)}</span>
-        <span className="num block truncate text-xs text-ink-faint">
-          {domain ? t(`domain.${domain.id}.title`) : ''}
-        </span>
-      </span>
-      <Icon name="chevron-right" size={13} className="text-ink-faint" />
-    </button>
   );
 }
