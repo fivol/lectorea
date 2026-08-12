@@ -50,8 +50,8 @@ shared/            imported by both the build and the browser
 
 ## Quota
 
-10 000 units a day. The rule that shapes everything: **never call
-`search.list`** — it costs 100 units.
+10 000 units a day per Google Cloud project. The rule that shapes everything:
+**never call `search.list`** — it costs 100 units.
 
 | Call | Cost | What it gives |
 |---|---|---|
@@ -84,9 +84,33 @@ Tiers 1–3 the queue reads off the `matches` table. Tiers 0 and 4 it cannot see
 by itself — hand decisions are a file in git and the support-material rule lives
 in `lib/rules.ts` — so `03-videos.ts` works them out and hands them over.
 
-`lib/youtube.ts` counts spent units in the `quota(date, spent)` table and stops
-at 9500, leaving a margin. The date key follows Pacific midnight, which is when
-the real quota resets.
+`lib/youtube.ts` counts spent units in the `quota(date, key, spent)` table and
+stops each key at 9500, leaving a margin. The date key follows Pacific midnight,
+which is when the real quota resets.
+
+### More than one key
+
+A key is named in the ledger by eight hex characters of its digest rather than
+by the slot it sits in. Identity has to follow the value: swapping two keys
+around in `.env` would otherwise hand one of them the other's spending, which is
+the one bookkeeping mistake that quietly overdraws a project.
+
+Keys are spent **in order, not balanced** — a crawl that ends mid-queue should
+leave the untouched key obviously untouched, because two keys both mysteriously
+at 6000 is a state nobody can reason about the next morning.
+
+Rotation is a loop around the request rather than a single choice up front. The
+ledger is only this machine's memory of the day, and the API's own 403 is the
+fact: a key that looks fresh here but is spent in reality — a clone with no
+`cache.db`, a project CI has been crawling on — is found out on its first call,
+written off for the day, and the same request goes out again on the next key.
+`quotaExceeded` therefore no longer ends the run; it ends *a key*. Only when
+every key has been written off does the worker stop with
+`квота исчерпана, продолжу завтра`.
+
+Two keys from two projects turn the two-day first crawl into one evening. Two
+keys of the same project do nothing: the quota is the project's, and the second
+is found empty on its first call. How to add one: [setup.md](setup.md).
 
 Jobs run six at a time, because every unit is one request and one request at a
 time is bound by the round trip rather than by the quota: at a second each, a

@@ -93,7 +93,7 @@ async function main(): Promise<void> {
     // than a typo or something deleted last year. Out of quota is not a reason
     // to refuse the decision: the crawl checks the id again before it publishes
     // anything, and a binding nobody can write down today is a binding lost.
-    if (!env.youtubeKey) {
+    if (env.youtubeKeys.length === 0) {
       console.warn('! YOUTUBE_API_KEY is not set — the link is taken on trust');
     } else {
       const api = createClient(db);

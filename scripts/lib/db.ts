@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import Database from 'better-sqlite3';
-import { paths, nowIso } from './config.js';
+import { paths, nowIso, env } from './config.js';
 
 /**
  * `data/cache.db` is not the source of truth — it is the cache and the working
@@ -88,8 +89,10 @@ CREATE TABLE IF NOT EXISTS matches (
 );
 
 CREATE TABLE IF NOT EXISTS quota (
-  date TEXT PRIMARY KEY,
-  spent INTEGER DEFAULT 0
+  date TEXT,
+  key TEXT,
+  spent INTEGER DEFAULT 0,
+  PRIMARY KEY (date, key)
 );
 `;
 
@@ -97,8 +100,34 @@ export function openDb(options: { readonly?: boolean } = {}): Db {
   fs.mkdirSync(path.dirname(paths.cacheDb), { recursive: true });
   const db = new Database(paths.cacheDb, { readonly: options.readonly ?? false });
   db.pragma('journal_mode = WAL');
-  if (!options.readonly) db.exec(SCHEMA);
+  if (!options.readonly) {
+    db.exec(SCHEMA);
+    migrateQuotaPerKey(db);
+  }
   return db;
+}
+
+/**
+ * The ledger used to be one row a day, from when there was one key. A key from
+ * another project is another 10 000 units, so the day is now counted per key.
+ *
+ * Everything already written was spent on the first key, and that is where it
+ * goes. On a machine with no key configured there is nothing to attribute it
+ * to and it lands under `legacy` — harmless, because a machine that cannot
+ * crawl cannot misread the ledger either, and a mislabelled row only ever
+ * costs one 403 that rotation absorbs.
+ */
+function migrateQuotaPerKey(db: Db): void {
+  const columns = db.prepare(`PRAGMA table_info(quota)`).all() as Array<{ name: string }>;
+  if (columns.length === 0 || columns.some((column) => column.name === 'key')) return;
+
+  const owner = env.youtubeKeys[0] ? keyId(env.youtubeKeys[0]) : 'legacy';
+  db.exec(`ALTER TABLE quota RENAME TO quota_by_day`);
+  db.exec(SCHEMA);
+  db.prepare(`INSERT INTO quota (date, key, spent) SELECT date, ?, spent FROM quota_by_day`).run(
+    owner
+  );
+  db.exec(`DROP TABLE quota_by_day`);
 }
 
 /**
@@ -171,20 +200,54 @@ export function quotaDateKey(now = new Date()): string {
   return PACIFIC_DAY.format(now);
 }
 
-export function spentToday(db: Db): number {
-  const row = db.prepare(`SELECT spent FROM quota WHERE date = ?`).get(quotaDateKey()) as
-    | { spent: number }
-    | undefined;
+/**
+ * A key's name in the ledger: eight hex characters of its digest, which is not
+ * the key and cannot be turned back into it.
+ *
+ * Identity follows the value rather than the slot it sits in, so swapping two
+ * keys around in `.env` does not hand one of them the other's spending — the
+ * one mistake here that would quietly overdraw a project. Replacing a key
+ * starts a fresh row, and if the project behind it is in fact spent, the API
+ * says so on the first call and rotation writes it off.
+ */
+export function keyId(key: string): string {
+  return createHash('sha256').update(key).digest('hex').slice(0, 8);
+}
+
+export function spentToday(db: Db, key: string): number {
+  const row = db
+    .prepare(`SELECT spent FROM quota WHERE date = ? AND key = ?`)
+    .get(quotaDateKey(), key) as { spent: number } | undefined;
   return row?.spent ?? 0;
 }
 
-export function spendQuota(db: Db, units: number): number {
-  const date = quotaDateKey();
+/** Every key's spending together — what a run reports, and what a human reads. */
+export function spentTodayTotal(db: Db): number {
+  const row = db
+    .prepare(`SELECT COALESCE(sum(spent), 0) AS spent FROM quota WHERE date = ?`)
+    .get(quotaDateKey()) as { spent: number };
+  return row.spent;
+}
+
+export function spendQuota(db: Db, key: string, units: number): number {
   db.prepare(
-    `INSERT INTO quota (date, spent) VALUES (?, ?)
-     ON CONFLICT(date) DO UPDATE SET spent = spent + excluded.spent`
-  ).run(date, units);
-  return spentToday(db);
+    `INSERT INTO quota (date, key, spent) VALUES (?, ?, ?)
+     ON CONFLICT(date, key) DO UPDATE SET spent = spent + excluded.spent`
+  ).run(quotaDateKey(), key, units);
+  return spentToday(db, key);
+}
+
+/**
+ * Write off the rest of a key's day, after the API answered `quotaExceeded` on
+ * a key the ledger still thought had room. The ledger is only this machine's
+ * memory of the day — a fresh clone, or a project CI has been spending on,
+ * both look untouched here — so the 403 is the fact and this records it.
+ */
+export function exhaustKey(db: Db, key: string, ceiling: number): void {
+  db.prepare(
+    `INSERT INTO quota (date, key, spent) VALUES (?, ?, ?)
+     ON CONFLICT(date, key) DO UPDATE SET spent = max(spent, excluded.spent)`
+  ).run(quotaDateKey(), key, ceiling);
 }
 
 /* ───────────────────────────────  Reading  ─────────────────────────────── */

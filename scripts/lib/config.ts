@@ -37,23 +37,52 @@ function loadEnv(): void {
 }
 loadEnv();
 
+/**
+ * Every YouTube key in the environment, in the order they are spent.
+ *
+ * The 10 000 units are a **project's**, not a key's, so a second key buys a
+ * second day only when it comes from a second Google Cloud project — two keys
+ * of one project share one budget and the crawler will simply find the second
+ * already empty. Slots are numbered rather than comma-separated so a key can be
+ * commented out on its own line, and identical values are collapsed: the same
+ * key pasted twice is one budget, and counting it as two would make every
+ * estimate lie.
+ */
+function youtubeKeys(): string[] {
+  const slots = ['YOUTUBE_API_KEY', ...range(2, 9).map((n) => `YOUTUBE_API_KEY${n}`)];
+  return [...new Set(slots.map((slot) => (process.env[slot] ?? '').trim()).filter(Boolean))];
+}
+
+function range(from: number, to: number): number[] {
+  return Array.from({ length: to - from + 1 }, (_, i) => from + i);
+}
+
 export const env = {
-  youtubeKey: process.env.YOUTUBE_API_KEY ?? '',
+  youtubeKeys: youtubeKeys(),
   openaiKey: process.env.OPENAI_API_KEY ?? '',
-  /** Stop the worker at this many units to leave a safety margin under 10 000. */
+  /** Stop at this many units **per key**, leaving a safety margin under 10 000. */
   quotaCeiling: Number(process.env.YOUTUBE_QUOTA_CEILING ?? 9500),
   defaultLang: process.env.DEFAULT_LANG ?? 'ru',
 };
 
-export function requireYoutubeKey(): string {
-  if (!env.youtubeKey) {
+/**
+ * What all the keys together buy in a day — the divisor behind every "so many
+ * days of crawling left" estimate. Floored at one key so a report can still be
+ * rendered on a machine with no key at all.
+ */
+export function dailyQuota(): number {
+  return Math.max(1, env.youtubeKeys.length) * env.quotaCeiling;
+}
+
+export function requireYoutubeKeys(): string[] {
+  if (env.youtubeKeys.length === 0) {
     console.error(
       'YOUTUBE_API_KEY is not set. Copy .env.example to .env and put the key there.\n' +
         'See docs/setup.md for how to obtain one.'
     );
     process.exit(1);
   }
-  return env.youtubeKey;
+  return env.youtubeKeys;
 }
 
 /**

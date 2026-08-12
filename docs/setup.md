@@ -31,7 +31,23 @@ is requested through the "YouTube API Services — Audit and Quota Extension For
 and takes weeks; this project does not need one. Incremental refresh fits inside
 a day, and the first full crawl takes two or three of them.
 
-`YOUTUBE_QUOTA_CEILING` (default 9500) stops the crawler short of the limit.
+`YOUTUBE_QUOTA_CEILING` (default 9500) stops the crawler short of the limit, and
+it counts per key.
+
+**More than one key.** The quota belongs to the **project**, not to the key, so
+a second key is worth having only when it comes from a second Google Cloud
+project — repeat steps 1–5 there and add it as `YOUTUBE_API_KEY2`:
+
+```
+YOUTUBE_API_KEY=AIza…      # project one
+YOUTUBE_API_KEY2=AIza…     # project two — another 10 000 units
+```
+
+Slots run to `YOUTUBE_API_KEY9`. The crawler spends them in order and moves to
+the next when one runs out, so two keys turn the two-day first crawl into one
+evening. Two keys of the *same* project share one budget: the crawler will find
+the second already empty and say so. Nothing needs configuring beyond the
+variable — the ledger in `cache.db` counts each key's day separately.
 
 ## OpenAI
 
@@ -63,5 +79,6 @@ A build outside CI assumes `fivol/lectorea`. Two variables override that:
 | Variable | |
 |---|---|
 | `DEFAULT_LANG` | interface language to build. Only `ru` exists so far |
-| `YOUTUBE_QUOTA_CEILING` | where the crawler stops inside the daily quota, default 9500 |
+| `YOUTUBE_API_KEY2`…`9` | extra keys, spent in order after the first — one per Google Cloud project |
+| `YOUTUBE_QUOTA_CEILING` | where the crawler stops inside each key's daily quota, default 9500 |
 | `OPENAI_CLASSIFY_MODEL`, `OPENAI_IMAGE_MODEL` | override the models used for matching and images |

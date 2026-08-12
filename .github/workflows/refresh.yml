@@ -42,16 +42,21 @@ jobs:
           key: cache-db-${{ github.run_id }}
           restore-keys: cache-db-
 
+      # YOUTUBE_API_KEY2 is optional: a key from a second Google Cloud project,
+      # spent once the first runs out. An unset secret arrives as an empty
+      # string and is ignored, so the workflow needs no branch for it.
       - name: Discover new playlists
         if: inputs.discover
         run: pnpm data:discover
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_KEY2: ${{ secrets.YOUTUBE_API_KEY2 }}
 
       - name: Refresh metadata, videos and liveness
         run: pnpm data:refresh
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_KEY2: ${{ secrets.YOUTUBE_API_KEY2 }}
 
       - name: Match playlists to courses
         run: pnpm data:match

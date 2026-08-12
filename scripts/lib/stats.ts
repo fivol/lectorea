@@ -11,7 +11,7 @@ import {
 } from '../../shared/schema.js';
 import { forwardClosureSizes, dependantsIndex } from '../../shared/graph.js';
 import { median } from './score.js';
-import { env, paths } from './config.js';
+import { dailyQuota, paths } from './config.js';
 import { dbExists, MATCH_THRESHOLD, openDb, type Db } from './db.js';
 import { REFRESH_DAYS } from './tasks.js';
 import { loadYamlObject } from './sources.js';
@@ -717,8 +717,10 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
 
     const quotaByDay = dailyWindow(
       new Map(
+        // Summed over the keys: the ledger holds a row per key per day, and a
+        // chart of the day's spending wants the day, not one key's share of it.
         all<{ date: string; spent: number }>(
-          'SELECT date, spent FROM quota ORDER BY date'
+          'SELECT date, sum(spent) AS spent FROM quota GROUP BY date ORDER BY date'
         ).map((row) => [row.date, row.spent])
       ),
       days
@@ -919,8 +921,10 @@ function buildForecast(db: Db, context: CrawlContext): Forecast {
   const total = covered + empty.size;
   const projected = total ? (covered + fillable.length) / total : 0;
 
-  const days = Math.ceil(useful.units / env.quotaCeiling);
-  const totalDays = Math.ceil(queued.units / env.quotaCeiling);
+  // Against every key together: a second project halves the days left.
+  const perDay = dailyQuota();
+  const days = Math.ceil(useful.units / perDay);
+  const totalDays = Math.ceil(queued.units / perDay);
   const hours = (inReview * SECONDS_PER_DECISION) / HOUR;
   const dayText = days <= 1 ? 'меньше дня квоты' : `${days} дн квоты`;
 
@@ -954,7 +958,7 @@ function buildForecast(db: Db, context: CrawlContext): Forecast {
   }));
 
   return {
-    ceiling: env.quotaCeiling,
+    ceiling: perDay,
     useful: { playlists: useful.playlists, units: useful.units, days },
     total: { ...queued, days: totalDays },
     scheduled,
@@ -972,7 +976,7 @@ function buildForecast(db: Db, context: CrawlContext): Forecast {
         value: totalDays === 1 ? '1 день' : `${totalDays} дн`,
         hint: `${fmt(queued.units)} единиц на ${fmt(queued.playlists)} плейлистов (${fmt(
           queued.videos
-        )} лекций) при потолке ${fmt(env.quotaCeiling)} в сутки`,
+        )} лекций) при потолке ${fmt(perDay)} в сутки`,
       },
       {
         label: 'Осталось полезного обхода',

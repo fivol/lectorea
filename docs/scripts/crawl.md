@@ -4,10 +4,13 @@
 imports that feed it.
 
 These need `YOUTUBE_API_KEY` in `.env` ([setup.md](../setup.md)). They share a
-10 000 unit daily quota, and all of them stop at `YOUTUBE_QUOTA_CEILING`
-(default 9500) rather than dying on a 403. Running out of quota prints
-`квота исчерпана, продолжу завтра` and **exits 0** — it is the normal end of a
-working day, not a failure, and CI stays green.
+10 000 unit daily quota per key, and all of them stop at
+`YOUTUBE_QUOTA_CEILING` (default 9500) rather than dying on a 403. Add
+`YOUTUBE_API_KEY2` from a second Google Cloud project and the crawler moves onto
+it when the first runs out — two keys are two days of crawling in one evening.
+Running out of every key prints `квота исчерпана, продолжу завтра` and
+**exits 0** — it is the normal end of a working day, not a failure, and CI stays
+green.
 
 Every response body is kept verbatim in `raw_responses`, so a parser bug is
 fixed and re-run locally instead of costing another day of quota.

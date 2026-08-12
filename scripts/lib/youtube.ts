@@ -1,13 +1,23 @@
-import { env, requireYoutubeKey } from './config.js';
-import { saveRaw, spendQuota, spentToday, type Db } from './db.js';
+import { env, requireYoutubeKeys } from './config.js';
+import {
+  exhaustKey,
+  keyId,
+  saveRaw,
+  spendQuota,
+  spentToday,
+  spentTodayTotal,
+  type Db,
+} from './db.js';
 
 /**
  * Thin wrapper over the YouTube Data API v3 with quota accounting.
  *
- * The daily quota is 10 000 units. The single most important rule: never call
- * `search.list` — it costs 100 units per call, and a full crawl through it
- * would burn the whole day in a hundred requests. Everything here is built out
- * of the 1-unit endpoints only:
+ * The daily quota is 10 000 units **per Google Cloud project**, and the client
+ * spends one key at a time, moving to the next when one runs out — so two keys
+ * from two projects are two days of crawling in one evening. The single most
+ * important rule: never call `search.list` — it costs 100 units per call, and a
+ * full crawl through it would burn the whole day in a hundred requests.
+ * Everything here is built out of the 1-unit endpoints only:
  *
  *   channels.list        1   uploads playlist of a channel
  *   playlists.list       1   metadata for up to 50 playlists at once
@@ -47,11 +57,24 @@ export class TransientError extends Error {
 export type YoutubeClient = ReturnType<typeof createClient>;
 
 export function createClient(db: Db) {
-  const key = requireYoutubeKey();
+  const configured = requireYoutubeKeys();
+  const keys = configured.map((key, index) => ({
+    key,
+    id: keyId(key),
+    label: `key ${index + 1}/${configured.length}`,
+  }));
 
-  /** Stops well short of the hard limit so a half-finished job can still finish. */
-  function assertBudget(cost: number): void {
-    if (spentToday(db) + cost > env.quotaCeiling) throw new QuotaExceededError();
+  /**
+   * The first key with room for the call, or nothing when the day is over.
+   *
+   * Keys are spent in order rather than balanced. A crawl that ends mid-queue
+   * should leave the untouched key obviously untouched — two keys both
+   * mysteriously at 6000 is a state nobody can reason about tomorrow. The
+   * ceiling stops each one well short of its hard limit, so a job already in
+   * flight can still finish.
+   */
+  function pickKey(cost: number) {
+    return keys.find((candidate) => spentToday(db, candidate.id) + cost <= env.quotaCeiling);
   }
 
   async function call<T>(
@@ -59,42 +82,55 @@ export function createClient(db: Db) {
     params: Record<string, string>,
     cost = 1
   ): Promise<T> {
-    assertBudget(cost);
+    // A loop rather than a single choice, because the ledger is only this
+    // machine's memory of the day while the API's 403 is the fact. A key that
+    // looks fresh here but is spent in reality — a clone with no cache.db, a
+    // project CI has been crawling on — is found out on its first call,
+    // written off, and the same request goes out again on the next key. One
+    // pass per key: each turn of the loop writes off at most one.
+    for (let attempt = 0; attempt < keys.length; attempt += 1) {
+      const chosen = pickKey(cost);
+      if (!chosen) break;
 
-    const query = new URLSearchParams({ ...params, key });
-    const url = `${BASE}/${endpoint}?${query.toString()}`;
-    const response = await fetch(url);
-    spendQuota(db, cost);
+      const query = new URLSearchParams({ ...params, key: chosen.key });
+      const url = `${BASE}/${endpoint}?${query.toString()}`;
+      const response = await fetch(url);
+      spendQuota(db, chosen.id, cost);
 
-    if (response.status === 403) {
-      const body = await response.text();
-      // Two different 403s wear the same status. `quotaExceeded` is the day's
-      // 10 000 units and means come back tomorrow; `rateLimitExceeded` is a
-      // burst limit measured in seconds and means wait a moment. Reading the
-      // second as the first throws away the rest of the day over one busy
-      // instant — and it is the one concurrency provokes.
-      if (body.includes('rateLimitExceeded') || body.includes('userRateLimitExceeded')) {
-        throw new TransientError(`${endpoint} rate limited`, 403);
+      if (response.status === 403) {
+        const body = await response.text();
+        // Two different 403s wear the same status. `quotaExceeded` is the day's
+        // 10 000 units and means this key is finished; `rateLimitExceeded` is a
+        // burst limit measured in seconds and means wait a moment. Reading the
+        // second as the first throws away a whole key over one busy instant —
+        // and it is the one concurrency provokes.
+        if (body.includes('rateLimitExceeded') || body.includes('userRateLimitExceeded')) {
+          throw new TransientError(`${endpoint} rate limited`, 403);
+        }
+        if (body.includes('quotaExceeded') || body.includes('dailyLimitExceeded')) {
+          exhaustKey(db, chosen.id, env.quotaCeiling);
+          console.log(`· ${chosen.label} is out of quota`);
+          continue;
+        }
+        throw new NotFoundError(`${endpoint} ${JSON.stringify(params)}`);
       }
-      if (body.includes('quotaExceeded') || body.includes('dailyLimitExceeded')) {
-        throw new QuotaExceededError();
+      if (response.status === 404) {
+        throw new NotFoundError(`${endpoint} ${JSON.stringify(params)}`);
       }
-      throw new NotFoundError(`${endpoint} ${JSON.stringify(params)}`);
-    }
-    if (response.status === 404) {
-      throw new NotFoundError(`${endpoint} ${JSON.stringify(params)}`);
-    }
-    if (response.status >= 500) {
-      throw new TransientError(`${endpoint} returned ${response.status}`, response.status);
-    }
-    if (!response.ok) {
-      throw new Error(`${endpoint} returned ${response.status}: ${await response.text()}`);
+      if (response.status >= 500) {
+        throw new TransientError(`${endpoint} returned ${response.status}`, response.status);
+      }
+      if (!response.ok) {
+        throw new Error(`${endpoint} returned ${response.status}: ${await response.text()}`);
+      }
+
+      const body = (await response.json()) as T;
+      // Raw bodies are kept so a parser fix costs nothing instead of a day of quota.
+      saveRaw(db, endpoint, JSON.stringify(params), body);
+      return body;
     }
 
-    const body = (await response.json()) as T;
-    // Raw bodies are kept so a parser fix costs nothing instead of a day of quota.
-    saveRaw(db, endpoint, JSON.stringify(params), body);
-    return body;
+    throw new QuotaExceededError();
   }
 
   return {
@@ -184,8 +220,12 @@ export function createClient(db: Db) {
       return collected;
     },
 
-    spent: () => spentToday(db),
-    remaining: () => Math.max(0, env.quotaCeiling - spentToday(db)),
+    spent: () => spentTodayTotal(db),
+    remaining: () =>
+      keys.reduce(
+        (left, candidate) => left + Math.max(0, env.quotaCeiling - spentToday(db, candidate.id)),
+        0
+      ),
   };
 }
 
