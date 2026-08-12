@@ -106,14 +106,16 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
       // later in the document, so a curve passes behind the sticky label rather
       // than across it.
       //
-      // A layer with no size of its own, drawing outside itself. Sized to the
-      // scroller it covers, it became part of what the scroller had to scroll,
-      // and the next measurement read its own width back: switch to a field with
-      // three courses in it and the canvas stayed as wide as the field before
-      // it, three cards adrift in an empty page that could not shrink.
-      className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible"
-      width={0}
-      height={0}
+      // Sized by the columns it covers rather than by a measurement of the
+      // scroller. Measuring gave the layer a width of its own, which the
+      // scroller then had to scroll, which the next measurement read back:
+      // switch to a field with three courses in it and the canvas stayed as
+      // wide as the field before it, three cards adrift in a page that could
+      // not shrink. Stretched to the row of columns instead, it can never be
+      // larger than what is already there, and there is nothing to measure.
+      // A viewport of no size was the other way out of that loop, and it drew
+      // nothing at all: an outermost `svg` of 0 × 0 paints no overflow.
+      className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-visible"
       aria-hidden="true"
     >
       {curves.map((curve) => (
