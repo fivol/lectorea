@@ -419,5 +419,24 @@ matches:
   PL8_xPU5epJdffROMjxwdAfiWrCfUDoHID: null
   PL1iwBJ9vqBRZq4-pSkxPOAvD1SFbBTZnV: null
 
+
+  # Second pass over the same crawl, for the courses whose own keywords could
+  # not find their material: «law» among all this physics finds Gauss, and
+  # «морфология» never appears at all. Searched by subject instead.
+  PL27C4A6AEA552F9E6: strength-of-materials
+  PL521D094C8752CE67: strength-of-materials
+  PL35EBF66D99E7A0EC: strength-of-materials
+  PLcsjsqLLSfNCj8DC961LjRbHB8Hhu1bLr: oceanography
+  PLyqSpQzTE6M9pkQ9AT8F3bJOLerNEAKcF: world-literature
+  PLFW6lRTa1g81NnDjRTccn8jM_U4lT692-: psych-research-methods
+  PLyqSpQzTE6M_teA9zPY83-6_Kz6kQvGis: social-theory
+  PLwdnzlV3ogoXsEtcMIKynhfv3B5T7mud9: social-research-methods
+  PLthfp5exSWEqqxLhNoArxYojMxacEKPTq: law-intro
+  PLthfp5exSWEoZHMl5byCkRlfiPeOe5D7y: law-intro
+  PLcsjsqLLSfNAhxK1YOQThJTrhJtmZwKnM: modern-philosophy
+  PLLy_2iUCG87Cr7_Yo_8ONaEC38tMB1ykM: organizational-behavior
+  PLLy_2iUCG87AAaDRVrD02Y1z44OXt5shB: urban-studies
+  PLbRMhDVUMngfAgwu_wh7UYeL5nGRsKZJi: urban-studies
+
 playlists: {}
 channels: {}
