@@ -74,8 +74,6 @@
   "ui.map.zoomIn": "Zoom in",
   "ui.map.zoomOut": "Zoom out",
   "ui.map.fit": "Show the whole map",
-  "ui.map.bridge": "interdisciplinary field",
-  "ui.map.bridgeHint": "An interdisciplinary field — it lies where the continents meet and draws on several branches of knowledge at once",
   "ui.map.domainDone": "{n} done",
   "ui.map.legend": "Three continents — three branches of knowledge; inside a continent, the more courses a field has, the more room it takes",
 

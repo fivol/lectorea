@@ -175,9 +175,6 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
                 <Row mark={<FavoriteMark explain={false} />}>{t('ui.legend.favorite')}</Row>
                 {columns ? (
                   <>
-                    <Row mark={<Icon name="bridge" size={14} className="text-ink-dim" />}>
-                      {t('ui.map.bridgeHint')}
-                    </Row>
                     <Row
                       mark={
                         <span className="flex items-center gap-0.5">
