@@ -26,7 +26,10 @@ explains how.
 is enough for layout, navigation and styling work.
 
 Reads `DEFAULT_LANG` (default `ru`) to pick which `data/i18n/{lang}.json` and
-`data/keywords/{lang}.json` to bake in.
+`data/keywords/{lang}.json` to bake in. Every other language in `UI_LANGS` is
+written out as well — its interface strings laid over that same catalogue, so
+each file in `public/data/i18n/` is a complete dictionary. See
+[data.md](../data.md#interface-language--content-language).
 
 ## `pnpm data:seed-dev`
 
@@ -138,6 +141,11 @@ It also gates content, since the course files hold no prose at all: every course
 needs a non-empty `title` and `desc`, and at least one entry in
 `data/keywords/{lang}.json`. An empty string counts as missing — it passes a
 presence check and then renders as nothing.
+
+The other interface languages are held to the content one: each must carry every
+`ui.*` and `app.*` key and nothing beyond them. A translation is a thing that
+rots, and a screen nobody on the project ever opens in English is exactly where
+a stray Russian sentence survives for months.
 
 Exits non-zero on any of it, and CI runs it.
 

@@ -41,7 +41,6 @@ export type Catalog = {
   providers: Record<string, BuiltProvider>;
   search: SearchEntry[];
   meta: Meta;
-  dict: Dictionary;
 };
 
 async function getJson<T>(path: string): Promise<T> {
@@ -52,14 +51,22 @@ async function getJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function loadCatalog(lang: string): Promise<Catalog> {
-  const [domains, coursesFile, providers, search, meta, dict] = await Promise.all([
+/**
+ * The dictionary is fetched on its own, because it is the one file that changes
+ * when the interface language does. Switching language then costs one file
+ * rather than the whole catalogue, and nothing on screen has to be torn down.
+ */
+export function loadDictionary(lang: string): Promise<Dictionary> {
+  return getJson<Dictionary>(`i18n/${lang}.json`);
+}
+
+export async function loadCatalog(): Promise<Catalog> {
+  const [domains, coursesFile, providers, search, meta] = await Promise.all([
     getJson<BuiltDomain[]>('domains.json'),
     getJson<CoursesFile>('courses.json'),
     getJson<Record<string, BuiltProvider>>('providers.json'),
     getJson<SearchEntry[]>('search-index.json'),
     getJson<Meta>('meta.json'),
-    getJson<Dictionary>(`i18n/${lang}.json`),
   ]);
 
   // Transitive closures are not shipped — they would be ~100 KB of JSON for
@@ -80,7 +87,6 @@ export async function loadCatalog(lang: string): Promise<Catalog> {
     providers,
     search,
     meta,
-    dict,
   };
 }
 

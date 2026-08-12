@@ -1,6 +1,7 @@
 {
   "app.title": "Lectorea",
   "app.tagline": "Каталог образовательных плейлистов в порядке изучения",
+  "app.documentTitle": "Lectorea — каталог курсов в порядке изучения",
 
   "ui.common.close": "Закрыть",
   "ui.common.cancel": "Отмена",
@@ -37,6 +38,9 @@
 
   "ui.theme.toLight": "Светлая тема",
   "ui.theme.toDark": "Тёмная тема",
+
+  "ui.lang.switchTo.ru": "Русский интерфейс",
+  "ui.lang.switchTo.en": "English interface",
 
   "ui.search.placeholder": "Область, курс, вуз…",
   "ui.search.open": "Поиск",
@@ -268,9 +272,9 @@
   "ui.profile.settings.resetDo": "Удалить",
   "ui.profile.data.export": "Выгрузить",
   "ui.profile.data.exportHint": "Скачает файл profile-ГГГГ-ММ-ДД.json",
-  "ui.profile.data.import": "Импортировать",
-  "ui.profile.data.importHint": "Выберите файл или вставьте текст профиля",
-  "ui.profile.data.importPaste": "Вставить текст",
+  "ui.profile.data.import": "Загрузить",
+  "ui.profile.data.importHint": "Откройте ранее выгруженный profile-….json — или вставьте его содержимое в поле ниже. Перед импортом покажем, что внутри",
+  "ui.profile.data.importPaste": "Вставьте сюда содержимое файла",
   "ui.profile.data.importFile": "Выбрать файл",
   "ui.profile.data.preview": "Предпросмотр",
   "ui.profile.data.previewSummary": "{courses} {courseWord}, {playlists} {playlistWord}, {date}",

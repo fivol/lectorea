@@ -244,6 +244,24 @@ export function loadSources(lang = 'ru'): Sources {
   };
 }
 
+/**
+ * The interface dictionary of a language other than the content one.
+ *
+ * Only the catalogue is written once, in `DEFAULT_LANG`: course titles and
+ * descriptions are content, and translating them is a data job, not a UI one.
+ * The chrome around them is not — `data/i18n/en.json` carries the `ui.*` and
+ * `app.*` keys and nothing else, and the build lays it over the full dictionary
+ * so an English interface still names the Russian courses it is showing.
+ */
+export function loadInterfaceDictionary(lang: string): Record<string, string> {
+  return loadJson(path.join(paths.i18n, `${lang}.json`), I18nSchema);
+}
+
+/** True for the keys that belong to the interface rather than to the catalogue. */
+export function isInterfaceKey(key: string): boolean {
+  return key.startsWith('ui.') || key.startsWith('app.');
+}
+
 export function reportSourceError(error: unknown): never {
   if (error instanceof SourceError) {
     console.error(`\n✗ ${error.message}`);

@@ -159,6 +159,13 @@ Light and dark also have a one-click toggle in the header of both screens — th
 choice is about the room you are sitting in, not about your account, and behind
 a modal most people put up with the wrong one; «Авто» stays in the settings.
 
+The language sits on the same plate, for a harder reason: someone who cannot
+read the interface cannot find the settings that would fix it, and two letters
+in the corner are what that person looks for. Russian and English, and like the
+theme button it shows where the click leads rather than where you are. Only the
+interface is translated — course titles and descriptions stay in the language
+the catalogue is written in.
+
 There is no account and no backend: it all lives in `localStorage`. The **Data**
 tab exports it as a JSON file and imports one back, either replacing what is
 there or merging it — on a conflict the more advanced status wins, and histories

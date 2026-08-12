@@ -1,8 +1,16 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { stageRank, type BuiltCourse, type BuiltDomain, type Stage } from '@shared/schema';
 import { upstreamOf } from '@shared/graph';
-import { loadCatalog, type Catalog } from './data';
-import { I18nProvider, useT } from '@/i18n';
+import { loadCatalog, loadDictionary, type Catalog } from './data';
+import { I18nProvider, useT, type Dictionary } from '@/i18n';
 import { useProfile } from '@/store/profile';
 import { Button } from '@/components/ui';
 
@@ -17,12 +25,12 @@ export function useCatalog(): Catalog {
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const lang = useProfile((state) => state.profile.settings.lang);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [dict, setDict] = useState<{ lang: string; dict: Dictionary } | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setError(null);
-    loadCatalog(lang)
+    loadCatalog()
       .then((value) => {
         if (!cancelled) setCatalog(value);
       })
@@ -32,14 +40,52 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  /**
+   * The dictionary follows the language on its own, and the previous one stays
+   * on screen until the new one lands. Switching language is a click in the
+   * header, and a click in the header must not blank the page it is on.
+   */
+  const hasDict = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadDictionary(lang)
+      .then((value) => {
+        if (cancelled) return;
+        hasDict.current = true;
+        setDict({ lang, dict: value });
+      })
+      .catch((cause: Error) => {
+        // Only the very first dictionary is fatal — without one there is
+        // nothing to render but keys. A failed switch keeps the previous
+        // language, which is a working page in the wrong language.
+        if (!cancelled && !hasDict.current) setError(cause);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [lang]);
 
+  /**
+   * The page itself is part of the interface: the tab's name and the `lang` a
+   * screen reader picks its voice from follow the dictionary that is actually
+   * on screen, not the setting that may still be loading.
+   */
+  useEffect(() => {
+    if (!dict) return;
+    document.documentElement.lang = dict.lang;
+    const title = dict.dict['app.documentTitle'];
+    if (title) document.title = title;
+  }, [dict]);
+
   if (error) return <FatalError error={error} />;
-  if (!catalog) return <Booting />;
+  if (!catalog || !dict) return <Booting />;
 
   return (
     <CatalogContext.Provider value={catalog}>
-      <I18nProvider lang={lang} dict={catalog.dict}>
+      <I18nProvider lang={dict.lang} dict={dict.dict}>
         {children}
       </I18nProvider>
     </CatalogContext.Provider>

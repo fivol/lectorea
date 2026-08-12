@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { UI_LANGS, UiLang } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useProfile } from '@/store/profile';
 import { Button, Segmented, Select } from '@/components/ui';
@@ -12,12 +13,19 @@ export default function SettingsTab() {
 
   return (
     <div className="max-w-lg space-y-6 p-4">
+      {/* Also in the header, where someone who cannot read this screen will
+          find it. Here for completeness, and because a language named in full
+          in its own script is unambiguous in a way that «RU» is not. */}
       <Row label={t('ui.profile.settings.lang')}>
         <Select
           value={settings.lang}
-          onChange={(event) => setSetting('lang', event.target.value)}
+          onChange={(event) => setSetting('lang', UiLang.parse(event.target.value))}
         >
-          <option value="ru">Русский</option>
+          {UI_LANGS.map((entry) => (
+            <option key={entry.id} value={entry.id} lang={entry.id}>
+              {entry.name}
+            </option>
+          ))}
         </Select>
       </Row>
 

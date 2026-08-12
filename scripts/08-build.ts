@@ -6,6 +6,7 @@ import {
   BuiltPlaylistSchema,
   BuiltProviderSchema,
   lectureLengthOf,
+  UI_LANGS,
   type BuiltCourse,
   type BuiltDomain,
   type BuiltPlaylist,
@@ -25,7 +26,13 @@ import {
 } from './lib/graph.js';
 import { layoutColumns } from './lib/layout.js';
 import { bayesianScore, engagementOf, meanEngagement, median, scoreToPercent } from './lib/score.js';
-import { loadSources, reportSourceError, SourceError, type Sources } from './lib/sources.js';
+import {
+  loadInterfaceDictionary,
+  loadSources,
+  reportSourceError,
+  SourceError,
+  type Sources,
+} from './lib/sources.js';
 import {
   dbExists,
   isBindingConfident,
@@ -149,7 +156,16 @@ async function main(): Promise<void> {
   });
   writeJson(path.join(paths.outData, 'providers.json'), providers);
   writeJson(path.join(paths.outData, 'search-index.json'), searchIndex);
+  // One file per interface language, each a complete dictionary. The content
+  // language ships as it is written; the others are its catalogue with their own
+  // chrome laid over the top, so a missing translation shows the Russian string
+  // rather than a bare key.
   writeJson(path.join(paths.outData, 'i18n', `${lang}.json`), sources.i18n);
+  for (const other of UI_LANGS.filter((entry) => entry.id !== lang)) {
+    const ui = loadInterfaceDictionary(other.id);
+    writeJson(path.join(paths.outData, 'i18n', `${other.id}.json`), { ...sources.i18n, ...ui });
+    console.log(`· i18n: ${other.id} interface over the ${lang} catalogue`);
+  }
 
   // Stale shards from courses that no longer exist would be served forever.
   for (const file of fs.readdirSync(paths.outPlaylists)) {

@@ -19,6 +19,7 @@ data/
   overrides.yaml         hand edits on top of the automatic pipeline
   image-prompts.yaml     prompt templates for domain images
   i18n/ru.json           every interface and content string
+  i18n/en.json           the interface strings only, in English
   keywords/ru.json       search keywords
 ```
 
@@ -85,7 +86,8 @@ public/data/
   search-index.json
   playlists/
     probability.json     one file per course, fetched on click
-  i18n/ru.json
+  i18n/ru.json           one complete dictionary per interface language
+  i18n/en.json
   meta.json              build date, counts, coverage
 ```
 
@@ -200,3 +202,25 @@ clerical part — see [scripts/catalogue.md](scripts/catalogue.md#pnpm-coursenew
 left empty, and when a course has no keywords at all. The last two matter most:
 without them, half the catalogue quietly ends up with no description and no way
 to find it.
+
+### Interface language ≠ content language
+
+The catalogue is written once, in `DEFAULT_LANG`. Translating four hundred
+course titles is a data job; translating the chrome around them is not, so the
+two are split:
+
+| file | holds | who reads it |
+| --- | --- | --- |
+| `data/i18n/ru.json` | interface **and** catalogue, the whole dictionary | the source of truth |
+| `data/i18n/en.json` | `ui.*` and `app.*` only | laid over the Russian one at build time |
+
+The build writes one complete file per language into `public/data/i18n/`, so
+`en.json` is the English interface over the Russian catalogue and a course with
+no translation shows its Russian title rather than a bare key. Adding a language
+means adding it to `UI_LANGS` in `shared/schema.ts` and dropping a file next to
+these; `check:i18n` then holds it to the same key set — every interface key
+present, nothing beyond them.
+
+The setting lives in the profile (`settings.lang`) and there is a switch in the
+header of both screens. Only the dictionary is refetched when it changes: the
+catalogue is language-independent, so nothing on screen is torn down.

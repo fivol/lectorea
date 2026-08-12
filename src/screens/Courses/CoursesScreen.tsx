@@ -15,6 +15,7 @@ import ContributeBar from '@/components/ContributeBar';
 import GlobalFilters from '@/components/GlobalFilters';
 import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/Dropdown';
 import ThemeToggle from '@/components/ThemeToggle';
+import LangToggle from '@/components/LangToggle';
 import ProfileButton from '@/components/ProfileButton';
 import { Cap, IconButton, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
@@ -154,6 +155,7 @@ export default function CoursesScreen() {
           {/* The same plate as on the map, so crossing between the two screens
               does not change what the corner of the window is. */}
           <Plate row>
+            <LangToggle />
             <ThemeToggle />
             <PlateDivider />
             <ProfileButton />

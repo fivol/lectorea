@@ -10,6 +10,7 @@ import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
 import GlobalFilters from '@/components/GlobalFilters';
 import ThemeToggle from '@/components/ThemeToggle';
+import LangToggle from '@/components/LangToggle';
 import ViewSwitch from '@/components/ViewSwitch';
 import ProfileButton from '@/components/ProfileButton';
 import { Plate, PlateDivider } from '@/components/ui';
@@ -99,6 +100,7 @@ export default function MapScreen() {
             <ViewSwitch value={mapView} onChange={setMapView} />
           )}
           <Plate row>
+            <LangToggle />
             <ThemeToggle />
             <PlateDivider />
             <ProfileButton label />

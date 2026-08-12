@@ -263,6 +263,26 @@ export const MetaSchema = z.object({
 });
 export type Meta = z.infer<typeof MetaSchema>;
 
+/* ────────────────────────  Interface language  ─────────────────────── */
+
+/**
+ * The languages the interface speaks.
+ *
+ * The catalogue itself is written once, in `DEFAULT_LANG`: a course title is
+ * content, and translating four hundred of them is a data job rather than a UI
+ * one. The chrome around it is not — `data/i18n/{lang}.json` carries the `ui.*`
+ * keys for every language here, and the build lays each one over the full
+ * dictionary, so an English interface still names the courses it is showing.
+ */
+export const UiLang = z.enum(['ru', 'en']);
+export type UiLang = z.infer<typeof UiLang>;
+
+/** How each language names itself, plus the two letters the header switch shows. */
+export const UI_LANGS: ReadonlyArray<{ id: UiLang; short: string; name: string }> = [
+  { id: 'ru', short: 'RU', name: 'Русский' },
+  { id: 'en', short: 'EN', name: 'English' },
+];
+
 /* ─────────────────────────────  Profile  ───────────────────────────── */
 
 export const CourseStatus = z.enum(['in_progress', 'done']);
@@ -310,7 +330,10 @@ export const ProfileSchema = z.object({
     .default([]),
   settings: z
     .object({
-      lang: z.string().default('ru'),
+      // `catch` rather than `default`: a profile carrying a language this build
+      // no longer ships would otherwise fail the whole parse and be read as
+      // corrupt, losing every mark in it over one string.
+      lang: UiLang.catch('ru'),
       theme: z.enum(['auto', 'light', 'dark']).default('auto'),
       splitRatio: z.number().min(0.3).max(0.8).default(0.62),
       /**

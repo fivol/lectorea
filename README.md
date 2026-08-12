@@ -102,9 +102,10 @@ back on another machine — either replacing what is there or merging it, keepin
 the further-along status on a conflict. That is the whole sync story, and it
 works between browsers without anyone hosting anything.
 
-**Small comforts.** Light and dark themes, a link that carries the exact view
-you are looking at, and keyboard shortcuts (`/` search, `t` theme, `?` for the
-rest).
+**Small comforts.** Light and dark themes, a Russian and an English interface
+(the course titles stay in the language the catalogue is written in), a link
+that carries the exact view you are looking at, and keyboard shortcuts (`/`
+search, `t` theme, `?` for the rest).
 
 ## The catalogue is public — help fix it
 

@@ -535,6 +535,19 @@
     background: color-mix(in srgb, var(--c-ink) 7%, transparent);
   }
 
+  /* The same control holding two letters instead of a glyph — the language the
+     click leads to. Set in the map's lettering, like everything else on a plate
+     that speaks in words rather than shapes. */
+  .lang-btn {
+    @apply inline-flex h-[28px] items-center justify-center rounded-full px-2
+           font-mono text-[11px] font-semibold uppercase tracking-[0.08em]
+           text-ink-dim transition-colors duration-fast ease-out;
+  }
+  .lang-btn:hover {
+    color: var(--c-ink);
+    background: color-mix(in srgb, var(--c-ink) 7%, transparent);
+  }
+
   /*
    * The view switch.
    *
@@ -606,6 +619,12 @@
   .swap > [data-on='false'] {
     opacity: 0;
     transform: rotate(-90deg) scale(0.4);
+  }
+  /* Two letters need the width a glyph does not. The trailing letter-spacing
+     of the caps is part of the box, hence the odd number. */
+  .swap-wide {
+    width: 22px;
+    height: 14px;
   }
 
   /*
