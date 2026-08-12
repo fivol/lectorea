@@ -146,9 +146,12 @@ function DomainCard({
           </Tooltip>
         ) : null}
       </div>
-      {/* A full-width card fits in one line what a half-width one needed two
-          for, so the phone list stays scrollable instead of doubling in height. */}
-      <p className="line-clamp-1 text-caption text-ink-faint min-[480px]:line-clamp-2">
+      {/* One line on a full-width card cut every description mid-sentence and
+          left the card shorter than its own title block. At ~53 characters per
+          line the longest description here needs two, so three is the cap that
+          never truncates on a phone; from two columns up the card is half as
+          wide and two lines is all the height the grid can spend. */}
+      <p className="line-clamp-3 text-caption text-ink-faint min-[480px]:line-clamp-2">
         {t(`domain.${domain.id}.desc`)}
       </p>
       <div className="mt-auto flex items-center justify-between gap-2 pt-1">
