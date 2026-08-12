@@ -64,13 +64,23 @@ export default function MapScreen() {
         do on the blocks list is shrink once there is something above the fold,
         and take a shadow, so the row reads as sitting over the grid rather than
         floating in the same plane as it.
+
+        Over the map it is lifted out of the column entirely and floats. The
+        drawing then runs the full height of the window and the sea carries on
+        behind the wordmark instead of stopping at a band of flat colour — which
+        is what tells a reader the header is lying on the map rather than
+        holding it down, and what lets the land slide under it when the map is
+        dragged.
       */}
       <header
-        className={`relative z-30 flex items-start justify-between gap-4 px-4 transition-all
+        className={`z-30 flex items-start justify-between gap-4 px-4 transition-all
                     duration-base ease-out sm:px-6
+                    ${showMap ? 'absolute inset-x-0 top-0 pt-4' : 'relative'}
                     ${compact ? 'on-canvas pb-2 pt-2 shadow-[var(--shadow-card)] backdrop-blur' : 'pt-4'}`}
       >
-        <div className="flex items-baseline gap-3">
+        {/* Over open water and over a continent alike, so the lettering that
+            has no plate under it carries the same halo the map's own names do. */}
+        <div className={`flex items-baseline gap-3 ${showMap ? 'over-map' : ''}`}>
           {/* The wordmark is the way home, as it is on every site — and home
               here is the map: from a filtered or searched view, and from the
               blocks, it leads back to the clean drawing. The way back from the
@@ -141,18 +151,22 @@ export default function MapScreen() {
       </div>
 
       {/*
-        The floating field sits over the map, so the canvas keeps clear of it.
+        In map mode this is the whole window: no padding held back for the
+        header, because the header is floating over it and the drawing is meant
+        to pass underneath. What the map keeps clear of the chrome it does
+        itself, by fitting the land to the part of the window nothing is
+        standing on — see `CHROME` in `MapView`.
 
-        In map mode the whole area takes the sea's own colour. The drawing is
-        16:9 and the window is not, so without it the map ends in two bands of
-        page background — which reads as a picture pinned to a page rather than
-        as a map you are looking at.
+        The sea's own colour underneath, still, for the moment before the file
+        has loaded and for the hairline the drawing cannot be expected to cover
+        exactly.
+
+        The map is moved rather than scrolled — it answers a wheel itself, and a
+        scroll container around it would take the two-finger swipe that is meant
+        to carry the drawing.
       */}
-      {/* The map is moved rather than scrolled — it answers a wheel itself, and
-          a scroll container around it would take the two-finger swipe that is
-          meant to carry the drawing. */}
       <main
-        className={`min-h-0 flex-1 ${showMap ? 'overflow-hidden pt-16' : 'overflow-auto'}`}
+        className={`min-h-0 flex-1 ${showMap ? 'overflow-hidden' : 'overflow-auto'}`}
         style={showMap ? { background: MAP_SEA } : undefined}
         onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 8)}
       >

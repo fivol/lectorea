@@ -11,7 +11,7 @@ import { Plate, PlateDivider, IconButton } from '@/components/ui';
 import { SLAB } from '@shared/view';
 import { hexPath } from '@shared/tiles';
 import { groundOf, HEX_CLIP } from './ground';
-import { useMapViewport, ZOOM_STEP } from './viewport';
+import { useMapViewport, ZOOM_STEP, type MapPlan } from './viewport';
 
 /**
  * The map's own colours live in `index.css` next to every other theme colour —
@@ -172,6 +172,60 @@ const letteringScale = (zoom: number, rest: number): number => {
 };
 
 /**
+ * The chrome the map is drawn under but not fitted under, in screen pixels.
+ *
+ * The drawing runs edge to edge — the sea has to carry on behind the header or
+ * the header reads as a lid on it, and a map that slides under its own controls
+ * when it is dragged is a map rather than a picture in a frame. What it is
+ * *fitted* to is the part of the window a reader can actually see: the wordmark
+ * and the search field along the top, the legend and the plate of controls
+ * along the bottom.
+ */
+const CHROME = { top: 132, bottom: 48 };
+
+/**
+ * How much air the land is given on each side when the window is fitted to it,
+ * as a share of the land's own size.
+ *
+ * Not symmetric, and not for looks: a continent is named above its northern
+ * coast and the islands too small to be written on put their names in the water
+ * below, so the drawing overruns its own coastlines by more underneath than on
+ * top and hardly at all to the sides.
+ */
+const CONTENT_AIR = { x: 0.03, top: 0.075, bottom: 0.08 };
+
+/**
+ * What the map asks the viewport for: the box it covers, the box it is worth
+ * showing, and the chrome in between.
+ *
+ * The two boxes differ by a third of the drawing's width. `map.svg` is a
+ * rectangle with the continents in the middle of it and open water all round,
+ * and fitting the rectangle to the window is what left the land at two thirds
+ * the size of the room it had. The water is scenery — it may run off the edges,
+ * and on most windows it should.
+ */
+function planOf(map: ParsedMap): MapPlan {
+  const land = map.landmasses;
+  const x0 = Math.min(...land.map((mass) => mass.x));
+  const y0 = Math.min(...land.map((mass) => mass.y));
+  const x1 = Math.max(...land.map((mass) => mass.x + mass.width));
+  // The cliffs hang below the southern coasts, and what a reader has to see
+  // goes down with them.
+  const y1 = Math.max(...land.map((mass) => mass.y + mass.height)) + DEPTH;
+  const air = { x: (x1 - x0) * CONTENT_AIR.x, top: (y1 - y0) * CONTENT_AIR.top, bottom: (y1 - y0) * CONTENT_AIR.bottom };
+  return {
+    extent: { width: map.width, height: map.height + DEPTH },
+    content: {
+      x: x0 - air.x,
+      y: y0 - air.top,
+      w: x1 - x0 + air.x * 2,
+      h: y1 - y0 + air.top + air.bottom,
+    },
+    inset: CHROME,
+  };
+}
+
+/**
  * The rectangle the shallows are worked out in: what the reader can see, and a
  * blur's worth of margin so the falloff finishes rather than stopping square.
  *
@@ -220,16 +274,13 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
   /**
-   * What the reader has done to the drawing: how far in, and where. The extent
-   * is the whole of what the viewport needs from the map — and it is null until
-   * the file has loaded, which is also what tells it the svg now exists to
-   * listen on.
+   * What the reader has done to the drawing: how far in, and where.
+   *
+   * Null until the file has loaded, which is also what tells the viewport the
+   * svg now exists to listen on.
    */
-  const extent = useMemo(
-    () => (map ? { width: map.width, height: map.height + DEPTH } : null),
-    [map]
-  );
-  const viewport = useMapViewport(extent);
+  const plan = useMemo(() => (map ? planOf(map) : null), [map]);
+  const viewport = useMapViewport(plan);
 
   /** One unit of lettering, in map units, at the magnification now showing. */
   const scale = letteringScale(viewport.zoom, viewport.rest);
@@ -695,7 +746,8 @@ export default function MapView({ matched, searchActive, allowed }: Props) {
         // `touch-none` hands the browser's own pan and pinch over to this
         // component: without it a finger on the map scrolls the page, and two
         // fingers zoom the document rather than the drawing.
-        className={`h-full w-full touch-none select-none ${viewport.panning ? 'map-grabbing' : ''}`}
+        className={`map-enter h-full w-full touch-none select-none
+                    ${viewport.panning ? 'map-grabbing' : ''}`}
         style={{ cursor: viewport.panning ? 'grabbing' : 'grab' }}
         role="group"
         aria-label={t('ui.a11y.mapRegion')}

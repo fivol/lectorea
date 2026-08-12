@@ -13,7 +13,7 @@
  * element is recorded, and it is the only place this file has to know about it.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useReducedMotion } from '@/lib/hooks';
 
@@ -39,21 +39,23 @@ export type Frame = { x: number; y: number; w: number; h: number };
 export const MAX_MAGNIFICATION = 4;
 
 /**
- * The widest the map is ever drawn, in screen pixels.
+ * The widest the land is ever drawn, in screen pixels.
  *
- * Without a cap the drawing takes whatever it is given, and on a large display
- * that is a wall map: the reader's eye has to travel the width of the desk to
- * get from one continent to the next. Past this the map stops growing and the
- * sea around it grows instead, which is the same picture at a comfortable size
- * rather than a bigger one. Below it nothing happens at all: a laptop and a
- * phone still get the whole window, because on those the room is the constraint
- * and there is none to spare.
+ * The land, not the drawing: the file is a rectangle with the continents in the
+ * middle of it and a third of its width in open water round the outside, and
+ * fitting *that* to the window is how the map ended up drawn two thirds the
+ * size of the room it was given. What a reader came for is the land, so the
+ * land is what the window is measured against and the water is what runs off
+ * the edges.
  *
- * Generous, because everything written on the map is sized off this: a cap set
- * where the drawing merely stops being uncomfortable leaves the names smaller
- * than they need to be on exactly the displays that had room for them.
+ * The cap is still needed above it. Without one the drawing takes whatever it
+ * is given, and on a large display that is a wall map — the eye has to travel
+ * the width of the desk to get from one continent to the next. Past this the
+ * land stops growing and the sea around it grows instead. Below it nothing
+ * happens at all: a laptop and a phone still get the whole window, because on
+ * those the room is the constraint and there is none to spare.
  */
-const COMFORTABLE_WIDTH = 2400;
+const COMFORTABLE_WIDTH = 1800;
 
 /** One press of the plus button. A quarter of a doubling reads as a step. */
 export const ZOOM_STEP = 2 ** 0.25;
@@ -109,18 +111,27 @@ const clamp = (value: number, low: number, high: number): number =>
   Math.min(Math.max(value, low), high);
 
 /**
- * Keeps the drawing over the window on one axis.
+ * Keeps the drawing over the room on one axis.
  *
- * Two cases, and they are opposites: when the map is larger than the window it
- * may be moved until one of its edges reaches the edge of the window and no
- * further, and when it is smaller — which is the whole of it at rest, and one
- * axis of it for a while after — it is not moved at all but centred. Letting a
- * fitted map slide inside its own letterbox is the difference between a map you
- * are looking at and a picture that has come loose.
+ * The room and not the window, which is the whole point: the header floats over
+ * the map, so the top of the window is a place the drawing may pass through but
+ * not a place it may come to rest. Measured against the window instead, a map
+ * that is a little shorter than the window gets centred in it — and the band the
+ * chrome is standing on is taken out of the middle, which puts the northernmost
+ * names under the search field.
+ *
+ * Two cases, and they are opposites: when the map is larger than the room it may
+ * be moved until one of its edges reaches the room's and no further, and when it
+ * is smaller it is not moved at all but centred there. Letting a fitted map
+ * slide about inside its own margins is the difference between a map you are
+ * looking at and a picture that has come loose.
+ *
+ * What shows outside the drawing either way is the water it is drawn on, which
+ * the file carries a fifth of its own width past every edge.
  */
-function settleAxis(pos: number, size: number, min: number, view: number): number {
-  if (size <= view) return min + (view - size) / 2;
-  return clamp(pos, min + view - size, min);
+function settleAxis(pos: number, size: number, min: number, room: number): number {
+  if (size <= room) return min + (room - size) / 2;
+  return clamp(pos, min + room - size, min);
 }
 
 type Track = { x: number; y: number; fromX: number; fromY: number };
@@ -135,6 +146,26 @@ function spanOf(points: Track[]): { distance: number; x: number; y: number } {
   };
 }
 
+/**
+ * What the viewport has to know about the map to place it.
+ *
+ * Two boxes, and they are not the same box. `extent` is everything the drawing
+ * covers, and it is what the map may not be dragged off the window; `content`
+ * is the part a reader came for — the land and the names on it — and it is what
+ * the map is sized and centred by. Between them lies the open water the file
+ * carries round its edges, which is scenery: it may run off the screen, and on
+ * most windows it should.
+ */
+export type MapPlan = {
+  extent: { width: number; height: number };
+  content: { x: number; y: number; w: number; h: number };
+  /**
+   * Bands of the window, in screen pixels, that the drawing passes under but
+   * does not come to rest under — whatever floats over the map.
+   */
+  inset: { top: number; bottom: number };
+};
+
 export type MapViewport = {
   ref: React.RefObject<SVGSVGElement>;
   /** What to put on the group the whole drawing lives in. */
@@ -142,10 +173,10 @@ export type MapViewport = {
   /** How far in the reader is; `rest` is the whole map in the window. */
   zoom: number;
   /**
-   * The magnification the map settles at on this screen: 1 where the window is
-   * the constraint, less where the map would otherwise be drawn larger than it
-   * is comfortable to read. Everything written on the map is sized against it,
-   * so a name is the same size on a laptop and on a wall display.
+   * The magnification the map settles at on this screen: the one that fits the
+   * land into whatever is not covered by the chrome, unless that would draw it
+   * wider than is comfortable to read. Everything written on the map is sized
+   * against it, so a name is the same size on a laptop and on a wall display.
    */
   rest: number;
   /** The part of the drawing the window shows, in map units — null until measured. */
@@ -169,11 +200,11 @@ export type MapViewport = {
 };
 
 /**
- * @param content The extent of the drawing in its own units, or null while the
- *   map is still loading — the listeners cannot be attached before the element
- *   they belong to exists, and this is what tells them it now does.
+ * @param plan How the map wants to be placed, or null while it is still
+ *   loading — the listeners cannot be attached before the element they belong
+ *   to exists, and this is what tells them it now does.
  */
-export function useMapViewport(content: { width: number; height: number } | null): MapViewport {
+export function useMapViewport(plan: MapPlan | null): MapViewport {
   const ref = useRef<SVGSVGElement>(null);
   const [view, setView] = useState<Viewport>({ x: 0, y: 0, k: 1 });
   const [panning, setPanning] = useState(false);
@@ -199,9 +230,21 @@ export function useMapViewport(content: { width: number; height: number } | null
   const frameRef = useRef<(Frame & { unit: number }) | null>(null);
   frameRef.current = frame;
 
-  useEffect(() => {
+  /*
+   * Measured before the browser paints, not after.
+   *
+   * The map cannot be placed until the window it is going into has been
+   * measured, and the window cannot be measured until the map is in the DOM —
+   * so there is one render where the drawing exists and nothing is known about
+   * where it should sit. Run as an ordinary effect, that render reaches the
+   * screen: the map appears at the wrong size and jumps to the right one a
+   * frame later, every load and every return from the columns. A layout effect
+   * closes the gap — React flushes the measurement, the placing and the second
+   * render before a single pixel is drawn.
+   */
+  useLayoutEffect(() => {
     const svg = ref.current;
-    if (!svg || !content) return;
+    if (!svg || !plan) return;
 
     const measure = (): void => {
       const matrix = svg.getScreenCTM();
@@ -223,35 +266,69 @@ export function useMapViewport(content: { width: number; height: number } | null
     const observer = new ResizeObserver(measure);
     observer.observe(svg);
     return () => observer.disconnect();
-  }, [content]);
+  }, [plan]);
 
   /**
-   * Where the map comes to rest on this screen.
-   *
-   * The browser has already fitted the drawing to the element, so at 1 the map
-   * is exactly as wide as there is room for — which on a large display is far
-   * wider than anyone wants to read. This is the fraction of that fit which
-   * keeps the drawing under `COMFORTABLE_WIDTH`, and it is 1 on every screen
-   * small enough for the question not to arise.
+   * The part of the window the map settles inside: everything the chrome is not
+   * standing on. In the drawing's own units, so that the fitting below is one
+   * division rather than a change of coordinate system.
+   */
+  const room = useMemo(() => {
+    if (!frame || !plan) return null;
+    const top = plan.inset.top * frame.unit;
+    const bottom = plan.inset.bottom * frame.unit;
+    return { x: frame.x, y: frame.y + top, w: frame.w, h: Math.max(frame.h - top - bottom, 1) };
+  }, [frame, plan]);
+
+  const roomRef = useRef<typeof room>(null);
+  roomRef.current = room;
+
+  /**
+   * Where the map comes to rest on this screen: the magnification at which the
+   * land fills that room, or the one that keeps it under `COMFORTABLE_WIDTH`,
+   * whichever is smaller.
    */
   const rest = useMemo(() => {
-    if (!frame || !content) return 1;
-    const natural = content.width / frame.unit;
-    return natural > 0 ? Math.min(1, COMFORTABLE_WIDTH / natural) : 1;
-  }, [frame, content]);
+    if (!frame || !room || !plan) return 1;
+    const { content } = plan;
+    if (content.w <= 0 || content.h <= 0) return 1;
+    const fits = Math.min(room.w / content.w, room.h / content.h);
+    const comfortable = (COMFORTABLE_WIDTH * frame.unit) / content.w;
+    return Math.min(fits, comfortable);
+  }, [frame, room, plan]);
+
+  /**
+   * Where the map sits when nothing has been asked of it: the land centred in
+   * the room, not the drawing centred in the window. Those are different points
+   * whenever the chrome is thicker on one side than the other, and the second
+   * one puts the continents behind the header.
+   */
+  const home = useCallback(
+    (k: number): Viewport => {
+      if (!room || !plan) return { x: 0, y: 0, k };
+      const { content } = plan;
+      return {
+        k,
+        x: room.x + room.w / 2 - k * (content.x + content.w / 2),
+        y: room.y + room.h / 2 - k * (content.y + content.h / 2),
+      };
+    },
+    [room, plan]
+  );
 
   /** The map back over the window, after anything that may have moved it off. */
   const settle = useCallback(
     (next: Viewport): Viewport => {
-      const window = frameRef.current;
-      if (!window || !content) return next;
+      const area = roomRef.current;
+      if (!area || !plan) return next;
+      const { extent } = plan;
       return {
         k: next.k,
-        x: settleAxis(next.x, content.width * next.k, window.x, window.w),
-        y: settleAxis(next.y, content.height * next.k, window.y, window.h),
+        x: settleAxis(next.x, extent.width * next.k, area.x, area.w),
+        y: settleAxis(next.y, extent.height * next.k, area.y, area.h),
       };
     },
-    [content]
+    [plan]
   );
 
   /** Put the map somewhere now, with nothing left to walk towards. */
@@ -311,11 +388,11 @@ export function useMapViewport(content: { width: number; height: number } | null
    * settling from whatever the reader last did.
    */
   const fittedTo = useRef(1);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previous = fittedTo.current;
     fittedTo.current = rest;
-    land(settle(wanted.current.k <= previous * 1.001 ? { x: 0, y: 0, k: rest } : wanted.current));
-  }, [frame, rest, settle, land]);
+    land(settle(wanted.current.k <= previous * 1.001 ? home(rest) : wanted.current));
+  }, [frame, rest, settle, land, home]);
 
   /** Where a point of the screen falls on the drawing, before the map was moved. */
   const at = useCallback((clientX: number, clientY: number) => {
@@ -375,7 +452,7 @@ export function useMapViewport(content: { width: number; height: number } | null
    */
   useEffect(() => {
     const svg = ref.current;
-    if (!svg || !content) return;
+    if (!svg || !plan) return;
 
     const onWheel = (event: WheelEvent): void => {
       event.preventDefault();
@@ -397,7 +474,7 @@ export function useMapViewport(content: { width: number; height: number } | null
 
     svg.addEventListener('wheel', onWheel, { passive: false });
     return () => svg.removeEventListener('wheel', onWheel);
-  }, [content, zoomAt, panBy]);
+  }, [plan, zoomAt, panBy]);
 
   /* ─────────────────────────────  Fingers  ──────────────────────────────── */
 
@@ -493,8 +570,8 @@ export function useMapViewport(content: { width: number; height: number } | null
   );
 
   const reset = useCallback((): void => {
-    glide(settle({ x: 0, y: 0, k: rest }));
-  }, [glide, settle, rest]);
+    glide(settle(home(rest)));
+  }, [glide, settle, home, rest]);
 
   const window = useMemo(
     () =>

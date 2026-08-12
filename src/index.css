@@ -456,6 +456,36 @@
   }
 
   /*
+   * Lettering that lies on the map with nothing under it.
+   *
+   * Everything else in the header is on a plate, which brings its own ground;
+   * the wordmark is bare, and under it the map may be open water one moment and
+   * a mountain range the next. The same answer the map gives its own names — a
+   * halo in the colour the letters are written on, wide enough to lift them and
+   * soft enough not to become a shape of its own.
+   */
+  .over-map {
+    text-shadow:
+      0 0 2px var(--map-halo),
+      0 0 6px var(--map-halo),
+      0 0 14px var(--map-halo);
+  }
+
+  /*
+   * The drawing arriving.
+   *
+   * A file has to be fetched and parsed before there is a map at all, so the
+   * first frame of it is always an appearance rather than a change — and an
+   * appearance that is instant reads as a glitch on a screen that was showing
+   * open water a moment before. A plain cross-fade, no movement: the map is
+   * already in the right place by the time it is visible, and anything that
+   * slid or grew here would be the very jump this exists to avoid.
+   */
+  .map-enter {
+    animation: map-enter 420ms var(--ease-out) both;
+  }
+
+  /*
    * A translucent panel over whatever it floats on.
    *
    * Not `bg-surface/70`: every colour in the theme is a bare `var(--c-…)`, and
@@ -891,6 +921,16 @@
   }
   to {
     background-position: -200% 0;
+  }
+}
+
+/* The map fading up once its file has arrived. */
+@keyframes map-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

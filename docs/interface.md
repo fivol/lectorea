@@ -50,10 +50,24 @@ both: the names shrink against the territories, so fields that had to put their
 names out at sea, or go unnamed until pointed at, take them back — and they are
 still comfortable to read at the far end.
 
-The size the map comes to rest at is what all of that is measured from. It is
-fitted to the window up to a comfortable width and no further, so a large
-display gets the map at a readable size with open water around it rather than a
-wall map, and a name is the same size there as on a laptop.
+The size the map comes to rest at is what all of that is measured from, and it
+is arrived at from two boxes rather than one. `map.svg` is a rectangle with the
+continents in the middle of it and a third of its width in open water round the
+outside; fitting the rectangle to the window drew the land at two thirds the
+size of the room it had. So the land is what the window is measured against and
+the water is what runs off the edges — up to a comfortable width, past which the
+land stops growing and the sea around it grows instead, so a large display gets
+the map at a readable size rather than a wall map and a name is the same size
+there as on a laptop.
+
+The window it is fitted to is not quite the window either. The drawing runs edge
+to edge and passes under the header — the sea has to carry on behind the
+wordmark, or the header reads as a lid on it rather than something lying on it,
+and dragging the map has to slide the land under its own controls. What the map
+is *fitted* to is the part nothing is standing on, so the northernmost names
+come to rest below the search field even though the water behind it is theirs.
+The lettering with no plate under it takes the same halo the map gives its own
+names.
 
 On a small screen the map falls back to a grid of blocks carrying the same
 icons; on a wide one the switch in the header does the same by hand.
