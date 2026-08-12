@@ -39,7 +39,8 @@ const SUBJECTS = [
 
 const PLAYLIST_ID = /(?:list=|playlist\/)(PL[A-Za-z0-9_-]{16,32})(?![A-Za-z0-9_-])/g;
 
-const subjects = process.argv.slice(2).length ? [process.argv.slice(2).join(' ')] : SUBJECTS;
+/** One argument is one subject, so a rate-limited run can be resumed by name. */
+const subjects = process.argv.slice(2).length ? process.argv.slice(2) : SUBJECTS;
 
 /** repo/path pairs, deduped — the same README answers a dozen subjects. */
 const files = new Map<string, { repo: string; path: string; branch: string }>();
