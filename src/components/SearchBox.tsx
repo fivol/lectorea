@@ -79,6 +79,17 @@ export default function SearchBox({
   useScrollLock(sheet);
 
   /*
+   * Leaving the field takes the query with it. Half a word left standing in a
+   * pill over the map is not a filter anyone set on purpose — it keeps dimming
+   * every domain it missed, and whoever clicks the field next lands in the
+   * middle of it.
+   */
+  const leave = useCallback(() => {
+    setOpen(false);
+    onQueryChange('');
+  }, [onQueryChange]);
+
+  /*
    * A typed query preselects its best hit, so Enter goes where the eye already
    * is. The default list has no best hit — nothing was asked for yet — and
    * preselecting its first row would send Enter to «Математика» for anyone who
@@ -138,17 +149,21 @@ export default function SearchBox({
   }, [open, asSheet]);
 
   useEffect(() => {
+    // Only while the list is open, which is only while the field has focus: the
+    // sheet has its own way out, and once Escape has dropped the focus the
+    // query belongs to the second press.
+    if (asSheet || !open) return;
     const onPointerDown = (event: PointerEvent): void => {
       // The panel is portalled out of the field's box, so it has to be asked
       // about separately — otherwise the pointer that picks a row closes the
       // list from under itself and the click lands on the page behind.
       const target = event.target as Node;
       if (boxRef.current?.contains(target) || panelRef.current?.contains(target)) return;
-      setOpen(false);
+      leave();
     };
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, []);
+  }, [asSheet, open, leave]);
 
   const select = useCallback(
     (entry: SearchEntry) => {
@@ -291,17 +306,24 @@ export default function SearchBox({
                       className="w-full bg-transparent text-base text-ink outline-none
                                  placeholder:text-ink-dim [&::-webkit-search-cancel-button]:hidden"
                     />
-                    {query ? (
-                      <IconButton
-                        icon="close"
-                        iconSize={14}
-                        label={t('ui.search.clear')}
-                        onClick={() => {
-                          onQueryChange('');
-                          inputRef.current?.focus();
-                        }}
-                      />
-                    ) : null}
+                    {/* Held open whether or not there is anything to clear: a
+                        thumb-sized button appearing on the first letter would
+                        push the line it is being typed on. Here the slot keeps
+                        the button's full size — the field is a tap target, not
+                        a place to save four pixels. */}
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+                      {query ? (
+                        <IconButton
+                          icon="close"
+                          iconSize={14}
+                          label={t('ui.search.clear')}
+                          onClick={() => {
+                            onQueryChange('');
+                            inputRef.current?.focus();
+                          }}
+                        />
+                      ) : null}
+                    </span>
                   </Field>
                 </div>
 
@@ -338,6 +360,16 @@ export default function SearchBox({
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onBlur={(event) => {
+            // Tab, or a click that landed on some other control — the focus
+            // went somewhere nameable, and that is a departure. A blur with
+            // nowhere to go (Escape, another window taking over) reports a
+            // null `relatedTarget` and is not: Escape keeps its second press,
+            // and coming back to the tab should find the search as it was.
+            const next = event.relatedTarget as Node | null;
+            if (!next || boxRef.current?.contains(next) || panelRef.current?.contains(next)) return;
+            leave();
+          }}
           onKeyDown={(event) =>
             onNavKey(event, () => {
               // Drops focus but keeps the highlight — that is the point of the
@@ -355,19 +387,30 @@ export default function SearchBox({
           className={`w-full bg-transparent text-ink outline-none placeholder:text-ink-dim
                       [&::-webkit-search-cancel-button]:hidden ${floating ? 'text-base' : 'text-sm'}`}
         />
-        {query ? (
-          <IconButton
-            icon="close"
-            iconSize={14}
-            label={t('ui.search.clear')}
-            onClick={() => {
-              onQueryChange('');
-              inputRef.current?.focus();
-            }}
-          />
-        ) : (
-          <Kbd className="hidden sm:block">/</Kbd>
-        )}
+        {/*
+          One slot of a fixed size holds both. The key and the clear button are
+          not the same shape, and swapping them on the first keystroke moved the
+          input's right edge and the height of the row with it — the field
+          twitched under the caret at the exact moment it was being typed into.
+          The slot is the line's own height, so the pill is the same size at rest
+          as it was before it had one.
+        */}
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+          {query ? (
+            <IconButton
+              icon="close"
+              iconSize={14}
+              label={t('ui.search.clear')}
+              className="h-5 w-5"
+              onClick={() => {
+                onQueryChange('');
+                inputRef.current?.focus();
+              }}
+            />
+          ) : (
+            <Kbd className="hidden sm:block">/</Kbd>
+          )}
+        </span>
       </Field>
 
       {/*
