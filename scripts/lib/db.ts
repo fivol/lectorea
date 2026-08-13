@@ -154,6 +154,34 @@ export function dbExists(): boolean {
   }
 }
 
+/**
+ * True when the crawl cache holds material, not merely a schema.
+ *
+ * The distinction is what the nightly job has to decide by, and it is not the
+ * one above. `openDb` creates every table before the first request goes out, so
+ * a run that dies on a missing API key still leaves a complete and completely
+ * empty database — which `dbExists` calls a crawl, because the tables are all
+ * there. Saved to the Actions cache under a newer key, that empty file wins the
+ * `cache-db-` prefix race against the last good one, and the deploy publishes a
+ * catalogue with no playlists in it.
+ *
+ * Which is what happened every night from 2026-08-08: `refresh` red, `deploy`
+ * green, and `coverage 0.0% (0/186)` on the live site for five days, because
+ * nothing in the chain treats an empty catalogue as a failure.
+ */
+export function dbHasMaterial(): boolean {
+  if (!dbExists()) return false;
+  const db = new Database(paths.cacheDb, { readonly: true });
+  try {
+    const row = db.prepare(`SELECT EXISTS (SELECT 1 FROM playlists) AS any`).get() as {
+      any: number;
+    };
+    return row.any === 1;
+  } finally {
+    db.close();
+  }
+}
+
 /* ─────────────────────────────  Raw responses  ─────────────────────────── */
 
 /**

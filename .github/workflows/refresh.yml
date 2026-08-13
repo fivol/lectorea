@@ -68,14 +68,18 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       # An interrupted crawl is still worth keeping — the queue lives in the
-      # database and the next run resumes from it. A run that died before it
-      # ever opened the database is not: it leaves an empty file, and saving
-      # that would hand the deploy a cache with no tables in it.
+      # database and the next run resumes from it. A run that never got as far
+      # as a playlist is not: `openDb` writes the whole schema before the first
+      # request, so a job that dies on a missing key leaves a database that has
+      # every table and nothing in them. Saved under a newer key it outranks the
+      # last good cache on the `cache-db-` prefix, and the deploy publishes an
+      # empty catalogue — five days of it from 2026-08-08. So the question is
+      # whether there is material, not whether there are tables.
       - name: Is there a crawl worth keeping?
         id: crawl
         if: always()
         run: |
-          if pnpm exec tsx -e "import { dbExists } from './scripts/lib/db.ts'; process.exit(dbExists() ? 0 : 1)"; then
+          if pnpm exec tsx -e "import { dbHasMaterial } from './scripts/lib/db.ts'; process.exit(dbHasMaterial() ? 0 : 1)"; then
             echo 'keep=true' >> "$GITHUB_OUTPUT"
           else
             echo 'keep=false' >> "$GITHUB_OUTPUT"
