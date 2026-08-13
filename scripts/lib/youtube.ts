@@ -215,9 +215,20 @@ export function createClient(db: Db) {
       return collected;
     },
 
-    /** Video ids of a playlist, in order. */
+    /**
+     * Video ids of a playlist, in order.
+     *
+     * Some playlists answer with a `nextPageToken` that leads back to the page
+     * that produced it. Nothing downstream notices — the same fifty ids arrive
+     * again and the walk simply never ends — and every turn of that loop is a
+     * unit. Six playlists spent 54 000 units this way on 2026-08-13, and two of
+     * them had been spinning since the evening before, which is most of two
+     * days' quota for six lists of nursery rhymes and car videos. A token
+     * already seen is therefore the end of the playlist, not its next page.
+     */
     async playlistVideoIds(playlistId: string): Promise<string[]> {
       const ids: string[] = [];
+      const seen = new Set<string>();
       let pageToken: string | undefined;
       do {
         const body = await call<PlaylistItemsResponse>('playlistItems', {
@@ -230,6 +241,11 @@ export function createClient(db: Db) {
           if (item.contentDetails?.videoId) ids.push(item.contentDetails.videoId);
         }
         pageToken = body.nextPageToken;
+        if (pageToken && seen.has(pageToken)) {
+          console.warn(`! ${playlistId}: pagination repeats after ${seen.size} pages — stopping`);
+          break;
+        }
+        if (pageToken) seen.add(pageToken);
       } while (pageToken);
       return ids;
     },
