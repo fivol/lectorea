@@ -30,7 +30,7 @@ const LECTURE_LENGTHS: LectureLength[] = ['short', 'lesson', 'pair', 'double', '
  * two thirds of the catalogue, but «show me the courses and not the shelves» is
  * exactly what somebody would come to this dropdown to ask.
  */
-const TYPES: PlaylistType[] = ['lectures', 'course', 'seminars', 'collection'];
+const TYPES: PlaylistType[] = ['lectures', 'course', 'seminars', 'uneven', 'collection'];
 const PROVIDER_TYPES: ProviderType[] = ['university', 'platform', 'individual'];
 
 export default function PlaylistFilters({
@@ -69,13 +69,15 @@ export default function PlaylistFilters({
     );
   }, [facets.providers, providerQuery, catalog.providers]);
 
-  // The lecturer filter is a substring match, so what is typed is both the
-  // query and the filter itself — the list below narrows as it is refined.
+  // Typing here finds a name; picking one sets the filter. The field used to be
+  // the filter itself, and could therefore never hold one: a row closes the
+  // popover, and closing clears the field — so every choice undid itself.
+  const [lecturerQuery, setLecturerQuery] = useState('');
   const shownLecturers = useMemo(() => {
-    const needle = normalize(state.lecturer);
+    const needle = normalize(lecturerQuery);
     if (!needle) return facets.lecturers;
     return facets.lecturers.filter((name) => normalize(name).includes(needle));
-  }, [facets.lecturers, state.lecturer]);
+  }, [facets.lecturers, lecturerQuery]);
 
   const toggle = <K extends keyof PlaylistFilterState>(
     key: K,
@@ -158,16 +160,23 @@ export default function PlaylistFilters({
               label={t('ui.filters.lecturer')}
               active={Boolean(state.lecturer)}
               search={{
-                value: state.lecturer,
-                onChange: (next) => onChange({ ...state, lecturer: next }),
+                value: lecturerQuery,
+                onChange: setLecturerQuery,
                 placeholder: t('ui.filters.lecturerPlaceholder'),
-                // The field is the filter here, so it has to outlive the
-                // popover — see `keep` in Dropdown.
-                keep: true,
               }}
             >
+              {/* The way back to «anyone», above the caption the way the
+                  university filter puts it: a radio row cannot untick itself,
+                  and the chip that clears this filter is below the strip
+                  rather than in the menu it was set from. */}
+              <RadioRow
+                checked={!state.lecturer}
+                onChange={() => onChange({ ...state, lecturer: '' })}
+              >
+                {t('ui.common.all')}
+              </RadioRow>
               <Caption>
-                {state.lecturer.trim()
+                {lecturerQuery
                   ? t('ui.filter.found', { n: shownLecturers.length })
                   : t('ui.filter.popular')}
               </Caption>

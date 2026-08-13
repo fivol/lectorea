@@ -110,7 +110,11 @@ export function applyFilters(
   global: GlobalFilter,
   providersById: Record<string, BuiltProvider>
 ): BuiltPlaylist[] {
-  const lecturerNeedle = state.lecturer.trim().toLowerCase();
+  // A name picked off the list, not something typed: the field above it is a
+  // way to find a row, and only a row sets this. Matched whole, because 14
+  // names in the catalogue contain another one — «Сорокин» would otherwise
+  // bring «Сорокин А.А.» along with it.
+  const lecturer = state.lecturer.trim();
 
   return playlists.filter((playlist) => {
     // The global provider/lecturer filter lives above the whole app and is
@@ -126,7 +130,7 @@ export function applyFilters(
       const type = providersById[playlist.providerId]?.type;
       if (!type || !state.providerTypes.includes(type)) return false;
     }
-    if (lecturerNeedle && !playlist.lecturer?.toLowerCase().includes(lecturerNeedle)) return false;
+    if (lecturer && playlist.lecturer !== lecturer) return false;
     if (state.videoCount) {
       const [min, max] = state.videoCount;
       if (playlist.videoCount < min || playlist.videoCount > max) return false;
