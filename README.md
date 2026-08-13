@@ -91,7 +91,9 @@ that have died or been half-deleted are dropped automatically.
 
 **Goals and progress.** Add a course to your favourites and it becomes a goal:
 the profile shows a progress bar along its whole path, how many hours are left,
-and a button that takes you to the next course you can actually start.
+and a button that takes you to the next course you can actually start. Above
+them the profile opens on the numbers — hours watched, lectures behind you,
+courses finished, and the path to everything you have marked, as one bar.
 
 **Progress down to the lecture.** Watch in the built-in player and it remembers
 the second you stopped at — the profile opens on **Продолжить**, which puts you
@@ -100,11 +102,16 @@ a run of them, and one press marks a whole playlist. A course counts itself as
 started on the first lecture and finished when a playlist is behind you, until
 you say otherwise yourself. See [docs/interface.md](docs/interface.md#progress-down-to-the-lecture).
 
-![The profile, with two goals in progress](docs/images/profile.webp)
+![The profile](docs/images/profile.webp)
 
-**Your marks, your playlists, your history.** Courses in progress and finished,
-favourite playlists, and everything you have opened recently — grouped by course
-or by university.
+**One shelf-lined room, not four tabs.** What you are studying, what you are
+aiming at, the playlists you saved, what you had open lately and what is behind
+you — each shelf showing a handful and opening into the whole of itself without
+leaving the profile.
+
+**The front page remembers you.** Come back and the map carries the lecture you
+stopped at, the lectures and courses behind you and how far the nearest goal is —
+one press to carry on, one to open the profile.
 
 **Your data is yours.** There is no account and no server: everything lives in
 your browser. The **Данные** tab exports it all as one JSON file and imports it

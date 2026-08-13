@@ -8,6 +8,7 @@ import { fieldHref, useCatalogParams } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import Icon from '@/components/Icon';
 import DomainIcon from '@/components/DomainIcon';
+import ProfileSummary from '@/components/ProfileSummary';
 
 type Props = {
   matched: Set<string>;
@@ -47,6 +48,12 @@ export default function BlocksView({ matched, searchActive, allowed }: Props) {
     /* Room at the foot for the view switch, which floats over this list on a
        phone rather than taking a row of its own. */
     <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-4 sm:px-6 sm:pb-16">
+      {/* Above the continents, because it is about the reader rather than about
+          the catalogue, and what somebody was in the middle of outranks the
+          thirty-nine fields they were not. It scrolls away with the page — the
+          avatar stays in the header for exactly that reason. */}
+      <ProfileSummary variant="section" className="mb-8" />
+
       {CONTINENTS.map((continent) => {
         const domains = catalog.domains.filter((domain) => domain.continent === continent);
         if (!domains.length) return null;

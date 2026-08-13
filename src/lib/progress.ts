@@ -325,6 +325,100 @@ export function useContinue(): WatchEntry | null {
   }, [recent, watched]);
 }
 
+/**
+ * The same question as `useContinue`, answered without downloading anything.
+ *
+ * The front page cannot afford the shards: a course's playlists run to three
+ * quarters of a megabyte and the map is the first thing anyone sees. Everything
+ * here is already in the profile — the playlist that was open last, its title,
+ * and the lecture that was playing, which is enough for a thumbnail and a name.
+ * What it cannot know is how far through that playlist somebody is, so it says
+ * nothing about that; a sealed playlist is skipped, being the one case the
+ * profile does record as finished.
+ */
+export type ResumePointer = { entry: RecentEntry; lastVideoId?: string };
+
+export function useResumePointer(): ResumePointer | null {
+  const profile = useProfile((state) => state.profile);
+
+  return useMemo(() => {
+    for (const entry of profile.recent) {
+      const saved = profile.playlists[entry.id];
+      if (saved?.watched) continue;
+      return { entry, lastVideoId: saved?.lastVideoId };
+    }
+    return null;
+  }, [profile.recent, profile.playlists]);
+}
+
+/** Hours and lectures behind you, across everything the profile knows about. */
+export type WatchedTotals = {
+  /** Distinct lectures ticked off, sealed playlists included. */
+  lectures: number;
+  /** Their length, plus part-watched lectures as the part they are. */
+  seconds: number;
+};
+
+/**
+ * How much has actually been watched.
+ *
+ * Lecture lengths live in the shards and nowhere else, so this is a floor that
+ * rises as they land — hence the «≈» wherever it is printed. The set is capped
+ * because it is a headline number, not a ledger: somebody who has touched forty
+ * courses should not pay ten megabytes to be told roughly how many hours they
+ * have spent, and the most recent dozen carry nearly all of them anyway.
+ */
+const STATS_COURSE_LIMIT = 12;
+
+export function useWatchedTotals(): WatchedTotals {
+  const profile = useProfile((state) => state.profile);
+
+  const courseIds = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const entry of Object.values(profile.playlists)) {
+      if (!entry.courseId) continue;
+      const at = seen.get(entry.courseId);
+      if (!at || entry.at > at) seen.set(entry.courseId, entry.at);
+    }
+    return [...seen.entries()]
+      .sort((a, b) => b[1].localeCompare(a[1]))
+      .slice(0, STATS_COURSE_LIMIT)
+      .map(([id]) => id);
+  }, [profile.playlists]);
+
+  const shards = useCourseShards(courseIds);
+
+  return useMemo(() => {
+    // Keyed by lecture rather than by playlist: the same recording turns up in
+    // more than one of them, and watching it once is watching it once.
+    const length = new Map<string, number>();
+    const done = new Set<string>();
+
+    for (const playlists of shards.values()) {
+      for (const playlist of playlists) {
+        const sealed = profile.playlists[playlist.id]?.watched ?? false;
+        for (const video of playlist.videos) {
+          length.set(video.id, video.seconds);
+          if (sealed) done.add(video.id);
+        }
+      }
+    }
+
+    for (const [id, mark] of Object.entries(profile.videos)) {
+      if (mark.done) done.add(id);
+    }
+
+    let seconds = 0;
+    for (const id of done) seconds += length.get(id) ?? 0;
+    for (const [id, mark] of Object.entries(profile.videos)) {
+      if (mark.done || done.has(id) || !mark.sec) continue;
+      seconds += Math.min(mark.sec, length.get(id) ?? mark.sec);
+    }
+
+    return { lectures: done.size, seconds };
+  }, [shards, profile.videos, profile.playlists]);
+}
+
 /** The shards for a set of courses, filling in as they land. */
 function useCourseShards(courseIds: string[]): Map<string, BuiltPlaylist[]> {
   const [shards, setShards] = useState<Map<string, BuiltPlaylist[]>>(new Map());

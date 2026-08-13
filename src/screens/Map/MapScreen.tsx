@@ -4,7 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
-import { useIsMobile, useIsPortrait } from '@/lib/hooks';
+import { useIsMobile, useIsPortrait, useMediaQuery } from '@/lib/hooks';
 import { useMapView, useUi } from '@/store/ui';
 import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
@@ -13,9 +13,14 @@ import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ViewSwitch from '@/components/ViewSwitch';
 import ProfileButton from '@/components/ProfileButton';
+import ProfileSummary, { useHighlights } from '@/components/ProfileSummary';
 import { Plate, PlateDivider } from '@/components/ui';
 import MapView, { MAP_SEA } from './MapView';
 import BlocksView from './BlocksView';
+
+/** What the summary takes off the drawing, in pixels — its own size plus its margin. */
+const SUMMARY_BAR_HEIGHT = 56;
+const SUMMARY_CARD_WIDTH = 336;
 
 export default function MapScreen() {
   const catalog = useCatalog();
@@ -44,6 +49,22 @@ export default function MapScreen() {
   }, [catalog, params.providers]);
 
   const showMap = mapView === 'map';
+
+  /**
+   * Whether the reader has a past here worth putting on the front page.
+   *
+   * Over the map the summary floats and never leaves the screen, so the avatar
+   * in the corner would be a second door to the room you are already looking
+   * into — it goes. Over the list the summary is the first section of a page
+   * that scrolls, and the button is what stays behind when it has scrolled
+   * away, so it stays.
+   */
+  const highlights = useHighlights();
+  const showSummary = highlights.any && showMap;
+  // The corner card needs room for itself beside the search column; below that
+  // the summary is a bar at the foot of the screen, and the drawing has to be
+  // told, because it fits itself to whatever the chrome leaves.
+  const wideEnoughForCard = useMediaQuery('(min-width: 1280px)');
 
   /**
    * Which drawing of the world the window is the right shape for.
@@ -116,8 +137,12 @@ export default function MapScreen() {
           <Plate row>
             <LangToggle />
             <ThemeToggle />
-            <PlateDivider />
-            <ProfileButton label />
+            {showSummary ? null : (
+              <>
+                <PlateDivider />
+                <ProfileButton label />
+              </>
+            )}
           </Plate>
         </div>
       </header>
@@ -160,6 +185,18 @@ export default function MapScreen() {
       </div>
 
       {/*
+        Over the map, in the corner the avatar was in — under the header plate
+        and clear of the search column, which is why it waits for a window wide
+        enough to hold all three across. Narrower windows get the same thing as
+        a bar at the foot of the screen; see the stack below.
+      */}
+      {showSummary ? (
+        <div className="pointer-events-none absolute right-4 top-[4.5rem] z-30 hidden sm:right-6 xl:block">
+          <ProfileSummary variant="card" className="pointer-events-auto" />
+        </div>
+      ) : null}
+
+      {/*
         In map mode this is the whole window: no padding held back for the
         header, because the header is floating over it and the drawing is meant
         to pass underneath. What the map keeps clear of the chrome it does
@@ -188,6 +225,8 @@ export default function MapScreen() {
             matched={results.matchedDomains}
             searchActive={Boolean(query.trim())}
             allowed={allowed}
+            bottomChrome={showSummary && !wideEnoughForCard ? SUMMARY_BAR_HEIGHT : 0}
+            rightChrome={showSummary && wideEnoughForCard ? SUMMARY_CARD_WIDTH : 0}
           />
         ) : (
           <BlocksView
@@ -213,19 +252,37 @@ export default function MapScreen() {
           the foot of the screen — see the footer below for why it is up here
           and not down there.
         */}
-        {isMobile ? (
+        {isMobile || showSummary ? (
           <div
+            /* Clear of the legend written across the foot of the drawing —
+               which only exists on the windows wide enough to have room for
+               it, and is exactly what the phone gives up to keep the map
+               running to the bottom edge. */
             className="pointer-events-none sticky bottom-0 z-30 flex h-0 items-end justify-center
-                       pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+                       pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-12"
           >
             <div className="flex flex-col items-center gap-1.5">
-              <ViewSwitch
-                large
-                value={mapView}
-                onChange={setMapView}
-                className="pointer-events-auto shadow-[var(--shadow-pop)]"
-              />
-              {showMap ? <ContributeBar floating>{t('ui.footer.contribute')}</ContributeBar> : null}
+              {/* Where the corner card cannot fit. At the foot of the screen
+                  rather than the top: it is the one thing here that is pressed
+                  rather than read, and on a phone that is the band a thumb
+                  reaches without the hand moving. */}
+              {showSummary ? (
+                <ProfileSummary
+                  variant="bar"
+                  className="pointer-events-auto shadow-[var(--shadow-pop)] xl:hidden"
+                />
+              ) : null}
+              {isMobile ? (
+                <ViewSwitch
+                  large
+                  value={mapView}
+                  onChange={setMapView}
+                  className="pointer-events-auto shadow-[var(--shadow-pop)]"
+                />
+              ) : null}
+              {isMobile && showMap ? (
+                <ContributeBar floating>{t('ui.footer.contribute')}</ContributeBar>
+              ) : null}
             </div>
           </div>
         ) : null}

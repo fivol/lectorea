@@ -72,6 +72,32 @@ come to rest below the search field even though the water behind it is theirs.
 The lettering with no plate under it takes the same halo the map gives its own
 names.
 
+### Where you were
+
+A front page answers "what is there"; somebody who has been here before is
+asking "where was I", and that answer used to be two presses away behind an
+avatar in the corner. So for a reader with a past here the avatar grows into
+what it was standing for: the lecture that was playing, the lectures and courses
+behind them, and the nearest goal with the path to it. On a wide window it is a
+plate in the corner the avatar was in, on a narrower one a bar at the foot of
+the screen — where a thumb reaches it — and on the blocks list the first section
+of the page. The avatar goes only where the summary is on screen for good: over
+the list it scrolls away, so the button stays in the header behind it. A profile
+with nothing in it yet gets the plain button, as before.
+
+Nothing on it costs a download. The playlist that was open last, the lecture
+that was playing, the ticks and the paths between courses are all in the profile
+or in the catalogue the page has loaded anyway; the one thing it cannot know
+without the playlist shards is how far through that playlist somebody is, so it
+does not claim to. That number is in the panel, where the files are worth
+fetching.
+
+Both shapes are chrome, and chrome comes off the same budget: the drawing is
+fitted to what nothing is standing on, so the card takes a column off the right
+of it and the bar a band off the bottom. On a wide window that usually moves the
+land rather than shrinking it — the fit is limited by the height there — which is
+why the continents slide left when the card appears.
+
 ### Two shapes of paper
 
 A map of three continents ranged side by side wants a window wider than it is
@@ -302,18 +328,46 @@ without turning off which lectures are behind you.
 
 ## The profile
 
-![The profile, with two goals in progress](images/profile.webp)
+![The profile](images/profile.webp)
 
-A modal, not a page — it opens over whatever you were looking at. Courses and
-playlists you have marked, a **Недавние** tab holding the playlists you have
-opened (clearable in full or row by row), and settings for language and theme.
+A modal, not a page — it opens over whatever you were looking at. Three tabs:
+**Обучение**, **Настройки**, **Данные**.
 
-The first thing in it is **Продолжить** — the last thing opened that is not
-finished, at the lecture and the second it was left at, one press away. It is
-the only card in the profile about right now; everything under it is a shelf of
-things decided at some point. History carries the same bar for its most recent
-rows, and no further: progress lives in the playlist shards, and drawing a bar
-on all sixty rows would pull the catalogue down to decorate a list.
+Everything a reader has done here is on the first of them. It used to be three —
+courses, playlists, history — and they answered the same question three times: a
+saved playlist is a course you meant to watch, and a course in progress is a
+playlist you are watching. Split up, nothing anywhere said what somebody was
+actually in the middle of; you had to know which half of your own studying you
+were looking for before you could look.
+
+So it reads top to bottom as the routine it describes:
+
+- **The numbers.** Hours watched, lectures behind you, courses finished — and
+  under them the path to everything you have marked as a goal, as one bar with
+  the hours still to spend beside it. Three of the four only ever go up, which
+  is the point: a shelf of goals on its own is a list of debts.
+- **Продолжить** — the last thing opened that is not finished, at the lecture
+  and the second it was left at, one press away. The only card in the profile
+  about right now; everything under it is a shelf of things decided at some
+  point.
+- **Сейчас изучаю**, **Избранное**, **Сохранённые плейлисты**, **Недавно
+  открытые**, **Пройдено**. A favourite course is a goal — the word is
+  «избранное» because that is the button that makes one, and its card counts the
+  whole path to it. The cards under «сейчас изучаю» count lectures instead: the
+  path to a course you are already watching is ancient history, and what is left
+  of the recording is the useful number.
+
+Each shelf shows a handful and opens into the whole of itself — a back button in
+the corner, the tabs still above it, because a longer list of the same things is
+not a different place. The way in appears only when there is something behind
+it: a section showing everything it has needs no door, and a row of dead
+«показать все» links teaches people to stop reading them.
+
+The hours are a floor and say so with «≈». Lecture lengths live in the playlist
+shards, which are fetched per course and capped at the dozen most recently
+touched: somebody who has opened forty courses should not pay ten megabytes to
+be told roughly how long they have spent. History carries a bar for its most
+recent rows and no further, for the same reason.
 
 Light and dark also have a one-click toggle in the header of both screens — that
 choice is about the room you are sitting in, not about your account, and behind

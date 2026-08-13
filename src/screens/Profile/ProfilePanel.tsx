@@ -3,13 +3,11 @@ import { useT } from '@/i18n';
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
 import { useUi } from '@/store/ui';
 import { IconButton, Segmented } from '@/components/ui';
-import CoursesTab from './CoursesTab';
-import PlaylistsTab from './PlaylistsTab';
+import LearningTab from './LearningTab';
 import SettingsTab from './SettingsTab';
 import DataTab from './DataTab';
-import RecentTab from './RecentTab';
 
-const TABS = ['courses', 'playlists', 'recent', 'settings', 'data'] as const;
+const TABS = ['learning', 'settings', 'data'] as const;
 type Tab = (typeof TABS)[number];
 
 /**
@@ -22,7 +20,7 @@ export default function ProfilePanel() {
   const open = useUi((state) => state.profileOpen);
   const close = useUi((state) => state.closeProfile);
   const { t } = useT();
-  const [tab, setTab] = useState<Tab>('courses');
+  const [tab, setTab] = useState<Tab>('learning');
 
   useEscape(open, close);
   useScrollLock(open);
@@ -73,8 +71,14 @@ export default function ProfilePanel() {
           />
         </header>
 
-        {/* One plate holding all five, as in the header: an underlined word is
-            the tab bar of a document, and this is a control panel. */}
+        {/* One plate holding all three, as in the header: an underlined word is
+            the tab bar of a document, and this is a control panel.
+
+            Three and not five: what somebody has studied used to be split
+            across «мои курсы», «мои плейлисты» and «недавние», which asked the
+            reader to know which shape their own studying had before they could
+            find it. It is one shelf-lined room now, and the other two tabs are
+            what they always were — the settings, and the file. */}
         <nav className="shrink-0 border-b border-line px-4 py-3">
           <Segmented
             kind="tabs"
@@ -85,9 +89,7 @@ export default function ProfilePanel() {
         </nav>
 
         <div className="panel-scroll min-h-0 flex-1" role="tabpanel">
-          {tab === 'courses' ? <CoursesTab /> : null}
-          {tab === 'playlists' ? <PlaylistsTab /> : null}
-          {tab === 'recent' ? <RecentTab /> : null}
+          {tab === 'learning' ? <LearningTab /> : null}
           {tab === 'settings' ? <SettingsTab /> : null}
           {tab === 'data' ? <DataTab /> : null}
         </div>

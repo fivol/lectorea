@@ -205,8 +205,11 @@ and «open in a new tab» are the difference, and on a link to YouTube they
 matter. And a chip with no click is a `<span>`, so a tag never lands in the tab
 order.
 
-Above the kit sit three app-level controls that know about the store:
-`ThemeToggle`, `ProfileButton` and `ViewSwitch`.
+Above the kit sit four app-level controls that know about the store:
+`ThemeToggle`, `ProfileButton`, `ProfileSummary` and `ViewSwitch`. The last pair
+are two sizes of the same door: the summary is the profile said in one card on
+the front page, and where it is on screen for good the plain button steps aside
+— see [the interface](interface.md#where-you-were).
 
 ## Components worth knowing about
 
