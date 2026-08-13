@@ -2,15 +2,14 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
-import { unlocksOf, useCatalog } from '@/lib/catalog';
+import { useCatalog } from '@/lib/catalog';
 import { formatHours, inkOn, withAlpha } from '@/lib/format';
 import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
 import { courseHref } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import { Button, Chip, IconButton } from '@/components/ui';
-import PathBlock from './PathBlock';
-import CourseLinkCard from './CourseLinkCard';
+import LinksBlock from './LinksBlock';
 import PlaylistList from './PlaylistList';
 
 type Props = {
@@ -57,8 +56,6 @@ export default function CoursePanel({
   const domains = course.domains
     .map((id) => catalog.domainById.get(id))
     .filter((domain): domain is NonNullable<typeof domain> => Boolean(domain));
-
-  const unlocks = unlocksOf(catalog, course.id);
 
   return (
     <div className={scroll ? 'panel-scroll h-full' : ''}>
@@ -137,41 +134,10 @@ export default function CoursePanel({
         </p>
       </section>
 
-      {/* The two directions of one relation, so: one card, mirrored headings,
-          and adjacent — one of them used to be stranded below the playlists.
-          The full chain follows both rather than splitting them, since it is
-          the first one expanded and belongs after the pair, not inside it.
-
-          An empty side is dropped whole, heading and all: "nothing depends on
-          this course yet" is a sentence about the catalogue, not about the
-          course, and it took the same space as two real links. */}
-      {course.deps.length ? (
-        <section className="border-t border-line px-4 py-4">
-          <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
-          <ul className="grid gap-1.5 sm:grid-cols-2">
-            {course.deps.map((id) => (
-              <li key={id}>
-                <CourseLinkCard courseId={id} search={search} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {unlocks.length ? (
-        <section className="border-t border-line px-4 py-4">
-          <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
-          <ul className="grid gap-1.5 sm:grid-cols-2">
-            {unlocks.map((step) => (
-              <li key={step.id}>
-                <CourseLinkCard courseId={step.id} search={search} behind={step.behind} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <PathBlock course={course} search={search} outsideFilter={outsideFilter} />
+      {/* Where the course sits — what it needs, what it opens, the whole path —
+          in one folded block, so that the playlists the panel is opened for are
+          not three sections of neighbouring courses away. See `LinksBlock`. */}
+      <LinksBlock course={course} search={search} outsideFilter={outsideFilter} />
 
       <PlaylistList course={course} />
 

@@ -342,12 +342,23 @@ export const ProfileSchema = z.object({
        * it should hold across domains and across sessions.
        */
       maxStage: Stage.nullable().default(null),
+      /**
+       * Whether the panel opens with the course's links and path unfolded.
+       *
+       * `auto` reads the screen: a phone sheet is opened to find something to
+       * watch, and three sections of neighbouring courses used to stand between
+       * its first screen and the playlists; a wide panel has the room, so there
+       * the structure stays in sight. Touching the block at all replaces the
+       * guess with an answer, and that answer holds everywhere afterwards.
+       */
+      panelLinks: z.enum(['auto', 'open', 'closed']).default('auto'),
     })
     .default({
       lang: 'ru',
       theme: 'auto',
       splitRatio: 0.62,
       maxStage: null,
+      panelLinks: 'auto',
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;

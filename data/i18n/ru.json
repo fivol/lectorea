@@ -166,6 +166,12 @@
   "ui.unlocks.title": "Открывает путь к",
   "ui.unlocks.behind": "и ещё {n} дальше",
 
+  "ui.links.title": "Связи и путь",
+  "ui.links.titleNoPath": "Связи",
+  "ui.links.first": "сначала «{course}»",
+  "ui.links.opens": "открывает {courses}",
+  "ui.links.path": "путь {courses}, ≈{hours} ч",
+
   "ui.playlists.title": "Плейлисты",
   "ui.playlists.empty": "Плейлистов пока нет",
   "ui.playlists.emptyFiltered": "Под фильтрами ничего не осталось",

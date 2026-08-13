@@ -216,12 +216,23 @@ was opened from still in sight. Drag it up for the whole card, down to put it
 back, down again to send it away — or tap the grab bar to switch between the
 two, and the × or the dimmed list behind it to close.
 
-- **Требует знания** and **Даст понимание курсов** are the same relation read in
-  either direction, so they use the same card and sit next to each other,
-  whichever field the neighbour comes from, with the full chain below the pair.
-- **Path** — everything that has to come first, in order, with an hour estimate
-  and how much of it you have already marked done. «Export» copies it to the
-  clipboard and downloads it as a Markdown checklist with links.
+- **Связи и путь** — where the course sits, in one folded block. **Опирается на**
+  and **Открывает путь к** are the same relation read in either direction, so
+  they use the same card and sit next to each other, whichever field the
+  neighbour comes from, with the full chain below the pair.
+
+  Folded, the block is one line: which course to start with — the first step
+  still unmarked, never one that already carries a tick — and what the whole
+  path costs. The progress bar stays outside the fold, but only once there is
+  progress to show. It starts folded on a phone, where three sections of
+  neighbouring courses used to stand between the title and the playlists the
+  sheet was opened for, and unfolded on a wide panel, which has the room.
+  Folding or unfolding it once answers the question for good: the choice is kept
+  in the profile and holds on every screen afterwards.
+- **Path** — inside that block: everything that has to come first, in order,
+  with an hour estimate and how much of it you have already marked done.
+  «Export» copies it to the clipboard and downloads it as a Markdown checklist
+  with links.
 
   ![The path, expanded](images/path.webp)
 

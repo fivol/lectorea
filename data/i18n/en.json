@@ -166,6 +166,12 @@
   "ui.unlocks.title": "Opens the way to",
   "ui.unlocks.behind": "and {n} more behind it",
 
+  "ui.links.title": "Links and path",
+  "ui.links.titleNoPath": "Links",
+  "ui.links.first": "first “{course}”",
+  "ui.links.opens": "opens {courses}",
+  "ui.links.path": "path {courses}, ≈{hours} h",
+
   "ui.playlists.title": "Playlists",
   "ui.playlists.empty": "No playlists yet",
   "ui.playlists.emptyFiltered": "Nothing left under these filters",
