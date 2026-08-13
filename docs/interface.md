@@ -74,13 +74,15 @@ names.
 
 ### Where you were
 
+![The map with the resume plate in the corner](images/home.webp)
+
 A front page answers "what is there"; somebody who has been here before is
 asking "where was I", and that answer used to be two presses away behind an
 avatar in the corner. So for a reader with a past here the front page carries
 it: the lecture that was playing, and the three numbers that say whether the
 habit is alive — days in a row, lectures watched, courses done. On a wide window
 it is a plate in the corner, on a narrower one a bar at the foot of the screen
-— where a thumb reaches it — and on the blocks list the first section of the
+— where a thumb reaches it — and on the list view the first section of the
 page. A profile with nothing in it yet shows none of it.
 
 The avatar stays in the header either way. The summary is a shortcut into the
@@ -102,8 +104,8 @@ covering sea would be charging the whole map for a corner of it.
 A map of three continents ranged side by side wants a window wider than it is
 tall. Fitted into a phone held upright it is a strip of land across the middle of
 a great deal of water, with the names at three pixels — and no amount of zooming
-fixes the shape of the paper. So a phone used to be sent to the blocks whatever
-it asked for.
+fixes the shape of the paper. So a phone used to be sent to the list whatever it
+asked for.
 
 There are two drawings now. The same generator lays the same territories out
 again with the continents stacked instead of ranged, and writes
@@ -139,23 +141,24 @@ pixels and not eight. Fewer names fit inside their own borders at that size and
 more go out to sea or wait for the reader to come closer — on a screen that size
 the better trade, and the same one the map has always made.
 
-The blocks are still there, and are still the same catalogue drawn as a grid of
-cards.
+The other view is still there, and is still the same catalogue drawn as a grid of
+cards — «Список» in the header, `blocks` in the code, and a reader who wants
+names rather than a drawing never has to learn the map at all.
 
-![The blocks fallback](images/blocks.webp)
+![The list view, with the resume plate as its first section](images/blocks.webp)
 
 Both views are now a choice on every screen. On a wide one the switch sits in the
 header; on a phone there is no room for it beside the wordmark — and a control
 that decides what the whole screen is belongs under the thumb rather than in the
 far corner — so it floats at the foot of the screen instead, thumb-sized, in the
-same place over both views. Over the blocks it rides the bottom of the scrolling
+same place over both views. Over the list it rides the bottom of the scrolling
 column rather than standing over the middle of a card.
 
 That choice
 lasts the visit and no longer: the map is the front door, so every visit opens
 on the drawing, and the wordmark leads back to it from anywhere. The way back
 from the columns is the other half of that pair — it returns to the view you
-left, blocks included, and says which one it is.
+left, the list included, and says which one it is.
 
 ## The columns — `/courses`
 
@@ -242,6 +245,9 @@ screen there is room for the field itself, so the field is what you tap — the
 same screen opens, and course names arrive with the width to be read whole
 rather than cut at «Дифференциальные уравне…».
 
+<img src="images/phone-search.webp" alt="The search as its own screen on a phone" width="320">
+
+
 ## The course panel
 
 Selecting a course opens it; the × in the panel, or a click on empty space, puts
@@ -312,7 +318,48 @@ two, and the × or the dimmed list behind it to close.
 Marking a course cycles it through *nothing → in progress → done*, which is what
 makes "what can I study right now" answerable.
 
+## On a phone
+
+![The map, a course sheet and the profile on a phone](images/phone.webp)
+
+Every screen has a phone shape, and none of them is the wide one scaled down.
+The rules, and where each is argued in full:
+
+| | On a wide window | On a phone |
+|---|---|---|
+| The map | three continents ranged, fitted whole | a second drawing with them stacked, opening close in — [two shapes of paper](#two-shapes-of-paper) |
+| Map or list | a switch in the header | a thumb-sized switch floating at the foot of both views |
+| Where you were | a plate in the corner | a bar along the bottom, where a thumb reaches it |
+| The catalogue | columns that scroll sideways | one column of rows, folded by difficulty |
+| A course | a panel beside the columns | a sheet over the list, dragged up for the whole card — [the course panel](#the-course-panel) |
+| Links and path | three sections, always open | folded into one **Связи и путь** line, and the fold is remembered |
+| Search | a field in the header | its own screen, full width and full height — [search](#search) |
+| The profile | a modal over the page | the same modal, the numbers in two columns instead of four |
+
+The header is the one place something has to give. On the map there is room for
+the wordmark and the search field itself; above the columns the row is a way
+back, three filters and the theme, language and profile buttons — so the search
+becomes an icon there, and the filters keep the width, being what that screen is
+for.
+
+**It installs.** The build ships a PWA manifest and a service worker
+([`vite.config.ts`](../vite.config.ts)): added to the home screen the site opens
+in its own window with the canvas colour behind it, and everything already
+fetched — the bundle, the map, the catalogue files — is served from cache, so a
+reader who has looked at a field once can look at it again on the underground.
+The catalogue's own JSON is stale-while-revalidate: what is on screen is
+whatever the last visit saw, replaced the moment the network answers.
+
 ## Progress, down to the lecture
+
+![A recording open: the player, the lectures with their ticks, the numbers behind the rating](images/lectures.webp)
+
+Opening a recording gives the player, the lectures under it with a tick each,
+and — on the right — the same numbers the rating was computed from, so a status
+can always be traced back to what produced it ([rating.md](rating.md)). The
+poster says «Продолжить с лекции N» rather than «Play», because after the first
+session that is the only offer worth making, and a part-watched lecture carries
+the second it stopped at where its length would otherwise be.
 
 Three levels, and only the bottom one holds anything. A lecture is watched or it
 is not; a playlist and a course are arithmetic over that.
@@ -401,11 +448,19 @@ So it reads top to bottom as the routine it describes:
   path to a course you are already watching is ancient history, and what is left
   of the recording is the useful number.
 
+![The shelves: saved playlists, what was open lately, what is done](images/profile-shelves.webp)
+
 Each shelf shows a handful and opens into the whole of itself — a back button in
 the corner, the tabs still above it, because a longer list of the same things is
 not a different place. The way in appears only when there is something behind
 it: a section showing everything it has needs no door, and a row of dead
 «показать все» links teaches people to stop reading them.
+
+The shelves are not four copies of one card either. A course under «сейчас
+изучаю» carries the recording it is being studied by and what is left of it; a
+saved playlist carries who recorded it and how long it runs; a row under
+«недавно открытые» carries the date and the lecture it was left at. Same
+furniture, different question.
 
 The hours are a floor and say so with «≈». Lecture lengths live in the playlist
 shards, which are fetched per course and capped at the dozen most recently
@@ -436,7 +491,7 @@ The domain and provider filters, the selected course and the open playlist — s
 a link carries the exact view and the back button behaves.
 
 The stage cap and the display settings do not: they belong to the reader, not to
-the view being shared, and stay in `localStorage`. Map or blocks is neither — it
+the view being shared, and stay in `localStorage`. Map or list is neither — it
 is not what a link points at, and it is not something one visit should decide
 for the next, so it lives in memory for the length of the visit.
 

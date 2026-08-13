@@ -1,0 +1,151 @@
+# Roadmap
+
+[← docs](README.md) · [the live site](https://lectorea.org/)
+
+What is being worked towards, why, and what is deliberately not planned. Nothing
+here is a promise with a date on it; it is the order things are likely to happen
+in, and the reasoning is more useful than the order.
+
+## Where it stands today
+
+The site is static and there is no backend. Everything a reader marks —
+lectures, playlists, courses, favourites, the days they studied — lives in one
+`localStorage` key, and the **Данные** tab exports it as a JSON file and imports
+one back, replacing or merging ([interface.md](interface.md#the-profile)).
+
+![The Данные tab: download the profile, restore it from a file](images/data.webp)
+
+That buys a great deal. No account to make, no password to lose, no server that
+can go down or read your history, and a fork of this repository is a working site
+after one deploy. It costs exactly one thing, and readers hit it immediately:
+**the profile is trapped in one browser.** Study on a laptop, open the site on a
+phone, and it does not know you. Clear the browser's site data and a year of
+marks is gone with no way back.
+
+Everything at the top of this list is about paying that cost down without giving
+up what it bought.
+
+## 1. Sync between devices
+
+The same profile on a laptop, a phone and a tablet, without either of them being
+the master copy.
+
+Half of it already exists: the import merges rather than overwrites, and its
+rules were written for exactly this — on a conflict the more advanced status
+wins, days union, a lecture watched on either machine is watched, and histories
+interleave by time (`mergeProfile` in
+[`store/profile.ts`](../src/store/profile.ts)). Merging two profiles in either
+order gives the same answer, and merging twice changes nothing — which is what
+makes syncing them safe. What is missing is a way for two devices to hand each
+other the file without a human carrying it.
+
+Three shapes it could take, in increasing order of what they cost:
+
+| | How it works | Cost |
+|---|---|---|
+| **A sync code** | one device shows a short code, the other types it, the profile passes through a relay and is never stored | a tiny service; nothing at rest; both devices have to be to hand at the same time |
+| **A sync account** | sign in with an existing account (GitHub, Google) and the profile lives in object storage under that identity | a real backend, an OAuth app, and somebody's data to look after |
+| **A folder you own** | the profile syncs into a file in the reader's own Dropbox / iCloud / WebDAV | no server at all, but every provider is its own integration and its own login flow |
+
+The constraint that decides it: **the site must keep working with no account at
+all.** Sync is a thing you turn on, never a wall in front of the catalogue, and
+a reader who never signs in must not lose a single feature. That rules out
+anything that makes an identity the primary key of the profile, and it is why a
+sync code is the likely first step even though an account is the better
+long-term answer — the code can ship without changing anything about how the
+profile works.
+
+## 2. Progress kept off the browser
+
+Sync solves "two devices"; it does not solve "I cleared my cookies". Those are
+the same mechanism from the outside and different problems underneath: the
+second one needs a copy that survives the device, not a copy on another device.
+
+The cheap version is a reminder — the profile knows when it was last exported,
+and a profile with three hundred marks and no backup in six months could say so
+once. The full version is the sync account above, with the cloud copy as the one
+that outlives everything. A middle step worth having on its own: an export that
+is one press rather than three, and an import that takes a dropped file
+anywhere on the page.
+
+## 3. A plan with dates in it
+
+The path already answers "what, in what order, and roughly how many hours"
+([interface.md](interface.md#the-course-panel)). It does not answer "by when",
+which is the question anybody planning a term actually has. Given hours a week,
+the path becomes a schedule; given a date to finish by, it becomes hours a week.
+Both are arithmetic over numbers the catalogue already has.
+
+Exported as an `.ics` calendar it stops being a document and becomes something
+that turns up in the morning. This is the one item on the list that needs no
+server, no account and no new data — only the interface for it.
+
+## 4. Reminders that a run is about to break
+
+The streak is the one number in the profile that can be lost by doing nothing,
+which is exactly what makes it work. The site is already an installable PWA, so
+the notification permission is available where the reader has installed it;
+nothing else is needed. It has to be opt-in, quiet, and never more than one a
+day — a study site that nags is a study site people uninstall.
+
+## 5. Search inside the lectures
+
+The catalogue knows which recordings have subtitles. It does not read them.
+Fetching and indexing that text would move search from "which course is this"
+to "which lecture explains this" — the question people bring to a search box
+after they have already found the course. It is the most valuable thing on this
+list and the most expensive: transcripts are large, the index would dwarf the
+catalogue, and it would have to be built per language.
+
+## 6. More of the catalogue in English
+
+The interface is Russian and English; the catalogue is Russian with English
+titles for the courses and a mostly Russian-language set of recordings
+([`data/i18n`](../data/i18n)). English-language playlists are already crawled and
+already ranked — three quarters of what has been found is in English — so what is
+missing is not material but the editorial pass that files it: course texts,
+keywords and the search forms that make `linalg` find linear algebra the way
+`линал` does.
+
+## 7. Smaller things worth doing
+
+- **Notes.** A line of your own on a course or a lecture, exported with the plan.
+  Everything needed for it is already in the profile's shape.
+- **A lighter way to fix the data.** Today «Предложить плейлист» opens a GitHub
+  issue form, which is a wall for anyone without an account
+  ([CONTRIBUTING.md](../CONTRIBUTING.md)).
+- **Recordings that are not on YouTube.** University media portals hold courses
+  that exist nowhere else. Every one of them is its own crawler, so this waits
+  until a specific gap justifies it ([harvest.md](harvest.md)).
+- **"What can I start now", as a screen.** The graph knows which courses have
+  every prerequisite behind you. Nothing shows that list on its own yet.
+- **Sharing a path.** A link that carries a plan, so one person can hand another
+  a route through a subject.
+
+## Not planned
+
+Saying no to these once is cheaper than reconsidering them every few months.
+
+- **No ads, no paid tier, no "premium" anything.** The catalogue is a list of
+  links to free lectures; charging for a view of it would be charging for
+  somebody else's work.
+- **No account required to read.** Sync, if it lands, is a setting.
+- **No analytics that follow a reader.** There is no tracking on the site now and
+  none is planned; what pages are popular is not worth what it costs to know.
+- **No comments, ratings or forum.** The rating is computed from what YouTube
+  already measures ([rating.md](rating.md)), and a comment section is a
+  moderation commitment this project cannot honour.
+- **No hosting the videos.** The lectures belong to the universities and channels
+  that recorded them, and they stay where they are, with the view counted where
+  it should be.
+- **No AI-generated courses or summaries in the catalogue.** A model is used in
+  the pipeline to *match* a playlist to a course somebody wrote down
+  ([pipeline.md](pipeline.md#matching)); nothing a reader sees is invented by
+  one.
+
+## Suggesting something
+
+Open an issue — there is a form for "everything else":
+[new issue](https://github.com/fivol/lectorea/issues/new/choose). A missing
+course, a wrong prerequisite or a better recording is worth more than any item
+on this page, and those have their own forms.

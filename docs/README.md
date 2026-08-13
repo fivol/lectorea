@@ -13,6 +13,10 @@ pipeline of scripts and served as files; the user profile lives in
 `localStorage`. The live site is [lectorea.org](https://lectorea.org/),
 deployed from `main` by [deploy.yml](../.github/workflows/deploy.yml).
 
+It also keeps itself current without anybody pressing anything: a nightly job
+re-crawls what is already known, drops what has died, and the deploy runs off
+the back of it ([pipeline.md](pipeline.md#automation)).
+
 ## Quick start
 
 ```bash
@@ -116,9 +120,11 @@ the matching, the map generators — is under [scripts/](scripts/README.md).
 **The product**
 
 - [interface.md](interface.md) — the three screens: the map, the columns, the
-  filters, the panel, the profile, with screenshots
+  filters, the panel, progress, the profile and the phone, with screenshots
 - [design-system.md](design-system.md) — the tokens (colour, type, space,
   motion), the plate every control is cut from, and the UI kit
+- [roadmap.md](roadmap.md) — what is being worked towards, in what order, and
+  what is deliberately not planned
 
 **The data**
 

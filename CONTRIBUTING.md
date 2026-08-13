@@ -111,9 +111,11 @@ That is on purpose: a course with no description shows a placeholder, and a
 course with no keywords can only be found by someone who already knows its exact
 title — both are invisible failures otherwise.
 
-An empty course — one with no playlists yet — is welcome. Empty courses are not
-hidden: they show the structure of the field, and the empty outskirts on the map
-are visible as work to be done.
+An empty course — one with no playlists yet — is welcome, and adding one is not
+wasted work. It is kept in the data and dropped from the site until something
+matches it, so the graph is right the day a recording turns up; and a course that
+something visible depends on is shown empty rather than breaking the chain. See
+[courses with no materials](docs/data.md#courses-with-no-materials-are-hidden-not-deleted).
 
 ## Adding a domain
 

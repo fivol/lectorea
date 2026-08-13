@@ -324,24 +324,56 @@ which renders to `.map-poc/` with a metrics report. The sandbox has a
 
 ## Automation
 
-`refresh.yml` — cron at 03:00 UTC plus manual dispatch:
+The catalogue is meant to stay current with nobody touching it. Two workflows do
+that, and they are deliberately separate: crawling must not block a deploy, and
+deploying must not spend quota.
+
+**`refresh.yml`** — cron at 08:30 UTC plus manual dispatch:
 
 ```
 restore cache.db from the Actions cache →
   seed it from the data-cache release if that came back empty →
-  pnpm data:refresh (runs until the quota is gone) →
-  pnpm data:match →
+  pnpm data:refresh      (metadata, video lists, liveness — until the quota is gone)
+  pnpm data:subscribers  (single digits of quota; the rating's reach signal)
+  pnpm data:match        (bind what discovery found to courses)
+  pnpm data:embeds       (which playlists the player refuses as list=) →
   save cache.db to the Actions cache and to the release →
   open a PR if there are new matches
 ```
 
-`deploy.yml` — on push to `main`: restore the same cache, then
-`pnpm data:build → pnpm build → deploy`.
+**Half past the reset, and the hour is load-bearing.** The quota is Google's
+day and turns over at midnight Pacific — 08:00 UTC in winter, 07:00 in summer.
+The job used to run at 03:00, four hours *before* the reset, where it inherited
+whatever was left of a day a laptop had already spent, and a nightly run could
+end with nothing crawled at all.
 
-The separation matters: crawling must not block a deploy, and deploying must not
-spend quota.
+**What the night fixes by itself.** A retitled playlist, a lecture added to one,
+a video count that moved, a channel that has grown, a playlist that has been
+deleted or set to private — all of it is read again on the schedule in
+[incremental refresh](#incremental-refresh) and republished. Ratings and
+statuses follow from those numbers ([rating.md](rating.md)), so a recording that
+has stopped being watched slides down the list on its own, and one that has died
+leaves it. A course whose last recording disappeared stops being shown and comes
+back the day one matches it again ([data.md](data.md)).
 
-Secrets: `YOUTUBE_API_KEY`, `OPENAI_API_KEY`.
+**What it will not decide alone.** New bindings between a playlist and a course
+are a content change and arrive as a pull request against `data/overrides.yaml`,
+labelled `data`. A wrong binding files a recording under a course nobody will
+check again, which is the one failure here nothing downstream can catch —
+so it waits for a person. Everything else the crawl learns is published without
+review.
+
+**`deploy.yml`** — on push to `main`, *and* on a successful `refresh` run: it
+restores the same cache, then `pnpm data:build → pnpm build → deploy`. That
+second trigger is what closes the loop — without it a night's work would sit in
+the cache until somebody happened to push. A refresh that failed publishes
+nothing: there is no new material, and rebuilding on its schedule would only
+churn the site.
+
+Secrets: `YOUTUBE_API_KEY` (plus optional `YOUTUBE_API_KEY2`, `3`) and
+`OPENAI_API_KEY`; the refresh needs them, the deploy needs none. A fork that has
+set none of them still builds and publishes — the graph, and whatever playlists
+the snapshot it restored happens to hold ([below](#moving-the-crawl-between-machines)).
 
 ## Moving the crawl between machines
 

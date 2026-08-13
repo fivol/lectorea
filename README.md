@@ -11,21 +11,22 @@
 [![site](https://img.shields.io/badge/site-lectorea.org-2ea043)](https://lectorea.org/)
 [![deploy](https://github.com/fivol/lectorea/actions/workflows/deploy.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/deploy.yml)
 [![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
-[![courses](https://img.shields.io/badge/courses-174_in_39_fields-4c8eda)](https://lectorea.org/)
+[![courses](https://img.shields.io/badge/courses-186_in_39_fields-4c8eda)](https://lectorea.org/)
 
 [![The map](docs/images/map.webp)](https://lectorea.org/)
 
-Nearly 200 courses across 39 fields of knowledge, each one knowing what it
-depends on. That is the difference from a search engine: YouTube can find you a
-lecture on tensor analysis, but it cannot tell you that you will not understand
-it without linear algebra. Lectorea answers the two questions that actually come
-up:
+186 courses across 39 fields of knowledge, each one knowing what it depends on,
+and some 3700 recordings of them from nearly 250 universities and channels. That
+is the difference from a search engine: YouTube can find you a lecture on tensor
+analysis, but it cannot tell you that you will not understand it without linear
+algebra. Lectorea answers the two questions that actually come up:
 
 - **What do I need to know before this course?**
 - **What can I study right now, with what I already know?**
 
 No registration, no ads, nothing to pay for. Everything you mark stays in your
-browser. The interface and most of the catalogue are in Russian for now.
+browser, and the catalogue re-crawls itself every night. The interface is
+Russian and English; most of the catalogue is Russian for now.
 
 ## Who it is for
 
@@ -56,10 +57,8 @@ missed.
    sciences, humanities — with the fields of knowledge drawn as territories. The
    bigger the territory, the more courses it holds. Move it as you would any
    map: two fingers to carry it, a pinch to go in — the names grow a little as
-   you do, and more of them appear. On a phone the same world is drawn stacked
-   rather than ranged, so it fills a tall screen instead of lying across the
-   middle of it. Or just search: the box understands abbreviations and student
-   slang, so `теорвер` and `линал` find what you mean.
+   you do, and more of them appear. Or just search: the box understands
+   abbreviations and student slang, so `теорвер` and `линал` find what you mean.
 2. **Pick a field and read the columns.** Each column is a difficulty level:
    the number of courses that have to come before this one. Left is the
    foundation, right is what stands on it. Hovering over a card lights up what
@@ -70,9 +69,13 @@ missed.
 
    ![A course open, its chain lit and its panel out](docs/images/courses.webp)
 
-4. **Mark what you are doing.** A course cycles through *not started → in
-   progress → done*, and that is what makes "what can I study right now"
-   answerable.
+4. **Watch, and it keeps count.** Play a lecture in the built-in player and it
+   remembers the second you stopped at; anything watched on YouTube gets a tick
+   of its own. A course moves through *not started → in progress → done* on its
+   own from that — and the button that cycles it by hand is still there, which
+   is what makes "what can I study right now" answerable.
+
+   ![A recording open in the player, its lectures ticked off](docs/images/lectures.webp)
 
 ## What is in it
 
@@ -89,42 +92,95 @@ playlist with forty views and one enthusiastic comment cannot outrank MIT. A
 careful lecture course from a small university gets a fair hearing. Playlists
 that have died or been half-deleted are dropped automatically.
 
-**Goals and progress.** Add a course to your favourites and it becomes a goal:
-the profile shows a progress bar along its whole path, how many hours are left,
-and a button that takes you to the next course you can actually start. Above
-them the profile opens on the numbers — hours watched, lectures behind you,
-courses finished, days in a row and the last four weeks as a strip, then the
-path to everything you have marked, as one bar.
+**Progress, down to the lecture.** A lecture counts as watched at 90% of its
+length, or when the player says it ended; anything watched on YouTube instead
+gets a tick of its own, shift-click marks a run of them, and one press seals a
+whole playlist. A playlist is the share of its lectures behind you, a course is
+the recording it is being studied by — never the sum of thirteen alternatives.
+Watching promotes a course on its own, and pressing the status button yourself
+takes the wheel back.
+See [docs/interface.md](docs/interface.md#progress-down-to-the-lecture).
 
-**Progress down to the lecture.** Watch in the built-in player and it remembers
-the second you stopped at — the profile opens on **Продолжить**, which puts you
-back there. Lectures watched on YouTube get a tick of their own, shift-click for
-a run of them, and one press marks a whole playlist. A course counts itself as
-started on the first lecture and finished when a playlist is behind you, until
-you say otherwise yourself. See [docs/interface.md](docs/interface.md#progress-down-to-the-lecture).
+## What the profile holds
 
-![The profile](docs/images/profile.webp)
+![The profile: the numbers, the run of days, and what to carry on with](docs/images/profile.webp)
 
-**One shelf-lined room, not four tabs.** What you are studying, what you are
-aiming at, the playlists you saved, what you had open lately and what is behind
-you — each shelf showing a handful and opening into the whole of itself without
-leaving the profile.
+There is no account and nothing to sign up for — the profile is a modal over
+whatever you were looking at, and it reads top to bottom as the routine it
+describes.
+
+- **The numbers.** Hours watched, lectures behind you, courses finished, days in
+  a row — then the last four weeks as a strip of days, and the path to
+  everything you marked as a goal, as one bar with the hours still to spend.
+- **Продолжить.** The last thing you opened that is not finished, at the lecture
+  and the second you left it at, one press away.
+- **The shelves.** What you are studying now, your goals, the playlists you
+  saved, what you had open lately, what is behind you. Each shows a handful and
+  opens into the whole of itself without leaving the profile.
+
+![The shelves: saved playlists, what was open lately, what is done](docs/images/profile-shelves.webp)
+
+**Goals.** A favourite course is a goal: its card counts the whole path to it,
+not the course alone, so the bar moves while you are still three prerequisites
+away.
 
 **The front page remembers you.** Come back and the map carries the lecture you
 stopped at and the three numbers that say whether the habit is alive — days in a
 row, lectures watched, courses done. One press to carry on, one to open the
 profile.
 
-**Your data is yours.** There is no account and no server: everything lives in
-your browser. The **Данные** tab exports it all as one JSON file and imports it
-back on another machine — either replacing what is there or merging it, keeping
-the further-along status on a conflict. That is the whole sync story, and it
-works between browsers without anyone hosting anything.
+**Your data is yours.** Everything lives in your browser, and there is no server
+to hold it. The **Данные** tab exports it all as one JSON file and imports it
+back on another machine — replacing what is there or merging it, keeping the
+further-along status on a conflict, and taking the union of the days you
+studied. That is today's whole sync story; the [roadmap](docs/roadmap.md) is
+about making it less manual.
 
-**Small comforts.** Light and dark themes, a Russian and an English interface
-(the course titles stay in the language the catalogue is written in), a link
-that carries the exact view you are looking at, and keyboard shortcuts (`/`
-search, `t` theme, `?` for the rest).
+## On a phone
+
+![The map, a course sheet and the profile on a phone](docs/images/phone.webp)
+
+Not a shrunk desktop. The map is drawn a second time with the continents stacked
+into a column, because three of them ranged side by side on an upright screen is
+a strip of land in a lot of water — and it opens close in rather than on the
+whole world, since a whole world on a phone is names at four pixels. The columns
+become a list you can fold by difficulty, a course opens as a sheet you drag up
+for the whole card, search takes the whole screen, and the map/list switch sits
+under your thumb instead of in the far corner.
+
+**It installs.** The site is a PWA: add it to the home screen and it opens in its
+own window, and everything you have already looked at works without a
+connection.
+
+## The catalogue keeps itself fresh
+
+[![refresh](https://github.com/fivol/lectorea/actions/workflows/refresh.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/refresh.yml)
+
+Nobody has to press anything for the site to stay current. Every night a job
+re-reads the recordings it already knows — titles, lecture lists, durations,
+view and like counts, subscriber counts — and checks that they are still there.
+A playlist that has been deleted or half-emptied drops out of the ranking on its
+own; a course that has quietly lost all of its recordings stops being shown, and
+comes back the day one matches it again. New matches between a playlist and a
+course are the one thing that does not publish itself: they arrive as a pull
+request for a human to look at, because a wrong binding is a course nobody looks
+at twice. When the crawl finishes, the site rebuilds and deploys itself.
+
+The details, the quota arithmetic and what happens when a night fails —
+[docs/pipeline.md](docs/pipeline.md#automation).
+
+## Small comforts
+
+Light and dark themes, a Russian and an English interface (course titles stay in
+the language the catalogue is written in), a link that carries the exact view you
+are looking at, and keyboard shortcuts (`/` search, `t` theme, `m` swap the map
+and the columns, `?` for the rest).
+
+## Where it is going
+
+Sync between devices, progress that survives a cleared browser, a path with
+dates in it, and search inside the lectures — with what is deliberately *not*
+planned written down beside it: **[docs/roadmap.md](docs/roadmap.md)**.
 
 ## The catalogue is public — help fix it
 
@@ -132,17 +188,20 @@ Everything you see is open data, and anyone can change it. If a course is
 missing its best recording, or a prerequisite is wrong, or a whole subject is
 absent, say so:
 
-- **«Предложить плейлист»** on any empty course opens a ready-made form. It asks
-  for one thing — the link. The university, the lecturer, the language and the
-  running time are read from YouTube automatically.
+- **«Предложить плейлист»** on a course with nothing in it opens a ready-made
+  form. It asks for one thing — the link. The university, the lecturer, the
+  language and the running time are read from YouTube automatically.
 - **«Исправить данные»** in a course panel opens the exact file the course comes
   from.
 - Or open an issue [here](https://github.com/fivol/lectorea/issues/new/choose) —
   there are four short forms: a playlist, a course, a field of knowledge, and
   everything else.
 
-Empty courses are deliberately left visible rather than hidden: they show where
-the catalogue still has holes, and the map's empty outskirts are an invitation.
+A course with no recordings is kept in the data and dropped from the site rather
+than deleted: the markup is right, the graph is right, and the day a playlist
+matches it the course comes back. The exception is a course something visible
+depends on — that one stays, empty or not, because a gap in a chain of
+prerequisites is a worse answer than a card with nothing behind it.
 
 ---
 
