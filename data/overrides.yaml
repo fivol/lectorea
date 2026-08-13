@@ -471,5 +471,1077 @@ matches:
   PLo8pZkfZN5h0PgFE7JM9QssnlCsxirVoh: null # one talk
   PLo8pZkfZN5h3fPg7bI9CGVrMKEgsSbTY1: null # three talks
 
+  # ── Reviewed by hand on 2026-08-13 ──
+  # 1500 playlists already crawled and already paid for, sitting under the
+  # publish threshold because a course code or a translated title cost the rule
+  # pass a few points. Read one shelf at a time, with the lecture titles.
+
+  PL-XzhVrXIVeSVcV9iRJ4S9WAH1ryq4hTQ: abstract-algebra # Lectures 1-42 of a graduate course on Coxeter groups
+  PLgMDNELGJ1CYSbqKp1TEL2BGdGX6QXHoo: abstract-algebra # representation theory of finite groups
+  PLmU0FIlJY-MlFAojfH2wGVuRcRES8xVKN: abstract-algebra # 33 numbered class recordings, gcd to groups to cyclic groups
+  PLRRsDgzitzo4: abstract-algebra # commutative algebra
+  PLgMDNELGJ1CajIGnWor0zilGWhxAfunZx: algorithms # Lec 01-37
+  PLC86CC98DDF0CDDAC: analytical-chemistry # 28-lecture graduate course on IR, MS and NMR structure determination
+  PLE20foNk9J6L1dh9X27RaPiaul8_7wrAY: analytical-chemistry # Keeler's 14-lecture NMR course
+  PLqOZ6FD_RQ7nUiPCa47zSrMWArKAdwfcD: analytical-chemistry # Chem 203
+  PLO3VwXPRtV3yHbCsWoGCxEkBsDoXNkpMq: ancient-greek # Lesson 1 onward with quizzes
+  PLq5ea-jR9u2puDaLoRL-nBkpwrkURbLjT: ancient-greek # 118 numbered units covering two semesters of college Ancient Greek
+  PLqSMwvXdPUU_ffSvdYQn0fLl3Swt-P5wY: ancient-greek # from the alphabet through Thrasymachus readings to Aristotle
+  PLU1WuLg45SixzqVhVtpL-l2DWuvmTXwlP: ancient-greek # 43 sessions
+  PLYDcXWmyi12ZH7KA5o0TJNKT6bH5RrbEX: ancient-history # Lecture One to Seventeen
+  PLKjwFyELc2SlNa31c7YSQAbaHMIT-QAoQ: ancient-literature # a survey explicitly from Homer to Augustine
+  PLrbDdGg7Qy8jcDq63uO5ArrO7v2HDWwFa: ancient-philosophy # Presocratics to Plato's Republic to Aristotle in sequence
+  PLFDJJLh3yGREPkNZcUI6ITV_VK1Dmeami: anthropology-intro # 25 numbered lectures of an intro physical anthropology course
+  PLiL3JwUL21tNcMnpUOmvB5obuOO9OFlqa: art-history-intro # second semester of the survey
+  PLiL3JwUL21tOQ0-YVygIWh3BF0ime0kbw: art-history-intro # first semester
+  PLslORdWrrAlAQoZBZWP194v6LKB45CC31: art-history-intro # 199 clips, Western art from prehistory to 1400, the whole 201 survey
+  PLcsjsqLLSfNDJz7vjePMy9UwXuTvzdAzL: astronomy-intro # 11 numbered lectures touring the Solar System, planetary science
+  PLdLiRaajwSXRYPwqLkyZCm7619qtzjwBI: astronomy-intro # AST 114 lectures 1-29
+  PLyu4Fovbph6cEIHDBXlw8nZcS8wpJGdos: astronomy-intro # 147 videos, 115 h, the entire introductory course in order
+  PL279CFA55C51E75E0: biblical-studies # 26 numbered lectures, Yale's New Testament history and literature
+  PL2C51EC7EFBF4772A: biblical-studies # 28 numbered lectures, Old Testament survey II
+  PL4DC84F8EBBE6A3F9: biblical-studies # 11 numbered lectures, Hebrew exegesis I
+  PL4sbg6ng23C44cTE0MebLZHzfv_53vYwN: biblical-studies # 24 numbered lectures working sequentially through Romans
+  PL4sbg6ng23C4dtExx4raQDOWNDn53HoPq: biblical-studies # 16 numbered lectures on Ezekiel
+  PL4sbg6ng23C4fpQ2NsHz-GgzqcH3F73r4: biblical-studies # 34 numbered lectures, Old Testament survey I
+  PL4sbg6ng23C4maRZSrqq7mmOg3JYsXYV6: biblical-studies # 13 numbered lectures, Greek exegesis I
+  PL4sbg6ng23C4vwh8EZBXbJQI5hsaahhPv: biblical-studies # 31 numbered lectures introducing biblical theology
+  PL4sbg6ng23C5bTiAcT5bqXzjsiJoTKrMn: biblical-studies # 11 numbered lectures on the letter of James
+  PL4sbg6ng23C5lbrG6sBAmy_8yHpl9cq6Q: biblical-studies # 15 numbered lectures on Job
+  PL4sbg6ng23C5lhBQBYxqKrS7b34mwHD61: biblical-studies # 21 numbered lectures on 1 John
+  PL4sbg6ng23C5XKi6_Xt0-eU5ojr1FOa7g: biblical-studies # 9 numbered lectures, Old Testament survey II, an earlier recording
+  PL4sbg6ng23C6FM70Z1t5mD5ZGTXG0ub2w: biblical-studies # 16 numbered lectures on Genesis
+  PL4sbg6ng23C6tPDxH4XBoLUbgBilD0230: biblical-studies # 20 numbered lectures, Greek exegesis II
+  PL4sbg6ng23C7aiLQcjZzXhNSdQvANEGTi: biblical-studies # 11 numbered lectures on the general epistles
+  PL4sbg6ng23C7dShc85IESn2DtaLUO2wGH: biblical-studies # 15 numbered lectures on hermeneutics
+  PL7E045D606058C1D9: biblical-studies # 14 numbered lectures on prayer across scripture
+  PL895AC6FB62856998: biblical-studies # 30 numbered lectures, Old Testament survey I, an earlier recording
+  PL8C1262F23B3FA218: biblical-studies # 26 numbered lectures, Biblical Hebrew grammar II
+  PL9392DD285C853693: biblical-studies # 23 numbered lectures, Biblical Hebrew grammar I
+  PLAF8617315B9E8E84: biblical-studies # 13 numbered lectures, Hebrew exegesis II
+  PLF5C27FC26F8538B2: biblical-studies # 31 numbered lectures, New Testament survey
+  PLKjwFyELc2SlZf-SMdial4wEVX-QZJxhu: biblical-studies # the 2020 run of the same Bible-as-literature course
+  PLKjwFyELc2SmSvtOU3RDI2v4b0jowCCoy: biblical-studies # 40 ordered lectures on biblical narrative from Genesis
+  FLEY8HU47kVeo3_Odz2w4pww: biochemistry # 54 numbered lectures, the complete BB 450/550 + 451/551 sequence
+  PL428D02A28B56B809: biochemistry # 53 numbered lectures spanning the syllabus in course order
+  PL74ED4174166F94A8: biochemistry # 39 numbered BB 350 lectures
+  PL9DB4C43F8720CCAF: biochemistry # 139 parts, the full BB 350 semester in order
+  PLlnFrNM93wqwSmTn3kXZTdKeRXv-p6NOk: biochemistry # 29 numbered lectures, the BB 450/550 first term
+  PLlnFrNM93wqwX1lxTaX6356yTJf4BRNUE: biochemistry # 46 numbered 2016 lectures of the BB 450 semester
+  PLlnFrNM93wqxgPHQg2WwHfrVwyhxM062a: biochemistry # 30 numbered lectures, the 2014 BB 450 semester
+  PLlnFrNM93wqyay92Mi49rXZKs7Ih3RBC6: biochemistry # 29 numbered lectures (29-57), the second biochemistry term
+  PLlnFrNM93wqygqglti74WH8_mQxlgLPy5: biochemistry # 26 numbered lectures, the 2017 second term
+  PLlnFrNM93wqyQRoqevhfcuTk7YE3lIci7: biochemistry # 28 numbered lectures, the 2014 second term
+  PLlnFrNM93wqz37TUabcXFSNX2nJtrJnkx: biochemistry # 39 numbered BB 350 lectures, a different year
+  PLyqSpQzTE6M_m4bggem0rGz_k7j8e95-_: bioethics-intro # a structured course on ethics review of health research
+  PLbVDKwGpb3XnwBACQ5w8L8NzjZ-6D0M8u: bioinformatics-intro # 24 sessions
+  PLcc3bVa_RQOEd6N3e3IhPDnM-tUumfzen: bioinformatics-intro # 29 numbered lectures, introduction to alignment to homology searching
+  PLcc3bVa_RQOGsIy8AH_qjMWcO1H-gDNv2: bioinformatics-intro # the 2019 run of the same 21-lecture Fundamentals semester
+  PL1BE3027EF549C7D1: calculus-1 # 25 numbered lectures, differential calculus with integration
+  PLmU0FIlJY-Mn43VxU5fcj8R7pe_UrGELM: calculus-1 # 33 numbered class recordings, functions to limits to derivatives
+  PLgMDNELGJ1CbTOxQEmeFw23wn9OwcYEV2: calculus-3 # 31 lectures
+  PLCTMeyjMKRkoS699U0OJ3ymr3r01sI08l: category-theory # 37 lectures
+  PLcDxx1De7CZ0O9_K7uQCdBzVRrH_x5oLa: cell-biology # Cell Biology By The Numbers
+  PLTIeLyBa6PfJitDXi_z13_5eQ64uFeb9L: cognitive-science-intro # 66 ordered lectures
+  PL-XzhVrXIVeRLeezwY9h4M68k6yB3yOo-: combinatorics # Lectures 1-29 on Hopf algebras and combinatorics
+  PL-XzhVrXIVeSi7xym1XAfFIxOAaHVhjtP: combinatorics # Lectures 1-27 of an enumerative combinatorics course
+  PLCFS2rj-qIVYCkQfD3psh8CjRpoT7thdi: comparative-politics # numbered seminar on political culture and social capital
+  PLCFS2rj-qIVYxGaUtdwCNGe9UZFvY7JSq: comparative-politics # ordered series on democratisation and transition
+  PLCFS2rj-qIVZt2d3nwqWJ3MN2CRvE2loJ: comparative-politics # Ethnic Politics 01-16 in order
+  PLh9mgdi4rNeyViG2ar68jkgEi4y6doNZy: comparative-politics # 26 numbered lectures comparing post-1989 political systems
+  PLK4elntcUEy3aVZM1dxkpIcI-jJer8tYh: comparative-politics # GV311 weeks 4-20
+  PL_2VhOvlMk4UHGqYCLWc6GO8FaPl8fQTh: compilers # 11-part ordered course building a parser and interpreter
+  PL-_cKNuVAYAUkjhvHtKoH5Of2F0w3I400: compilers # 11 numbered CSC lectures, programming languages and compilers
+  PL-_cKNuVAYAXVHS80cvuVRocimVoS2b61: compilers # same Bulychev course, 2012 run, numbered lectures
+  PLlb7e2G7aSpQ4Ym2TWTYyMcfMevxpKoxj: compilers # 14 numbered lectures, semantics, parsing, control constructs
+  PLlb7e2G7aSpSnNLNWqF46tPQ_wAXqLMNC: compilers # ten lectures, syntax to parsing to lexing to CYK
+  PLlb7e2G7aSpTA0aT2M1CvIWof3Osslo7Z: compilers # programming-language semantics with Coq, 17 h
+  PLgMDNELGJ1CadxsFnzhQba16u46KRDze4: complex-analysis # Cauchy-Riemann to analytic functions to contour integration
+  PL-_cKNuVAYAXQjc8L03DoYOYNR0BverAJ: computability # 11 numbered CSC lectures on computability and logic
+  PLDDGPdw7e6AhOute8PxF1qccHYGtFZdbl: computational-linguistics-intro # 15 lectures, formal languages, automata, compositional semantics
+  PL5PHm2jkkXmh4cDkC3s1VBB7-njlgiG5d: computer-architecture # 24 numbered CMU 18-742 lectures on parallel architecture, 35 h
+  PL5PHm2jkkXmhs4EACiFKvTPAQkdYMZKGu: computer-architecture # 38 numbered ETH lectures, combinational logic onward, 44 h
+  PLEUHFTHcrJmswfeq7QEHskgkT6HER3gK6: computer-architecture # UNICAMP MC404
+  PLQL6z4JeTTQkCq4rqcs1r1o-gBm_8C2bA: computer-architecture # 13 numbered lectures on logic systems and processors, 20 h
+  PLllwxvcS7ca7LBEaGfhEf0sARXn9iEvNF: computer-vision # NUS CS6101 lectures 1-14
+  PLyH-5mHPFffFvCCZcbdWXAb_cTy4ZG3Dj: computer-vision # 20 lectures
+  PLyi5FHzX7hBxJnkFZa-9oVZnTsQcux79M: computer-vision # KAIST CS479 2026 offering
+  PLyi5FHzX7hBzbg9rKbbKczNfc3FYgHSMg: computer-vision # KAIST CS479
+  PLgMDNELGJ1CYJka07lYfNgSgno3OES8Wt: condensed-matter # crystallography and symmetry of solids
+  PL8RcQaADy-ZFOa7p9Z23ajmolK9r0Itg5: constitutional-law # form of the state, judiciary, 24 sessions with an exam
+  PL8RcQaADy-ZGTffyI_SThVyBqHwgBWbC-: constitutional-law # constitution, status of the person, form of state, higher organs
+  PL9YAbarGo6bZmG8MVy1AZmOtpVZx90l_J: contemporary-history # one historian, chronological narrative of 20th-century Russia
+  PLF4DFAB80C2018F85: contemporary-history # 12 numbered lectures, western history from 1750 to the present
+  PLgMDNELGJ1CbdGLyn7OrVAP-IKg-0q2U2: cryptography # 59 lectures
+  PLOzRYVm0a65fhRBCF65lHpOj0JJ84UoEZ: cultural-anthropology # Lecture 1-68 on ethnographic method and fieldwork
+  PLsAe2n9bkZqUG0LYpyfytkQ6HX_8mlnTR: cultural-anthropology # 2021 run of the same course, lectures 1-6 in order
+  PLsAe2n9bkZqVy5wmqRv_qbADye9W68YWR: cultural-anthropology # the anthropological theory canon, evolutionists to Levi-Strauss
+  PL9426FE14B809CC41: databases # 43 numbered lectures
+  PLBlnK6fEyqRi_CUQ-FXxgzKQ1dwr_ZJWZ: databases # 57 lectures from DBMS fundamentals to system design
+  PLdQddgMBv5zEhlpqdiUcf9aTNEtmESgyl: databases # 14 chapter lectures, architecture, data models, relational model
+  PLLOxZwkBK52B6FqMOu6FfU4_5Id2cBStN: databases # 45-video DBMS course
+  PLPvaSRcEQh4kfVIyezAQu9Mvj5FBk_OEN: databases # 33 numbered lectures
+  PLZ2ps__7DhBYc4jkUk_yQAjYEVFzVzhdU: databases # 81 numbered lectures, relational model to SQL to transactions
+  PLgMDNELGJ1Ca_DduFvH6qfI1eapL48xOr: deep-learning # 38 lectures on generative models
+  PLgMDNELGJ1CaeIiQMBOE0NONdZxS2eD2H: deep-learning # Lec 01-65 ending in foundation models and diffusion
+  PLllwxvcS7ca46v1Nhru9zoTmKK5qy5n_v: deep-learning # CS6101 sessions
+  PLllwxvcS7ca4tA9EkAAia2Oc90yx-vGdt: deep-learning # CS6101 sessions 1-12 through a deep learning curriculum
+  PLyi5FHzX7hBxtkKUZLRdiq5C01QimCno2: deep-learning # KAIST CS492D lectures 02-18 on diffusion models
+  PLyi5FHzX7hBzC698EjqgxQJG7pNPQyYyc: deep-learning # KAIST CS492C
+  PLQH2tJfvheNMnnYAUVEOV34BdfqJOST9i: developmental-psychology # 14 lectures across the lifespan, prenatal onward
+  PLI0VEqFaDDLyHJn8uARDIfBHs5bxnpWo6: differential-equations # 13 lectures, separable to homogeneous to exact to Bernoulli
+  PLQL6z4JeTTQnIbkbPliqX1QZiXs35RQjq: differential-equations # 45 numbered lectures, ODEs and numerical analysis together, 57 h
+  PLgMDNELGJ1CYjjGOuEVtdK6YWON9m7bGu: differential-geometry # 69 lectures
+  PL1iLu2CSC9EWlusZsVqXQ9BFg5jRRLzom: distributed-systems # 28 lectures
+  PLcsjsqLLSfNAit4nHkv1_gwxBjcKsqRQ7: ecology # 22 numbered MSU lectures on urban ecology, in teaching order
+  PLcsjsqLLSfNAMKqTtXG8exK-BCEyar3eT: ecology # 9 numbered lectures on global environmental problems
+  PLFW6lRTa1g81YMhPVMSPwEpZbVz64acBS: ecology # 37 numbered lectures, history of ecology to biodiversity
+  PLFW6lRTa1g83LRIWgrIRvREz3O0HCNQ8F: ecology # 36 numbered lectures on forest ecology, succession and silviculture
+  PLGKQe3NU_VU1NtfDbKIl_hXfrpfeOMkz2: ecology # LSU Biol 4253
+  PLgMDNELGJ1CYmie3e-Z3Uu2t_NzjkiLup: ecology # 54 numbered lectures
+  PLp0hSY2uBeP8-UMVAOX2Rlhcd377OchSs: ecology # 10 numbered ICTP lectures on population ecology and evolutionary dynamics
+  PLyqSpQzTE6M_vO7rLpxKZWqai4uJP2bDa: ecology # 45 numbered lectures on environment
+  PLalrHnPrv5uDe-vDW5dPxTByQoZu6P6Hq: econ-intro # Ec 50 Lecture 01 to 19
+  PLgMDNELGJ1CaXa4sX6QSrkhu-yP_Wu2EN: electrical-circuits # 84-video semester on rectifiers
+  PLwjK_iyK4LLBN9RIDQfl9YB4caBYyD_uo: electrical-circuits # 136-video network analysis course
+  PL9jo2wQj1WCM2TdlnlKOY_tn1T7OGxW8T: electrodynamics # 110 videos
+  PL9jo2wQj1WCNypGCqFxAl8GBsxgAsEgis: enzymology # 48 videos
+  PL10D71A7139FD2D0D: ethics # 14 numbered lectures on professional ethics in journalism
+  PL6E4E972E03EA4D51: ethics # 33 sessions from his Ethics class
+  PLB4F425D56947B151: ethics # 18 numbered lectures on contested ethical issues
+  PLbRMhDVUMngdL7ofhT7uH9_XBk4-2qsIL: ethics # 40 lectures
+  PLFW6lRTa1g83uYgRiZEy_F4pzedPNWpew: ethics # 23 numbered lectures introducing values and ethics
+  PLtmWHNX-gukKHo6LBrdq82QadvUEwyaJ7: ethics # the USF Applied Data Ethics course
+  PLUl4u3cNGP61YF5HCMnGUwJ8D-PNNs3OR: ethics # ESD.932 semester
+  PLzWd5Ny3vW3QsKQDh73nnozz_JQNSE-UG: ethics # 55 sessions of an organizational ethics course
+  PLzWd5Ny3vW3RsGz5Sf8hPR1m8F3B_JnwH: ethics # 39 sessions of the Spring 2019 organizational ethics course
+  PLzWd5Ny3vW3Teomd5j0jClS8ZRCjh5_kR: ethics # 82 class sessions of Business, Ethics and Public Policy
+  PLF2E17B4CDCCE15F5: evolution # 10 numbered Stanford lectures on Darwin and the theory of evolution
+  PLh9mgdi4rNezvm7QkQ_PioadoAWqfa2L0: evolution # 65 numbered lectures, Yale's evolution and medicine course
+  PLRbcDEXJqtXI: evolution # 41 lectures
+  PL393CDB1EF90EADFA: film-studies-intro # 21L.011 on narrative film
+  PLQhSzXVuPKKVr_nUAs-032Vc8ICx000Ha: film-studies-intro # an ordered film-theory course on digital cinema
+  PLQhSzXVuPKKWrvV4wy4iyvWxacmSRTPyA: film-studies-intro # numbered lessons building film-analysis vocabulary
+  PLaLOVNqqD-2Gv96OSVRqwROJV0GsfEtwn: finance # 24 numbered lectures on capital structure and corporate financing
+  PLdLiRaajwSXS8B5gr1CvCwQ16OsmcZIls: finance # FIN 150 classes 1-8
+  PLdLiRaajwSXSO6FD9_oQUkjAgQoRHDs8d: finance # ECO 305 lectures 1-40 on money and banking
+  PLEuzmtv9IuT-_TUC4kCC1pS9K4Cb2MRi0: finance # 35 lectures, consumption smoothing to capital market equilibrium
+  PLFW6lRTa1g80AzQhQ70y04ewp9-2aKxkP: finance # 28 lectures, 24 h, on portfolio construction and trading strategy
+  PLLy_2iUCG87B8Gu-jY5-RPeH6cFK7n_y4: finance # 26 numbered lectures on exposure, hedging and options
+  PLLy_2iUCG87BFW5LwV9zFEH5dgS2XQTH5: finance # 61 lectures on working capital, a corporate finance semester
+  PLLy_2iUCG87CXY2B6fPex1SOIqxzzD5Wj: finance # 61 lectures on corporate finance fundamentals
+  PLLy_2iUCG87Dn-7ofD1-0U3N-zXF3qWOt: finance # 61 lectures, debt and equity to bond pricing to derivatives
+  PLoJHkGmgd2_lVcSww5NYKxbSAP_9FVC5D: finance # 52-part personal finance series
+  PLQL6z4JeTTQk6lria4vJy99cRKF8Ixx6D: finance # ten numbered lectures, fundamentals of financial management
+  PLQL6z4JeTTQm7X7jG5A5WZ71IQjfQs8Vc: finance # 13 numbered lectures of a financial management course, 19 h
+  PLUkh9m2BorqkgpNyRpP-NL3BS4yvFabXk: finance # 27 numbered valuation sessions, a full MBA semester
+  PLUkh9m2BorqkYrFjNdut81IIcYdLfgqNd: finance # 28 numbered valuation sessions, a full undergraduate semester
+  PLUkh9m2BorqlDJlnBXUaJaMRNE7UDckn6: finance # 39 numbered NYU Stern sessions, risk to valuation, 11 h
+  PLUkh9m2BorqlDu2zrSN9WZ3xEp3qNgnQj: finance # twelve-session executive corporate finance class, 18 h
+  PLUkh9m2BorqlpbJBd26UEawPHk0k9y04_: finance # twenty-session online class on the corporate life cycle
+  PLUkh9m2Borqls7VGVRN0qpfba4Zdevusi: finance # 32 MBA sessions in teaching order, 41 h
+  PLUkh9m2Borqn0-LdT27pVxn-nJwpxTvYa: finance # 26 MBA sessions in teaching order, 36 h
+  PLUkh9m2BorqnapcQ03A0a_jsbele2kKbp: finance # 30 undergraduate sessions in teaching order, 38 h
+  PLUkh9m2Borqne-Uz_yTAr4FbdZu6qKn0q: finance # 31 MBA sessions in teaching order, 37 h
+  PL8EE54070B382E73A: general-biology # 19 numbered lectures, a general-education life sciences survey
+  PLRDwuoRClPzcHQmsEVnjDIxaRjFgSh1gz: general-biology # 53 videos following a senior biology syllabus unit by unit
+  PLdLiRaajwSXQijoTrObGsTL0Q5z_dg9KF: general-chemistry # CHM 105/106 unit-by-unit recorded semester
+  PL17NIL2mko8nJ1RvfIwtaFnukoWICqS5B: genetics # BIO412 lectures 1-14 on genome evolution
+  PL3D6BD220BC6AC096: genetics # 34 numbered lectures on genetic engineering
+  PL-_cKNuVAYAV0nVp1k5LrjBWL-YLYFz0B: geology # numbered SPbU lectures, Earth structure to plate tectonics to collision
+  PL1Oi4O0iZ7iYI4AsAV5JAsYzrB_M96L_y: geology # GEO210 structural geology
+  PL69bBhmsrgfv67R9zy9qBDDhaxxuKYfnD: geology # physical geology in order
+  PL8dPuuaLjXtMuxfQl-TBfSHokgpbLvKX9: geology # numbered episodes in order, Earth structure to minerals
+  PLcKUIuDhdLl_gDfL4oQlMRBmcbdIAr-cO: geology # GEOL 351 numbers 1-32
+  PLcKUIuDhdLl-iF2WU-k6z6ESC8NnQ6wWd: geology # GEOL 101 numbers 1-34
+  PLcKUIuDhdLl-lflwbkzTw-aJOyW7uM8Dj: geology # GEOL 351 lectures 1-17 in order
+  PLcsjsqLLSfNAQW_Z11Vujcl9H34YDXKsF: geology # 18 numbered lectures, historical geology and stratigraphy
+  PLcsjsqLLSfNAwFiNnkG8fPxbunYcUbnUf: geology # 15 numbered lectures, stratigraphy to palaeogeography
+  PLcsjsqLLSfNBb8gkyQ03G9gr0l2Lwi6C8: geology # 14 numbered lectures, a general geology semester for biologists
+  PLcsjsqLLSfNBdjEstrjLCGXgRt209sgpD: geology # 10 numbered lectures on metallic ore deposits
+  PLcsjsqLLSfNBHVlavc-02CFU7MIKEKEbM: geology # 12 numbered seminars, the practical half of historical geology
+  PLcsjsqLLSfNBKKliBFsavm1dFMbwNscGo: geology # 11 numbered lectures, general geology part 2
+  PLcsjsqLLSfNBSA2nkM2xqb3GfVNbRieRv: geology # 34 numbered MSU lectures on the geology of fossil fuels
+  PLcsjsqLLSfNBwbaBbz08pO9N-PTBhtKu5: geology # 20 numbered MSU lectures on the geology of Russia
+  PLcsjsqLLSfNC-wzt-macb8XzyYdyP1bK-: geology # 12 numbered lectures, regional geology for geographers
+  PLcsjsqLLSfNCfl10bFWzUoSot6xsfUUg6: geology # 24 numbered MSU lectures, engineering geology from first definitions
+  PLcsjsqLLSfNCjLJjqrZg1MAHenyeDd2Wl: geology # 15 numbered lectures, general geology part 1
+  PLcsjsqLLSfNCNMExnGMJ62iB6bKUHi5tt: geology # 20 numbered lectures, the second semester of fossil-fuel geology
+  PLcsjsqLLSfNCTYew9cUR1NFMg9DZ1UWmW: geology # 24 numbered MSU lectures on ore deposits, a full semester
+  PLcsjsqLLSfND7WGp-dJ3ZzvxCXQRVeje-: geology # 21 numbered lectures on structural geology and geological mapping
+  PLcsjsqLLSfNDn5V22OCCJdnOdN6r3lBJQ: geology # 22 numbered MSU lectures on the regional geology of Russia
+  PLDF5162B475DD915F: geology # 40 lectures
+  PLFW6lRTa1g822aq1e4FdkbS_SLsgN9A7S: geology # the same 56-lecture earthquake geology course, noc20-ce19 numbering
+  PLFW6lRTa1g82lBt-yqEBlR6iJv6NuxFb9: geology # 19 numbered lectures plus labs, strain to deformation to structures
+  PLFW6lRTa1g82XB1j_PaMCqpymNwSmmrPM: geology # 17 numbered field lectures on structural geology
+  PLFW6lRTa1g83xz2_Ql09fJG9V6KsZQqsN: geology # 66 numbered lectures, active tectonics to paleoseismology to hazard
+  PLLy_2iUCG87Ae0PTTkwPclJdnx9h_A5D-: geology # 59 numbered lectures, the second upload of sequence stratigraphy
+  PLLy_2iUCG87CyAKCGul7g-zaf0UXjox9r: geology # 61 numbered lectures on sequence stratigraphy, sedimentary geology
+  PLmRQwysTuced_dqkjnSM4Z_9OWiK8Ebvc: geology # chaptered intro-geology lectures covering a textbook
+  PLOzRYVm0a65ccE-NNHY2N2udL37sNWzMQ: geology # 61 lectures on unconformities and stratigraphic principles
+  PLOzRYVm0a65djk-44ZmTNt6RFLYkq9OoZ: geology # structural geology
+  PLrhG2NtyHAZuPW5HP3cyenGGTUqUhumeQ: geology # its blurb says college-level introductory physical geology
+  PLyqSpQzTE6M84kUoQ-Hxe8MIdCpOPhG0a: geology # earth history opening with minerals and the rock cycle
+  PLbRMhDVUMngedlxA0PD7VvE3oQ0QuvSC6: geophysics # Fourier analysis
+  PLgMDNELGJ1CYUg39ngts4kxqt4A7T8VbX: geophysics # 64 lectures
+  PLp0hSY2uBeP8sYkYFp2w-hqXxb1B2nCgv: geophysics # 12 numbered ICTP lectures, seismology as the substance of geophysics
+  PLp0hSY2uBeP9efm4rhYyRrEh9hQtIilSd: geophysics # the 2019-2020 run of the same theoretical seismology semester
+  PLp0hSY2uBeP9u7N65Wcd4yGQZ1faQjxhN: geophysics # 12 numbered lectures, a theoretical seismology semester
+  PLwdnzlV3ogoUL-2LgkPd5MxP1N4Sth9u6: geophysics # plate tectonics
+  PLcsRQtcgfEzB3IDoyw8Gu4OxvENJJZC3E: historical-linguistics # Proto-Slavic sound change, open-syllable law, ancient alternations
+  PLYDcXWmyi12ZSOipW6G6Jw6pkbK7fXsXu: historiography # numbered lectures on Herodotus
+  PL4gvlOxpKKIgkqWvqYuu_OH9S47v0XCsn: history-of-religions # 52 numbered lectures walking America's Religions chapter by chapter
+  PL4sbg6ng23C5ERVzh0-3aKvRw6jt6lRp9: history-of-religions # 25 numbered lectures, Christian doctrine from the early church
+  PL4sbg6ng23C61k2K5J-A9Prw8cy6rAXnM: history-of-religions # 19 numbered lectures on the Reformation, taught as church history
+  PL4sbg6ng23C6dDuIZdrzJZUVyeqwM-NXr: history-of-religions # 27 numbered lectures, Christian doctrine from the Reformation
+  PLRgREWf4NFWZWRgLy3pEJ6Tci8cv7oTjk: history-of-religions # 60 lectures
+  PLF7D7F81CD5E07497: history-of-science-intro # 21L.448J Lec 1-21 on pre- and post-Darwinian design
+  PLFFD1C791A86FB485: history-of-science-intro # 20 numbered lectures on science, magic and religion before 1700
+  PLybg94GvOJ9G9v5KJ6ya2fWymeZw8DcN4: history-of-science-intro # 14 episodes in chronological order
+  PLaLOVNqqD-2F5X2eC4jjlXuqMmXqmWusB: human-geography-intro # GEOG 1014 numbered 1.1 onward
+  PLBC60989205348505: human-geography-intro # Stanford course, five numbered lectures on electoral geography
+  PLZKcAeoj7_LI9EWk2lxgsKnmVnzoz3Jgh: human-geography-intro # culture
+  PL9jo2wQj1WCNaYmBK_B81PlrX4OYLwb13: immunology # 26 videos
+  PLDEN2FPNHwVZ6lO0eJntfa6514LKGrS2r: information-theory # 12 numbered lectures, thermodynamics to entropy to channel capacity
+  PLOavegEYg7IsTKxZRQb5oE4ROddRoAW9C: inorganic-chemistry # CHEM-3115
+  PL8RcQaADy-ZGqxS67CdVU4FoPZJC0ZX_4: international-law # full semester, concept, principles, subjects of international law
+  PLBE7AFE887CCFE864: international-relations # ten sessions of a Columbia SIPA graduate course
+  PLCFS2rj-qIVa2ZD-dVkYwALMD2dVTK_vJ: international-relations # the UN charter
+  PLCFS2rj-qIVbXKBTrZF-Fxo0LCaqc3Yh2: international-relations # Russian Foreign Policy
+  PLCFS2rj-qIVZEu23xR_-zs2v-mkkRA3ri: international-relations # numbered course on IR theory and regional organisations
+  PLyqSpQzTE6M8PMy20NjLPmbRhfO4zYrUT: international-relations # 32 lectures on Chinese foreign policy
+  PLEE440D6A8DCBA478: latin # 169 numbered steps, a serial Latin course from the ground up
+  PLI76N29qybf-o5U6tvD-8VPILacttSaM3: latin # 91 numbered rules covering Latin grammar end to end, in order
+  PLm3LAO9P4dgip0AnnXBh0TOW4DUAhhIHS: latin # Lesson I onward
+  PLsiWWIub-HIkBVlEeOIMNIl4Yf81c8oDY: latin # 33 numbered lessons from Lectio Prima onward, 21 h, from zero
+  PLSpl3cO92FvZvZa2t5ZGA_lkUVj_1bQE-: latin # 189 videos walking LLPSI lectio by lectio
+  PL84DCD72C5B5DC403: law-intro # 24 numbered lectures on environmental law through case histories
+  PL8RcQaADy-ZG9uMlZHrW5pxJoJH_2nXso: law-intro # public/private division and the structure of jurisprudence
+  PLgMDNELGJ1CaVFgpIEMR5wkqfHntklpne: learning-sciences # 12 weeks of instructional design and blended learning
+  PLgMDNELGJ1CaTrBVbwaHoHYlTbyeV-q5c: linear-algebra # Lec 01-64 from linear systems and matrices onward
+  PLbMVogVj5nJSEQYH2dVtcXN9I4n8hF0VY: linguistics-intro # 42 numbered lectures
+  PLbRMhDVUMngfDxDq-EhY6sDtIPsi6kp0y: linguistics-intro # 61 numbered lectures
+  PLcsRQtcgfEzD8AZMtLxvelMH9SWMhBgiy: linguistics-intro # numbered Общее языкознание lectures from the start
+  PLgi3uSA7VGIosqrQbVCdGMAuBxgkLwkb6: linguistics-intro # 38 lectures from What is language onward through morphology
+  PLKgdsSsfw-fYCJ90tLikJRbXvl74g6FUw: linguistics-intro # 23 lectures
+  PLKgdsSsfw-fZriNpCCYrlAs2w9COkrO2u: linguistics-intro # reshot intro course across the subfields
+  PLRIMXVU7SGRJ4XsL9YTQODZsoWzHWUOJf: linguistics-intro # 15 e-lectures, opening with what linguistics is
+  PLyqSpQzTE6M_O8VwHbQCv5p0W_BMZSbtk: linguistics-intro # 41 numbered lectures
+  PLKjwFyELc2Sk4IF-h8IfisV1Jv0WJ9k_y: literary-theory # theory from Plato to the Romantics
+  PLKjwFyELc2SmgFXFtdaOEqpZdXAMV6nmz: literary-theory # 2024 Contemporary Literary Theory
+  PLKjwFyELc2Smj0b8PrdAtDf6P8uu0uAo3: literary-theory # 2023 history of literary theory
+  PLKjwFyELc2SmVNoL4pkh6kGu8aLKxav2Q: literary-theory # numbered course
+  PLsAe2n9bkZqUduIYeRWcWhbV0Xi2zZuSt: literary-theory # 10 numbered lectures on 20th-century text analysis
+  PLsAe2n9bkZqVQToqfaQLv80_AWjf8eWSW: literary-theory # История и теория литературы, 12 numbered lectures
+  PLsAe2n9bkZqWH2lBVn4JIdVzcEoA9fbJm: literary-theory # six ordered lectures on Bourdieu, genre, canon, author and reader
+  PLyqSpQzTE6M84OH4Sk0BOHIkX_pRoF9YK: literary-theory # ecocriticism and postcolonial ecological thought
+  PL8RcQaADy-ZG7DJM11Lv91YBqIEFQU_Sd: logic-intro # classical logic in order, identity, contradiction, excluded middle
+  PLDDGPdw7e6AhsNuxXP3D-45Is96L8sdSG: logic-intro # 46 lectures running propositional to predicate to modal logic
+  PLKI1h_nAkaQq5MDWlKXu0jeZmLDt-51on: logic-intro # 50 numbered videos, the complete Logic 101 course
+  PLdLiRaajwSXRcJxAeIHjVGukaJZoJtkXz: macroeconomics # ECO 155 lectures 1-39
+  PLEuzmtv9IuT9Q1PL_Or9MtFRLxSmNHP6p: macroeconomics # 15 lectures building the two-period consumption-savings framework
+  PL70626B93401271C5: management-intro # evolution of management thought
+  PLbRMhDVUMngc6u1a-O0aOSttZTUG-6ai-: management-intro # definition
+  PLgMDNELGJ1CZGHvxBcvmDQzsNhPHZGSsN: management-intro # Lec 01-39
+  PLLy_2iUCG87DH0iQSVWZ8iamVl5SaLlXQ: management-intro # 63 lectures on planning, organizing, leading, controlling
+  PLoJHkGmgd2_kaxMmAgUNnYD5VM8ZGHGy6: management-intro # 33 videos
+  PLthfp5exSWEpBBXp5_CS_mThR355XCJz8: management-intro # same Kondratyev course, 2020 run, numbered lectures in order
+  PLthfp5exSWErjOiEFr-zTqZwHcgNEIJRg: management-intro # one MIPT lecturer, dated lectures across one academic year
+  PLqfJbCqCJS8wvvY3HEfHnqSuzZ_PUCKIr: mathematical-logic # lezione 1-25 of a formal logic course
+  PL77A337915A76F660: medieval-history # 22 numbered lectures, 284-1000
+  PLaLOVNqqD-2Eccb8JNCmQvCoLmQm4HKtN: medieval-history # 27 numbered Bilkent HIST-416 lectures, Roman Britain onward
+  PLaLOVNqqD-2HKHtfe4No8Sua_3JEvRHGe: medieval-history # Bilkent HIST417
+  PLzWd5Ny3vW3Qi6k4d6srF55OUpNSu8av3: medieval-philosophy # 65 lectures from the Platonic background through the medievals
+  PLgMDNELGJ1CarRkJ1Xtf7iW4Y82T-NUEJ: meteorology # 60 lectures on energy balance
+  PLp0hSY2uBeP-6Wv1Xv8YJuLuob0syzrzX: meteorology # 12 numbered lectures, the dynamics core of a meteorology programme
+  PLqOZ6FD_RQ7naGB0pp1C4O8gVCgS4gd36: meteorology # 27 numbered lectures on climate and the cryosphere
+  PLZKcAeoj7_LIh92l2NzGy__W6-FAdKqyS: meteorology # moisture
+  PL4_hYwCyhAvaGhV7Aw3m1Dr2s2wJqF_vL: ml-intro # 12 numbered lectures, trees to ensembles to survival analysis
+  PLgMDNELGJ1Cay-Q9Cn8KcpUcC58NDWuiu: ml-intro # 89 numbered lectures
+  PLgMDNELGJ1CYPJS6m_ygxb4KtHYxh1HjR: ml-intro # Lec 01-70
+  PLgMDNELGJ1CYxkPswXfE1Fk9rzBeG4hFv: ml-intro # 66 numbered lectures
+  PLp0hSY2uBeP9-yq-VhlAugYm1hvo9wSND: ml-intro # 9 numbered lectures, 15 h, the ICTP data science semester
+  PLUenpfvlyoa0PB6_kqJ9WU7m6i6z1RhfJ: ml-intro # numbered recordings of the graduate AI course, perceptron, MDPs
+  PLUenpfvlyoa1iiSbGy9BBewgiXjzxVgBd: ml-intro # 19 ordered AI lectures, agents, search, A*, alpha-beta, probability
+  PLyGKBDfnk-iDj3FBd0Avr_dLbrU8VG73O: ml-intro # MIT 9.520 classes 01-26
+  PLRgREWf4NFWY-eaIzunrliqn5ZtW3xqr2: modern-history # a stated 39-part course
+  PLdLiRaajwSXSd3gR3dv4Oli5VZzj54_CV: music-history # MUS 241 lectures 1-31
+  PL6Towqbh0pdpxUL5NlGTOW2hwVVo1IhdQ: music-theory # 19 numbered lessons, 1:1 species counterpoint to florid melody
+  PLgMDNELGJ1CaBrefq-0eYatfOnoncW0y-: networks # 53-lecture IoT course
+  PLgMDNELGJ1CZ7PWrnrGjz9TrRHJPl2VEy: neuroscience # CNS structure to electrophysiology to neocortical circuits
+  PLTF9h-T1TcJgx3OFachdjHPMX6VE4VDS1: neuroscience # 66 videos
+  FLMRHZcgwdSE_9wbwcP8aRJw: null # the channel's Favorites list
+  PL_8xXS9VcXHyYIcfiksoVqNzPAaZ-BTMn: null # interview channel
+  PL_8xXS9VcXHzte65kq0xEF80rmUAGDipX: null # pop-sci interviews
+  PL_Cdhg0f9JD01TzkR1V21T9bzVwg-m7VZ: null # webinars soliciting feedback on a code of ethics
+  PL-_cKNuVAYAVgiVhwmWYHYIxSfqJeOe2s: null # conference with opening remarks and separate speakers papers
+  PL-_cKNuVAYAWfPBjpr0CyJRV--hqhw6yS: null # haematology talks by six different clinicians
+  PL-_cKNuVAYAXp8cg_luEssiSEE7CirQJz: null # selected papers from a 2013 conference
+  PL-_EnUuI9PUoIncYlqgWainfOUoZAXhCY: null # video-game commentary
+  PL-51WBLyFTg2vW-_6XBoUpE7vpmoR3ztO: null # a framework crash course building one CRUD app
+  PL0-IkmzWbjob9lPqBGAyQAX6lhxm5fE_d: null # audiobook read in chapters
+  PL054FE56859C0CD7C: null # another Latin news bin
+  PL05keIMVq9x12J4pBn_8IZsL22xQBet2W: null # nine clips
+  PL0BAC5D88402F0571: null # assorted clips
+  PL0C6909A3268C6609: null # award interviews
+  PL17NIL2mko8nXcBujp-bzHhjE6vWKysgF: null # its blurb calls it supplemental lab resources
+  PL18y1vgsGPLbl3wrSZwUyvkAiUJHZTS5Y: null # short public-TV geology segments
+  PL1F845F5CED131FCB: null # preparatory pronunciation clips
+  PL2DisXS8LigZjkwFHQrEF81hD7XwWzIy0: null # conference
+  PL34B19BA788E18384: null # short films
+  PL3D3A30F433F51031: null # institutional promotional videos
+  PL3izGL6oi0S_3oy6J4S9jdBa2OINN-I4v: null # three-day pathogen genomic epidemiology workshop
+  PL3izGL6oi0S_c8hnXgU-9mgplRB6jQ6Db: null # yearly rerun of the same cancer genomics workshop
+  PL3izGL6oi0S_e5T8qx-74WRaMR5K5U8V5: null # five-day genomic epidemiology workshop
+  PL3izGL6oi0S_Qkdpo7agCXWeWxQwmjvKg: null # two-day machine learning workshop for biologists
+  PL3izGL6oi0S_zm8XwX7kfXXGOb1mWOBSw: null # yearly rerun of the same cancer genomics workshop
+  PL3izGL6oi0S-ilbfUWf2ueecZobU_tIro: null # a multi-speaker workshop, not a semester
+  PL3izGL6oi0S-lr-eGRAzRuHpPI9fxgOJT: null # two-day machine learning workshop for biologists
+  PL3izGL6oi0S-roRT49_8YmdcqR1mgRS9t: null # yearly rerun of the same cancer genomics workshop
+  PL3izGL6oi0S-VGY9VaoC7ITiQCTiP6HBE: null # two-day spatial omics workshop
+  PL3izGL6oi0S-YDsvpBtrqLjU8LwB9ZjJE: null # two-day spatial omics workshop
+  PL3izGL6oi0S8Li-YKz1wcppY-PtmIo37W: null # three-day microbiome workshop
+  PL3izGL6oi0S8RG8vnwLXFznzJnKh8OR8F: null # four-day genomic epidemiology workshop
+  PL3izGL6oi0S8svosOiiqMwOFTgwyg7EaT: null # genomic epidemiology workshop with a keynote
+  PL3izGL6oi0S8TfxAY-UHhBBdSnVMU3wF6: null # four-day cancer genomics workshop, multiple speakers
+  PL3izGL6oi0S8xFSWke6nyZ9QeJnR7Hqnl: null # six workshop sessions on R, a tool rather than a subject
+  PL3izGL6oi0S9_tVpKieiwUHO9VClV1H66: null # two-day metabolomics workshop
+  PL3izGL6oi0S90mdLlnxX-vZN4UwopPQcl: null # two-day metabolomics workshop
+  PL3izGL6oi0S9B0xqTnu2adTt8v2XGu2zx: null # five-day cancer analysis workshop, multiple speakers
+  PL3izGL6oi0S9fqvtp6iqqRNE5m9zw1aaN: null # six workshop sessions on R, a tool rather than a subject
+  PL3izGL6oi0S9SXZA8ddSctbzuyouCu2uo: null # genomic epidemiology workshop, multiple speakers
+  PL3izGL6oi0S9TtQyRnfNlINigZa1VR3Ej: null # yearly rerun of the same cancer genomics workshop
+  PL4625A5EA38596A85: null # the same guest-speaker series in a later year
+  PL47Z0ywCYIywOomio-EyGX47B4tCDADth: null # standalone short videos on tort topics
+  PL47Z0ywCYIywsvRzkIylxyV2LCppEaSaw: null # isolated case-study videos across unrelated legal subjects
+  PL47Z0ywCYIyx_BRZNTaRy74CVy-0WKNvs: null # standalone short videos on bankruptcy topics
+  PL47Z0ywCYIyx-l-Q63sdcPdFRVBEL3FUq: null # commentary on law-related news stories
+  PL47Z0ywCYIyx8wrmuCJxqBL8HeUpNQrc7: null # standalone short videos on criminal law, no teaching order
+  PL47Z0ywCYIyxb69rpGMw2zBXCMe8c3mgm: null # standalone short videos on real property topics
+  PL47Z0ywCYIyy4TpNPQhHIHHE7zMIveVTo: null # standalone short videos on civil procedure and evidence
+  PL47Z0ywCYIyyDLtoNGcY6hTHSuV7VdhJa: null # standalone short videos on family law topics
+  PL47Z0ywCYIyye2foMednt4mj4ZSj_VCgi: null # standalone short videos on wills and elder law
+  PL47Z0ywCYIyykGNxHpB6_LN5MvTO8hPGD: null # standalone short videos on business organisations
+  PL47Z0ywCYIyyYBspRF5ejVePK6NYUnahy: null # a dictionary of legal terms
+  PL47Z0ywCYIyzivVjdEtvdrTssST61l4pD: null # standalone short videos on employment law topics
+  PL47Z0ywCYIyzv4qLwWouhE3HgktYA8DZN: null # standalone short videos on contract topics
+  PL4A7FJI6O01Crd2-kpm6DupCzYILKQK1S: null # 18 five-minute clips
+  PL4d5ZtfQonW3_BZfBswl0VSohALKYEphb: null # short films about mathematicians and their research
+  PL4E1239370E37414B: null # short answers to viewer questions
+  PL4gvlOxpKKIg2o3tpqTIKuDiMLJXijZ23: null # single-author bin
+  PL4gvlOxpKKIgFtcnQLf8s3yBnmMQ9WW10: null # 121 unordered core-concept clips across many authors
+  PL4gvlOxpKKIgfufAQZ55tItfcQxAXub--: null # single-author bin of clips
+  PL4gvlOxpKKIgFVZpisYc8GTl7rxuyRtwm: null # how-to-study advice videos
+  PL4gvlOxpKKIgmsmZAHZOP2foF8TzYve_J: null # thematic bin mixing class sessions
+  PL4gvlOxpKKIgrsPdVy0zpRPEBF1PZYi6E: null # single-author core-concept bin
+  PL4gvlOxpKKIgt33c9d-yOlPrKqxQF5kDQ: null # thematic bin of core-concept clips
+  PL4gvlOxpKKIgybQoJmwkcPqL92cSiu7dR: null # single-author bin
+  PL4gvlOxpKKIgyKOiFPpD4A2CX90BIPYO8: null # conference presentations and invited talks
+  PL4gvlOxpKKIh7RZ3Mag2EF2c_QsGxlVBD: null # 185-video open-ended series on many authors
+  PL4gvlOxpKKIh920a6unt_WYr0veGzz6su: null # caption-contest joke videos
+  PL4gvlOxpKKIh9A22Tf40y7FHbndIcJFUC: null # conference talks
+  PL4gvlOxpKKIhAaOQiIJ-ElpvevqNndA-z: null # core-concept clips on one book
+  PL4gvlOxpKKIhAKxB6oBvNUjzfE4Vqwi_r: null # single-author bin drawn from several classes
+  PL4gvlOxpKKIhap1_df02itAgaVvczQ8AL: null # channel-member perks
+  PL4gvlOxpKKIhAwHviNqcn-q6zE1Y8uFkT: null # core-concept clips on one book
+  PL4gvlOxpKKIhdhm8pB5g4ICmyiA3HH4GE: null # core-concept clips on one book
+  PL4gvlOxpKKIhDTEb44P_M_ZvdUPVFy9UP: null # FAQ responses
+  PL4gvlOxpKKIhEwQyN-WJKR2c6ewI1l_jb: null # single-author bin
+  PL4gvlOxpKKIhgeOnUAJARDIrBPmasbwCs: null # interviews and scattered talks about one novelist
+  PL4gvlOxpKKIhI1M9ZCvRhzicpcSruKhkZ: null # single-author core-concept bin
+  PL4gvlOxpKKIhjl1PX2Ly_Z0evHH-Z0FYV: null # pet videos
+  PL4gvlOxpKKIhJZ338XECYT8Tauw1cjkFE: null # entertainment videos
+  PL4gvlOxpKKIhLUOIaRXYQFV_y3li_vfEr: null # commentary on social media threads
+  PL4gvlOxpKKIhMF0NquJdqqGNYFrE06aIb: null # autobiographical reflections
+  PL4gvlOxpKKIhRoX3lxuhPv4Ixq99c4U9O: null # radio show conversations
+  PL4gvlOxpKKIhwsDloeGcwXQKWzy6DzFLX: null # comedy bits
+  PL4gvlOxpKKIhXUUr6TM0EgdD-kxusDOA2: null # single-author core-concept bin
+  PL4gvlOxpKKIhYs9Abpunu0q85df3OaEzn: null # two talks
+  PL4gvlOxpKKIhYW7Cr92XHq8RdZs1sWDFl: null # personal talks
+  PL4gvlOxpKKIi_VwVzdHhYFx5HEayhcZDA: null # city photography vlogs
+  PL4gvlOxpKKIi7iTK4jkqk7SzSvBhfylRn: null # Q and A recordings
+  PL4gvlOxpKKIiAS-X_A98U6fSTVxsaZ75T: null # single-author bin
+  PL4gvlOxpKKIibbfhnF_E5nAPx7-z2kaXY: null # single-author core-concept bin
+  PL4gvlOxpKKIic9_KCHwXdY0Arfh8KfhV9: null # 32 short clips on one topic
+  PL4gvlOxpKKIiIRWZ7weXIqJLZilQpzGRW: null # family videos
+  PL4gvlOxpKKIilcscfZaa1EactIkYcQDzo: null # concept clips on scattered readings
+  PL4gvlOxpKKIinLAmURBMQbPrcTlVW5i6W: null # core-concept clips on one book
+  PL4gvlOxpKKIinS5w0lhPUnvgTlPzlJ8M5: null # unordered core-concept clips
+  PL4gvlOxpKKIipNN_0kLm2nz51qgw37uj2: null # monthly AMA sessions
+  PL4gvlOxpKKIiPvhj_nt95uuHdxpndputT: null # unordered core-concept clips across many philosophers
+  PL4gvlOxpKKIirPFDeVMMhbMLNPIXoCyk5: null # asides and rants
+  PL4gvlOxpKKIirS-coRFAAqMt4lstX2-zw: null # single-author bin
+  PL4gvlOxpKKIiS1vhFN5niCce_N7Z7r4am: null # guest-led discussion sessions on unrelated topics
+  PL4gvlOxpKKIitEG90CFSGu_K9tWX_lthu: null # talks about the philosophy profession
+  PL4gvlOxpKKIiTXwINGMzFt2obWiEjOVCb: null # personal anecdotes
+  PL4gvlOxpKKIiuo3yYSBeOsrT-iSHvDRUb: null # an ongoing multi-year lecture series
+  PL4gvlOxpKKIiVr0BNEe-nU2hnzMhkzQE0: null # monthly channel-update vlogs
+  PL4gvlOxpKKIiwsAuZFXmwrOFvCZyfcP6F: null # single-author core-concept bin
+  PL4gvlOxpKKIj-iR53DSbEJf5z7behuTWt: null # a quarterly public lecture series running over years
+  PL4gvlOxpKKIj1Ldzu9CrnwGHDKNrzeaMW: null # opinion pieces on internet culture
+  PL4gvlOxpKKIj38VcMBDvUQKD5t69gn_VS: null # single-author core-concept bin
+  PL4gvlOxpKKIj7FJgkqWlQ12zvD6-RhEHl: null # single-author core-concept bin
+  PL4gvlOxpKKIjbRCYswy2Fd0uWgBvsjJsC: null # single-author core-concept bin
+  PL4gvlOxpKKIjCpL1WdLyUs23HF6hxE5Bj: null # core-concept clips on one book
+  PL4gvlOxpKKIjd2291zz0AIqhCrXSgW6N9: null # an ordered online class on one theme
+  PL4gvlOxpKKIjEA0_6MvpBXc4_Ey0cM-Wy: null # book reviews
+  PL4gvlOxpKKIjEEG_o_XRqamupE-M5Fka-: null # single-author bin pulled from several classes
+  PL4gvlOxpKKIjEUJzYBEet5f87U8z-SEbg: null # unordered core-concept clips on Renaissance texts
+  PL4gvlOxpKKIjfBuuAh4HRFBwoY3g6-DLx: null # core-concept clips on one book
+  PL4gvlOxpKKIjJ7oBuyUc558w9lGF9vB5V: null # FAQ answers
+  PL4gvlOxpKKIjK-pl3QgYe-kO5W3zgoX6L: null # single-author core-concept bin
+  PL4gvlOxpKKIjK0_fhnCat-HS_MGSGJPk3: null # single-author core-concept bin
+  PL4gvlOxpKKIjmaNv3dpFYXMLSJ4Qrci5C: null # short opinion pieces
+  PL4gvlOxpKKIjMoDtQOd84Vdnp8xAXY8M9: null # scattered concept clips across four disciplines
+  PL4gvlOxpKKIjmu1MRIlvSLNxSvOUYIWX3: null # core-concept clips on one essay
+  PL4gvlOxpKKIjNy7v1WoLB81ASLsqm1I92: null # single-author bin mixing clips
+  PL4gvlOxpKKIjrWPzkfqDogfrimUYS3vXY: null # single-author bin
+  PL4gvlOxpKKIjvfI4TH2y9DZclkalDqc1a: null # readings of short stories
+  PL4gvlOxpKKIjXrvBns9nSD5sz7ITV4beV: null # memes
+  PL4gvlOxpKKIjYwyL3ZXfCNvt4U4IqTWAc: null # unrelated monthly webinars
+  PL4sbg6ng23C4cFp2HinnoUZX4XAggoEuY: null # graduation testimonies
+  PL4sbg6ng23C4nDeewRx_KYbwcUtYRfaIw: null # ten short Q and A videos, 36 minutes in total
+  PL4sbg6ng23C4xmLDIfUq8Lpo_81L_8RVa: null # chapel sermons
+  PL4sbg6ng23C4yf8_cxwa34Oq8y5L8htVf: null # chapel sermons
+  PL4sbg6ng23C5-yWCkVdo6crFF6jWlFrIS: null # promotional clips for a preaching centre
+  PL4sbg6ng23C57VkXhOz7vMhek8MxfAzhf: null # chapel sermons
+  PL4sbg6ng23C5gdi04nUmm4mfhfm9EqSeP: null # conference general sessions
+  PL4sbg6ng23C5oY8AiD52V-d6S9YE0__VG: null # chapel sermons
+  PL4sbg6ng23C5s9ARAu2KMhgcUMsdd0gt2: null # chapel sermons
+  PL4sbg6ng23C6dXerIiv7gB8BuaRoZvy9F: null # chapel sermons
+  PL4sbg6ng23C6q4_3sax31R6HcqyPOJ3gc: null # student testimonies
+  PL4sbg6ng23C6r3DcvQP1ib02EuByVt1CO: null # chapel sermons
+  PL4sbg6ng23C6YE4M-Qa7pC6-C5xEx0jq4: null # chapel sermons
+  PL4sbg6ng23C6zKFvg8VmMPiTAJWWK9qoS: null # chapel sermons
+  PL4sbg6ng23C7_pHsVBNKvtNWkC4SMLsUp: null # chapel sermons
+  PL4sbg6ng23C7s0ASpGCbtk5k4Fc9uVy7O: null # 66 three-minute overviews, one per biblical book, a reference series
+  PL4VoyER2bxcTY_74KpNHDdI3ME8atrylw: null # military-history video essays
+  PL54Pt_mZzBqgrUbiLcL6QjtXpc_PxfSt4: null # 133 seminar and conference talks by different speakers
+  PL556392A56177FB13: null # project talks by different speakers
+  PL5KkMZvBpo5AKu_EpJYjWG00w-KXH_xSE: null # explicitly a related-content supplementary bin
+  PL5KkMZvBpo5AsQgLnRE3bhzT2-E4PyK5_: null # explicitly a related-content supplementary bin
+  PL5KkMZvBpo5C2Oaejfaf2DdiXyp3U1Jot: null # explicitly a related-content supplementary bin
+  PL5KkMZvBpo5CHAV85gvW2DrckWx0ARiJE: null # a nine-part walkthrough of one problem
+  PL5KkMZvBpo5CpYvLtlBjjWQk_tlSqIaGQ: null # explicitly a related-content supplementary bin
+  PL5KkMZvBpo5DFSxBQ5sEVJqw35a8sIOLx: null # explicitly a related-content supplementary bin
+  PL5ZHh7SJMHFl38GSYK6q2Sayd3XJXf5r1: null # feature-length documentaries
+  PL60659E52B7B18BD7: null # student project videos
+  PL67dm6qliEMDvf0uRB0m1QusUJHaye2QV: null # dialect demonstration clips
+  PL67E0627174F36FCF: null # 275 tool webinars for databases
+  PL69bBhmsrgfsP8Pc6F1bRSPS-WsNFAiLy: null # a career-interview podcast
+  PL69bBhmsrgftjwxOFf93tHmilAEaqi2Iw: null # a thematic collection of standalone explainers
+  PL69bBhmsrgftwY3sPCgDVqZbG6oLdCJSf: null # a conference highlight reel
+  PL69bBhmsrgfvB1qRGCthr4LI7VgMjf-p6: null # on-location field videos at unrelated sites
+  PL69bBhmsrgfvDS_wLLXT8-uKrfydTEaHy: null # summaries of individual new papers
+  PL69bBhmsrgfvf4VWMuNjPzZA6RyMddEBT: null # personal and research-update videos
+  PL69bBhmsrgfvNWOzOhvdoDZbf2wNvXDCy: null # lab vlogs
+  PL6B8700C01F4A048F: null # songs
+  PL6Towqbh0pdpp1a-pPL9UH4f32ka0n--B: null # ten canon demonstrations, six minutes in total
+  PL71pFdjwRUvxRRCf2RNTWwKj5b2Wdj4mW: null # music jukebox
+  PL71pFdjwRUvy3ePEMS6SlEkHOTXVlqglf: null # folk music jukebox
+  PL746AE3CCB29B64B8: null # professional-ethics clips
+  PL7A40EC3B0DF03A73: null # single-author core-concept bin
+  PL7QcRCNp33XA7BBvpNbwsDZjLB-mezkUu: null # software demos
+  PL8dPuuaLjXtOmqnkvEtNVOrm0eaIjFjJ7: null # supplementary mixed bin, geography and biology clips
+  PL8dPuuaLjXtPTzMxnHVWhrV8dUZM0qL34: null # supplementary mixed bin of clips from other series
+  PL8RcQaADy-ZFIA6Mv0sZAN-X0zJ-TDJEH: null # public talks on calm and persuasion, not a taught course
+  PL8RcQaADy-ZFz7ykGLZZx6BYejl5ogwjI: null # an admissions webinar plus scattered clips, no order
+  PL8RcQaADy-ZHJjHT4gK8rEIVSWaLKLSNY: null # public talks on fear and pleasure as arguments
+  PL8RcQaADy-ZHYT-L5_e55vgnXAlcy_p30: null # public talks on black rhetoric and propaganda
+  PL921F32278E61E9B6: null # standalone talks on separate literary works
+  PL92NIqfZ7QJYpN2e_z_A7XMuAc6ixJ1kC: null # geophysics method overviews from mixed sources
+  PL93xoMrxRJIviJiC76oO5aV8bDp2s3OrA: null # Flutter tutorial
+  PL93xoMrxRJIvZHL420f63bWIOrcoM6NU-: null # Flutter framework tutorial
+  PL970187D814A61677: null # student-run lecture series with rotating guest speakers
+  PL98E0A837EAFCFDCF: null # news broadcasts in Latin
+  PL9jo2wQj1WCOZMhFNmI9AOQI-Pc3LaX4O: null # a superseded bin
+  PL9kd4mpdvWcCUOrG5S7KrvOFDhyqnXoUj: null # IHP trimester
+  PL9SyOIE9iSYI-qGaDNQhXCptexIif8Scm: null # one-day conference
+  PLA56EBB0FF3A51925: null # staff profile videos
+  PLaBYW76inbX46r95D4BjCxiJz7-OeyOtW: null # documentary bin
+  PLaBYW76inbX6e8IXZFoe08X9Kt1lQEvC1: null # documentaries
+  PLAE1A7FE85CAE137B: null # curated third-party filmmaking videos
+  PLBBCA1387B8703F91: null # 24 three-minute commentaries on course units, not the lectures
+  PLBlocmrrFygZiy2rsxSQHQrJBAQYyvRoB: null # ringtone downloads
+  PLboYkQmnpnCUJ1FLWcYRKrVz4hbyRSLFj: null # nutrition and supplement clips
+  PLbYkdovMggXE5LDtXnI6Ssx5IaD988aEm: null # software tutorials collected from other channels
+  PLbYkdovMggXE7cAlGTD4ZafSnNmcGd-Sg: null # camera gear reviews
+  PLbYkdovMggXF3yzcbGp58dLEipXBa5nD4: null # curated third-party composition clips
+  PLbYkdovMggXFEh9cKGXBy2HQFm7OtZfZ6: null # standalone viral talks about education
+  PLbYkdovMggXGALfVh80UDGKQYBRx1Z3ZO: null # online teaching tips series
+  PLbYkdovMggXGg4cea58phuAU0PgxrOSr3: null # curated third-party video collection
+  PLbYkdovMggXGhuqW0AySg6qQnvKCH8CaB: null # curated third-party clips
+  PLbYkdovMggXHAqA_60C4Q-2w1DJqpMkUf: null # standalone public talks
+  PLbYkdovMggXHmcFrOV37F3mp-9_nnl3X3: null # curated storytelling clips from other creators
+  PLbYkdovMggXHuCP5BCd36Iyft574OmSVN: null # curated third-party production clips
+  PLbYkdovMggXHv5rm6aN6ZbjKDULTyfbwn: null # curated third-party filmmaking tips
+  PLbYkdovMggXHXbil738Lbvy8USQd22h14: null # curated third-party editing tutorials
+  PLbYkdovMggXHYCs0pHTrz1xW1YL2mEbrN: null # curated third-party colour grading clips
+  PLc7bpbeTIk74siDqB8SNVT76Z5kbktSjK: null # simulator tool tutorials for a newer version
+  PLc7bpbeTIk75dgBVd07z6_uKN1KQkwFRK: null # older simulator install tutorials
+  PLc7bpbeTIk75i9paSqqSmkFDvWIBlmFfJ: null # a lab demo reel
+  PLc7bpbeTIk760SRoSDHfqi07RHa0Yv-bx: null # simulator tool tutorials
+  PLc7bpbeTIk77hVBw0QiST8BWxLNJsVbiM: null # simulator tool tutorials
+  PLCbmz0VSZ_vovZZfPYe136pRjE6QotzQX: null # mixed environmental video bin
+  PLCF4F041759868235: null # a curated collection of other people's videos
+  PLCFD8CE52DB829DEB: null # research talks and live readings from his own book
+  PLCFS2rj-qIVaD1R4uNgAy-zezDlvDnZEd: null # news clips and translated speeches on a running conflict
+  PLCFS2rj-qIVb2D72-d3fgdNW_fCtbtoT_: null # interviews and current affairs discussions
+  PLcfscBRetFvk1hhz3t604N8mU16i8WoIZ: null # 29 disease summaries, a reference bin
+  PLcfscBRetFvkhBxhf9N6H60AGJYyyjELs: null # eight clips on reading an ECG, one skill
+  PLcfscBRetFvkY2fa51EG_thOQie3gEzwu: null # eight clips on cancers, a reference bin
+  PLcfscBRetFvlrmZ_4c35pzba-BXAUkg_T: null # 32 disease summaries, a reference bin
+  PLcfscBRetFvndbIzfjR_HKIKnb2I_g7t8: null # 55 disease summaries by organ system, a reference bin
+  PLcfscBRetFvnEI15Vp4kCmGAEcippHe1t: null # 20 disease summaries, a reference bin
+  PLcfscBRetFvnOUzR48wf6aJM0ZsmCs4ZH: null # a chapter's worth of cell biology rather than a course
+  PLcGkkXtask_cgN4ZVQNC77ohNxTKUW2B5: null # background study music
+  PLcKUIuDhdLl_1uoKtxTcAOvMtojnG4u8G: null # television episodes
+  PLcKUIuDhdLl_4wVJ8sxC60Jy4Ccfn4LOj: null # alphabet series with a different guest each episode
+  PLcKUIuDhdLl_p1v6cjBYjlsu4kQFE-qCb: null # departmental promo and faculty features
+  PLcKUIuDhdLl_QcOQSI2aHUOKcmMXuYaSZ: null # standalone public lectures on unrelated topics
+  PLcKUIuDhdLl_QjFZAVxIv9cVfBm7ytvuj: null # guest lecture series
+  PLcKUIuDhdLl-_5O4baMBN2sU8vtvnrBmK: null # field conversations with one guest
+  PLcKUIuDhdLl-0IzVkYoAXxoFnwcyn0WUA: null # a collection of Cascades videos
+  PLcKUIuDhdLl-7SWE_CVkvnHRkBSA-lrOK: null # alphabet series of conversations with guests
+  PLcKUIuDhdLl-dtIp8R48eP-EMqAMzaXj_: null # a research question series
+  PLcKUIuDhdLl-m-uaHSfC5sWh3u470Koxv: null # alphabet series
+  PLcKUIuDhdLl830lU3EMQYIpXChQ_Iy8Ra: null # 196 assorted field videos
+  PLcKUIuDhdLl84YfUZEPB0buybVY_HpEh3: null # memorial and collaboration videos
+  PLcKUIuDhdLl8BhHyI9r666sbXC4CTgNCf: null # alphabet series of regional tectonics conversations
+  PLcKUIuDhdLl8Jks_VNk7f4yndSn0N56wZ: null # two-minute outreach clips
+  PLcKUIuDhdLl8kRXSCPHYuRYYaueb-U3C-: null # its own blurb calls it a grab bag
+  PLcKUIuDhdLl8lJeSS-FPGHKCN3EMcJSMN: null # alphabet series
+  PLcKUIuDhdLl92gfymRabwCv8U9Sgh_B5R: null # pandemic livestreams on unrelated topics
+  PLcKUIuDhdLl93MFtRXz6aUlXB412nr-sm: null # assorted regional videos and guest interviews
+  PLcKUIuDhdLl9GvA6hewGeS8z62DIYSIq_: null # interviews with survey geologists
+  PLcKUIuDhdLl9kLKks--24wMWgqErLcFvi: null # alphabet series with guest researchers
+  PLcsjsqLLSfNAQBo7LJggzGJCgSWNFOEi7: null # popular one-off talks for schoolchildren, a different lecturer each time
+  PLCTMeyjMKRkpVysLVN69wrQC8Im_SjmFR: null # mixed software how-tos
+  PLCTMeyjMKRkqs3Vmz_uOeLuCwO1SdIoHC: null # 3D printing demonstrations
+  PLD7IrLyN7uvKxjW2C3Bnn1Yx4LbOJQfwX: null # trading-product explainers
+  PLDDGPdw7e6AgK-9wUg6XvFXRpaINiJgZn: null # 11 short videos covering parts of speech only
+  PLDDGPdw7e6AjLVCdoobmqvyZZpthHGBJ6: null # assorted proof exercises with no syllabus order
+  PLdGl5mi0XeW2iK2sVp2ni_VDRKrmfF_-Z: null # film video essays
+  PLdhB2hC90YEsym09PgnC3j3FFHjJesdIB: null # ambient all-day films
+  PLdhB2hC90YEtJ4_9Eo9rETRtNtGMbwtlE: null # ambient nature films
+  PLdhB2hC90YEtzqvf0Tg1yX9WqsRQpUzd4: null # ambient nature films
+  PLDjqc55aK3kywF2dd97_Jh5iP0d2ARhdo: null # 20 short public-health explainers
+  PLDW3IzDXPIgoo6jL17QJoDXCf6mcSxC7X: null # career advice mixed with concept videos
+  PLE1C14EC1E01387D1: null # a guest's spoken-Latin snippets
+  PLE9C2A963CCA2BFD4: null # faculty workshops and one-off talks about teaching
+  PLeft4OzTOOjPNXtCVYQS7jgrkNjkYLPG5: null # filmmaking gear tutorials from mixed channels
+  PLEiEAq2VkUUIE8vrshd0pKiYl7PKpINPe: null # marketing content with repeated videos and cohort ads
+  PLEiEAq2VkUUIk2HnEsN-xgruMOtVgJK5g: null # promo and career-advice bin
+  PLEiEAq2VkUULnZpxaLHNBoalEM868K2_p: null # promotional bin
+  PLEiEAq2VkUULPx4heWRZFC-fxQ9zWDaEf: null # PMP certification marketing and exam prep
+  PLEl9d2qvKkBs95yHG62Q5LIjj9mWjaI2u: null # talks by different speakers
+  PLeNbGOow-rnd59q9eLkiH71m_mV5IhsLU: null # six popular 13-minute lectures on one theme
+  PLeNbGOow-rndUuv0_yphWTPF68UC6tk4T: null # six popular lectures on Soviet communal flats
+  PLF314E827AD323ABD: null # eight-clip sampler
+  PLF5i191-xKfU: null # eight field videos from one trip
+  PLFbLg_bIQgxC-NtGO7TzTTO0Lgd8R-Vop: null # nutrition clips
+  PLFnZ-YWZXyLIzhI6TAwjcQmszzSpw2flM: null # video essays
+  PLgi3uSA7VGIoSpI7rOrwAIHD_LgbnCkDc: null # English pronunciation coaching, not a phonetics course
+  PLH0Szn1yYNedn4FbBMMtOlGN-BPLQ54IH: null # animated explainers
+  PLhfh21X9suLeJgxN1WpXSDs5RFKCU4601: null # weekly devotional following a reading calendar
+  PLhnrjQRejlBaoG0mOhVngpZeTGoRXUmOA: null # true-crime documentary
+  PLhNxZA1Rs2iRAQGdhuEmgRPAVRgPx4u0n: null # exam prep on one year's budget
+  PLhokxMQVGojVmKSkVHtoGbkG8gdV4SJwY: null # public lectorium
+  PLHorZlq6n3CHYJKzyGU51l0-GHWuZ2Khg: null # interview series
+  PLhP9EhPApKE-iX8SWvd76ZK_j0jIbzt17: null # ethics talks pulled from many courses and speakers
+  PLHSIfioizVW02bGzMfTOu7Kdcm5pRXUG-: null # facilities promo
+  PLHSIfioizVW0uCBryIJPHP5Xc_Tnne24R: null # teaching workshops
+  PLHSIfioizVW2JW3CdTNeHwT9rouz9aoJA: null # award clips
+  PLHSIfioizVW2QHnDilqlbeOGo9Yx77Lqe: null # 10 unit introductions, 30 minutes in total
+  PLHSIfioizVW3Dq6U5nwyHwo9ZQrE7TjIL: null # 12 clips on rock formation, not a course
+  PLHSIfioizVW3iU46VrX0_PHxJ2XNAlgQ3: null # course support material, not the lecture course
+  PLhuWQSr4hNslDaMxUAxL2oL8NKtvfIz_8: null # body-percussion lessons
+  PLi01XoE8jYohHx8MEpqM9zYny9RNsCTas: null # 25 short state-by-state travel guides
+  PLI0VEqFaDDLw2MmXrziQh8j4rSS2CqmZ9: null # WRF modelling bin, mostly software installation practicals
+  PLI0VEqFaDDLz_HPLfTtT9_QTMj4wFHWqy: null # seven module walkthroughs for course assignments
+  PLI0VEqFaDDLzFfAemWBz_KNlZGihalvoI: null # one topic (weather satellites) inside a larger course
+  PLi1VnGoeDGjuJBSTDIGFPe9aQsh4AF2jh: null # standalone how-to clips
+  PLi6K9w_UbfFSxHPEDWcXxIxSA6gDR4OeZ: null # short videos curated by topic
+  PLI76N29qybf8a9pkSzD9X0PX3a3PgO2_-: null # grammar help pinned to a textbook unit
+  PLIAE-umIKALbMkx8F6fax3zbQ8-9BXYD-: null # animated pop-history series
+  PLIljB45xT85DeX148Q2T2elycnIYHTxdP: null # polemical essays against modern pure mathematics
+  PLirEzjzoHKvwGjllF_-Yb2w5gsLbIKDcz: null # conference sessions by different speakers
+  PLj8S949x_pmR9brHqG0K9CyK5ovdI_X9V: null # podcast episodes
+  PLJefJsd1yfhagnkss5B1YCsHaH0GWQfFT: null # Seurat and Signac tool tutorials on one technique
+  PLJefJsd1yfhYa97VUXkQ4T90YH6voYjCn: null # bin of RNA-seq tool walkthroughs
+  PLJefJsd1yfhZtf0Ud98We_JByn0sK39wM: null # guest Q&A and collaboration videos
+  PLJQsrK_W2jnhITiPMzU_q6o2jxsvMXmVT: null # brand films
+  PLk6N8TA8c9gwbIeOqwZjM7bnQjsxWqJHG: null # one week of devotional study aids
+  PLkfBg8ML-gImYw6AMK7LPfuj0W9NHQr3S: null # pop-sci drug clips
+  PLKgdsSsfw-fa1QU7jX-jwDrdUPQpchT5p: null # standalone outreach videos about the discipline
+  PLKgdsSsfw-fajFxBXVDCw4nA-nQzXeHf0: null # conference and research talks
+  PLKI1h_nAkaQo7M8H8Ox8_l6hGRKNEsiKP: null # puzzle videos with no course order
+  PLKI1h_nAkaQoKoY6M9kPuyAjA9e2EToNt: null # topical commentary on Chinese politics
+  PLKI1h_nAkaQowqx2sIuifctyQ5yXkPUlC: null # ongoing conflict commentary
+  PLKI1h_nAkaQrijucpjoxqeDJj7rvjjBur: null # topical commentary on NATO
+  PLKI1h_nAkaQrxEzfdylXh33gweZZEqrdV: null # 259 running commentaries on a war, no syllabus
+  PLKjwFyELc2SllpYsgntHqTDNAIb5L_Hxk: null # standalone public lectures on unrelated topics
+  PLKjwFyELc2SlXMXQ-nS-QEMBE7Qn4sMEY: null # sermons
+  PLKjwFyELc2SmRTK1H2UfcOn0AvoS0MvUv: null # episode-by-episode TV show commentary
+  PLKjwFyELc2SnpWdJQqHi1UTaHIesvCa1a: null # a 261-video multi-season two-host show
+  PLKjwFyELc2SnxNQwWvE-gn9-5-NlRHyNX: null # media appearances
+  PLkKvotUGCyLdlWlX1XbKssmpd03V5S__Y: null # multiple-choice practice questions for exam prep
+  PLkvTG4A3XyMkGg6sywFB4i0nDq2CQuZCV: null # children's cartoon
+  PLL8_5VpX9Txq96sRthgKvFo6EscNGLyOT: null # assorted clips
+  PLlnFrNM93wqwfZyqwgOg6OXFZaqo_8HbK: null # 483 poems
+  PLlnFrNM93wqy6zRRgYWgUaXS1Uiihrc6u: null # assorted non-academic videos
+  PLlnFrNM93wqzeZvsE_GKes91C8D6q5xcz: null # problem-solving walkthroughs, not lectures
+  PLlnFrNM93wqzF5MOedL9oZy0Sg3vhYc9B: null # limericks
+  PLlnFrNM93wqzsyXKe7SvxKfAF9DO2YnuU: null # a most-popular-videos collection
+  PLLqNdnCET2IUbsjYlGK93TbmAvMBjCva_: null # worked problem solutions, not lectures
+  PLLqNdnCET2IWbh_N64QJlEg7TuSIvEr-d: null # 43 clips averaging three minutes, lab demos and formula snippets
+  PLLqNdnCET2IWo4_CGOkE5qAiHwUDpNPnW: null # 24 short clips, a fraction of a theoretical mechanics course
+  PLLqNdnCET2IX8P8jBX9JcQ7EEVE92Xr1u: null # 35 short lab-experiment clips, 1.5 h in total
+  PLm8ZSArAXicJpCTKOI0TvO0H6IGlJMu8-: null # a maths refresher assembled as preparation, not a course
+  PLMa5a9Dh6SlgcnYfJCFsJsrnoHWopDvWa: null # Java project walkthrough
+  PLMfHuI-eghZngpW8gzd6RAMlMwmwiN0Bg: null # conference sessions
+  PLmGQgRI4QyEBdLjpi3R_qr4EwpK625GBn: null # ECG case clips
+  PLMH5SfME31ZJoNAUk9uSoESuyj8VSByiN: null # vocabulary drills read from an early modern wordbook
+  PLmiokot_81foUicf2DanPABQkSzG6257t: null # companion stories
+  PLmU0FIlJY-MkdGKjrPBEZY2rkyXfeHJHw: null # actuarial Exam FM drills on term structure
+  PLmU0FIlJY-MkEcQQsRMnm8I0JjZfS0fI3: null # precalculus and calculus problem-solving tutorials, no syllabus
+  PLmU0FIlJY-MkIA0egpS1ycAAFGfcOvubO: null # actuarial Exam FM problem drills
+  PLmU0FIlJY-MkYr8VI0MPk73Aqz6RmHWST: null # the tail of the abstract algebra course, from its lecture 32 on
+  PLmU0FIlJY-Mkz09JQYJBdrnd5bouQq9ov: null # challenge problem set, not a course
+  PLmU0FIlJY-Ml4Ha5USN0kSt4TyvamTJar: null # AP exam review and practice problems
+  PLmU0FIlJY-Ml8qTaBE1qydtGnlaTLaTo7: null # one topic (polar coordinates) lifted out of Calculus 2
+  PLmU0FIlJY-Mla08f3lrUXZ3hS9LyKwjm5: null # tutorial bin explicitly aimed at homework and exams
+  PLmU0FIlJY-MlAJg0OLoub5oXmnEnnbtzo: null # spreadsheet algebra exercises
+  PLmU0FIlJY-MlFocdHKYapCv8RlUfRhvpe: null # actuarial Exam P problem drills
+  PLmU0FIlJY-MlhpxQ9D7wQeRH6Eo1rntfo: null # problem-solving bin for calculus homework
+  PLmU0FIlJY-MllS1q3uh8ctuPjJcdeGHK2: null # Mathematica demonstrations, not the course
+  PLmU0FIlJY-MlXInIk0FZHx5VsairNeFm7: null # actuarial Exam FM drills on bond duration
+  PLmU0FIlJY-MmpcyK6greUvy4ElbRPCeQR: null # documentaries and clips about three mathematicians
+  PLmU0FIlJY-MnJkPLSeLSP4Zp4GVk90Kxw: null # eleven proof exercises
+  PLmU0FIlJY-MnsjhWSCBsXQit9lN8_x1cj: null # actuarial Exam FM problem drills
+  PLn0nrSd4xjjYCkOxtYqozyDuwt-4sC2L6: null # award lectures by different laureates
+  PLN3OhfIDlvuMVtLl6I7gFoJuAejCSBkaw: null # urbanism video essays
+  PLN7FF06VmIkkpWsnaRKitfJMx0Ngr8h-g: null # dubbed movies
+  PLn8PRpmsu08pYXwR-qihN6abrK3Io97NN: null # vendor how-to in six parts
+  PLNlg05dGKXv4Bs-iOLYxYWJuBjvg0NkBB: null # conference sessions from a 2019 forum
+  PLNlg05dGKXv4c6Tll1fDzcOs0lnxHVClH: null # seminar series, different speakers, unrelated planning-law topics
+  PLNlg05dGKXv4k3SNkd_aJKIBRxUhd7LmI: null # one-off event lectures by different visitors
+  PLNlg05dGKXv4Oc1ZceN8AeKBzBL1KS7IU: null # open-day and programme-presentation videos
+  PLNlg05dGKXv5Q0YYv2h3bS3fZeOlKhH5A: null # lab welcome/promo videos and guest talks, no syllabus
+  PLNlg05dGKXv5QMjhy2bxEq74zvLDbviXz: null # open days and admission webinars
+  PLNlg05dGKXv6FC-88eiAac0CmCE4JZTSj: null # научный семинар, standalone research talks on Arctic cities
+  PLNlg05dGKXv7-WbBwgBkwzXhiRRBvX0wl: null # admissions material plus student project clips
+  PLNlg05dGKXv7a-Qvic71B6XfU8-gilcwd: null # 10 short films of student research from an expo
+  PLnn3dWigwUya8yYya2STrq8sSWbTSthH4: null # mnemonic clips
+  PLNrGtdJ6nPMh8JSe1JhYmBDrQ52whsZps: null # beginner clips
+  PLNsFwZQ_pkE9UD-PuWU6hTg2F8xbs88iv: null # music tracks
+  PLO3VwXPRtV3xNIxgjThRYDiENyNWc4Hjg: null # quiz supplement to the lessons playlist
+  PLO3VwXPRtV3yaZNPfq-CfhTktwCez-0Io: null # reading practice
+  PLo8pZkfZN5h05u7YSjr87sgFcpUWmPgy6: null # short talks on textual criticism
+  PLo8pZkfZN5h24Q1sdZSJkeT0Phx31KKF7: null # a handful of introductory clips
+  PLoJHkGmgd2_k13xg2U4RmdvjGIoAAiE_x: null # an explicit best-of bin
+  PLoJHkGmgd2_n90JRgl0qV5bdmN0yAYwq6: null # assorted clips
+  PLORHt8cnZL3UdLywLwUtRnM2IvtKt-hCZ: null # assorted clips about research methods, no teaching order
+  PLORHt8cnZL3Uip084BmenqA1wp2TrV5hA: null # one theme (class), assembled from clips and outside videos
+  PLORHt8cnZL3UNqyfBburMJnyokPGe80p3: null # one theme (work and leisure) with outside videos
+  PLORHt8cnZL3UQefoTtIQYDibKJ7HW8Zpb: null # one theme (gender and sexuality), clips from several sources
+  PLORHt8cnZL3VK8QftTZnnossShMMqkqA4: null # interviews with sociologists about their careers
+  PLORHt8cnZL3VPBlEb9DjbocIOxMIrOYNx: null # topic playlist mixing lecture clips with documentaries
+  PLORHt8cnZL3VQWBGA5JaECS02rnMhiAv1: null # one theme (the self), clips and interview footage
+  PLORHt8cnZL3VYZiwO5HQcd7nvYR0Tmvba: null # one theme (family), assembled from clips and outside videos
+  PLORHt8cnZL3Whh5fPmhfANBPw3VPqWG1d: null # one theme (power and the state) with debate footage
+  PLORHt8cnZL3WI871rllpH_1RvGZ6y1zxR: null # one theme (the sociological imagination), clips from several sources
+  PLORHt8cnZL3WQ3wojw3zn7q7AEwCA6-Dn: null # one theme (education), mostly outside videos
+  PLORHt8cnZL3WuZqyNWRU1qpZSZXnYiPTi: null # one theme (crime and deviance), clips from several sources
+  PLORHt8cnZL3WV5KB4bJ3dPO53uFLoI6KI: null # topic playlist mixing the channel's clips with pop-culture videos
+  PLORHt8cnZL3XXcJ_ULIujbjeChmPGB_jL: null # one theme (identity) with documentary and TV material
+  PLoROMvodv4rMZs66WrOI0mRJ9placS8QP: null # promo clips and trailers for a product management programme
+  PLoTScYm9O0GFzeMuTUaB128ffUDeS0GUq: null # data-scraping tutorials
+  PLOY-0V_l_9x4rMKVgoLX7vVZrtS5wRxN0: null # book review
+  PLOY-0V_l_9x4UZVVLDC7GHkclZYIGMJ4s: null # vlogs
+  PLOY-0V_l_9x5ii8U1zbXRA5aD70UhpxjU: null # book review series
+  PLOY-0V_l_9x5zyZvaYnc-TuZjDuX-txNS: null # book reviews
+  PLpvdEKCBVrBi6cxQYR9xHEyTYz3_O8-JB: null # video essays
+  PLpvdEKCBVrBjB7nHueZcmPd3IKDycflwT: null # sci-fi video essays
+  PLpWBD1oD22WaFDoaGxd6WtVkJFODbnaSG: null # one-day workshop
+  PLpxcmJ23ymcWL0Hx5kndU1zS5m6iQFL_8: null # demos of teaching methods
+  PLPZal7ksxNs0mgScrJxrggEayV-TPZ9sA: null # product how-tos
+  PLQ-85lQlPqFOcGz6A3g2ZArRL09Ffpp_N: null # one chapter of a bioinformatics algorithms textbook
+  PLq5ea-jR9u2ojLpe4x3suBCx1eGuXwnL2: null # open-ended scene readings and discussions, not a taught course
+  PLq5ea-jR9u2ozL9NaRxWKMJkj2vFK3fmT: null # a 24-hour performance event of the Odyssey
+  PLq5ea-jR9u2p4k1qE0ORK9_hVvVGBPXA3: null # staged readings of Antigone
+  PLq5ea-jR9u2p5jVhU6bhfTHfnKPtVLxNk: null # student competition entries
+  PLq5ea-jR9u2p7gIjqjkvcgZC9tPg3BMX4: null # festival performances
+  PLq5ea-jR9u2ps6zCeOdMFOwZWBP0CQVIX: null # a concert
+  PLq5ea-jR9u2pthVznRQnIKyHO1yGBlEC6: null # conference sessions by different speakers
+  PLq5ea-jR9u2qzr5z5OwiuTn0l98lmI-ED: null # visiting-artist presentations
+  PLq5ea-jR9u2rAOmRyzFPbK9heU1Vb-xz1: null # research symposium talks
+  PLq5ea-jR9u2rFIvinDOVXkq3hGWhUTWqv: null # fellows research presentations
+  PLQIRUjKxcKZw-KCBGJ5uFnJ2Cf081HDEz: null # popular clickbait-titled music videos, no order
+  PLQIRUjKxcKZwLBnm6p7cnhziB0RsMv0Ek: null # a themed collection of podcast episodes
+  PLQIRUjKxcKZztWZz6i8I5w2lMjHx_qG9Q: null # a сборник видео of popular streams with a webinar ad
+  PLQL6z4JeTTQn0M6vqd8ITekObDPxxiapK: null # grant-funded videos, field theory next to op-amps, no syllabus
+  PLQL6z4JeTTQnVdOoEnZqLl3V7KQsGlrAS: null # student conference talks
+  PLQL6z4JeTTQnVuLWeaZm1VrODjz2po3C5: null # student and alumni testimonials promoting a degree programme
+  PLQw7KTnzkpXcJ3GQbh9xls7-Dr6Cs1rur: null # conference talks
+  PLQw7KTnzkpXcpF3ssNhVEsaTFUqAfdXEC: null # award ceremony
+  PLQw7KTnzkpXcx5---ZOXZGbIEMqxAAV79: null # marketing talks
+  PLQw7KTnzkpXcxHV9ehbYiB_DjQM1Qblnj: null # conference honouring a researcher
+  PLQw7KTnzkpXd7a68u7HV3v41KJyE3GZG4: null # award ceremony
+  PLQw7KTnzkpXdJenJr66bPqNLc1apZC3_N: null # workshop talks by different speakers
+  PLQw7KTnzkpXdrsnZ7n_3HNyD-GCmfCNQ4: null # conference talks
+  PLQw7KTnzkpXdVLfNCmp-VxTTObrZPlA0w: null # award ceremony
+  PLQw7KTnzkpXeLss-03Ya9TusfkxFpe9qC: null # summit talks
+  PLQw7KTnzkpXePUZSwUf_MtL5ZvpIXlulf: null # conference talks
+  PLQw7KTnzkpXeXcIXK-QyobkmB-u2N6G4M: null # conference talks
+  PLQw7KTnzkpXeZ3tGycARklzn6ihmpulxo: null # public lectures by different researchers
+  PLQw7KTnzkpXfap0VfcftuZLMSCJXif4dE: null # conference talks
+  PLQw7KTnzkpXfbhRvSbUqu2Q-lZ266mpAH: null # conference talks
+  PLQw7KTnzkpXfGC2493C3h3HucGavlcnt_: null # public lecture series by different speakers
+  PLQw7KTnzkpXfOu3pFFneNFVB6PPC__Ram: null # alumni interviews
+  PLQw7KTnzkpXfQm0amqSbfzhpTGC4YjqD6: null # conference talks
+  PLQw7KTnzkpXfRjDSwBFydB6DbA1yWNd6W: null # conference talks
+  PLRDwuoRClPzcAjN3wwuBk8nb53PG4OQQk: null # a single clinical topic
+  PLRDwuoRClPzccDynRPbs5OaOdmkVhFyRJ: null # an unordered concept library
+  PLRDwuoRClPzcdvbQh595p_yIu34-gfL6h: null # 47 two-minute revision shorts
+  PLRDwuoRClPzdepj62MHdlBG31NYqm_rWU: null # a different discipline from the catalogue's pathology
+  PLRDwuoRClPzdSMtJvrrHTdP-8lXJPv_eN: null # brief concept captures
+  PLRDwuoRClPzeEUNYkR98E8neKJvYypTDB: null # recorded live tutorial sessions
+  PLRDwuoRClPzel5qay2zKP1ZFTKJGyNOzv: null # unordered clinical clips with no syllabus
+  PLRDwuoRClPzeuM4GUQsBvhSTO8aX4L2lk: null # topical explainers and interviews
+  PLRDwuoRClPzf9qRVfCFkZM6jnaHSZdtPo: null # 183 standalone concept clips
+  PLRDwuoRClPzfdCCqOpHb4TaubmbrvKoQp: null # a single tissue type
+  PLRDwuoRClPzfnAXMFtxJKhpJQZgmM7AuG: null # a single topic
+  PLRDwuoRClPzfOio5sdTaiQ0da92S1y6HP: null # 50 two-minute revision shorts
+  PLRDwuoRClPzfw4eCCxgKkDc_IFHHN7u-Q: null # podcast episodes
+  PLRgREWf4NFWY5oeJd5-g7kVce9oDaA2xn: null # one-off episodes on the origins of individual holidays
+  PLRgREWf4NFWYJyBpHWrMM1bu6ywQ9H9wJ: null # another cut of the standalone biography episodes
+  PLRgREWf4NFWYwa2KjgksgrIjfu1dH1g3O: null # standalone biographical episodes with no progression
+  PLrhDANsBnxU-ZEiWfN4SDXpTNnm3OZWQX: null # Java mini-project walkthrough
+  PLrhDANsBnxU8WUQarwVHpYWP5SDvG6ubv: null # Java project walkthrough
+  PLrhG2NtyHAZsphCSGVJXHnMODJGwIUrKz: null # virtual field-trip clips for one lab session
+  PLrhG2NtyHAZucaIEtIx6jVV9tTFt8UDU_: null # specimen clips for one lab session
+  PLRIMXVU7SGRK06cEKO8oCWCK1nWkWxs7z: null # 12 short talks about digitising teaching
+  PLRIMXVU7SGRL02tFguKFm1FJmGkrZhSRV: null # student-made micro-lectures on scattered unrelated topics
+  PLRIMXVU7SGRLZx4qFz_2-9k2hhKd-jkfn: null # in-class activity suggestions for teachers, not lectures
+  PLRqDfxcafc21bGNwISJ83uFla6eFKgafy: null # exam-prep shorts
+  PLRqDfxcafc22DYO1l_vNipUnOLEgfyKCr: null # FE licensing exam review
+  PLRqDfxcafc23SI5WKtgvWhfyJdZzx8t5U: null # shorts and problem-of-the-day clips
+  PLs84PsexbuAgfZVPFa38jtwxNidJTxgWO: null # a product webinar series
+  PLs84PsexbuAgNDqamI2msHOdoIXDhc1Pb: null # a single-day webinar with multiple speakers
+  PLs84PsexbuAgu4UBJXrh7mtwkZa641P_O: null # tool demos
+  PLs84PsexbuAgZB6LCJ91AxQpv0BwagJTr: null # research seminars by different speakers
+  PLs84PsexbuAhx4aJDgEZrhMfC5nH5TbqP: null # eight novelty shorts
+  PLs84PsexbuAhyszksuX3d01ZIFOVYUwH9: null # webinar series
+  PLs84PsexbuAi0uPsirn1YgxpVkGMFwVj4: null # unrelated guide webinars
+  PLs84PsexbuAi8iUVVj8RW5XaqKZqk3zVt: null # 13 novelty shorts
+  PLs84PsexbuAiapOM9uZPWrfsoFDT3u84R: null # tool demos
+  PLs84PsexbuAibHzOYl06t64PGdHEZz6jb: null # a resource-showcase webinar series
+  PLs84PsexbuAj94hc38D_UiAZgLw9MKF8v: null # release-by-release product webinars
+  PLs84PsexbuAjjT9yL2uTOHfYM-dpkCMhl: null # a six-video data-management webinar
+  PLSIpS0OxA1NwjRfYK1pC8w4Kg8E7gXje5: null # dated webinars by different speakers
+  PLSIpS0OxA1NwZZxLbCaU1b7nkUJ2i4u3Z: null # dated talks by different speakers
+  PLSIpS0OxA1NxrnkFUN0zRv13Q8TWbcUje: null # dated talks by different corpus linguists
+  PLSIpS0OxA1NxZ3d0nT-zWLfRR760cPhQC: null # assorted clips in several languages, a resource bin
+  PLSIpS0OxA1Ny5HaqPiX-iCo_tEJe8qlp3: null # interviews and conversations
+  PLSIpS0OxA1Ny9529nvAcxiFR4z3C80b3r: null # concept explainers, under an hour
+  PLSIpS0OxA1NyNilHv-zpMNC8yz2vFYpJx: null # talks and interviews on corpus stylistics
+  PLSIpS0OxA1NzO6wUl2FfZejDB6XJ2V_eY: null # dated talks by different speakers
+  PLsiWWIub-HIkdcxcW2RqrZXB-hC76T91f: null # superseded old versions of lessons 10-13
+  PLSL-eqKP1SPG2NpN0FtjdtqGIS5F3WCT8: null # 470 videos
+  PLSL-eqKP1SPHfRxRfYRPBgQAeS5Hg4MLi: null # 28 clips of single joint movements
+  PLslORdWrrAlA0jZNC45ecRwYyOWUp3Q8L: null # single-movement mini-unit
+  PLslORdWrrAlA2e3rrgYMdZcDyfA9k6lPq: null # a World of the Arts gened, theatre, music and dance plus announcements
+  PLslORdWrrAlA6o55k94VS-5mFz6sxQz3X: null # unit 5 of the World of the Arts gened
+  PLslORdWrrAlAak-D8v9tV7S55z8DoZuj5: null # one period unit (18th century) of the 210 survey
+  PLslORdWrrAlAb6INVYCXB2V8Ra5cUA7PT: null # two clips, remnant of the Asian unit
+  PLslORdWrrAlADXvXX5AhzhNqw6e-sSrCD: null # one unit (Byzantine)
+  PLslORdWrrAlAHNk46qrWkTXZevJJA3kAs: null # condensed Islamic unit
+  PLslORdWrrAlAjti4Hwtm6t1pByyES-drv: null # one unit on Roman art of the Ancient-to-Medieval survey
+  PLslORdWrrAlALLM6wwEidbb6bRnNGOZTO: null # one period unit (1870-1900) of the 210 survey
+  PLslORdWrrAlAlxM2VFXf8fFMzyd-9oHru: null # single-movement mini-unit
+  PLslORdWrrAlAPaTwd7Tx1L47lO_Qla0tA: null # one period unit (Italian 16th c.)
+  PLslORdWrrAlAso-SKMADgUbJwVuCGwC--: null # one unit of the non-Western survey (Americas after 1300)
+  PLslORdWrrAlAWAvNPtLSVwSZyz3mQf_vP: null # one period unit (Northern Europe 15th c.)
+  PLslORdWrrAlB8ZlfPVgxwBRU0p_VkjshN: null # one period unit (Italian Baroque)
+  PLslORdWrrAlBfQPY7hDqQ4lh-6xkLkUU8: null # condensed re-cut of the Americas unit
+  PLslORdWrrAlBGD4JWBX_dQAFhFjNp_BkA: null # one unit (Ancient Near East) of the Ancient-to-Medieval survey
+  PLslORdWrrAlBIXKo-hUYyfaJ8iJWWHuzF: null # one unit (Late Antiquity)
+  PLslORdWrrAlBjrs12wOJbrSl8KdYmFF2T: null # one period unit (1945-1980) of the 210 survey
+  PLslORdWrrAlBmTfGDDvzHgA-5WaFxDoue: null # one unit on Islamic art of the non-Western survey
+  PLslORdWrrAlBqaHsURbI-pDtubCIEWpM_: null # single-movement mini-unit
+  PLslORdWrrAlBRoR-g8PY2O6OEKXTIpn3d: null # single-movement mini-unit
+  PLslORdWrrAlC-EJ4AMG7HhO89bopaZELk: null # single-topic mini-unit
+  PLslORdWrrAlC0jKlXvnSS_zYjOM0_yZ6r: null # single-movement mini-unit
+  PLslORdWrrAlC3dRbaujpZ_q9ZcRFfm1TS: null # one period unit (American art 1900-1945)
+  PLslORdWrrAlC8fle-CAVJbYqFY3RsWaez: null # one period unit (Italian Renaissance to 1400)
+  PLslORdWrrAlCclbOG2P90uvZ_9k-O0As0: null # eight clips on Japanese art, part of the non-Western unit
+  PLslORdWrrAlCF7CZ2A-3mCOhey0Rip711: null # single-topic mini-unit
+  PLslORdWrrAlCH9gQ1Dz0C47mYKfP3xnMV: null # one unit (Etruscans)
+  PLslORdWrrAlChgJL4Wr-LqL9Q5nMLHQR7: null # condensed African unit
+  PLslORdWrrAlChJYQP1OlQ4ii6OSXUjOlc: null # one unit (Early Medieval)
+  PLslORdWrrAlCIr5DSDiw2zaS63v4HDeAc: null # one period unit (1800-1870) of the 210 survey
+  PLslORdWrrAlCIVZe6jypQCDjb6KA5QNl8: null # single-movement mini-unit
+  PLslORdWrrAlCIy1wo5PzoNtL5tP_cHcYi: null # one unit (Romanesque)
+  PLslORdWrrAlCjk8ba9NhkxdVrP9d0YCZT: null # unlisted announcements and updates for students
+  PLslORdWrrAlCLxI5NPntYD7lvo876JCEb: null # one unit (Gothic)
+  PLslORdWrrAlCqvRBW6qBjzYkhN2nBuXYw: null # one unit on African art of the non-Western survey
+  PLslORdWrrAlCtq5uLtEo03vdEt0lY4qrw: null # condensed re-cut of the Asian unit
+  PLslORdWrrAlCUk-PeRre92e-s6nX-H5uQ: null # one period unit (Italian 15th c.)
+  PLslORdWrrAlCupE0xF6d3E_t_BFCSRwyl: null # Florence-filtered re-cut of the Italian units, not a course of its own
+  PLslORdWrrAlD0WP2tCAQ9diuGYmYBuhHD: null # unlisted announcements and exam-discussion videos
+  PLslORdWrrAlD193VBWFz8bu7L_GNNtEQX: null # one unit on Pacific art, nothing to do with oceanography
+  PLslORdWrrAlD3xCzxh4c99GA4i1Jl0tX5: null # one unit of the non-Western survey
+  PLslORdWrrAlD5TzQMV7fMWPhyvd4SiDtm: null # one period unit (Europe 1900-1945) of the 210 survey
+  PLslORdWrrAlD6mOiTQJ416MTdUgF1chOL: null # single-movement mini-unit
+  PLslORdWrrAlDA8X9xi6JQYhl9XdkbA8SK: null # one period unit (1980-2020) of the 210 survey
+  PLslORdWrrAlDCCvx3iXhfJRrb5iyiQ8L6: null # one unit (Prehistoric) of the Ancient-to-Medieval survey
+  PLslORdWrrAlDgYzxFwnue5GI7YRVis5KE: null # three clips on Chinese art, remnant of the non-Western unit
+  PLslORdWrrAlDHRChDgl9YrAnYzjqSBVI4: null # one unit (Ancient Aegean) of the Ancient-to-Medieval survey
+  PLslORdWrrAlDHulPtfyEgyD7yR7ZgseWz: null # one period unit (Northern Baroque) of the 210 survey
+  PLslORdWrrAlDLanBYcRcXHytsPA5g5cje: null # single-movement mini-unit
+  PLslORdWrrAlDn3nfwh6OpmPU1pzeUjdl8: null # single-movement mini-unit
+  PLslORdWrrAlDstzC9HbMdUUeyByFngCc5: null # one period unit (1945-2000), the author calls it temporary
+  PLslORdWrrAlDuc_nYMBi2dtXVsVCRZgTa: null # single-movement mini-unit
+  PLslORdWrrAlDW-JVvYrmdac4P2jWdoJto: null # a 100-level art-appreciation gened, ballet and theatre alongside art
+  PLslORdWrrAlDYUfNo4ldwOHeOMxYZxzCO: null # one period unit (Northern Europe 16th c.)
+  PLsmqeqKj7M-p_cC_I81favAvBu4U8-5-2: null # pop-sci climate clips
+  PLSQl0a2vh4HAmesA2mzILc6gghrr4jl5L: null # nine short interview clips with a journalist
+  PLSQl0a2vh4HAqhJHlIkloZVKHSctXhifs: null # third-grade measurement and shapes clips
+  PLSQl0a2vh4HArUG5LObtxIRqYIVUN9-KW: null # second-grade measurement clips
+  PLSQl0a2vh4HATvRXDVB4hbnSKZ30TEN9X: null # fourth-grade unit-conversion and line-plot clips
+  PLSQl0a2vh4HCJlJRGmC8cMlo--MU0IhKe: null # fifth-grade unit-conversion clips
+  PLSQl0a2vh4HCvPfI9-ffUwYdHQ5lSY5M4: null # seven videos, several of them dead-link placeholders
+  PLSQl0a2vh4HDYIB-tq4HUJj3WR0n6hxRg: null # early-math measurement clips
+  PLsuXZgkp0aLhMkmBCOB0U1xxnez_qxMsc: null # comedy shorts
+  PLsuXZgkp0aLhTX5ov5X5TDv5UNC5_5hLK: null # trailers and announcements
+  PLsuXZgkp0aLjcTOnmQBAEtNnLddTNAWgK: null # comedy shorts
+  PLSX0ZvGXyRb7Hz4ksaaFHu1aXi9cLlK4j: null # one popular lecture on ageing cut into 4 parts plus a teaser
+  PLT4S5qC9JaqOW1OY3rss-N0cSt-j2PDem: null # wildlife footage
+  PLTF9h-T1TcJghboF2tNKpqbDWSyva6xSW: null # fan mail videos
+  PLTF9h-T1TcJi3pcU7atE2wCpu8hYpAJmZ: null # clinical skills demonstrations
+  PLTF9h-T1TcJijSqoJVCfZy8nD55kyQH6g: null # numbered clinical case studies
+  PLTF9h-T1TcJj9ayiidEJUB3fSrWU3_tgQ: null # a bin of retired lectures
+  PLtl4bsccyqPUa29NgQAqsq6mE9Spiiyxy: null # architecture-in-fiction essays
+  PLtTPtV8SRcxgDSzmQZ5X9WcHV2PMehPBj: null # conference panels and interviews by many speakers
+  PLTv2U3HnAL4NN2tK-59ZiNBm-o64-Yvos: null # Vim tool reference clips
+  PLu0W_9lII9ahOwlLGfKljH86ni_muVoi7: null # VPS hosting tutorials
+  PLU1WuLg45Siw2bcwgjIj8FgQoJuGTM70j: null # Latin vocabulary clips
+  PLU1WuLg45SiwDwqmIdi_tx9FVD6ZTk4ly: null # film scenes dubbed into Latin
+  PLU1WuLg45SiwEEYSOAC4LECYcRTC7xllt: null # recitations and audiobooks
+  PLU1WuLg45SiwLDkZX0tB3fm8Gr6d3mwN0: null # the channel's own miscellany bin
+  PLU1WuLg45SiwuGR1H6ZRhLvusm1iQN7ay: null # songs from one film performed in Latin
+  PLU1WuLg45SiwukZMyb1XtsjnHehecesfl: null # nine one-off livestream lessons
+  PLU1WuLg45SixAYDZD4Lg5-qNGi8UShczN: null # eight recitations from the Aeneid
+  PLU1WuLg45SixbkOyL6ZQcV0FZyxBj2ioS: null # guided tours of Roman sites given in Latin
+  PLU1WuLg45Sixfh8jIY8bZ202Y_FdMSAsm: null # short how-to-say-X clips
+  PLU1WuLg45SixiJ3uYEzpR9U4rOzi1uSpK: null # readings from a convention
+  PLU1WuLg45SixjiUXs2h_k6ynUuVakchKr: null # radio-style news in Latin
+  PLU1WuLg45SixuvJ6-yOyl8aW0UA7QMIfL: null # 100 daily recitations of the same passage from memory
+  PLU1WuLg45Sixuy2YggJ6D6uEVlrHLWKcY: null # a recitation of Ovid
+  PLU1WuLg45Sixy5Me3wULYlzWiDFuHDIYv: null # a conversational phrase list
+  PLU1WuLg45SixzXE5yKknISwKHZ_dUY4RD: null # reading passages for a convention
+  PLU1WuLg45Siy43DO7i26cegjPFWfw5V19: null # 48 livestreams
+  PLU1WuLg45SiyF0SHKQUhbsTWj_i3r4lc1: null # reading passages for a convention
+  PLU1WuLg45SiyoKYbbV5HS1pRFPimS_A6T: null # songs covered in Latin
+  PLU1WuLg45SizQQ5VwufQbCB9rL-Z3VIUJ: null # standalone pronunciation videos collected over years
+  PLU1WuLg45SiztbhlV7IN-bSxl-eYc7UzT: null # performances by modern Latin poets
+  PLu8ZTamQS84u-7xZTntpUifXleZlHSLbj: null # software tutorials
+  PLUenpfvlyoa0VSYPGou2kW9SSwI0xCgjI: null # improvised chess-programming livestreams
+  PLuhRWgmPaHtSEd9SWIaoKsxMkannW8zX3: null # conference track
+  PLuIhQdwUVqqpq-aOnrEUjEq2oidCXbp9J: null # grammar clips
+  PLUkh9m2BorqkjTKRzLN9Cx0vIlPvo4Ivw: null # one video per book chapter, the same twenty sessions again
+  PLUkh9m2BorqkNIdjpZY2kI0qzRbEv5F5L: null # companion webcasts each demonstrating one technique
+  PLUkh9m2BorqndWimijiJ-VCAXjJUrzJQU: null # a preview series announced as a lead-in to the real classes
+  PLUl4u3cNGP60bTiL2hg0h_akgz8ywXkCX: null # short demonstrations of teaching techniques
+  PLUl4u3cNGP62KjqcGeQzyy83Y_XBsNw0v: null # student project presentations from a practicum
+  PLUl4u3cNGP63QSCvqM7qgvn66CiR8cz2d: null # visiting artist residency talks
+  PLUMWjy5jgHK0iUaExESSY5-PYpTcoHE9z: null # section 2 of the control series, Bode plots only
+  PLUMWjy5jgHK34zHva0RNs08PWDp1A-sKE: null # section 3 of the control series, Routh-Hurwitz, PID, compensators
+  PLuQDC4auD-xiUFW2ELc0GGXSXBI6S1z8H: null # reaction videos
+  PLuRaSnb3n4kRrNCXpl_B8pFuO65-AXop-: null # commemorative lecture series, a different professor each time
+  PLWctyKyPphPiGB4daIfqKQoYcCOIjEY31: null # Cinema 4D software tutorials
+  PLwGzY25TNHPA51h02X2nRi2d_9pP4srMr: null # documentary series
+  PLwjK_iyK4LLDE3eB-uSifs3h-wLrZNaSY: null # daily quiz solutions
+  PLwJRxp3blEvaOTZfSKXysxRmi6gXJf5gP: null # 1.8 h on a single technique, factor analysis and SEM
+  PLWKjhJtqVAbkArDMazoARtNz1aMwNWmvC: null # a bin of 29 unrelated standalone courses
+  PLWKjhJtqVAbkFiqHnNaxpOPhh9tSWMXIF: null # 18 minutes of tool introduction
+  PLWKjhJtqVAbkOoQw0jDWn-pzN3nFVjhbH: null # 154 h of live-coding streams building one app
+  PLWKjhJtqVAbkPX-lJHxjXdsw19vbXIZpz: null # independent live-coding project builds
+  PLWKjhJtqVAbkyK9woUZUtunToLtNGoQHB: null # a one-hour library mini-tutorial
+  PLWKjhJtqVAblfum5WiQblKPwIbqYXkDoC: null # a bin of 13 unrelated standalone courses
+  PLWKjhJtqVAblh4QvUtzEq4qgs_bnvBrw2: null # live-coding project streams
+  PLWKjhJtqVAbmcla_n9Haxp8PfTGYXIBwP: null # live-coding project streams
+  PLWKjhJtqVAbmMuZ3saqRIBimAKIMYkt0E: null # a curated roadmap linking many separate courses
+  PLWKjhJtqVAbmqFs83T4W-FZQ9kK983tZC: null # a bin of unrelated tutorials across different engines
+  PLWKjhJtqVAbn21gs5UnLhCQ82f923WCgM: null # a curated roadmap linking many separate courses
+  PLWKjhJtqVAbnqBxcdjVGgT3uVR10bzTEB: null # a bin of unrelated standalone courses
+  PLXCHvtX_U_-rhcZw_T39TJJ3VnW5jWUeP: null # personality-framework overviews
+  PLxYUpljfsNvgjc5eOF1k-I5uz0pnjRghy: null # ten symposium talks by different climate scientists plus a panel
+  PLyGKBDfnk-iC3gcOundSHzA2OHMaOOH_l: null # workshop with a different speaker per talk
+  PLyGKBDfnk-iCNqfdkqgCWczCNcnQYUwf-: null # summer lecture series
+  PLyGKBDfnk-iD9ZJcxO_4DIylbG2_6N13o: null # workshop talks by different researchers
+  PLYlhncU2MojDY9gxU36pxNVkiylGGcbwq: null # one project's talk series
+  PLyu4Fovbph6eL7llK0HnJJMmRvTUU3KNn: null # a highlight reel of solar system videos
+  PLyu4Fovbph6eXnuAq-2oyx8kFMwrzR_At: null # television and radio appearances
+  PLyu4Fovbph6fD-_7cIAP9_4OTv6um76Sd: null # supplemental animations and telescope footage, no teaching order
+  PLZ2ps__7DhBYu3qOIpWxYCzbC2ciTVhu8: null # practice sessions and activity questions accompanying the DBMS course
+  PLzCVxM48YMm8I7mTQSz_dDI77l7h7OlCV: null # body-percussion workshop clips
+  PLzH6n4zXuckodsatCTEuxaygCHizMS0_I: null # standalone clips
+  PLzH6n4zXuckpXGbML1y7pHxCkMRYYoG-c: null # clips grouped by having subtitles
+  PLZKcAeoj7_LIKhXsLHMnABpOZ8qkIpixq: null # 54 rock-identification specimen clips
+  PLZKcAeoj7_LIMvNrO5mYiaaZwuFDShafV: null # assorted how-to clips
+  PLZKcAeoj7_LIVKqgzcFtu2xR-RGG09iLj: null # field stops on one trip
+  PLZKcAeoj7_LJ7jOuQnblNummTydETzW_G: null # twelve rock specimen clips
+  PLZKcAeoj7_LJeAnZNzRriyio8PxbY5LZd: null # twelve rock specimen clips
+  PLZKcAeoj7_LJMVOb24nIyO--IlHIvQkhn: null # twelve rock specimen clips
+  PLZKcAeoj7_LKinWVd4MtS9TO-OvUudBvI: null # virtual field trips to individual sites
+  PLZKcAeoj7_LKMa2ZXvi2OrvkZOBPmVBpt: null # memorabilia videos
+  PLZKcAeoj7_LKn-04Un08a55URYbO7rnVd: null # vintage toys and collectibles from the presenter's shelf
+  PLztBpqftvzxUEqGGgvL3EuIQUNcAdmVhx: null # 263 worked exercises, a companion rather than the course
+  PLztBpqftvzxWgOCg9P4ifXXPrJKN9rgIJ: null # 25 days of AP exam free-response practice
+  PLztBpqftvzxWISatG96gMMwuOGgHIcMuh: null # exercise companion to the Calculus 2 playlist
+  PLztBpqftvzxXAN05Gm3iNmpz9SkVfLNqC: null # exercise companion to the Real Analysis playlist
+  PLzWd5Ny3vW3SSq4Ysw_hcxxdXmnCItkpR: null # themed collection of paradox lectures, duplicated
+  PLzWd5Ny3vW3T_Vmoo6EVD_EVsokH40DcN: null # themed collection of paradox lectures, duplicated
+  PLzWd5Ny3vW3TeXE38_6zc1_XtkHqxOhEs: null # church choir performances
+  PLZZ0o0vuqmrOKvwEDnlb_ogILpBlo3RoW: null # documentary bin
+  PLgMDNELGJ1CZQflgZinHm-rSNmYoAPtQb: number-theory # 58 lectures ending in cyclotomic fields and class groups
+  PL6Vi_EcJpt8FqwhzZXC_6EWAkgopbF6xW: numerical-methods # differentiation
+  PLI0VEqFaDDLwI87jyXgFzMRGKjfFrcZsB: numerical-methods # series, root finding, solvers, regression, interpolation
+  PL1YDDPZua938LJklpi8C5QfejUygeq_3o: oceanography # 17 OCE-1001 lectures, plate tectonics through air-sea interaction
+  PLgMDNELGJ1Cb4_F7DZ9jJF5OjKLOZjRIk: optics # 44 lectures on ultrashort pulse propagation and measurement
+  PLcsjsqLLSfNAq7Q4XY3-zxU8iHrsOMXSl: optimization # 12 numbered lectures, Euler-Lagrange, Bolza, isoperimetric problems
+  PLcsjsqLLSfNBCeGW64qB_aAgYuaWfyWsF: optimization # 14 numbered lectures, calculus of variations and optimal control
+  PLcsjsqLLSfNBR4-JzRJcHEKRQ_Sb2M93Q: optimization # 11 numbered lectures, stochastic optimal control and Bellman
+  PL4BE4AAFBFECDB2F8: organic-chemistry # 27 numbered lectures on organic reactions
+  PL6539BAED55972D64: organic-chemistry # 29 dated Chem 51A lectures, chapter by chapter
+  PLAABCA439BF7EA3CC: organizational-behavior # motivation
+  PLCD408E74E6E853F3: organizational-behavior # 40 lectures on organization theory and organizational analysis
+  PL9jo2wQj1WCOvvIL7dE-V1QUCtAoxM2KW: oscillations-waves # 62 videos
+  PL3oAYNQ024sijkTwlmK4MIiyV1Nmv2xZX: pathology # 64 numbered sessions, the following year's run
+  PL3oAYNQ024sjOBlr-8pEsnpnfXcDkGz6n: pathology # 74 numbered sessions of a medical school pathology course
+  PL8RcQaADy-ZHaNhAdg0XQ0XcEhDf8iQHS: pedagogy-intro # designing an interactive university course, Socratic method, drills
+  PLB1304385546D6F86: pedagogy-intro # 5.95J Lec 1-11
+  PLcsRQtcgfEzClqsmHkrjMTohe_9YGhToM: pedagogy-intro # 18 numbered lectures of a teacher-training methods course
+  PLokeFpXsus96lkVjFsQEMtT5a-yIJKDJt: pharmacology # NIH Principles of Clinical Pharmacology
+  PLyqSpQzTE6M97hDzpHwRPqN57ndrZEHmD: pharmacology # 63 lectures
+  PL4gvlOxpKKIgkPJJK_srMWbv9Q0pLrn9u: philosophy-intro # 53 numbered course lectures
+  PLcsjsqLLSfNC3Klw-Ya9LHDgPkatZ0Uy2: philosophy-intro # 15 numbered lectures through Parmenides, Protagoras, Plato, Aristotle
+  PLcsjsqLLSfNCBLsbnYyv_ku-cu9Gan8SD: philosophy-intro # 13 numbered lectures, the second semester of the same course
+  PLzWd5Ny3vW3R_1YqkqneW99MaJvmYXg11: philosophy-of-language # 37 sessions on Frege, Russell and the analytic canon
+  PLm8ZSArAXicJAzGE7ebwSOiFN-f9xEOKu: physical-chemistry # 137 numbered lectures, a full physical chemistry course
+  PLyqSpQzTE6M8eGML9tjCEgZjci5USazoW: physical-chemistry # molecular spectroscopy from quantum basics to dipole moments
+  PLRDwuoRClPzevd9LvIcFvkiIRdOzF91Ex: physiology # Lecture 1 to 11 in order
+  PL2FD48CE33DFBEA7E: political-philosophy # 25 numbered lectures on utilitarianism, Marxism, the social contract
+  PLB4w-p0WTsoLGS_z0y63A-LKKgLIcHIx3: political-philosophy # a university course on social and political philosophy
+  PLE62F19DE82271A15: political-philosophy # an ordered course on African American political thought
+  PLq-kUiXssVioxBWwToyN3Apqd8f_a7mCC: political-philosophy # 30 numbered lectures
+  PL111C79294B019F04: political-science-intro # PLS 103 lectures 1-17
+  PL8dPuuaLjXtOfse2ncvffeelTrqvhrz8H: political-science-intro # 50 numbered episodes following a government and politics curriculum
+  PL5BE09709EECF36AA: probability # 28 numbered lectures, elementary probability through limit theorems
+  PL6yRaaP0WPkUf-ff1OX99DVSL1cynLHxO: programming-intro # 14 ordered chapters, 57 h, a full course on Flutter state management
+  PLWKjhJtqVAbk2qRZtWSzCIN38JC_NdhW5: programming-intro # its blurb calls it a complete JavaScript course
+  PLWKjhJtqVAbkmRvnFmOd4KhDdlK1oIq23: programming-intro # an ordered beginner Python series
+  PLyH-5mHPFffEmEgm2vkUYp5Vr6vPkqxlx: programming-intro # 38 lectures from anatomy of a C program onward
+  PLyH-5mHPFffEu5Sbm_1hMbB15AJDqfUNY: programming-intro # the second C course
+  PLQH2tJfvheNMDQzXzuPsTSMcK2qw7ZZWl: psych-research-methods # 30 videos on hypotheses, literature search and APA writing
+  PLKgdsSsfw-fbJRdvvuK4oH_vJ1U93P4iT: psycholinguistics # every lecture titled the psycholinguistics of bilingualism
+  PLkKvotUGCyLeSDxODsglLJ0ET5PJ8K7e2: psychology-intro # tutorials numbered upward across all 16 units of a syllabus
+  PLQH2tJfvheNPLM-yAZ68ju-iskOD_gYVM: psychology-intro # 20 lectures on the history of psychology, in order
+  PLWsL2KQ39BEzXhTLaYyd9jS7jtpKOd9ev: psychology-intro # Asmolov's MSU course, numbered, foundational personality psychology
+  PLgMDNELGJ1Cbtd5MIUWUHvasydy7evigA: quantum-chemistry # time-dependent Schrodinger equation course
+  PLgMDNELGJ1CYPdF1YFnLmEFsFYMnmwwFF: quantum-field-theory # Dirac field
+  PLgMDNELGJ1CZd3GYDIQzYdTqVfDc5SHfS: quantum-field-theory # field quantization
+  PLp0hSY2uBeP-cpgjtlqrPfOg47VD7mO1R: quantum-field-theory # 24 numbered lectures; QED is field theory, not classical electrodynamics
+  PLp0hSY2uBeP9Xs-nF9V6vTdlIqQBYStFF: quantum-mechanics # 13 numbered lectures, relativistic QM as the advanced end
+  PLp0hSY2uBeP9Z5i-wlmKW8D8B-ppSfY6g: quantum-mechanics # 29 numbered lectures, 43 h, an ICTP diploma semester
+  PLrbYZnU7vahIbplgN1YwOmpmlTh-cRJZ5: quantum-mechanics # Lecture 1 to 24
+  PLuiPz6iU5SQ8paqz9BVjGHMzzm2b-dBg_: random-processes # EE 531
+  PLbYkdovMggXGMU3FEfFK407fePXhK8yE4: religious-studies-intro # weeks 1-14 of a world religions course
+  PLjxfpwtKvIllqPSskUqvDDre1nTvrTrrf: renaissance-art # ARTH2720
+  PLc7bpbeTIk74esZj1hd7LF3VYeJM3NYo5: robotics # 48 lectures with a syllabus
+  PLgMDNELGJ1CYV-Jy3htel8ib1A6593DAL: robotics # transformations
+  PLgMDNELGJ1CZZLI8nL0sDXJ6vPOj5p4Hv: robotics # drone perception
+  PLcsjsqLLSfNAuN62PfxsOC3jCrvsZeT0r: russian-literature # 13 numbered lectures reading Pushkin, Bunin and Chaadaev
+  PLdLiRaajwSXTQcn7Me-mXHBMz0u-0oAF0: school-algebra # MTH 135 College Algebra
+  PLRqDfxcafc23cwNivSi98pSTrMvSzGCoQ: school-algebra # 26 numbered lessons, integers to order of operations to expressions
+  PLKgdsSsfw-faeun9_0LVETPT-ZGpKptlj: semantics # metaphor
+  PLcc3bVa_RQOEggjyCrWof0TDsZreLQ8SI: sequence-analysis # 25 numbered lectures, 18.6 h, a semester on sequence-analysis algorithms
+  PLcc3bVa_RQOHBVrfyGZbAdEcsoD85x2MG: sequence-analysis # 14 numbered lectures, 19 h, the 2018 run
+  PLgMDNELGJ1CZvseV6lIAeeNT-GGf7Illj: sequence-analysis # 48 lectures on alignment
+  PLcsjsqLLSfNDdsAHpGWTTcihCa2QyaV_G: signal-processing # 13 numbered lectures, signal spaces, spectral analysis, FFT, filtering
+  PLgMDNELGJ1CYvviJ_ZHrHy5TKLb-Vn7-r: signal-processing # Lec 01-57
+  PLA1DA9D11E15C116D: social-psychology # 18-lecture course on communication and conflict in families
+  PLA2E69FC89640C272: social-psychology # 18 numbered lectures on environmental psychology
+  PLD7BlzsBs5Z_A9qD_FLjE1UbQawV0dFTT: social-research-methods # POL SCI 702
+  PLD7BlzsBs5Z8CGcdZ0ztdOivAbS2C5MO3: social-research-methods # POL SCI 701
+  PLirEzjzoHKvxaX8zZuFUSAi4jdukeexwx: social-research-methods # 29 postgraduate lectures in order
+  PLLy_2iUCG87BhfgXhS3OM94bNb_8qR3Dv: social-research-methods # 41 lectures on research questions, measurement, scaling, surveys
+  PLDF7B08FF8564D1FE: social-theory # 25 numbered lectures, Hobbes through the classical sociologists
+  PLFW6lRTa1g828WCieQAK0yGhWqBkqHeLi: social-theory # 21 lectures on the Indian sociological tradition and its theorists
+  PLh9mgdi4rNewd_0qe4c2lkzXZZQka_QnZ: social-theory # 19 classes reading Capital chapter by chapter
+  PLORHt8cnZL3XyiMRJoUovC7nLdf9WHA6J: social-theory # the classical sociological theory series of one named lecturer, in order
+  PLuiPz6iU5SQ9Wl5TEisk1dpCMRS-EcvYF: social-theory # SOC 341 on Baudrillard
+  PLyqSpQzTE6M8gHdhW5T--Sm2R8OdneAqx: social-theory # 66 lectures of contemporary social theory debates
+  PLKgdsSsfw-fa5sArxdeSKv8N9qrrVkSS1: sociolinguistics # variation
+  PLwdnzlV3ogoVGIYbTIl-eat7vZmvwm8Vk: sociolinguistics # 41 lectures ending in cognitive and sign-language sociolinguistics
+  PL8dPuuaLjXtMJ-AfB_7J1538YKWkZAnGA: sociology-intro # 44 numbered episodes on an introductory sociology curriculum
+  PLFW6lRTa1g81Y6L_D2s5GzqCTwsxa023d: sociology-intro # 20 numbered lectures, an introductory survey set in rural society
+  PLbRMhDVUMngc6PKT-mKpwtVRRALquCIVI: software-engineering # 61 lectures on life-cycle models
+  PL9jo2wQj1WCPvSAfQkKODyJo47d7tyXMr: special-relativity # 30 videos
+  PLgMDNELGJ1CaU4z9GFrlTnb1lfxmNoBwi: statistical-physics # Lec 01-60
+  PLgMDNELGJ1CY5NKddZbIPIuGPoI2YfXd8: statistical-physics # 49 lectures
+  PLcsjsqLLSfNBriwAEM-sOObHLQY6Rhy6S: statistics # 9 numbered lectures on measurement error, least squares, probability
+  PLkKvotUGCyLd-qP6SrxT5t8wM5Z8Zw97c: statistics # scales of measurement to central tendency to inference
+  PLmU0FIlJY-MloqXyrL6x2tIPlVPV78WpF: statistics # 27 numbered class recordings of an applied statistics course
+  PLQH2tJfvheNP46M2VXUVQp7hwV46zXeO0: statistics # 20 lectures from frequency distributions to variability, with SPSS
+  PLgMDNELGJ1CY3yEfpvPjwPNXOtWUIFfFL: strength-of-materials # shell theory from surface geometry to plate vibration
+  PLgMDNELGJ1CaaOzhHiWTSxVH_XmlFyLcF: structural-bioinformatics # cryo-EM structure determination
+  PLJ0WcPQS7xJVJr6ceIPFSkAGAgrkmw1c9: structural-bioinformatics # a stated nine-lesson course implementing AlphaFold 2
+  PLDDGPdw7e6Aiz1cMkB_Nx1x_OeeBWtWNf: syntax # 30 lectures on constituents, word classes and phrase structure
+  PLKgdsSsfw-fZyiK6ahhdg4N3n4NrpdgWk: syntax # 19 lectures on construction grammar and argument structure
+  PLuiPz6iU5SQ-mH1OmJEizRUDDdqT43snE: thermodynamics # CHE-204 first law
+  PLcsjsqLLSfNAjv2K_kAW4BZoljuDRPIqY: time-series # 13 numbered lectures building AR, MA and ARMA models
+  PLEuzmtv9IuT_vg5oE0lQyZR-wgbVeGztt: time-series # 38 videos in order, stationarity to differencing to forecasting
+  PLjTSwwygZVE0Cz1U9sYMlyUTQ3kW19hOE: time-series-econometrics # numbered course built on Hyndman's fpp3
+  PLCTMeyjMKRkppAPHgDo9TTT34oLZkn6GG: topology # 44 lectures
+  PL853CF986474D4193: typology # 19 e-lectures on reconstruction, classification, comparative phonology
+  PLyqSpQzTE6M-VI0qgrf26meCmqfKqr--Q: typology # 66 lectures explicitly on the typological approach to language
+  PLCFS2rj-qIVZl2EInNdNlu2qZIsnvheFS: urban-studies # numbered course theorising African urban space
+  PLLy_2iUCG87DjHz8u-VTkJesDNvYG_7iw: urban-studies # 61 lectures on urbanisation, urban governance and municipal legislation
+  PL8dPuuaLjXtMK1IYcpCXJ7Eo_FVSKhpey: world-literature # 13 numbered episodes surveying Latin American literature
+  PLdLiRaajwSXQ-I9p2g-CVYIfH3ittnEuY: world-literature # LLT 180 lectures 0-24
+  PLE162D5967A29AA3B: world-literature # 18 numbered lectures on Holocaust texts and films
+  PLKjwFyELc2SkBTJlfQDVI9vAdVnBMqS0e: world-literature # survey course
+  PLKjwFyELc2SkDPX8JEyV_XPWWDSuiipO6: world-literature # 2023 Milton course
+  PLKjwFyELc2SkfpwsuVjCt_kivXECQw8v_: world-literature # the Romantic epic
+  PLKjwFyELc2SkjIR-2tsdGCN90-_93UPKA: world-literature # course on the six major English Romantic poets
+  PLKjwFyELc2SkniyQuAP5NhJZ8gTqaKmJZ: world-literature # C.S. Lewis course
+  PLKjwFyELc2SkPXfTYPPRl8TdZ2HHyCNK_: world-literature # 2024 second-semester survey
+  PLKjwFyELc2SkR7DhCjqhywXnFjnKum4rc: world-literature # Milton course through the poetry and prose
+  PLKjwFyELc2SkUr8qhxulGJM6x6L9lsXHU: world-literature # 2022 C.S. Lewis course
+  PLKjwFyELc2Sl0jCl3mbD7geM6bpGe6C3B: world-literature # part 2 of the Western literature sequence
+  PLKjwFyELc2Sl6zRcyazwjT8rWGS7pCNJS: world-literature # survey course
+  PLKjwFyELc2SlpNbavQt-RdsBpkSEw8pbr: world-literature # 2026 course on seventeenth-century poetry
+  PLKjwFyELc2SlWNGYDdVcPDznB1PePsobk: world-literature # 40 lectures
+  PLKjwFyELc2SlyYBoXLdBCyikTBILx6qGp: world-literature # 2024 Shakespeare course with a syllabus
+  PLKjwFyELc2SmeqVStHFnRD3j95b9m2bdp: world-literature # second half of the survey
+  PLKjwFyELc2SmICT4wo3sRqcBPD76nYgSv: world-literature # survey course
+  PLKjwFyELc2SmjqHF5X5cbxFoCBAnpVT6r: world-literature # survey course
+  PLKjwFyELc2SmmiCYjuVZasjWjuY4R2RxI: world-literature # Milton survey
+  PLKjwFyELc2SmvVKVHtkTuJK2KbTxJJg9P: world-literature # 2023 first-semester survey
+  PLKjwFyELc2Sn37WaS3bdMXeabgAim2HAI: world-literature # Shakespeare course
+  PLKjwFyELc2Sn4oIfNW7FPeo3maX4c5EXo: world-literature # 2025 run of the Lewis and Tolkien course
+  PLKjwFyELc2SnCNzfGaAYUdhwD5hYfssQO: world-literature # 2025 Shakespeare course
+  PLKjwFyELc2SnGFaoftyx2jLspAYDmvGIq: world-literature # 2025 Milton course
+  PLKjwFyELc2SnMI9t3LaOf2iNf6OpBynse: world-literature # 2025 survey
+  PLKjwFyELc2SnpgtjSC8PNbH-tDig6O1rw: world-literature # 2023 semester course on Lewis and Tolkien
+  PLKjwFyELc2Snqt4O6X4VhCm2Pk1k2pXUx: world-literature # numbered lecture course on Lewis and Tolkien
+  PLKjwFyELc2SnsfLohp083Kmm0Bc2qgCcp: world-literature # survey
+  PLKjwFyELc2SntsWGo2-DnNGGehIWGPZDR: world-literature # lecture series across Lewis's criticism and fiction
+  PLRgREWf4NFWYkdjziCtks-Gws5YIdN0Fi: world-literature # a live course on Lewis and Tolkien
+  PLvf7ejBdYbcRSohGOHa0B3jzl_2tvyAel: world-literature # 25 lectures
+  PLYyGj0u6XVSShPbU3EwPPMPy9424W8s3Q: world-literature # ordered survey 1890-1910s, naturalism, Wilde, symbolism, Kipling
 playlists: {}
 channels: {}
