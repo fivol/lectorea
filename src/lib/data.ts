@@ -85,10 +85,15 @@ export async function loadCatalog(): Promise<Catalog> {
     getJson<Meta>('meta.json'),
   ]);
 
+  // Courses with nothing to watch that nothing needs ship marked rather than
+  // removed, so that the coverage report keeps seeing the hole, and they end
+  // here: nothing below this line — columns, links, search, the counts — is
+  // told they exist. Dropping them keeps the topological order intact.
+  const courses = coursesFile.courses.filter((course) => !course.hidden);
+
   // Transitive closures are not shipped — they would be ~100 KB of JSON for
   // something that is two walks over 200 nodes here. `courses` arrives in
   // topological order, which is exactly what `forwardClosureSizes` needs.
-  const courses = coursesFile.courses;
   const order = courses.map((course) => course.id);
 
   return {

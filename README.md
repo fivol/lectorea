@@ -11,7 +11,7 @@
 [![site](https://img.shields.io/badge/site-fivol.github.io%2Flectorea-2ea043)](https://fivol.github.io/lectorea/)
 [![deploy](https://github.com/fivol/lectorea/actions/workflows/deploy.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/deploy.yml)
 [![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
-[![courses](https://img.shields.io/badge/courses-186_in_39_fields-4c8eda)](https://fivol.github.io/lectorea/)
+[![courses](https://img.shields.io/badge/courses-174_in_39_fields-4c8eda)](https://fivol.github.io/lectorea/)
 
 [![The map](docs/images/map.webp)](https://fivol.github.io/lectorea/)
 

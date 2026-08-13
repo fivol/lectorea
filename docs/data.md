@@ -118,6 +118,7 @@ On a course:
 | `row` | position inside the column, from the barycentric ordering |
 | `playlistCount` | number of live playlists |
 | `hours` | median `totalSeconds` across the course's playlists |
+| `hidden` | present and `true` when the course is kept but not shown — below |
 
 Transitive closures are **not** shipped. `level(dep) < level(course)` holds by
 construction, so the client walks `deps` and sorts by level to get a valid study
@@ -125,7 +126,32 @@ order — five lines instead of ~100 KB of JSON in every page load. The same goe
 for "what opens up next": it is the reverse `deps` index, built once on load.
 
 `courses.json` also carries `columns` (`{level, count}` per column) and
-`maxLevel`.
+`maxLevel`. Both count the courses that are shown, not the ones in the file —
+see below.
+
+## Courses with no materials are hidden, not deleted
+
+A course nobody has recorded is a card that answers nothing: it opens to an
+empty panel, pads the columns and the field counts, and search finds it only to
+disappoint. The build marks it `hidden: true` and the client drops it before
+anything is drawn — the columns, the links, the search index, the field counts
+and `maxLevel` are all built from what is left.
+
+Nothing is removed from the sources. The course keeps its file, its markup and
+its dependencies, and the day a playlist matches it, it comes back on the next
+build with no edit at all.
+
+One exception, and it is the point of the rule: **a course something visible
+depends on always stays**, empty or not. «What has to come first» is the promise
+the catalogue makes, and a path that leads through a card that is not there
+would be a worse lie than a card with nothing behind it. Keeping such a course
+can keep its own dependencies in turn, so the set is a fixpoint rather than a
+filter. Those courses are the ones that still show «нет материалов» on the site.
+
+Coverage is deliberately *not* affected: `meta.coverage` and everything in
+`pnpm stats` count the whole catalogue, hidden courses included, because hiding
+a hole is not filling it. `meta.hidden` says how many are hidden, and the stats
+page shows it beside «Курсов без материала».
 
 On a playlist:
 

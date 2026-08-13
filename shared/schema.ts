@@ -126,6 +126,13 @@ export const BuiltCourseSchema = CourseSchema.extend({
   row: z.number(), // position inside the column, from the barycentric ordering
   playlistCount: z.number(),
   hours: z.number(), // median totalSeconds of the course playlists, in hours
+  /**
+   * A course with nothing to watch and nothing standing on it: it stays in the
+   * file so the coverage report keeps seeing the hole, and the client drops it
+   * before anything is drawn. Never set on a course some visible course needs —
+   * a path may not lead through a card that is not there. See `docs/data.md`.
+   */
+  hidden: z.boolean().optional(),
 });
 export type BuiltCourse = z.infer<typeof BuiltCourseSchema>;
 
@@ -253,7 +260,10 @@ export type SearchEntry = z.infer<typeof SearchEntrySchema>;
 export const MetaSchema = z.object({
   version: z.string(),
   builtAt: z.string(),
+  /** The whole catalogue, hidden courses included — the coverage denominator. */
   courses: z.number(),
+  /** Of those, how many are kept but not shown. See `BuiltCourseSchema.hidden`. */
+  hidden: z.number(),
   domains: z.number(),
   playlists: z.number(),
   providers: z.number(),

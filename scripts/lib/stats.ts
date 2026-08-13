@@ -557,6 +557,11 @@ function collectCatalog(notes: string[]): CatalogStats | null {
       { label: 'Лекций', value: fmt(lectures) },
       { label: 'Колонок сложности', value: fmt(meta.maxLevel + 1) },
       { label: 'Курсов без материала', value: fmt(courses.length - covered.length) },
+      {
+        label: 'Скрыто с сайта',
+        value: fmt(meta.hidden),
+        hint: 'пустые курсы, от которых ничего не зависит: остаются в данных и вернутся с первым плейлистом',
+      },
     ],
     coverage: {
       byBucket: bucketCounts,

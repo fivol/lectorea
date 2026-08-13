@@ -11,6 +11,7 @@ import {
   type BuiltDomain,
   type BuiltPlaylist,
   type BuiltProvider,
+  type Course,
   type Meta,
   type SearchEntry,
 } from '../shared/schema.js';
@@ -89,18 +90,16 @@ async function main(): Promise<void> {
 
   // 2. Levels, order and cycles — one pass of Kahn's algorithm -------------
   const { order, level: levels } = buildLevels(sources.courses);
-  const maxLevel = Math.max(...levels.values());
-  console.log(`· deps graph is acyclic, deepest chain is ${maxLevel + 1} courses long`);
+  console.log(
+    `· deps graph is acyclic, deepest chain is ${Math.max(...levels.values()) + 1} courses long`
+  );
 
   // Not errors: markup that still builds but rots the graph if left alone.
   const warnings = findGraphWarnings(sources.courses, sources.courseLocations);
   for (const warning of warnings.slice(0, 20)) console.warn(`  ! ${warning}`);
   if (warnings.length > 20) console.warn(`  ! …and ${warnings.length - 20} more`);
 
-  // 3. Column order -------------------------------------------------------
-  const layout = layoutColumns(sources.courses, levels, sources.domains);
-
-  // 4. Playlists ----------------------------------------------------------
+  // 3. Playlists ----------------------------------------------------------
   const assembled = assemblePlaylists(sources);
   console.log(
     assembled.total
@@ -108,7 +107,19 @@ async function main(): Promise<void> {
       : '· no cache.db (or no matched playlists) — building the graph without playlists'
   );
 
-  // 5. Aggregates ---------------------------------------------------------
+  // 4. What the catalogue shows -------------------------------------------
+  const hidden = hiddenCourses(sources.courses, assembled.playlistsByCourse);
+  const shownSources = sources.courses.filter((course) => !hidden.has(course.id));
+  if (hidden.size) {
+    console.log(`· ${hidden.size} courses hidden: nothing to watch and nothing needs them`);
+  }
+
+  // 5. Column order -------------------------------------------------------
+  // Over the shown courses only: a row reserved for a card nobody draws is a
+  // hole in the column.
+  const layout = layoutColumns(shownSources, levels, sources.domains);
+
+  // 6. Aggregates ---------------------------------------------------------
   // Written in topological order, which is also a sane reading order for the
   // file and lets the client trust that a dependency always appears earlier.
   const byId = new Map(sources.courses.map((course) => [course.id, course]));
@@ -117,19 +128,29 @@ async function main(): Promise<void> {
     const playlists = assembled.playlistsByCourse.get(id) ?? [];
     return BuiltCourseSchema.parse({
       ...course,
+      // Sideways links to a hidden course would render as a name that leads
+      // nowhere. `deps` never point at one — that is what makes it hideable.
+      soft: course.soft.filter((dep) => !hidden.has(dep)),
+      related: course.related.filter((dep) => !hidden.has(dep)),
       level: levels.get(id) ?? 0,
       row: layout.row.get(id) ?? 0,
       playlistCount: playlists.length,
       hours: playlists.length
         ? Math.round((median(playlists.map((p) => p.totalSeconds)) / 3600) * 10) / 10
         : 0,
+      ...(hidden.has(id) ? { hidden: true } : {}),
     });
   });
+
+  // Everything the site is built from — counts, columns, the search index —
+  // comes from these, so a hidden course cannot leak into a total anywhere.
+  const shown = courses.filter((course) => !course.hidden);
+  const maxLevel = shown.reduce((deepest, course) => Math.max(deepest, course.level), 0);
 
   const coursesById = new Map(courses.map((c) => [c.id, c]));
 
   const domains: BuiltDomain[] = sources.domains.map((domain) => {
-    const own = courses.filter((c) => c.domains.includes(domain.id));
+    const own = shown.filter((c) => c.domains.includes(domain.id));
     return BuiltDomainSchema.parse({
       ...domain,
       courseCount: own.length,
@@ -140,11 +161,11 @@ async function main(): Promise<void> {
 
   const providers = buildProviders(sources, assembled, coursesById);
 
-  // 6. Search index -------------------------------------------------------
+  // 7. Search index -------------------------------------------------------
   const materials = buildMaterialEntries(sources, providers, assembled);
   console.log(`· search index: ${materials.length} language-neutral entries`);
 
-  // 7. Write --------------------------------------------------------------
+  // 8. Write --------------------------------------------------------------
   ensureDir(paths.outData);
   ensureDir(paths.outPlaylists);
   ensureDir(path.join(paths.outData, 'i18n'));
@@ -172,7 +193,7 @@ async function main(): Promise<void> {
     // interface may well type «матан» at it. Only matching is widened —
     // whatever is found is still named in the language on screen.
     const keywords = own ? [sources.keywords] : [loadKeywords(entry.id), sources.keywords];
-    const catalogue = buildCatalogueEntries(dictionary, keywords, courses, domains);
+    const catalogue = buildCatalogueEntries(dictionary, keywords, shown, domains);
     writeJson(path.join(paths.outData, 'i18n', `${entry.id}.json`), dictionary);
     writeJson(path.join(paths.outData, 'i18n', `search-${entry.id}.json`), catalogue);
     console.log(
@@ -189,12 +210,15 @@ async function main(): Promise<void> {
     writeJson(path.join(paths.outPlaylists, `${courseId}.json`), playlists);
   }
 
-  // 8. Meta ---------------------------------------------------------------
+  // 9. Meta ---------------------------------------------------------------
+  // Counted over the whole catalogue, hidden courses included: coverage is the
+  // measure of what is missing, and hiding a hole is not filling it.
   const withMaterials = courses.filter((c) => c.playlistCount > 0).length;
   const meta: Meta = {
     version: BUILD_VERSION,
     builtAt: nowIso(),
     courses: courses.length,
+    hidden: hidden.size,
     domains: domains.length,
     playlists: assembled.total,
     providers: Object.keys(providers).length,
@@ -205,8 +229,49 @@ async function main(): Promise<void> {
 
   console.log(
     `✓ built in ${Date.now() - started} ms · coverage ${(meta.coverage * 100).toFixed(1)}% ` +
-      `(${withMaterials}/${courses.length} courses have materials)`
+      `(${withMaterials}/${courses.length} courses have materials)` +
+      (hidden.size ? ` · ${shown.length} shown, ${hidden.size} hidden` : '')
   );
+}
+
+/* ─────────────────────────────  What is shown  ─────────────────────────── */
+
+/**
+ * Courses the catalogue keeps but does not show.
+ *
+ * A course with no recordings is a card that answers nothing: it opens to an
+ * empty panel, it pads the columns and the counts, and search finds it only to
+ * disappoint. Deleting it is worse — the markup is right, the graph is right,
+ * and the day a playlist matches it the course should simply come back — so it
+ * is dropped from the site and kept in the data.
+ *
+ * The one thing hiding may not do is break a path. A course something visible
+ * depends on stays, empty or not: «what has to come first» is the promise the
+ * catalogue makes, and a missing link in that chain is a worse lie than a card
+ * with nothing behind it. That makes it a fixpoint rather than a filter —
+ * keeping one course brings back whatever it needs in turn.
+ */
+function hiddenCourses(
+  courses: Course[],
+  playlistsByCourse: Map<string, BuiltPlaylist[]>
+): Set<string> {
+  const hidden = new Set(
+    courses.filter((course) => !playlistsByCourse.get(course.id)?.length).map((c) => c.id)
+  );
+
+  // Every pass un-hides the empty courses that something shown needs, which can
+  // make their own dependencies needed in turn. At most one course comes back
+  // per pass, so it settles in as many passes as there are chains of them.
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const course of courses) {
+      if (hidden.has(course.id)) continue;
+      for (const dep of course.deps) {
+        if (hidden.delete(dep)) changed = true;
+      }
+    }
+  }
+  return hidden;
 }
 
 /* ────────────────────────────  Playlist assembly  ──────────────────────── */
