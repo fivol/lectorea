@@ -447,5 +447,29 @@ matches:
   PLDDGPdw7e6Ah0e9VYg6ejkS4jRLKB2b2J: linguistics-intro
   PLz0n_SjOttTe34Mjc1e2ar_qqpMqcpxvv: ancient-philosophy
 
+  # Polysemy, not a shape a rule can catch. The rule pass reads every language's
+  # names since 2026-08-13, which put the English search keywords to work for
+  # the first time — and a search keyword is allowed to be loose in a way a
+  # course name is not. «study design» belongs to epidemiology and «inheritance»
+  # to genetics, and both are also ordinary words in the course that really owns
+  # these three playlists. Pinned by hand because the alternative is teaching
+  # the matcher a word sense, which a substring cannot hold.
+  PLSQl0a2vh4HA__gtkQQzr1dsl0n0hHP5w: statistics
+  PLSQl0a2vh4HBN0ECD0oSSP1iG9XzfjNDm: statistics
+  PLBlnK6fEyqRjd0FV_gSyhCxTZUc37YKSW: programming-intro
+
+  # The same day, the same cause, checked against the lecture titles rather than
+  # the playlist title — which is what saved two of them. «MEMORY» from IIT
+  # Roorkee reads like a hardware bin and is «Methods of Studying Memory I–III»,
+  # a real cognitive psychology course, so it was left where the rule put it.
+  # These are the ones the titles condemned instead.
+  PLix7MmR3doRo3NGNzrq48FItR3TDyuLCo: random-processes # HMM course: Viterbi, Baum-Welch, no biology
+  PL8mG-RkN2uTzxKz-jbEIsZDIHfz_CBGGx: null # «Ryzen 9 review», «Intel is BACK» — a tech channel's bin
+  PLLpHa44nPtMtUxIm2XtM83r2BgUsg73tb: null # «The Best of Mozart» — listening, not a course
+  PLO09Th4dLYVlOoVSMlOn5iuiNYXvL2ubp: null # the same, under Wagner's name
+  PLAW2GohZkMvFc0HUdVZJcsEwRPuS05YyC: null # «All Educational Tutorial Videos» is a label, not a syllabus
+  PLo8pZkfZN5h0PgFE7JM9QssnlCsxirVoh: null # one talk
+  PLo8pZkfZN5h3fPg7bI9CGVrMKEgsSbTY1: null # three talks
+
 playlists: {}
 channels: {}
