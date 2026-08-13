@@ -156,6 +156,7 @@ export default function PlaylistList({ course }: Props) {
                   }
                 }
                 language={languageLabel(playlist.lang, filters.langs)}
+                showRetention={sort === 'retention'}
                 onOpen={(id) => {
                   lastFocused.current = document.activeElement as HTMLElement;
                   params.setPlaylist(id);

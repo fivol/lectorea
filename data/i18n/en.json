@@ -211,6 +211,8 @@
   "ui.playlist.ratingTooltip": "Sorted by a combined score: likes per view, and the share of viewers who make it to the end. Both are measured against the catalogue — against contemporaries in the same language, because a like in 2010 was worth a third of one today",
   "ui.playlist.retention": "watched through",
   "ui.playlist.retentionValue": "~{percent} of those who start reach the end",
+  "ui.playlist.retentionShort": "{percent} reach the end",
+  "ui.playlist.retentionUnknown": "watch-through not measured",
   "ui.playlist.noStatusHint": "Nothing stands out among its contemporaries — but the data says nothing bad about it either",
   "ui.playlist.relativeHint": "The scale is relative: it shows this metric against the other playlists in the catalogue, not as a share of anything",
   "ui.playlist.avgLecture": "~{n} min",

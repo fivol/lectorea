@@ -1,4 +1,5 @@
 import {
+  measuredRetention,
   playlistTypeOf,
   type BuiltPlaylist,
   type BuiltProvider,
@@ -166,11 +167,14 @@ export const SORT_KEYS = [
 
 export type SortKey = (typeof SORT_KEYS)[number];
 
-const SORTERS: Record<SortKey, (playlist: BuiltPlaylist) => number> = {
+type Rank = (playlist: BuiltPlaylist) => number;
+
+const SORTERS: Record<SortKey, Rank> = {
   rating: (p) => p.rating,
-  // A playlist whose curve could not be read has no answer here, and −1 puts it
-  // below every playlist that does rather than in the middle of them.
-  retention: (p) => p.retention ?? -1,
+  // The number the row prints, and only when the row is willing to print it —
+  // see `measuredRetention`. A playlist with no answer sits below every playlist
+  // that has one rather than in the middle of them.
+  retention: (p) => measuredRetention(p) ?? -1,
   views: (p) => p.stats.views,
   // Normalises long courses: a 60-lecture series and a 6-lecture one are not
   // comparable on raw views.
@@ -181,9 +185,27 @@ const SORTERS: Record<SortKey, (playlist: BuiltPlaylist) => number> = {
   videoCount: (p) => p.videoCount,
 };
 
+/**
+ * A second opinion for keys whose first one ties, consulted before the title.
+ *
+ * Retention needs one because the ratio it sorts on is clamped: 15 playlists in
+ * the catalogue sit at the 300% ceiling together, and dozens more meet at a
+ * rounded percent. `signals.retention` is the same quantity scored — compared
+ * against peers and shrunk towards the middle by how few views it rests on — so
+ * among playlists the reader cannot tell apart it puts the better-evidenced one
+ * first. It is never the primary sort: the list would then run out of order
+ * against the percentages printed down it, which is worse than a tie.
+ */
+const TIEBREAKERS: Partial<Record<SortKey, Rank>> = {
+  retention: (p) => p.signals.retention ?? 0,
+};
+
 export function sortPlaylists(playlists: BuiltPlaylist[], key: SortKey): BuiltPlaylist[] {
   const value = SORTERS[key];
-  return [...playlists].sort((a, b) => value(b) - value(a) || a.title.localeCompare(b.title));
+  const tie = TIEBREAKERS[key];
+  return [...playlists].sort(
+    (a, b) => value(b) - value(a) || (tie ? tie(b) - tie(a) : 0) || a.title.localeCompare(b.title)
+  );
 }
 
 /** Distinct values present in this course's playlists — filters offer only these. */

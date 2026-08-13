@@ -1,5 +1,10 @@
 import { memo } from 'react';
-import { playlistTypeOf, type BuiltPlaylist, type PlaylistStatus } from '@shared/schema';
+import {
+  measuredRetention,
+  playlistTypeOf,
+  type BuiltPlaylist,
+  type PlaylistStatus,
+} from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { formatHours, hoursFromSeconds } from '@/lib/format';
 import { percent, playlistProgress } from '@/lib/progress';
@@ -15,6 +20,14 @@ type Props = {
   label: LabelParts;
   /** «Русский», or null when the filter makes the language a foregone conclusion. */
   language: string | null;
+  /**
+   * True while the list is ordered by retention — see the subtitle below.
+   *
+   * A boolean rather than the sort key itself: this is the one order whose
+   * number the row is otherwise silent about, and the only one it is asked to
+   * explain. Views and likes stay off the row whatever it is sorted by.
+   */
+  showRetention: boolean;
   onOpen: (id: string) => void;
 };
 
@@ -22,7 +35,7 @@ type Props = {
  * One row of the list. Only marks, never raw views and likes: those numbers turn
  * the list into a spreadsheet and make it harder, not easier, to compare.
  */
-function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
+function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: Props) {
   const { t, count } = useT();
   const profile = useProfile((state) => state.profile);
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
@@ -43,9 +56,23 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
    * Once the playlist is under way, how much of it is behind you supersedes how
    * much of it there is. Nothing is lost in the swap — both numbers are still
    * on the line, and both are now about the reader.
+   *
+   * The exception is the number the list is currently ordered by. Sorting by
+   * «Досматриваемость» used to reshuffle the panel and say nothing about why,
+   * which is a list asking to be taken on faith; so while that order is on, the
+   * share who reach the end leads the line — including the rows that have no
+   * such share, which is why they are at the bottom.
    */
-  const subtitle = (
-    progress.started
+  const retention = measuredRetention(playlist);
+  const retentionLabel = !showRetention
+    ? null
+    : retention === null
+      ? t('ui.playlist.retentionUnknown')
+      : t('ui.playlist.retentionShort', { percent: `${Math.round(retention * 100)}%` });
+
+  const subtitle = [
+    retentionLabel,
+    ...(progress.started
       ? [
           language,
           // Named, because «4 из 15 · 6.1 из 21 ч» is two bare ratios in a row
@@ -61,8 +88,8 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
           language,
           count(playlist.videoCount, 'lecture'),
           t(`ui.playlist.length.${playlist.lectureLength}`),
-        ]
-  )
+        ]),
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -241,10 +268,11 @@ export function StatusBadge({ playlist }: { playlist: BuiltPlaylist }) {
   }
 
   const tone = STATUS_TONE[playlist.status];
+  const measured = measuredRetention(playlist);
   const retention =
-    playlist.retention !== undefined && playlist.curve !== 'assorted'
-      ? t('ui.playlist.retentionValue', { percent: `${Math.round(playlist.retention * 100)}%` })
-      : null;
+    measured === null
+      ? null
+      : t('ui.playlist.retentionValue', { percent: `${Math.round(measured * 100)}%` });
 
   return (
     <Tooltip
