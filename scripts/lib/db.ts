@@ -105,8 +105,15 @@ CREATE TABLE IF NOT EXISTS quota (
 export function openDb(options: { readonly?: boolean } = {}): Db {
   fs.mkdirSync(path.dirname(paths.cacheDb), { recursive: true });
   const db = new Database(paths.cacheDb, { readonly: options.readonly ?? false });
-  db.pragma('journal_mode = WAL');
   if (!options.readonly) {
+    // The journal mode belongs to the file rather than to the connection, and
+    // asking for it is itself a write. A reader gets away with that only while
+    // the file is already in WAL — which the crawl's own copy always is, and a
+    // snapshot restored from the release never is: `cache-snapshot` writes it
+    // into a fresh database with the journal off. That was the whole of
+    // "attempt to write a readonly database" — the build opens the cache to
+    // read it and died setting a property it has no use for.
+    db.pragma('journal_mode = WAL');
     db.exec(SCHEMA);
     migrateQuotaPerKey(db);
     addColumns(db);
