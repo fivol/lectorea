@@ -6,14 +6,14 @@
 > превращается в маршрут вместо кучи ссылок.
 
 **[🇬🇧 In English](README.md)** ·
-**[Открыть каталог →](https://fivol.github.io/lectorea/)**
+**[Открыть каталог →](https://lectorea.org/)**
 
-[![сайт](https://img.shields.io/badge/%D1%81%D0%B0%D0%B9%D1%82-fivol.github.io%2Flectorea-2ea043)](https://fivol.github.io/lectorea/)
+[![сайт](https://img.shields.io/badge/%D1%81%D0%B0%D0%B9%D1%82-lectorea.org-2ea043)](https://lectorea.org/)
 [![deploy](https://github.com/fivol/lectorea/actions/workflows/deploy.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/deploy.yml)
 [![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
-[![курсов](https://img.shields.io/badge/%D0%BA%D1%83%D1%80%D1%81%D0%BE%D0%B2-174_%D0%B2_39_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8F%D1%85-4c8eda)](https://fivol.github.io/lectorea/)
+[![курсов](https://img.shields.io/badge/%D0%BA%D1%83%D1%80%D1%81%D0%BE%D0%B2-174_%D0%B2_39_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8F%D1%85-4c8eda)](https://lectorea.org/)
 
-[![Карта](docs/images/map.webp)](https://fivol.github.io/lectorea/)
+[![Карта](docs/images/map.webp)](https://lectorea.org/)
 
 Почти 200 курсов в 39 областях знания, и каждый знает, на что он опирается. Этим
 каталог и отличается от поиска: YouTube найдёт лекцию по тензорному анализу, но

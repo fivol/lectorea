@@ -1,7 +1,7 @@
 # Contributing
 
 [![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
-[![site](https://img.shields.io/badge/site-fivol.github.io%2Flectorea-2ea043)](https://fivol.github.io/lectorea/)
+[![site](https://img.shields.io/badge/site-lectorea.org-2ea043)](https://lectorea.org/)
 
 What the catalogue is: [README](README.md). How it is built:
 [docs/](docs/README.md). This page is the rules an edit has to follow.

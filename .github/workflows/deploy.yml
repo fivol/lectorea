@@ -69,9 +69,13 @@ jobs:
 
       # Taken from the run rather than written down, so a fork publishes links
       # to itself and the subdirectory always matches the repository name.
+      # BASE_PATH is passed only for this repository, which has a domain and is
+      # therefore served from its root; a fork gets an empty value and falls
+      # back to the /<repo>/ subdirectory github.io gives it.
       - run: pnpm build
         env:
           VITE_REPO: ${{ github.repository }}
+          BASE_PATH: ${{ github.repository == 'fivol/lectorea' && '/' || '' }}
 
       # Pages serves static files and knows nothing about client-side routes,
       # so a direct hit on /courses/:id would 404. Serving the app as the 404

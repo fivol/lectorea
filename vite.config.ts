@@ -3,10 +3,10 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
-// GitHub Pages serves the project from /lectorea/, not from the domain root,
-// so a built bundle has to know it lives in a subdirectory. Dev keeps the
-// short root URL; everything that builds a runtime path reads
-// `import.meta.env.BASE_URL`, which follows this setting on its own.
+// The catalogue lives at the root of its own domain, but a fork without one is
+// served from /<repo>/ on github.io, so a built bundle has to be told which of
+// the two it is. Dev keeps the short root URL; everything that builds a runtime
+// path reads `import.meta.env.BASE_URL`, which follows this setting on its own.
 /**
  * Which repository this build belongs to, as `owner/repo`. Two things follow
  * from it — the subdirectory Pages serves a project site from, and where the
@@ -16,8 +16,12 @@ import { fileURLToPath, URL } from 'node:url';
  */
 const repo = process.env.VITE_REPO ?? 'fivol/lectorea';
 
-/** A custom domain would serve the site from the root instead of /<repo>/. */
-const basePath = process.env.BASE_PATH ?? `/${repo.split('/')[1]}/`;
+/**
+ * A custom domain serves the site from the root instead of /<repo>/. CI hands
+ * this over as an empty string for a fork, which has no domain of its own —
+ * hence `||`, which falls back on empty, and not `??`, which would not.
+ */
+const basePath = process.env.BASE_PATH || `/${repo.split('/')[1]}/`;
 
 // Keyed on mode rather than command so that `vite preview` — which serves a
 // production build but still counts as `serve` — shows the site exactly as

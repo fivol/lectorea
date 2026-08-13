@@ -1,6 +1,6 @@
 # Setup
 
-[← docs](README.md) · the site itself: [fivol.github.io/lectorea](https://fivol.github.io/lectorea/)
+[← docs](README.md) · the site itself: [lectorea.org](https://lectorea.org/)
 
 The frontend needs nothing but `pnpm install`. Everything below is for the
 crawl scripts and for deploying somewhere other than this repository's Pages

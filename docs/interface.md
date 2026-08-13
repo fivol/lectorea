@@ -1,6 +1,6 @@
 # The interface
 
-[← docs](README.md) · [the live site](https://fivol.github.io/lectorea/)
+[← docs](README.md) · [the live site](https://lectorea.org/)
 
 Three screens, and the profile is the thread running through them.
 
