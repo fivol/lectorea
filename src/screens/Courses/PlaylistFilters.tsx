@@ -161,6 +161,9 @@ export default function PlaylistFilters({
                 value: state.lecturer,
                 onChange: (next) => onChange({ ...state, lecturer: next }),
                 placeholder: t('ui.filters.lecturerPlaceholder'),
+                // The field is the filter here, so it has to outlive the
+                // popover — see `keep` in Dropdown.
+                keep: true,
               }}
             >
               <Caption>

@@ -40,7 +40,18 @@ type Props = {
    * the filtering — the popover has no idea what its children are, and a list
    * long enough to need searching always knows how it wants to be matched.
    */
-  search?: { value: string; onChange: (next: string) => void; placeholder: string };
+  search?: {
+    value: string;
+    onChange: (next: string) => void;
+    placeholder: string;
+    /**
+     * Whether what is typed survives the popover closing — see `close` below.
+     *
+     * Off by default, and on where the field *is* the filter rather than a way
+     * to reach a row in it.
+     */
+    keep?: boolean;
+  };
 };
 
 /** Matches `w-60` below — the popover is measured before it is rendered. */
@@ -78,12 +89,18 @@ export default function Dropdown({
    * Closing throws the query away. A menu that reopens still filtered shows
    * three rows out of two hundred with nothing on screen explaining why — the
    * field is a way to reach a row now, not a setting the control remembers.
+   *
+   * Unless the field is the setting, which is what `keep` says. The lecturer
+   * filter is matched as a substring, so what is typed there is the filter
+   * itself: clearing it on the way out wiped the filter the moment it was set,
+   * whether by typing or by picking a name off the list — a row's own handler
+   * closes the popover, so every choice was undone by the closing.
    */
   const searchRef = useRef(search);
   searchRef.current = search;
   const close = useCallback(() => {
     setOpen(false);
-    searchRef.current?.onChange('');
+    if (!searchRef.current?.keep) searchRef.current?.onChange('');
   }, []);
 
   // Before paint, so the popover never shows up in the top-left corner first.

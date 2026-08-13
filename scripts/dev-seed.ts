@@ -146,7 +146,7 @@ function main(): void {
           playlistId,
           `${DEV_PREFIX}${channel.id}`,
           rnd() < 0.75 ? `${title} · курс лекций` : `${title} · семинары`,
-          `Синтетические данные для разработки. Лектор: ${LECTURERS[Math.floor(rnd() * LECTURERS.length)]}`,
+          `Синтетические данные для разработки. Преподаватель: ${LECTURERS[Math.floor(rnd() * LECTURERS.length)]}`,
           videoCount,
           `${year}-09-01T10:00:00Z`,
           views,

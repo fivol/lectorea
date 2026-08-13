@@ -157,6 +157,27 @@ export const BuiltProviderSchema = ProviderSchema.extend({
 });
 export type BuiltProvider = z.infer<typeof BuiltProviderSchema>;
 
+/* ────────────────────────────  Lecturers  ──────────────────────────── */
+
+/**
+ * Who reads the course, and where their recordings are.
+ *
+ * Nobody declares these: the names are read off playlist titles by
+ * `detectLecturer`, so a lecturer exists exactly as far as their recordings do.
+ * They ship as their own small file for the same reason providers do — the
+ * filter that names one lives above both screens and has to know which courses
+ * and which fields it leaves standing without opening 170 playlist shards to
+ * find out.
+ */
+export const BuiltLecturerSchema = z.object({
+  /** The name as it is written on the recordings — also the key and the URL value. */
+  name: z.string(),
+  playlistCount: z.number(),
+  courseIds: z.array(z.string()),
+  domainIds: z.array(z.string()),
+});
+export type BuiltLecturer = z.infer<typeof BuiltLecturerSchema>;
+
 /* ────────────────────────────  Playlists  ──────────────────────────── */
 
 export const PlaylistKind = z.enum(['lectures', 'seminars', 'mixed', 'unknown']);
@@ -650,4 +671,24 @@ export function playlistTypeOf(playlist: {
   if (playlist.kind === 'seminars') return 'seminars';
   if (playlist.fullCourse) return 'course';
   return 'lectures';
+}
+
+/**
+ * The share of the audience still there at the end — when that is a fact.
+ *
+ * Two ways for it not to be, and the second is the one worth naming. A playlist
+ * under eight videos with views has no curve to read at all. And a playlist
+ * with an `assorted` curve — a channel's «Astronomy», entered from search at a
+ * random point — has a ratio that can be computed and means nothing: the last
+ * quarter is not what people reached, it is what the search sent them to. The
+ * rating engine already refuses to score it (`docs/rating.md`), so nothing that
+ * shows the number or ranks on it may do otherwise. 540 playlists of 2902 hang
+ * on this test, and without it they take the top of the retention sort.
+ */
+export function measuredRetention(playlist: {
+  retention?: number;
+  curve?: CurveKind;
+}): number | null {
+  if (playlist.retention === undefined || playlist.curve === 'assorted') return null;
+  return playlist.retention;
 }

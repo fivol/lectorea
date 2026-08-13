@@ -763,7 +763,7 @@ export function renderPage(stats: Stats): string {
     true
   )}
   ${card('Провайдеры', 'сколько плейлистов даёт каждый', bars(catalog.playlists.topProviders))}
-  ${card('Лекторы', 'у кого больше всего записей', bars(catalog.playlists.topLecturers))}
+  ${card('Преподаватели', 'у кого больше всего записей', bars(catalog.playlists.topLecturers))}
 </div>`);
   }
 

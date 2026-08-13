@@ -1101,7 +1101,7 @@ function collectCuration(): CurationStats {
     overrides: [
       { label: 'привязано вручную', value: bound, tone: 'accent' },
       { label: 'отмечено «не курс»', value: rejected, tone: 'muted' },
-      { label: 'указан лектор', value: lecturers, tone: 'series' },
+      { label: 'указан преподаватель', value: lecturers, tone: 'series' },
       { label: 'скрыто', value: hidden, tone: 'danger' },
     ],
   };

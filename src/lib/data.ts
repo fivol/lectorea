@@ -1,6 +1,7 @@
 import type {
   BuiltCourse,
   BuiltDomain,
+  BuiltLecturer,
   BuiltPlaylist,
   BuiltProvider,
   Meta,
@@ -39,6 +40,8 @@ export type Catalog = {
   /** courseId → how many courses open up behind it, transitively. */
   behind: Map<string, number>;
   providers: Record<string, BuiltProvider>;
+  /** Keyed by the name itself — that is what the `lecturer` URL parameter holds. */
+  lecturers: Record<string, BuiltLecturer>;
   /** The whole search index: the language-neutral half plus the current language's. */
   search: SearchEntry[];
   meta: Meta;
@@ -75,10 +78,11 @@ export async function loadLanguage(lang: string): Promise<Language> {
 }
 
 export async function loadCatalog(): Promise<Catalog> {
-  const [domains, coursesFile, providers, search, meta] = await Promise.all([
+  const [domains, coursesFile, providers, lecturers, search, meta] = await Promise.all([
     getJson<BuiltDomain[]>('domains.json'),
     getJson<CoursesFile>('courses.json'),
     getJson<Record<string, BuiltProvider>>('providers.json'),
+    getJson<Record<string, BuiltLecturer>>('lecturers.json'),
     // Playlists, channels and lecturers only — the language half arrives with
     // the dictionary and is merged in by `CatalogProvider`.
     getJson<SearchEntry[]>('search-index.json'),
@@ -106,6 +110,7 @@ export async function loadCatalog(): Promise<Catalog> {
     dependants: dependantsIndex(courses),
     behind: forwardClosureSizes(courses, order),
     providers,
+    lecturers,
     search,
     meta,
   };

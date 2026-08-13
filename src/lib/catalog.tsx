@@ -203,24 +203,37 @@ export function useDomainTitle(): (id: string) => string {
 }
 
 /**
- * Courses that survive the active domain, provider and stage filters.
+ * Courses that survive the active domain, provider, lecturer and stage filters.
  *
  * A filter means a filter: nothing from outside it is kept as context, not even
  * a prerequisite. Faded foreign cards scattered down the columns read as part of
  * the field you asked for while sitting several levels away from anything that
  * referred to them. Prerequisites are answered where the question is actually
  * asked — in the strip above the columns, and in the panel.
+ *
+ * The lecturer is answered from `lecturers.json` for the same reason the
+ * provider is answered from `providers.json`: the playlists that would say so
+ * live in 170 shards nobody is going to load to draw one screen. Naming one
+ * used to leave the columns exactly as they were and empty out the list inside
+ * every course they never taught — a filter with no visible effect but that.
  */
 export function useFilteredCourses(
   domainFilter: string[],
   providerFilter: string[],
+  lecturerFilter: string[],
   maxStage: Stage | null = null
 ): Set<string> {
   const catalog = useCatalog();
 
   return useMemo(() => {
+    // Two sets, not one: each global filter is an OR inside itself and an AND
+    // against the other — the same way `applyFilters` combines them over the
+    // playlists once a course is open.
     const providerCourses = providerFilter.length
       ? new Set(providerFilter.flatMap((id) => catalog.providers[id]?.courseIds ?? []))
+      : null;
+    const lecturerCourses = lecturerFilter.length
+      ? new Set(lecturerFilter.flatMap((name) => catalog.lecturers[name]?.courseIds ?? []))
       : null;
 
     const inDomain = (course: BuiltCourse): boolean =>
@@ -229,8 +242,13 @@ export function useFilteredCourses(
     return new Set(
       catalog.courses
         .filter((course) => !maxStage || stageRank(course.stage) <= stageRank(maxStage))
-        .filter((course) => inDomain(course) && (!providerCourses || providerCourses.has(course.id)))
+        .filter(
+          (course) =>
+            inDomain(course) &&
+            (!providerCourses || providerCourses.has(course.id)) &&
+            (!lecturerCourses || lecturerCourses.has(course.id))
+        )
         .map((course) => course.id)
     );
-  }, [catalog, domainFilter, providerFilter, maxStage]);
+  }, [catalog, domainFilter, providerFilter, lecturerFilter, maxStage]);
 }

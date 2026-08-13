@@ -31,18 +31,28 @@ export default function MapScreen() {
   const results = useSearchResults(query);
 
   /**
-   * With a provider filter on, territories with no materials from that provider
-   * are dimmed. `providers.json` carries the domain list precisely so this
-   * needs no playlist loading at all.
+   * With a global filter on, territories that filter leaves nothing in are
+   * dimmed. `providers.json` and `lecturers.json` both carry the domain list
+   * precisely so this needs no playlist loading at all.
+   *
+   * Two filters on means both have to admit the territory — the same AND the
+   * columns and the playlist list apply.
    */
   const allowed = useMemo(() => {
-    if (!params.providers.length) return null;
-    const set = new Set<string>();
-    for (const id of params.providers) {
-      for (const domain of catalog.providers[id]?.domainIds ?? []) set.add(domain);
+    const sets: Array<Set<string>> = [];
+    if (params.providers.length) {
+      sets.push(
+        new Set(params.providers.flatMap((id) => catalog.providers[id]?.domainIds ?? []))
+      );
     }
-    return set;
-  }, [catalog, params.providers]);
+    if (params.lecturers.length) {
+      sets.push(
+        new Set(params.lecturers.flatMap((name) => catalog.lecturers[name]?.domainIds ?? []))
+      );
+    }
+    if (!sets.length) return null;
+    return sets.reduce((kept, next) => new Set([...kept].filter((id) => next.has(id))));
+  }, [catalog, params.providers, params.lecturers]);
 
   const showMap = mapView === 'map';
 

@@ -84,6 +84,7 @@ public/data/
   domains.json           ~39 records
   courses.json           the graph, plus level and row per course
   providers.json         for the global provider filter
+  lecturers.json         the same, for the global lecturer filter
   search-index.json      playlists, channels, lecturers — nobody translates those
   playlists/
     probability.json     one file per course, fetched on click

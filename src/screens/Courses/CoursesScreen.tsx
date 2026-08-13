@@ -41,7 +41,7 @@ export default function CoursesScreen() {
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
-  const visible = useFilteredCourses(params.domains, params.providers, maxStage);
+  const visible = useFilteredCourses(params.domains, params.providers, params.lecturers, maxStage);
 
   /*
    * Whoever is here has already picked a field, a stage, a university — the

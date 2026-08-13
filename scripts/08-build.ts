@@ -3,12 +3,14 @@ import path from 'node:path';
 import {
   BuiltCourseSchema,
   BuiltDomainSchema,
+  BuiltLecturerSchema,
   BuiltPlaylistSchema,
   BuiltProviderSchema,
   lectureLengthOf,
   UI_LANGS,
   type BuiltCourse,
   type BuiltDomain,
+  type BuiltLecturer,
   type BuiltPlaylist,
   type BuiltProvider,
   type Course,
@@ -175,9 +177,10 @@ async function main(): Promise<void> {
   });
 
   const providers = buildProviders(sources, assembled, coursesById);
+  const lecturers = buildLecturers(assembled, coursesById);
 
   // 7. Search index -------------------------------------------------------
-  const materials = buildMaterialEntries(sources, providers, assembled);
+  const materials = buildMaterialEntries(sources, providers, lecturers, assembled);
   console.log(`· search index: ${materials.length} language-neutral entries`);
 
   // 8. Write --------------------------------------------------------------
@@ -192,6 +195,9 @@ async function main(): Promise<void> {
     courses,
   });
   writeJson(path.join(paths.outData, 'providers.json'), providers);
+  // Tiny beside the shards, and it is what lets naming a lecturer narrow the
+  // columns and the map rather than only the list inside a course already open.
+  writeJson(path.join(paths.outData, 'lecturers.json'), lecturers);
   // Playlists, channels and lecturers are named on YouTube, in whatever
   // language they were published in; no dictionary touches them. They are also
   // nine tenths of the index, so they ship once and are never fetched again.
@@ -522,6 +528,49 @@ function buildProviders(
   return result;
 }
 
+/**
+ * The lecturers the catalogue knows, keyed by the name written on their
+ * recordings.
+ *
+ * Same shape as a provider, and for the same reason: the global filter has to
+ * answer "which courses, which fields" from a name alone. See
+ * `BuiltLecturerSchema`.
+ */
+function buildLecturers(
+  assembled: Assembled,
+  coursesById: Map<string, BuiltCourse>
+): Record<string, BuiltLecturer> {
+  const stats = new Map<string, { count: number; courses: Set<string>; domains: Set<string> }>();
+
+  for (const playlists of assembled.playlistsByCourse.values()) {
+    for (const playlist of playlists) {
+      if (!playlist.lecturer) continue;
+      const entry = stats.get(playlist.lecturer) ?? {
+        count: 0,
+        courses: new Set<string>(),
+        domains: new Set<string>(),
+      };
+      entry.count += 1;
+      entry.courses.add(playlist.courseId);
+      for (const domain of coursesById.get(playlist.courseId)?.domains ?? []) {
+        entry.domains.add(domain);
+      }
+      stats.set(playlist.lecturer, entry);
+    }
+  }
+
+  const result: Record<string, BuiltLecturer> = {};
+  for (const [name, entry] of stats) {
+    result[name] = BuiltLecturerSchema.parse({
+      name,
+      playlistCount: entry.count,
+      courseIds: [...entry.courses].sort(),
+      domainIds: [...entry.domains].sort(),
+    });
+  }
+  return result;
+}
+
 /* ────────────────────────────  Search index  ───────────────────────────── */
 
 /** Keywords are normalised at build time so the client compares like with like. */
@@ -586,12 +635,12 @@ function buildCatalogueEntries(
 function buildMaterialEntries(
   sources: Sources,
   providers: Record<string, BuiltProvider>,
+  lecturers: Record<string, BuiltLecturer>,
   assembled: Assembled
 ): SearchEntry[] {
   const entries: SearchEntry[] = [];
   const keywordsFor = keywordsOf(sources.keywords);
 
-  const lecturers = new Map<string, number>();
   for (const playlists of assembled.playlistsByCourse.values()) {
     for (const playlist of playlists) {
       entries.push({
@@ -607,9 +656,6 @@ function buildMaterialEntries(
         // lives in must be known without loading every shard to find it.
         c: playlist.courseId,
       });
-      if (playlist.lecturer) {
-        lecturers.set(playlist.lecturer, (lecturers.get(playlist.lecturer) ?? 0) + 1);
-      }
     }
   }
 
@@ -623,13 +669,13 @@ function buildMaterialEntries(
     });
   }
 
-  for (const [lecturer, count] of lecturers) {
+  for (const lecturer of Object.values(lecturers)) {
     entries.push({
       t: 'l',
-      id: lecturer,
-      n: lecturer,
-      k: keywordsFor(`lecturer.${lecturer}`, lecturer),
-      s: count,
+      id: lecturer.name,
+      n: lecturer.name,
+      k: keywordsFor(`lecturer.${lecturer.name}`, lecturer.name),
+      s: lecturer.playlistCount,
     });
   }
 
