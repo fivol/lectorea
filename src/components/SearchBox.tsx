@@ -8,7 +8,7 @@ import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { EDGE, placeBy, samePlace, type Placement } from '@/lib/popover';
 import { suggestCourseUrl } from '@/lib/repo';
-import { courseHref, coursesHref, useCatalogParams, useCourseSlice, withDomains } from '@/lib/url';
+import { courseHref, fieldHref, useCatalogParams, useCourseSlice } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
 import MarkedText from './MarkedText';
@@ -169,18 +169,12 @@ export default function SearchBox({
   const select = useCallback(
     (entry: SearchEntry) => {
       switch (entry.t) {
-        case 'd': {
-          // Through `withDomains`, so the provider and lecturer chips standing
-          // above both screens survive the crossing. The open playlist does
-          // not — it belongs to a course, and a field is entered with nothing
-          // selected in it.
-          const search = new URLSearchParams(withDomains(params.search, [entry.id]));
-          search.delete('playlist');
-          navigate(coursesHref(`?${search.toString()}`));
+        case 'd':
+          // The same address a territory on the map leads to — see `fieldHref`.
+          navigate(fieldHref(params.search, entry.id));
           setOpen(false);
           onQueryChange('');
           break;
-        }
         case 'c':
           navigate(courseHref(entry.id, sliceAround(entry.id)));
           setOpen(false);
