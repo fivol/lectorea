@@ -328,15 +328,54 @@ which renders to `.map-poc/` with a metrics report. The sandbox has a
 
 ```
 restore cache.db from the Actions cache →
+  seed it from the data-cache release if that came back empty →
   pnpm data:refresh (runs until the quota is gone) →
   pnpm data:match →
-  save cache.db →
+  save cache.db to the Actions cache and to the release →
   open a PR if there are new matches
 ```
 
-`deploy.yml` — on push to `main`: `pnpm data:build → pnpm build → deploy`.
+`deploy.yml` — on push to `main`: restore the same cache, then
+`pnpm data:build → pnpm build → deploy`.
 
 The separation matters: crawling must not block a deploy, and deploying must not
 spend quota.
 
 Secrets: `YOUTUBE_API_KEY`, `OPENAI_API_KEY`.
+
+## Moving the crawl between machines
+
+The catalogue lives in `cache.db`, which is not committed — and is a week of
+daily quota to rebuild. Two places hold it, for two different spans of time.
+
+The **Actions cache** is the working copy between nightly runs. It evicts after
+seven idle days, the whole repository shares a 10 GB ceiling, entries are matched
+on the `cache-db-` prefix so the newest wins, and nothing outside CI can write to
+it. A laptop that has crawled therefore has no way to hand its work over, and one
+bad entry saved under a newer key outranks every good one before it.
+
+The **`data-cache` release** holds the snapshot that outlives all of that:
+
+```bash
+pnpm cache:publish     # local cache.db → the release, replacing what is there
+pnpm cache:restore     # the release → data/cache.db, if there is no crawl here
+```
+
+`restore` is a no-op when the database already holds material, which is what lets
+both workflows run it unconditionally: the Actions cache stays in charge, and the
+snapshot only fills the hole it leaves. A repository with no release yet — a
+fresh fork — gets a log line and a catalogue without playlists, not a red build.
+`refresh` publishes a new snapshot after every night that crawled anything, so
+the release is never more than a day behind.
+
+The snapshot leaves out `raw_responses`, which is 3.5 GB of the 3.6 and read only
+by `11-mine` and `stats`, both local. What travels is 190 MB, 65 compressed.
+
+**What counts as "material" is the load-bearing part.** `openDb` writes the whole
+schema before the first request, and `seedManualMatches` fills `playlists` from
+`overrides.yaml` before that too, so a run that dies on a missing key leaves a
+database with every table and hundreds of playlist rows in it. Both are cheap to
+mistake for a crawl, and the mistake is expensive: the empty file is saved under
+a newer cache key and the deploy publishes `coverage 0.0%`. `dbHasMaterial` in
+`lib/db.ts` therefore asks for something only the API could have supplied — a
+video, or a playlist whose metadata came back.

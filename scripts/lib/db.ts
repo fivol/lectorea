@@ -200,15 +200,29 @@ export function dbExists(): boolean {
  * Which is what happened every night from 2026-08-08: `refresh` red, `deploy`
  * green, and `coverage 0.0% (0/186)` on the live site for five days, because
  * nothing in the chain treats an empty catalogue as a failure.
+ *
+ * A row in `playlists` is not the line either, which is how it went on happening
+ * after the first fix: `seedManualMatches` writes one per binding in
+ * `overrides.yaml` before a single request goes out, so the database that dies
+ * on a missing key has hundreds of them and not one title. What separates a
+ * crawl from a stub is therefore what only the API can supply — a video, or a
+ * playlist whose metadata came back.
  */
 export function dbHasMaterial(): boolean {
   if (!dbExists()) return false;
   const db = new Database(paths.cacheDb, { readonly: true });
   try {
-    const row = db.prepare(`SELECT EXISTS (SELECT 1 FROM playlists) AS any`).get() as {
-      any: number;
-    };
+    const row = db
+      .prepare(
+        `SELECT (EXISTS (SELECT 1 FROM videos)
+              OR EXISTS (SELECT 1 FROM playlists WHERE title IS NOT NULL)) AS any`
+      )
+      .get() as { any: number };
     return row.any === 1;
+  } catch {
+    // A database old enough to be missing a table the question is asked of has
+    // nothing this codebase can read either.
+    return false;
   } finally {
     db.close();
   }

@@ -23,7 +23,8 @@ Required by every script that touches YouTube ([pipeline.md](pipeline.md)).
    from a server and the CI runner's IP moves around.
 5. Put it in `.env` as `YOUTUBE_API_KEY=AIza…`.
 6. For CI: **Settings → Secrets and variables → Actions → New repository
-   secret**.
+   secret**. Without it the nightly `refresh` fails on its first step and the
+   site keeps publishing whatever the last good crawl left behind.
 
 **Quota.** 10 000 units a day, resetting at midnight Pacific. Current spend is
 visible under **APIs & Services → YouTube Data API v3 → Quotas**. An extension

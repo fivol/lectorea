@@ -191,6 +191,29 @@ function write(page: Page): void {
 
 /* ────────────────────────────────  Text  ───────────────────────────────── */
 
+/**
+ * A build can legitimately have no catalogue in it — a checkout with no
+ * `cache.db`, documented as enough to work on the interface — and it can have
+ * none by accident, as when CI restores a crawl cache that a failed run left
+ * empty. Either way the prose must not count out loud: «0 курсов в 39 областях
+ * знаний» is a sentence nobody should be able to publish by not noticing.
+ */
+const empty = courses.length === 0;
+
+/** «180 курсов», «22 курса», «1 курс» — the count and its noun, in agreement. */
+function plural(n: number, one: string, few: string, many: string): string {
+  const ten = n % 10;
+  const hundred = n % 100;
+  if (ten === 1 && hundred !== 11) return `${n} ${one}`;
+  if (ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14)) return `${n} ${few}`;
+  return `${n} ${many}`;
+}
+
+/** «в 39 областях знаний» — the same, for the one other noun that is counted. */
+function fields(n: number): string {
+  return `${n} ${n === 1 ? 'области' : 'областях'} знаний`;
+}
+
 /** Search results cut a description at about 160 characters — so cut it here. */
 function clip(text: string, limit = 160): string {
   if (text.length <= limit) return text;
@@ -343,7 +366,9 @@ function coursesPage(): Page {
 
   const body = [
     '      <h1>Все курсы каталога</h1>',
-    `      <p>${courses.length} курсов в ${domains.length} областях знаний, выстроенных в порядке изучения: у каждого видно, что нужно знать до него и что он открывает после.</p>`,
+    `      <p>${
+      empty ? 'Курсы' : `${plural(courses.length, 'курс', 'курса', 'курсов')} в ${fields(domains.length)}`
+    }, выстроенные в порядке изучения: у каждого видно, что нужно знать до него и что он открывает после.</p>`,
     ...byDomain
       .filter((group) => group.items.length)
       .map(
@@ -359,7 +384,9 @@ function coursesPage(): Page {
     pathname: 'courses',
     title: tr('seo.courses.title', {}, 'Lectorea'),
     description: clip(
-      `${courses.length} университетских курсов в ${domains.length} областях знаний: видеозаписи лекций, порядок изучения и связи между курсами.`
+      empty
+        ? 'Университетские курсы по областям знаний: видеозаписи лекций, порядок изучения и связи между курсами.'
+        : `${plural(courses.length, 'университетский курс', 'университетских курса', 'университетских курсов')} в ${fields(domains.length)}: видеозаписи лекций, порядок изучения и связи между курсами.`
     ),
     // One file answers `/courses` and every `?domain=…` view of it.
     canonical: false,
@@ -393,7 +420,9 @@ function homePage(): Page {
     pathname: '',
     title: dict['app.documentTitle'] ?? 'Lectorea',
     description: clip(
-      `Бесплатный каталог университетских видеолекций: ${courses.length} курсов в ${domains.length} областях знаний в порядке изучения — что нужно знать до курса и что он открывает.`
+      empty
+        ? 'Бесплатный каталог университетских видеолекций в порядке изучения: что нужно знать до курса и что он открывает дальше.'
+        : `Бесплатный каталог университетских видеолекций: ${plural(courses.length, 'курс', 'курса', 'курсов')} в ${fields(domains.length)} в порядке изучения — что нужно знать до курса и что он открывает.`
     ),
     canonical: true,
     jsonLd: [

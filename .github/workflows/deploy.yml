@@ -44,6 +44,10 @@ jobs:
     # schedule would only churn the site.
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    # Read, and only read: the build downloads the crawl snapshot from a release
+    # and publishes nothing back.
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -64,6 +68,14 @@ jobs:
           path: data/cache.db
           key: cache-db-
           restore-keys: cache-db-
+
+      # And when it left none — a fresh fork, an eviction, a run that died before
+      # it crawled — the published snapshot stands in. A no-op when the cache did
+      # come back with a crawl in it, so the nightly cache stays in charge.
+      - name: Seed from the published snapshot
+        run: pnpm cache:restore
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: pnpm data:build
 

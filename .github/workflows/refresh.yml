@@ -42,6 +42,15 @@ jobs:
           key: cache-db-${{ github.run_id }}
           restore-keys: cache-db-
 
+      # The Actions cache is the working copy between nightly runs; the snapshot
+      # in the `data-cache` release is what survives an eviction, a poisoned
+      # cache entry, or a repository that has never crawled. Restoring costs no
+      # quota, and does nothing at all when the cache came back with a crawl.
+      - name: Seed from the published snapshot
+        run: pnpm cache:restore
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # YOUTUBE_API_KEY2 and 3 are optional: keys from further Google Cloud
       # projects, spent in turn once the one before runs out. An unset secret
       # arrives as an empty string and is ignored, so the workflow needs no
@@ -107,6 +116,16 @@ jobs:
         with:
           path: data/cache.db
           key: cache-db-${{ github.run_id }}
+
+      # And the same crawl to the release, so the night's work outlives the
+      # Actions cache — which evicts after a week idle, has a 10 GB ceiling the
+      # repository shares, and cannot be written from anywhere but CI. Sixty-odd
+      # megabytes without the raw bodies, which is cheap enough to do daily.
+      - name: Publish the snapshot
+        if: always() && steps.crawl.outputs.keep == 'true'
+        run: pnpm cache:publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # New high-confidence matches are a content change and go through review
       # like any other content change.
