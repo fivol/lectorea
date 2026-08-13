@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { playlistTypeOf, type BuiltPlaylist, type Video } from '@shared/schema';
+import {
+  measuredRetention,
+  playlistTypeOf,
+  type BuiltPlaylist,
+  type Video,
+} from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
@@ -39,6 +44,8 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   const recordRecent = useProfile((state) => state.recordRecent);
 
   const progress = playlistProgress(profile, playlist);
+  /** Null for a shelf entered from search, whose ratio is not about staying. */
+  const retention = measuredRetention(playlist);
 
   /** What the store needs in order to know what a tick is part of. */
   const context: WatchContext = useMemo(
@@ -402,13 +409,13 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                 />
                 {/* The share of the audience still there at the end — the one
                     number here that is about the course rather than its size. */}
-                {playlist.retention !== undefined && playlist.curve !== 'assorted' ? (
+                {retention !== null ? (
                   <StatBar
                     label={t('ui.playlist.retention')}
-                    value={`${Math.round(playlist.retention * 100)}%`}
-                    fraction={playlist.retention}
+                    value={`${Math.round(retention * 100)}%`}
+                    fraction={retention}
                     hint={t('ui.playlist.retentionValue', {
-                      percent: `${Math.round(playlist.retention * 100)}%`,
+                      percent: `${Math.round(retention * 100)}%`,
                     })}
                   />
                 ) : null}
@@ -502,7 +509,12 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
 }
 
 /**
- * One lecture: a tick, a name that plays, and how long it runs.
+ * One lecture: a name that plays, how long it runs, and a tick at the end.
+ *
+ * The tick is last because the list is read before it is used: the eye goes
+ * down the titles, and a column of empty boxes in front of them is a form to
+ * fill in rather than a lecture list. At the right edge it is where a finished
+ * lecture leaves its mark, next to the length it took.
  *
  * The tick is its own control rather than part of the row, and it has to be —
  * a checkbox inside a button is not something HTML allows, and the two answer
@@ -539,6 +551,22 @@ function LectureRow({
     <li className={`relative flex items-center ${playing ? 'bg-accent-soft' : ''}`}>
       <button
         type="button"
+        onClick={onPlay}
+        className={`flex min-w-0 flex-1 items-center gap-3 py-2 pl-4 text-left text-sm
+                    transition-colors duration-fast ease-out hover:bg-surface-2
+                    ${playing ? 'text-ink' : done ? 'text-ink-faint' : 'text-ink-dim'}`}
+      >
+        <span className="num w-4 shrink-0 text-right text-xs text-ink-faint">{index + 1}.</span>
+        <span className="min-w-0 flex-1 truncate">{video.title}</span>
+        {/* Where you stopped, in place of the length — the length of a lecture
+            you are part way through is the less useful of the two. */}
+        <span className={`num shrink-0 text-xs ${left ? 'text-accent' : 'text-ink-faint'}`}>
+          {left ? formatDuration(left) : formatDuration(video.seconds)}
+        </span>
+      </button>
+
+      <button
+        type="button"
         role="checkbox"
         aria-checked={done}
         aria-label={`${t('ui.playlist.markWatched')}: ${video.title}`}
@@ -552,22 +580,6 @@ function LectureRow({
                       ${done ? 'border-accent bg-accent text-canvas' : 'border-line-strong'}`}
         >
           {done ? <Icon name="check" size={12} /> : null}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={onPlay}
-        className={`flex min-w-0 flex-1 items-center gap-3 py-2 pr-4 text-left text-sm
-                    transition-colors duration-fast ease-out hover:bg-surface-2
-                    ${playing ? 'text-ink' : done ? 'text-ink-faint' : 'text-ink-dim'}`}
-      >
-        <span className="num w-4 shrink-0 text-right text-xs text-ink-faint">{index + 1}.</span>
-        <span className="min-w-0 flex-1 truncate">{video.title}</span>
-        {/* Where you stopped, in place of the length — the length of a lecture
-            you are part way through is the less useful of the two. */}
-        <span className={`num shrink-0 text-xs ${left ? 'text-accent' : 'text-ink-faint'}`}>
-          {left ? formatDuration(left) : formatDuration(video.seconds)}
         </span>
       </button>
 

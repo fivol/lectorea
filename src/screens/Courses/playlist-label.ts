@@ -62,7 +62,7 @@ export function stripCoursePrefix(title: string, courseTitle: string): string {
  * stops at the «ь» and leaves one behind.
  */
 const TERM =
-  /(^|\P{L})(?:осен\p{L}*|весн\p{L}*|зим\p{L}*|летн\p{L}*|fall|spring|autumn|winter|summer)(?=\P{L}|$)[\s,]*(?:\d{2,4})?/giu;
+  /(^|\P{L})(?:осен\p{L}*|весн\p{L}*|зим\p{L}*|лет[оа]|летом|летн\p{L}*|fall|spring|autumn|winter|summer)(?=\P{L}|$)[\s,]*(?:\d{2,4})?/giu;
 
 /**
  * When it was filmed, written in months: «Jan 2025», «Jul - Dec 2020».
@@ -84,18 +84,68 @@ const MONTH_SPAN = new RegExp(
  * does separate, and it is the type badge's business.
  */
 const GENRE =
-  /(^|\P{L})(?:курс лекций|полный курс|весь курс|видеолекци\p{L}*|лекции по курсу|по курсу|full course|complete course|lecture collection|lectures? on the course|playlist|плейлист)(?=\P{L}|$)/giu;
+  /(^|\P{L})(?:курс лекций|полный курс|весь курс|видеолекци\p{L}*|лекции по курсу|по курсу|лектор\p{L}*|преподавател\p{L}*|читает|full course|complete course|lecture collection|lectures? on the course|lecturer|playlist|плейлист)(?=\P{L}|$)/giu;
 
 /** A lone «лекции»/«lectures» left over once the genre phrases are gone. */
 const BARE_LECTURES = /(^|\P{L})(?:лекци\p{L}*|lectures?)(?=\P{L}|$)/giu;
 
+/**
+ * A bare «курс»/«course» with nothing to number it.
+ *
+ * «3 курс» is which year of the degree this was filmed for and stays; a lone
+ * «Курс» is the word «course» in a catalogue of courses.
+ */
+const BARE_COURSE = /(^|\P{L})(?:курс|course)(?=\P{L}|$)/giu;
+
+/** Separators left at either end once what they separated was removed. */
+const TRIM_EDGES = /^[\s\-–—:;|,.]+|[\s\-–—:;|,.]+$/g;
+
+/** A preposition or conjunction left holding nothing — «Введение в ». */
+const DANGLING = /(^|\P{L})(?:в|во|по|на|и|для|from|to|of|and|the|with)\s*$/iu;
+
+/**
+ * Tidies the pieces a name has been left in.
+ *
+ * Removal works on one string, but what comes out of it reads as a list —
+ * «Введение в · 1 курс», where the course name was taken out of the middle of
+ * the first piece and left a preposition holding nothing. So each piece is
+ * finished on its own, and the empty ones simply do not come back.
+ */
+function tidySegments(text: string, hasLecturer: boolean): string {
+  return text
+    .split('·')
+    .map((part) =>
+      part
+        // Twice around the edges, because the dangling word sits inside them:
+        // «I - и» is trimmed to «I - и», loses the «и», and would keep the dash.
+        .replace(TRIM_EDGES, '')
+        .replace(DANGLING, '')
+        .replace(TRIM_EDGES, '')
+        .trim()
+    )
+    .filter((part) => part && /\p{L}|\d/u.test(part))
+    // A second lecturer, once the first has been recognised and taken out:
+    // «Практика · Роман Глинских». Only ever a bare pair of capitalised Russian
+    // words, and only next to a name the build already worked out — on its own
+    // that shape is «Общая физика» as often as it is a person.
+    .filter((part) => !(hasLecturer && /^[А-ЯЁ][а-яё]+ [А-ЯЁ][а-яё]+$/.test(part)))
+    .join(' · ');
+}
+
 /** «(fall 2019)», «[s1 | 2025]» — brackets that carry no word of their own. */
-const BRACKETED = /[([][^()[\]]*[)\]]/g;
-const TRAILING_BRACKET = /\s*[([][^()[\]]*[)\]]\s*$/;
+const BRACKETED = /[([]([^()[\]]*)[)\]]/g;
 const REAL_WORD = /\p{L}{3,}/u;
 
-/** Initials in either order: «А. В. Ершов», «Ершов А.В.», «Prof. Pavan». */
-const INITIALS = /(?:\p{Lu}\.\s?){1,2}\s?\p{Lu}\p{Ll}+|\p{Lu}\p{Ll}+\s?(?:\p{Lu}\.\s?){1,2}/gu;
+/**
+ * Initials in either order: «А. В. Ершов», «Ершов А.В.», «Маркеев. А. П.».
+ *
+ * The leading `(^|\P{L})` is the whole reason this is not a one-liner: without
+ * it «SQL.Начальный курс» matched as «L.Начальный» and shipped «SQ курс», and
+ * «ТФКП. Лекции» lost its «П». An initial is only an initial when nothing is
+ * attached to its left.
+ */
+const INITIALS =
+  /(^|\P{L})(?:(?:\p{Lu}\.\s?){1,2}\s?\p{Lu}\p{Ll}+|\p{Lu}(?:\p{Ll}+|\p{Lu}+)\.?\s+(?:\p{Lu}\.\s?){1,2})/gu;
 
 /**
  * The same name written out — «Асеев Виктор Васильевич», which is how МГУ names
@@ -162,37 +212,76 @@ export function ownName(
     text = text.replace(new RegExp(`(^|\\W)${literal(name.trim())}(?=\\W|$)`, 'gi'), '$1 ');
   }
 
+  // `$1` on the initials, not a bare space: the pattern eats the character in
+  // front of the name to prove it is a name, and that character is often the
+  // «(» whose «)» is still waiting downstream.
+  text = text.replace(FULL_NAME, ' ').replace(INITIALS, '$1 ');
+
+  // The lecturer again, by surname this time. The build stores «Вяткина К.» and
+  // the title says «Кира Вяткина», so matching the stored string literally —
+  // which is what the loop above does — never catches the ones that most need
+  // catching. The surname anchors it, and what may come away with it is only
+  // what a name is made of: initials, a patronymic, or a given name in front,
+  // and that last only where a separator says the pair stands on its own.
+  const surname = playlist.lecturer?.trim().split(/\s+/)[0];
+  if (surname && surname.length >= 3) {
+    const name = literal(surname);
+    const trail = `\\.?(?:\\s*(?:\\p{Lu}\\.\\s*){1,2}|(?:\\s+\\p{Lu}\\p{Ll}+){1,2})?`;
+    text = text
+      .replace(
+        new RegExp(
+          `(^|[|,;:(\\[—–-]\\s*)(?:(?:\\p{Lu}\\.\\s*){1,2}|\\p{Lu}\\p{Ll}+\\s+)?${name}${trail}`,
+          'giu'
+        ),
+        '$1 '
+      )
+      .replace(new RegExp(`(^|\\P{L})${name}${trail}`, 'giu'), '$1 ');
+  }
+
   text = text
-    .replace(FULL_NAME, ' ')
-    .replace(INITIALS, ' ')
     .replace(MONTH_SPAN, '$1 ')
     .replace(TERM, '$1 ')
     .replace(GENRE, '$1 ');
   // Only once the genre phrases are gone, so «курс лекций» is not left as
   // «курс» by the bare word going first.
   text = text.replace(BARE_LECTURES, '$1 ');
-  text = text.replace(/\b(19|20)\d{2}\b/g, ' ');
-  // What a title puts in brackets at the end is the small print — «(1 курс,
-  // 2020)», «(2к ФРТК)», «(SMA 5503)» — and none of it tells two recordings of
-  // one course apart. Mid-title brackets are kept unless they have lost their
-  // contents to the passes above, or never held a word to begin with.
-  text = text.replace(TRAILING_BRACKET, ' ');
-  text = text.replace(BRACKETED, (chunk) => (REAL_WORD.test(chunk) ? chunk : ' '));
+  // A lone «Курс», but never the «курс» in «3 курс», which is which year of the
+  // degree the recording was filmed for and is often all that separates two.
+  text = text.replace(BARE_COURSE, (match, pre: string, offset: number, whole: string) =>
+    /\d\s*$/.test(whole.slice(0, offset + pre.length)) ? match : `${pre} `
+  );
+  // «2022 год» goes with the year: on its own «год» is a word about nothing.
+  text = text.replace(/\b(19|20)\d{2}\b\s*(?:год\p{L}*|гг?\.)?/gu, ' ');
+
+  // Brackets are unwrapped rather than dropped. What a title puts in them is
+  // «(2 курс, осень 2019)» or «[ПМФ]» — the year and the term have just been
+  // taken out of it, and what is left is the stream, the year of the degree,
+  // the «(hard)» variant: the very things that tell two recordings of one
+  // course apart. Dropping the lot, which is what this did first, threw «2
+  // курс» away and left «(2 курс, )» behind when it did not.
+  for (let pass = 0; pass < 3; pass++) {
+    const before = text;
+    text = text.replace(BRACKETED, (_chunk, inner: string) => {
+      const tidy = inner.replace(/^[\s·,;:|.\-–—]+|[\s·,;:|.\-–—]+$/g, '').trim();
+      return REAL_WORD.test(tidy) ? ` · ${tidy} · ` : ' ';
+    });
+    if (text === before) break;
+  }
   // Quotation marks left facing each other once what they quoted was removed.
   text = text.replace(/["“”«][\s·.,\-—|]*["“”»]/g, ' ');
 
   const cleaned = unpaired(
     text
-      .replace(/\s*([—–\-:;·|,.]\s*){2,}/g, ' · ')
+      .replace(/\s*([—–\-:;·|,]\s*){2,}/g, ' · ')
+      .replace(/\s*·\s*/g, ' · ')
       .replace(/\s{2,}/g, ' ')
       .replace(/^[\s\-–—:;·|,.]+|[\s\-–—:;·|,.]+$/g, '')
       .trim()
   );
 
-  // «(практика)» is the whole of what this recording is called once the course
-  // name and the lecturer are out of it, and the brackets it was written in are
-  // punctuation belonging to a sentence that no longer exists.
-  const unwrapped = /^[([][^()[\]]*[)\]]$/.test(cleaned) ? cleaned.slice(1, -1).trim() : cleaned;
+  // «Введение в финансы» minus a course called «Финансы» is «Введение в», which
+  // is not a name but the first half of one.
+  const unwrapped = tidySegments(cleaned, Boolean(playlist.lecturer));
 
   if (!unwrapped || unwrapped.length < 2) return null;
   // A "name" that is the course under another spelling names nothing.
