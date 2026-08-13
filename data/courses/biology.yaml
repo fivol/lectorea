@@ -22,7 +22,14 @@
 - id: cell-biology
   domains: [biology]
   stage: bachelor-1
-  deps: [general-biology]
+  # Membranes, gradients and signalling are chemistry before they are biology,
+  # and the whole branch downstream inherited the gap. MIT reaches the same edge
+  # the long way round — 7.06 needs 7.05, which needs 5.12, which needs the
+  # Chemistry GIR — but here cell biology runs *before* biochemistry, so the
+  # chemistry has to be named directly or it is nowhere in the ancestry at all.
+  deps: [general-biology, general-chemistry]
+  refs:
+    syllabus: https://catalog.mit.edu/subjects/7/
 
 - id: genetics
   domains: [biology]
@@ -33,7 +40,12 @@
 - id: molecular-biology
   domains: [biology]
   stage: bachelor-2
-  deps: [cell-biology, biochemistry]
+  # MIT 7.28 reads «Prereq: 7.03» — replication and regulation are taught
+  # through genetics, not merely alongside it. `cell-biology` drops out of the
+  # line: biochemistry already carries it, and CI calls that out.
+  deps: [biochemistry, genetics]
+  refs:
+    syllabus: https://catalog.mit.edu/subjects/7/
 
 - id: evolution
   domains: [biology]

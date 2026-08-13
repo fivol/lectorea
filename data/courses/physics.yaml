@@ -33,7 +33,13 @@
 - id: electrodynamics
   domains: [physics]
   stage: bachelor-3
-  deps: [calculus-3, differential-equations]
+  # It asked for the mathematics and not for a single hour of physics: a
+  # third-year Maxwell course was reachable without ever having met a wave.
+  # MIT 8.07 reads «Prereq: 8.03 and 18.03» — 8.03 is oscillations and waves,
+  # which carries mechanics and the differential equations along with it.
+  deps: [oscillations-waves]
+  refs:
+    syllabus: https://catalog.mit.edu/subjects/8/
 
 - id: thermodynamics
   domains: [physics]
@@ -43,12 +49,15 @@
 - id: optics
   domains: [physics]
   stage: bachelor-4
-  deps: [oscillations-waves, electrodynamics]
+  # Waves now arrive through electrodynamics, so naming them again is the
+  # transitive edge CI warns about.
+  deps: [electrodynamics]
 
 - id: special-relativity
   domains: [physics]
   stage: bachelor-4
-  deps: [mechanics, electrodynamics]
+  # Mechanics comes in under electrodynamics now — same transitive edge.
+  deps: [electrodynamics]
 
 - id: general-relativity
   domains: [physics]

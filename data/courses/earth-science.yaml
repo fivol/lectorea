@@ -33,7 +33,12 @@
 - id: geophysics
   domains: [earth-science]
   stage: bachelor-3
-  deps: [geology, mechanics]
+  # MIT 12.201 reads «Prereq: Physics II (GIR) and 18.03». Seismic waves and
+  # the potential fields of gravimetry are differential equations before they
+  # are anything else.
+  deps: [geology, mechanics, differential-equations]
+  refs:
+    syllabus: https://catalog.mit.edu/subjects/12/
 
 - id: geodesy
   domains: [earth-science]

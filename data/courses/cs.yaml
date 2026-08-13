@@ -62,7 +62,12 @@
 - id: compilers
   domains: [cs]
   stage: bachelor-3
-  deps: [algorithms, theory-of-computation]
+  # MIT 6.1100 reads «Prereq: 6.1020 and 6.1910» — the second is computation
+  # structures. Code generation and register allocation are aimed at a machine,
+  # and a course that has never seen a pipeline has nothing to aim at.
+  deps: [algorithms, theory-of-computation, computer-architecture]
+  refs:
+    syllabus: https://catalog.mit.edu/subjects/6/
 
 - id: distributed-systems
   domains: [cs]

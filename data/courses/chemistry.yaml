@@ -22,7 +22,12 @@
 - id: inorganic-chemistry
   domains: [chemistry]
   stage: bachelor-1
-  deps: [general-chemistry]
+  # MIT 5.03 reads «Prereq: 5.12»: the chemistry of the elements is taught in
+  # the language of bonding and mechanism that organic sets up. `general-
+  # chemistry` is dropped — organic already stands on it.
+  deps: [organic-chemistry]
+  refs:
+    syllabus: https://catalog.mit.edu/subjects/5/
 
 - id: organic-chemistry
   domains: [chemistry]

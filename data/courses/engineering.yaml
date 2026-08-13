@@ -65,4 +65,9 @@
 - id: ocean-engineering
   domains: [engineering]
   stage: bachelor-4
-  deps: [strength-of-materials]
+  # Wave loads are a fluids problem, and the course stood on structures alone.
+  # MIT reaches it through hydrodynamics: 2.016 reads «Prereq: 2.005», the
+  # thermal-fluids course that transport phenomena stands in for here.
+  deps: [strength-of-materials, transport-phenomena]
+  refs:
+    syllabus: https://catalog.mit.edu/subjects/2/
