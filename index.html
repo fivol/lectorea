@@ -25,9 +25,11 @@
 
     <!--
       Shared links. Courses and playlists already have their own URLs, but this
-      is a static single-page app: there is no server to fill a per-course card
-      in, and a crawler that does not run JavaScript sees only this. So the tags
-      describe the catalogue, which is at least true of every URL in it.
+      is a static single-page app, so a per-course card is filled in after the
+      bundle rather than by a server — `scripts/prerender.ts` writes a file per
+      URL with the title, description and card of that course. What stands here
+      is what the dev server shows and what those pages are cut from: the
+      catalogue, which is at least true of every URL in it.
     -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Lectorea" />
@@ -36,11 +38,19 @@
       property="og:description"
       content="Образовательные YouTube-плейлисты, выстроенные в порядке изучения: что нужно знать до каждого курса и что он открывает дальше."
     />
-    <!-- The mark, not the map: the map is an SVG drawn by the app at runtime,
-         and no crawler renders it. A square icon with a `summary` card is
-         honest about that; a wide card with nothing wide to put in it is not. -->
-    <meta property="og:image" content="/pwa-512.png" />
-    <meta name="twitter:card" content="summary" />
+    <!-- The map, drawn once into a picture by `pnpm og:build`: the app draws it
+         at runtime and nothing that unfolds a link runs the app. Wide rather
+         than square, because a square buys a thumbnail the size of a favicon in
+         every feed that shows one, and a link to a catalogue of lectures is
+         worth more room than that. -->
+    <meta property="og:image" content="/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Карта знаний Lectorea: материки областей знаний в тёмном море"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -156,8 +156,9 @@ function render(page: Page): string {
     `<meta property="og:title" content="${escapeHtml(page.title)}" />`,
     `<meta property="og:description" content="${escapeHtml(page.description)}" />`,
     // Absolute by requirement: a card is fetched by a scraper that has only the
-    // tag to go on, and a path relative to the site means nothing to it.
-    `<meta property="og:image" content="${href('pwa-512.png')}" />`,
+    // tag to go on, and a path relative to the site means nothing to it. The
+    // size and the alt text stay in the template — one picture, every page.
+    `<meta property="og:image" content="${href('og.png')}" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:locale" content="${env.defaultLang === 'ru' ? 'ru_RU' : 'en_US'}" />`,
   ];

@@ -61,6 +61,21 @@ part of `pnpm build`) and writes a real file for every URL the catalogue offers:
 Pages resolves `/courses/calculus-1` to `courses/calculus-1.html` on its own, so
 the URLs do not change and neither does the router.
 
+The picture in those cards is `public/og.png` — the real map at 1200×630, drawn
+by [scripts/og-image.ts](../scripts/og-image.ts) from `map.svg` and the domain
+colours, with the wordmark over it. It is committed like any other asset and
+redrawn by hand when the map changes:
+
+```bash
+pnpm og:build
+```
+
+That needs a Chrome on the machine (`CHROME_PATH` if it lives somewhere
+unusual) and a moment of network for the two typefaces, which are embedded into
+the page it screenshots rather than linked — headless Chrome renders one frame,
+and a font that arrives after it is a card set in the wrong face. CI never runs
+this and does not need to.
+
 Once the app has booted it takes the head over itself — `useDocumentMeta` in
 [src/lib/meta.ts](../src/lib/meta.ts). Two reasons: navigation inside the app
 never reloads the document, and `/courses?domain=math` is one file serving every
