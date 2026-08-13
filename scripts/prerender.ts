@@ -210,7 +210,7 @@ function plural(n: number, one: string, few: string, many: string): string {
 }
 
 /** «в 39 областях знаний» — the same, for the one other noun that is counted. */
-function fields(n: number): string {
+function inFields(n: number): string {
   return `${n} ${n === 1 ? 'области' : 'областях'} знаний`;
 }
 
@@ -367,7 +367,7 @@ function coursesPage(): Page {
   const body = [
     '      <h1>Все курсы каталога</h1>',
     `      <p>${
-      empty ? 'Курсы' : `${plural(courses.length, 'курс', 'курса', 'курсов')} в ${fields(domains.length)}`
+      empty ? 'Курсы' : `${plural(courses.length, 'курс', 'курса', 'курсов')} в ${inFields(domains.length)}`
     }, выстроенные в порядке изучения: у каждого видно, что нужно знать до него и что он открывает после.</p>`,
     ...byDomain
       .filter((group) => group.items.length)
@@ -386,7 +386,7 @@ function coursesPage(): Page {
     description: clip(
       empty
         ? 'Университетские курсы по областям знаний: видеозаписи лекций, порядок изучения и связи между курсами.'
-        : `${plural(courses.length, 'университетский курс', 'университетских курса', 'университетских курсов')} в ${fields(domains.length)}: видеозаписи лекций, порядок изучения и связи между курсами.`
+        : `${plural(courses.length, 'университетский курс', 'университетских курса', 'университетских курсов')} в ${inFields(domains.length)}: видеозаписи лекций, порядок изучения и связи между курсами.`
     ),
     // One file answers `/courses` and every `?domain=…` view of it.
     canonical: false,
@@ -422,7 +422,7 @@ function homePage(): Page {
     description: clip(
       empty
         ? 'Бесплатный каталог университетских видеолекций в порядке изучения: что нужно знать до курса и что он открывает дальше.'
-        : `Бесплатный каталог университетских видеолекций: ${plural(courses.length, 'курс', 'курса', 'курсов')} в ${fields(domains.length)} в порядке изучения — что нужно знать до курса и что он открывает.`
+        : `Бесплатный каталог университетских видеолекций: ${plural(courses.length, 'курс', 'курса', 'курсов')} в ${inFields(domains.length)} в порядке изучения — что нужно знать до курса и что он открывает.`
     ),
     canonical: true,
     jsonLd: [
@@ -519,6 +519,16 @@ function main(): void {
     `✓ ${courses.length} course pages, sitemap with ${entries.length} URLs, robots.txt` +
       (isMirror ? ' (fork — kept out of search)' : ` for ${origin}`)
   );
+
+  // Loud, but not fatal: a checkout with no crawl cache is a supported way to
+  // work on the interface, and refusing to build it would be worse than saying
+  // what the build is missing. On CI it is the line that explains why a green
+  // deploy left search with one page.
+  if (empty) {
+    console.warn(
+      '! the catalogue in this build has no visible courses — not one course page was written, and search is being given a site with nothing in it'
+    );
+  }
 }
 
 main();
