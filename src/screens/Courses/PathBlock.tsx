@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { loadPlaylists } from '@/lib/data';
 import { formatHours, inkOn } from '@/lib/format';
 import { pathProgress, percent, useCourseProgress } from '@/lib/progress';
 import { courseHref } from '@/lib/url';
@@ -11,7 +10,6 @@ import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
-import { Button } from '@/components/ui';
 import { StatusMark } from './CourseMarks';
 
 type Props = {
@@ -50,7 +48,6 @@ export default function PathBlock({
 
   const [open, setOpen] = useState(false);
   const [hideDone, setHideDone] = useState(false);
-  const [exportState, setExportState] = useState<'idle' | 'working' | 'done'>('idle');
 
   const stepIds = useMemo(() => steps.map((step) => step.id), [steps]);
   const byCourse = useCourseProgress(stepIds);
@@ -64,42 +61,13 @@ export default function PathBlock({
     .filter((step) => profile.courses[step.id]?.status !== 'done')
     .reduce((sum, step) => sum + step.hours, 0);
 
-  const exportPlan = async (): Promise<void> => {
-    setExportState('working');
-    const shards = await Promise.all(steps.map((step) => loadPlaylists(step.id)));
-    const lines = steps.map((step, index) => {
-      const best = shards[index][0];
-      const title = t(`course.${step.id}.title`);
-      const status = profile.courses[step.id]?.status === 'done' ? 'x' : ' ';
-      const link = best
-        ? ` — [${best.title}](https://www.youtube.com/playlist?list=${best.id})`
-        : '';
-      return `- [${status}] ${index + 1}. ${title}${link}`;
-    });
-    const markdown = [
-      `# ${t(`course.${course.id}.title`)}`,
-      '',
-      `${count(steps.length, 'course')}, ≈${formatHours(totalHours)} ${t('ui.plural.hour.many')}`,
-      '',
-      ...lines,
-    ].join('\n');
-
-    try {
-      await navigator.clipboard.writeText(markdown);
-    } catch {
-      // Clipboard can be blocked; the download below still delivers the plan.
-    }
-    const blob = new Blob([markdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${course.id}-plan.md`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-
-    setExportState('done');
-    setTimeout(() => setExportState('idle'), 2000);
-  };
+  /* The goal stays on screen whatever its state, so a path whose only done
+     course is the goal has nothing the checkbox could hide — and an offer to
+     hide nothing reads as a broken control. */
+  const hidable = steps.some(
+    (step) => step.id !== course.id && profile.courses[step.id]?.status === 'done'
+  );
+  const hiding = hideDone && hidable;
 
   return (
     <div>
@@ -156,8 +124,8 @@ export default function PathBlock({
       <div className="collapse" data-open={open}>
         <div>
           <div className="pt-2">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-faint">
+            {hidable ? (
+              <label className="mb-2 flex w-fit cursor-pointer items-center gap-2 text-xs text-ink-faint">
                 <input
                   type="checkbox"
                   checked={hideDone}
@@ -166,17 +134,7 @@ export default function PathBlock({
                 />
                 {t('ui.path.hideDone')}
               </label>
-              <Button
-                variant="ghost"
-                small
-                icon="download"
-                iconSize={13}
-                onClick={exportPlan}
-                disabled={exportState === 'working'}
-              >
-                {exportState === 'done' ? t('ui.common.copied') : t('ui.path.export')}
-              </Button>
-            </div>
+            ) : null}
 
             {outsideFilter ? (
               <p className="mb-2 text-xs text-ink-faint">{t('ui.path.breaksFilter')}</p>
@@ -190,7 +148,7 @@ export default function PathBlock({
               {steps.map((step, index) => {
                 const status = profile.courses[step.id]?.status ?? null;
                 const isGoal = step.id === course.id;
-                if (hideDone && status === 'done' && !isGoal) return null;
+                if (hiding && status === 'done' && !isGoal) return null;
                 const domain = catalog.domainById.get(step.domains[0]);
 
                 const watched = status === 'done' ? null : byCourse.get(step.id);
