@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { formatHours, inkOn, withAlpha } from '@/lib/format';
+import { formatHours, hoursFromSeconds, inkOn, withAlpha } from '@/lib/format';
 import { percent, useCourseProgress } from '@/lib/progress';
 import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
 import { courseHref } from '@/lib/url';
@@ -145,11 +145,17 @@ export default function CoursePanel({
             <ProgressBar
               done={progress.done}
               total={progress.total}
+              fill={progress.fraction}
               label={`${percent(progress.fraction)}%`}
             />
             <p className="mt-1 truncate text-[11px] text-ink-faint">
               <span className="num">
                 {t('ui.course.lecturesDone', { done: progress.done, total: progress.total })}
+                {' · '}
+                {t('ui.playlist.hoursOf', {
+                  n: formatHours(hoursFromSeconds(progress.watchedSeconds)),
+                  of: formatHours(hoursFromSeconds(progress.totalSeconds)),
+                })}
               </span>
               {' · '}
               {progress.playlist.lecturer ?? progress.playlist.channelTitle}

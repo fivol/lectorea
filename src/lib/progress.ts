@@ -23,12 +23,23 @@ export type PlaylistProgress = {
   total: number;
   /** Sealed by hand, or every lecture ticked. */
   complete: boolean;
-  /** 0..1, for a bar. */
+  /**
+   * 0..1, for a bar — measured in time, not in lectures.
+   *
+   * Counting lectures makes every one of them the same size, and they are not:
+   * a course whose first four are twenty minutes and whose last four are two
+   * hours would read as half done at a fifth of the work. Time is what is
+   * actually left to spend, so time is what the bar is filled to, and the
+   * labels carry both numbers because "seven of fourteen" is the one people
+   * count in.
+   */
   fraction: number;
   /** Anything at all — a tick, a seal, a part-watched lecture. */
   started: boolean;
   /** Roughly how much of it has been watched, in seconds. */
   watchedSeconds: number;
+  /** What the watched seconds are out of — the lectures we know about. */
+  totalSeconds: number;
   /** What to play next, and where to drop back in. Null once it is finished. */
   next: { video: Video; index: number; sec: number } | null;
 };
@@ -40,6 +51,7 @@ const EMPTY: PlaylistProgress = {
   fraction: 0,
   started: false,
   watchedSeconds: 0,
+  totalSeconds: 0,
   next: null,
 };
 
@@ -59,6 +71,12 @@ export function playlistProgress(profile: Profile, playlist: BuiltPlaylist): Pla
   const total = videos.length || playlist.videoCount;
   if (!total) return EMPTY;
 
+  // The lectures we can actually account for, not what YouTube reported for the
+  // playlist as a whole: the bar has to be filled out of the same pot it is
+  // filled from, or a shard missing a private video would never reach the end.
+  const totalSeconds =
+    videos.reduce((sum, video) => sum + video.seconds, 0) || playlist.totalSeconds;
+
   const sealed = profile.playlists[playlist.id]?.watched ?? false;
   if (sealed) {
     return {
@@ -67,7 +85,8 @@ export function playlistProgress(profile: Profile, playlist: BuiltPlaylist): Pla
       complete: true,
       fraction: 1,
       started: true,
-      watchedSeconds: playlist.totalSeconds,
+      watchedSeconds: totalSeconds,
+      totalSeconds,
       next: null,
     };
   }
@@ -83,18 +102,22 @@ export function playlistProgress(profile: Profile, playlist: BuiltPlaylist): Pla
       watchedSeconds += video.seconds;
       continue;
     }
+    // Part of a lecture counts as the part of it that it is, so the bar moves
+    // during a two-hour recording instead of standing still until it ends.
     const sec = mark?.sec ?? 0;
     watchedSeconds += Math.min(sec, video.seconds);
     if (!next) next = { video, index, sec };
   }
 
+  const complete = done >= total;
   return {
     done,
     total,
-    complete: done >= total,
-    fraction: done / total,
+    complete,
+    fraction: complete ? 1 : totalSeconds ? watchedSeconds / totalSeconds : 0,
     started: done > 0 || watchedSeconds > 0,
     watchedSeconds,
+    totalSeconds,
     next,
   };
 }

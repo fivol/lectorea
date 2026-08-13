@@ -14,6 +14,16 @@ type Props = {
    * ones: two facts, one bar, neither of them rounded into the other.
    */
   partial?: number;
+  /**
+   * How full the bar is, 0..1, when that is not `done / total`.
+   *
+   * A playlist is counted in lectures and measured in hours — seven of fourteen
+   * is the number people hold in their head, and four hours of nine is the one
+   * that says how much is left. The label counts, the bar measures, and
+   * `aria-valuenow` stays on the countable one because that is what a screen
+   * reader can say out loud.
+   */
+  fill?: number;
   /** Rendered to the right of the bar; mono, so the digits do not jitter. */
   label?: string;
   className?: string;
@@ -31,12 +41,14 @@ export default function ProgressBar({
   done,
   total,
   partial = 0,
+  fill,
   label,
   className = '',
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [seen, setSeen] = useState(false);
-  const solid = total > 0 ? (done / total) * 100 : 0;
+  const solid =
+    fill === undefined ? (total > 0 ? (done / total) * 100 : 0) : Math.min(100, fill * 100);
   // Clamped against the remainder: a rounding error must never push the two
   // segments past the end of the track and make a full bar out of a half one.
   const soft = Math.max(0, Math.min(100 - solid, partial * 100));

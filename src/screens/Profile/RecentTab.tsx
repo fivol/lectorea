@@ -108,6 +108,7 @@ export default function RecentTab() {
                     className="mt-1.5"
                     done={watch.progress.done}
                     total={watch.progress.total}
+                    fill={watch.progress.fraction}
                     label={
                       watch.progress.complete
                         ? t('ui.playlist.watchedOn')

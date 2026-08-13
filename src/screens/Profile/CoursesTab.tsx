@@ -171,6 +171,7 @@ function ContinueCard() {
             className="mt-2"
             done={progress.done}
             total={progress.total}
+            fill={progress.fraction}
             label={`${percent(progress.fraction)}%`}
           />
         </span>

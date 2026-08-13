@@ -5,6 +5,7 @@ import { formatHours, hoursFromSeconds } from '@/lib/format';
 import { percent, playlistProgress } from '@/lib/progress';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
+import ProgressBar from '@/components/ProgressBar';
 import Tooltip from '@/components/Tooltip';
 import type { LabelParts } from './playlist-label';
 
@@ -58,75 +59,88 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
     .filter(Boolean)
     .join(' · ');
 
+  /*
+   * The card is a container with the row inside it rather than one big button,
+   * so the bar can sit underneath as a sibling.
+   *
+   * It used to be four pixels along the foot of the thumbnail, which is where
+   * every video player in the world puts it — but a player puts it on a frame
+   * that fills the screen, and here the frame is seventy by forty and often
+   * dark. It was unreadable. Given its own line under the row it is the same
+   * bar the panel and the profile draw, at the width of the card, and the row
+   * grows by twelve pixels to hold it.
+   *
+   * The hover lives on the container so the whole card lights up, bar included.
+   */
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(playlist.id)}
-      className={`flex w-full items-center gap-3 rounded-card border border-transparent px-2 py-2
-                  text-left transition-colors duration-fast ease-out
-                  hover:border-line-strong hover:bg-surface-2 ${watched ? 'opacity-70' : ''}`}
+    <div
+      className={`rounded-card border border-transparent px-2 py-2 transition-colors
+                  duration-fast ease-out hover:border-line-strong hover:bg-surface-2
+                  ${watched ? 'opacity-70' : ''}`}
     >
-      {/* Fixed size, so a thumbnail that never arrives costs no layout shift. */}
-      <span className="relative h-10 w-[70px] shrink-0 overflow-hidden rounded bg-surface-2">
-        {thumbnail ? (
-          <img
-            src={thumbnail}
-            alt=""
-            loading="lazy"
-            width={70}
-            height={40}
-            className="h-full w-full object-cover"
-            onError={(event) => {
-              event.currentTarget.style.display = 'none';
-            }}
-          />
-        ) : null}
-        {/* Along the foot of the thumbnail, where every video player in the
-            world puts it. A part-watched playlist is the one state the marks on
-            the right cannot show — a tick is finished and no tick is untouched,
-            and "seven of thirty" is neither.
-
-            Filled by time rather than by lectures, like every other bar here,
-            and never quite empty: a playlist ten minutes into its first lecture
-            rounds to nothing, and a bar that is not there says "untouched",
-            which is the one thing it must not say. */}
-        {progress.started && !watched ? (
-          <span className="absolute inset-x-0 bottom-0 h-1 bg-black/60">
-            <span
-              className="block h-full bg-accent"
-              style={{ width: `${Math.max(4, percent(progress.fraction))}%` }}
+      <button
+        type="button"
+        onClick={() => onOpen(playlist.id)}
+        className="flex w-full items-center gap-3 text-left"
+      >
+        {/* Fixed size, so a thumbnail that never arrives costs no layout shift. */}
+        <span className="h-10 w-[70px] shrink-0 overflow-hidden rounded bg-surface-2">
+          {thumbnail ? (
+            <img
+              src={thumbnail}
+              alt=""
+              loading="lazy"
+              width={70}
+              height={40}
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+              }}
             />
-          </span>
-        ) : null}
-      </span>
+          ) : null}
+        </span>
 
-      <span className="min-w-0 flex-1">
-        {/* The canonical name lives in the tooltip and in the player: the row
-            says who made it and which of theirs it is. */}
-        <Tooltip content={label.detail}>
-          <span className="block truncate text-caption text-ink">{label.heading}</span>
-        </Tooltip>
-        <span className="num mt-0.5 block truncate text-[11px] text-ink-faint">{subtitle}</span>
-      </span>
+        <span className="min-w-0 flex-1">
+          {/* The canonical name lives in the tooltip and in the player: the row
+              says who made it and which of theirs it is. */}
+          <Tooltip content={label.detail}>
+            <span className="block truncate text-caption text-ink">{label.heading}</span>
+          </Tooltip>
+          <span className="num mt-0.5 block truncate text-[11px] text-ink-faint">{subtitle}</span>
+        </span>
 
-      <span className="flex shrink-0 items-center gap-1.5">
-        {favorite ? (
-          <Tooltip content={t('ui.course.favoriteOn')}>
-            <span className="inline-flex text-warning">
-              <Icon name="star-filled" size={13} />
-            </span>
-          </Tooltip>
-        ) : null}
-        {watched ? (
-          <Tooltip content={t('ui.playlist.watchedOn')}>
-            <span className="inline-flex text-accent">
-              <Icon name="check" size={13} />
-            </span>
-          </Tooltip>
-        ) : null}
-        <StatusBadge playlist={playlist} />
-      </span>
-    </button>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {favorite ? (
+            <Tooltip content={t('ui.course.favoriteOn')}>
+              <span className="inline-flex text-warning">
+                <Icon name="star-filled" size={13} />
+              </span>
+            </Tooltip>
+          ) : null}
+          {watched ? (
+            <Tooltip content={t('ui.playlist.watchedOn')}>
+              <span className="inline-flex text-accent">
+                <Icon name="check" size={13} />
+              </span>
+            </Tooltip>
+          ) : null}
+          <StatusBadge playlist={playlist} />
+        </span>
+      </button>
+
+      {/* Only while there is a way to go. A finished playlist is already dimmed
+          and ticked, and a full bar on every one of them would add a line to
+          half the list to repeat what the tick says. */}
+      {progress.started && !watched ? (
+        <ProgressBar
+          className="mt-1.5"
+          done={progress.done}
+          total={progress.total}
+          fill={progress.fraction}
+          label={`${percent(progress.fraction)}%`}
+        />
+      ) : null}
+    </div>
   );
 }
 
