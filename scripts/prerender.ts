@@ -248,15 +248,16 @@ function coursePage(course: BuiltCourse): Page {
 
   const facts = [
     course.playlistCount
-      ? `${course.playlistCount} записей лекций, около ${hoursOf(course)} ч`
+      ? `${plural(course.playlistCount, 'запись', 'записи', 'записей')} лекций, около ${hoursOf(course)} ч`
       : '',
-    deps.length ? `до этого: ${list(deps)}` : '',
+    deps.length ? `Что нужно знать заранее: ${list(deps)}` : '',
   ].filter(Boolean);
 
   const description = clip(
-    own
-      ? `${own}. ${facts.join('. ')}`
-      : `Курс «${title}» в каталоге Lectorea: видеозаписи лекций и порядок изучения. ${facts.join('. ')}`
+    [
+      own || `Курс «${title}» в каталоге Lectorea: видеозаписи лекций и порядок изучения`,
+      ...facts,
+    ].join('. ')
   );
 
   const jsonLd: unknown[] = [
