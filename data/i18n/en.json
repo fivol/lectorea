@@ -229,6 +229,8 @@
   "ui.filters.lecturerPlaceholder": "Surname…",
   "ui.filters.videoCount": "Number of lectures",
   "ui.filters.lectureLength": "Lecture length",
+  "ui.filters.range.min": "At least",
+  "ui.filters.range.max": "At most",
   "ui.filters.captions": "Captions",
   "ui.filters.captions.any": "any",
   "ui.filters.captions.ru": "Russian ones",

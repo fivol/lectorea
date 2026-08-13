@@ -229,6 +229,8 @@
   "ui.filters.lecturerPlaceholder": "Фамилия…",
   "ui.filters.videoCount": "Количество лекций",
   "ui.filters.lectureLength": "Длительность лекции",
+  "ui.filters.range.min": "Не меньше",
+  "ui.filters.range.max": "Не больше",
   "ui.filters.captions": "Субтитры",
   "ui.filters.captions.any": "есть",
   "ui.filters.captions.ru": "есть русские",

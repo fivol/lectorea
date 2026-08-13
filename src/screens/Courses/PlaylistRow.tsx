@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import type { BuiltPlaylist } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
-import { formatHours, hoursFromSeconds } from '@/lib/format';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import Tooltip from '@/components/Tooltip';
@@ -127,11 +126,6 @@ export function QualityDot({ playlist }: { playlist: BuiltPlaylist }) {
       </span>
     </Tooltip>
   );
-}
-
-/** Duration summary used by both the row and the modal. */
-export function playlistDuration(playlist: BuiltPlaylist): string {
-  return `${formatHours(hoursFromSeconds(playlist.totalSeconds))} ч`;
 }
 
 export function playlistViews(playlist: BuiltPlaylist, lang: string): string {

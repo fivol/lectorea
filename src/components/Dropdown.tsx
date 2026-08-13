@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useT } from '@/i18n';
 import { placeBy, samePlace, type Placement } from '@/lib/popover';
 import Icon from './Icon';
 import { Chip, Input } from './ui';
@@ -265,6 +266,7 @@ export function RangeRow({
   value: [number, number];
   onChange: (next: [number, number]) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="px-2 py-1">
       <div className="num mb-1 flex justify-between text-xs text-ink-faint">
@@ -280,7 +282,7 @@ export function RangeRow({
           onChange([Math.min(Number(event.target.value), value[1]), value[1]])
         }
         className="w-full accent-[var(--c-accent)]"
-        aria-label="min"
+        aria-label={t('ui.filters.range.min')}
       />
       <input
         type="range"
@@ -291,7 +293,7 @@ export function RangeRow({
           onChange([value[0], Math.max(Number(event.target.value), value[0])])
         }
         className="w-full accent-[var(--c-accent)]"
-        aria-label="max"
+        aria-label={t('ui.filters.range.max')}
       />
     </div>
   );

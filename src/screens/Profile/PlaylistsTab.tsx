@@ -137,7 +137,9 @@ export default function PlaylistsTab() {
                   <span className="line-clamp-2 text-xs text-ink">{playlist.title}</span>
                   <span className="num mt-1 block truncate text-[11px] text-ink-faint">
                     {catalog.providers[playlist.providerId]?.title ?? playlist.channelTitle} ·{' '}
-                    {formatHours(hoursFromSeconds(playlist.totalSeconds))} ч
+                    {t('ui.playlist.hours', {
+                      n: formatHours(hoursFromSeconds(playlist.totalSeconds)),
+                    })}
                   </span>
                   {groupBy === 'provider' ? (
                     <span className="mt-1 block truncate text-[11px] text-accent">

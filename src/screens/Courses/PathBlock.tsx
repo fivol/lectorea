@@ -195,7 +195,9 @@ export default function PathBlock({ course, search, outsideFilter }: Props) {
                         style={{ color: domain ? inkOn(domain.color, scheme) : undefined }}
                         title={new Intl.NumberFormat(lang).format(step.hours)}
                       >
-                        {step.hours ? `${formatHours(step.hours)} ч` : ''}
+                        {step.hours
+                          ? t('ui.playlist.hours', { n: formatHours(step.hours) })
+                          : ''}
                       </span>
                     )}
                   </Link>
