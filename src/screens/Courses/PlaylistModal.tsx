@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import type { BuiltPlaylist } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
+import { courseHref, useCatalogParams } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import { Button, ButtonLink, IconButton } from '@/components/ui';
@@ -19,6 +21,7 @@ type Props = {
 export default function PlaylistModal({ playlist, onClose }: Props) {
   const { t, lang } = useT();
   const catalog = useCatalog();
+  const { search } = useCatalogParams();
 
   const watched = useProfile((state) => state.profile.playlists[playlist.id]?.watched ?? false);
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
@@ -47,6 +50,13 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
 
   const provider = catalog.providers[playlist.providerId];
   const course = catalog.courseById.get(playlist.courseId);
+  // The view behind the dialog, with the dialog itself taken out of it.
+  const courseSearch = useMemo(() => {
+    const query = new URLSearchParams(search);
+    query.delete('playlist');
+    const serialised = query.toString();
+    return serialised ? `?${serialised}` : '';
+  }, [search]);
   const poster = playlist.videos[0]?.id
     ? `https://i.ytimg.com/vi/${playlist.videos[0].id}/hqdefault.jpg`
     : null;
@@ -205,14 +215,21 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                     n: formatMinutes(playlist.medianSeconds),
                   })} · ${t(`ui.playlist.length.${playlist.lectureLength}`)}`}
                 />
-                <Fact
-                  label={t('ui.playlist.label.completeness')}
-                  value={t(`ui.playlist.completeness.${playlist.completeness}`)}
-                />
-                <Fact
-                  label={t('ui.playlist.label.kind')}
-                  value={t(`ui.playlist.kind.${playlist.kind}`)}
-                />
+                {/* «Полнота: неизвестна» is a line about the catalogue, not
+                    about the playlist: it costs a row and answers nothing. The
+                    unknown ones drop out, and the sheet is what is known. */}
+                {playlist.completeness === 'unknown' ? null : (
+                  <Fact
+                    label={t('ui.playlist.label.completeness')}
+                    value={t(`ui.playlist.completeness.${playlist.completeness}`)}
+                  />
+                )}
+                {playlist.kind === 'unknown' ? null : (
+                  <Fact
+                    label={t('ui.playlist.label.kind')}
+                    value={t(`ui.playlist.kind.${playlist.kind}`)}
+                  />
+                )}
                 <Fact
                   label={t('ui.playlist.label.captions')}
                   value={
@@ -252,10 +269,24 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                 </div>
               </div>
 
+              {/* The course is a link, not a caption: it is the one name in the
+                  dialog that leads somewhere, and the press means "put the
+                  panel back" — so it goes to the course with the playlist
+                  dropped from the query, which is exactly what closing does.
+                  `replace`, like the opening did, so the way back out of the
+                  dialog is still one press. */}
               {course ? (
                 <p className="mt-4 text-xs text-ink-faint">
                   {t('ui.playlist.forCourse')}:{' '}
-                  <span className="text-ink-dim">{t(`course.${course.id}.title`)}</span>
+                  <Link
+                    to={courseHref(course.id, courseSearch)}
+                    replace
+                    className="rounded text-ink-dim underline decoration-line underline-offset-2
+                               transition-colors duration-fast ease-out
+                               hover:text-accent hover:decoration-accent"
+                  >
+                    {t(`course.${course.id}.title`)}
+                  </Link>
                 </p>
               ) : null}
             </div>
