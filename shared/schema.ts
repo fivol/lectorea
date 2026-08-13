@@ -343,22 +343,25 @@ export const ProfileSchema = z.object({
        */
       maxStage: Stage.nullable().default(null),
       /**
-       * Whether the panel opens with the course's links and path unfolded.
+       * Whether the phone sheet opens with the course's links and path
+       * unfolded. Closed to start with: the sheet is opened to find something
+       * to watch, and three sections of neighbouring courses used to stand
+       * between its first screen and the playlists. One answer for every
+       * course, so the fold is not re-argued on each one — and none of this
+       * reaches the wide panel, which has the height and never folds.
        *
-       * `auto` reads the screen: a phone sheet is opened to find something to
-       * watch, and three sections of neighbouring courses used to stand between
-       * its first screen and the playlists; a wide panel has the room, so there
-       * the structure stays in sight. Touching the block at all replaces the
-       * guess with an answer, and that answer holds everywhere afterwards.
+       * `catch` rather than `default`, like `lang`: a value this build no
+       * longer knows must not fail the parse and cost the reader every mark in
+       * the profile over one string.
        */
-      panelLinks: z.enum(['auto', 'open', 'closed']).default('auto'),
+      panelLinks: z.enum(['open', 'closed']).catch('closed'),
     })
     .default({
       lang: 'ru',
       theme: 'auto',
       splitRatio: 0.62,
       maxStage: null,
-      panelLinks: 'auto',
+      panelLinks: 'closed',
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;

@@ -9,6 +9,7 @@ import { courseHref } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
+import ProgressBar from '@/components/ProgressBar';
 import { Button } from '@/components/ui';
 import { StatusMark } from './CourseMarks';
 
@@ -16,27 +17,28 @@ type Props = {
   course: BuiltCourse;
   /** The path itself, worked out by `LinksBlock`: the closure, then the goal. */
   steps: BuiltCourse[];
-  doneCount: number;
   totalHours: number;
   search: string;
   /** Path courses that the active domain filter would otherwise hide. */
   outsideFilter: number;
+  /** Cap the list and let it scroll — see `LinksBlock`. */
+  capped: boolean;
 };
 
 /**
  * The path to a course: the full transitive `deps` closure, ordered by level,
- * which is a correct order to study them in. Folded inside a block that is
- * itself foldable, because the summary line answers the question most of the
- * way — the total hours are the most motivating and most sobering figure on the
- * site — and the twelve steps under it are a plan, read once.
+ * which is a correct order to study them in. Folded, because the summary line
+ * answers the question most of the way — the total hours are the most
+ * motivating and most sobering figure on the site — and the twelve steps under
+ * it are a plan, read once.
  */
 export default function PathBlock({
   course,
   steps,
-  doneCount,
   totalHours,
   search,
   outsideFilter,
+  capped,
 }: Props) {
   const scheme = useResolvedTheme();
   const catalog = useCatalog();
@@ -48,6 +50,11 @@ export default function PathBlock({
   const [open, setOpen] = useState(false);
   const [hideDone, setHideDone] = useState(false);
   const [exportState, setExportState] = useState<'idle' | 'working' | 'done'>('idle');
+
+  const doneCount = steps.filter((step) => profile.courses[step.id]?.status === 'done').length;
+  const remainingHours = steps
+    .filter((step) => profile.courses[step.id]?.status !== 'done')
+    .reduce((sum, step) => sum + step.hours, 0);
 
   const exportPlan = async (): Promise<void> => {
     setExportState('working');
@@ -111,85 +118,112 @@ export default function PathBlock({
         </span>
       </button>
 
-      <div className="collapse" data-open={open}>
+      {/* Outside the fold, and only once there is progress to show: how much of
+          the path is done is the one thing worth seeing without opening it,
+          while an empty bar over «0 из 7» is forty pixels saying the same as
+          the line above. */}
+      {doneCount ? (
         <div className="pt-2">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-faint">
-              <input
-                type="checkbox"
-                checked={hideDone}
-                onChange={(event) => setHideDone(event.target.checked)}
-                className="accent-[var(--c-accent)]"
-              />
-              {t('ui.path.hideDone')}
-            </label>
-            <Button
-              variant="ghost"
-              small
-              icon="download"
-              iconSize={13}
-              onClick={exportPlan}
-              disabled={exportState === 'working'}
+          <ProgressBar
+            done={doneCount}
+            total={steps.length}
+            label={t('ui.profile.progress', { done: doneCount, total: steps.length })}
+          />
+          <p className="num mt-1 text-[11px] text-ink-faint">
+            {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
+          </p>
+        </div>
+      ) : null}
+
+      {/* The padding sits inside the collapsing box rather than on it: `0fr`
+          closes the content, and padding on the row itself stays behind. */}
+      <div className="collapse" data-open={open}>
+        <div>
+          <div className="pt-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-faint">
+                <input
+                  type="checkbox"
+                  checked={hideDone}
+                  onChange={(event) => setHideDone(event.target.checked)}
+                  className="accent-[var(--c-accent)]"
+                />
+                {t('ui.path.hideDone')}
+              </label>
+              <Button
+                variant="ghost"
+                small
+                icon="download"
+                iconSize={13}
+                onClick={exportPlan}
+                disabled={exportState === 'working'}
+              >
+                {exportState === 'done' ? t('ui.common.copied') : t('ui.path.export')}
+              </Button>
+            </div>
+
+            {outsideFilter ? (
+              <p className="mb-2 text-xs text-ink-faint">{t('ui.path.breaksFilter')}</p>
+            ) : null}
+
+            <ol
+              className={`space-y-0.5 ${
+                capped ? 'max-h-[11rem] overflow-y-auto overscroll-contain pr-1' : ''
+              }`}
             >
-              {exportState === 'done' ? t('ui.common.copied') : t('ui.path.export')}
-            </Button>
-          </div>
+              {steps.map((step, index) => {
+                const status = profile.courses[step.id]?.status ?? null;
+                const isGoal = step.id === course.id;
+                if (hideDone && status === 'done' && !isGoal) return null;
+                const domain = catalog.domainById.get(step.domains[0]);
 
-          {outsideFilter ? (
-            <p className="mb-2 text-xs text-ink-faint">{t('ui.path.breaksFilter')}</p>
-          ) : null}
-
-          <ol className="space-y-0.5">
-            {steps.map((step, index) => {
-              const status = profile.courses[step.id]?.status ?? null;
-              const isGoal = step.id === course.id;
-              if (hideDone && status === 'done' && !isGoal) return null;
-              const domain = catalog.domainById.get(step.domains[0]);
-
-              return (
-                <li key={step.id}>
-                  <Link
-                    to={courseHref(step.id, search)}
-                    onMouseEnter={() => setEcho(step.id)}
-                    onMouseLeave={() => setEcho(null)}
-                    onClick={() => requestFocus(step.id)}
-                    className={`flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-surface-2
-                                ${status === 'done' ? 'text-ink-faint' : 'text-ink-dim'}
-                                ${isGoal ? 'font-semibold text-ink' : ''}`}
-                  >
-                    <span className="num w-5 shrink-0 text-right text-xs text-ink-faint">
-                      {index + 1}.
-                    </span>
-                    <span className="min-w-0 flex-1 truncate">
-                      {t(`course.${step.id}.title`)}
-                    </span>
-                    {/* The same plate the cards wear, on the same side as the
-                        hours: a state worth marking says itself in a word, and
-                        an untouched step says it by carrying no mark at all.
-                        Four dots in a column, told apart by colour and by a
-                        tooltip that a phone never shows, said none of that. */}
-                    {status ? <StatusMark status={status} /> : null}
-                    {isGoal ? (
-                      <span className="shrink-0 text-[11px] text-accent">← {t('ui.path.goal')}</span>
-                    ) : (
-                      <span
-                        className="num shrink-0 text-[11px]"
-                        // Text, so the field's hue is taken at reading strength:
-                        // a biome ramp runs from basalt to chalk and both ends
-                        // vanish into one scheme or the other.
-                        style={{ color: domain ? inkOn(domain.color, scheme) : undefined }}
-                        title={new Intl.NumberFormat(lang).format(step.hours)}
-                      >
-                        {step.hours
-                          ? t('ui.playlist.hours', { n: formatHours(step.hours) })
-                          : ''}
+                return (
+                  <li key={step.id}>
+                    <Link
+                      to={courseHref(step.id, search)}
+                      onMouseEnter={() => setEcho(step.id)}
+                      onMouseLeave={() => setEcho(null)}
+                      onClick={() => requestFocus(step.id)}
+                      className={`flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-surface-2
+                                  ${status === 'done' ? 'text-ink-faint' : 'text-ink-dim'}
+                                  ${isGoal ? 'font-semibold text-ink' : ''}`}
+                    >
+                      <span className="num w-5 shrink-0 text-right text-xs text-ink-faint">
+                        {index + 1}.
                       </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
+                      <span className="min-w-0 flex-1 truncate">
+                        {t(`course.${step.id}.title`)}
+                      </span>
+                      {/* The same plate the cards wear, on the same side as the
+                          hours: a state worth marking says itself in a word, and
+                          an untouched step says it by carrying no mark at all.
+                          Four dots in a column, told apart by colour and by a
+                          tooltip that a phone never shows, said none of that. */}
+                      {status ? <StatusMark status={status} /> : null}
+                      {isGoal ? (
+                        <span className="shrink-0 text-[11px] text-accent">
+                          ← {t('ui.path.goal')}
+                        </span>
+                      ) : (
+                        <span
+                          className="num shrink-0 text-[11px]"
+                          // Text, so the field's hue is taken at reading strength:
+                          // a biome ramp runs from basalt to chalk and both ends
+                          // vanish into one scheme or the other.
+                          style={{ color: domain ? inkOn(domain.color, scheme) : undefined }}
+                          title={new Intl.NumberFormat(lang).format(step.hours)}
+                        >
+                          {step.hours
+                            ? t('ui.playlist.hours', { n: formatHours(step.hours) })
+                            : ''}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         </div>
       </div>
     </div>

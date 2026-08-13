@@ -6,7 +6,6 @@ import { formatHours } from '@/lib/format';
 import { useIsMobile } from '@/lib/hooks';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
-import ProgressBar from '@/components/ProgressBar';
 import CourseLinkCard from './CourseLinkCard';
 import PathBlock from './PathBlock';
 
@@ -19,18 +18,21 @@ type Props = {
 
 /**
  * Where the course sits: what it needs, what it opens up, and the whole path to
- * it — one block, folded.
+ * it.
  *
- * The three used to be three sections in a row, and on a phone they were 340 to
- * 460 pixels of neighbouring courses between the title and the playlists, which
- * are what the sheet is opened for. Folded they are one line, and the line
- * still carries the two things worth knowing without opening anything: which
- * course comes first, and how long the whole path is.
+ * On a phone the three of them were 340 to 460 pixels of neighbouring courses
+ * between the title and the playlists, which are what the sheet is opened for,
+ * so there they fold into one line — which course to start with, and what the
+ * whole path costs — and the fold is remembered for every course afterwards.
+ *
+ * A wide panel has the height, and a control that hides three headings behind a
+ * fourth is worth less there than the headings: nothing folds, and the lists cap
+ * their height and scroll instead, so a course that opens eight others cannot
+ * push the playlists off the screen either.
  *
  * The two directions of one relation stay adjacent and keep their mirrored
- * headings — "what has to come first" and "what this opens up" are the same
- * edge read from both ends. The full chain follows the pair rather than
- * splitting it.
+ * headings — "what has to come first" and "what this opens up" are the same edge
+ * read from both ends. The full chain follows the pair rather than splitting it.
  */
 export default function LinksBlock({ course, search, outsideFilter }: Props) {
   const catalog = useCatalog();
@@ -44,17 +46,13 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
   const steps = useMemo(() => [...pathTo(catalog, course.id), course], [catalog, course]);
 
   const hasPath = steps.length > 1;
-  const doneCount = steps.filter((step) => courses[step.id]?.status === 'done').length;
   const totalHours = steps.reduce((sum, step) => sum + step.hours, 0);
-  const remainingHours = steps
-    .filter((step) => courses[step.id]?.status !== 'done')
-    .reduce((sum, step) => sum + step.hours, 0);
 
   // A course at the root of its field with nothing standing on it yet has no
   // structure to tell — heading, summary line and all would say only that.
   if (!course.deps.length && !unlocks.length) return null;
 
-  const open = preference === 'auto' ? !isMobile : preference === 'open';
+  const open = preference === 'open';
 
   // The two halves of the folded line: where to start — the one thing in the
   // block anybody acts on — and what the whole thing costs. A course nothing is
@@ -80,6 +78,62 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
       ? t('ui.links.opens', { courses: count(unlocks.length, 'course') })
       : null;
 
+  /**
+   * The lists, capped on a wide panel.
+   *
+   * Two rows of cards and six steps are enough to read the shape of a chain;
+   * past that the scroll belongs to the list rather than to the panel, or a
+   * course with eight sequels pushes its own recordings out of sight. The cap
+   * is only for the panel: an inner scrollport inside the phone sheet is a
+   * gesture fighting the sheet's own drag.
+   */
+  const capCards = isMobile ? '' : 'max-h-36 overflow-y-auto overscroll-contain pr-1';
+
+  const content = (
+    <>
+      {course.deps.length ? (
+        <div>
+          <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
+          <ul className={`grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
+            {course.deps.map((id) => (
+              <li key={id}>
+                <CourseLinkCard courseId={id} search={search} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {unlocks.length ? (
+        <div>
+          <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
+          <ul className={`grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
+            {unlocks.map((step) => (
+              <li key={step.id}>
+                <CourseLinkCard courseId={step.id} search={search} behind={step.behind} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {hasPath ? (
+        <PathBlock
+          course={course}
+          steps={steps}
+          totalHours={totalHours}
+          search={search}
+          outsideFilter={outsideFilter}
+          capped={!isMobile}
+        />
+      ) : null}
+    </>
+  );
+
+  if (!isMobile) {
+    return <section className="space-y-4 border-t border-line px-4 py-4">{content}</section>;
+  }
+
   return (
     <section className="border-t border-line">
       <button
@@ -102,74 +156,27 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           <span className="block font-medium">
             {hasPath ? t('ui.links.title') : t('ui.links.titleNoPath')}
           </span>
-          {/* Under the heading rather than after it, and only while folded:
-              opened, every part of this line is a heading two lines below it,
-              and the same numbers would be on screen twice. */}
-          {open ? null : (
-            <span className="mt-0.5 block text-xs text-ink-dim">
+          {/* The line rolls up as the block rolls down, over the same duration:
+              dropping it the moment the fold opens made one movement look like
+              two, the text going first and the height following it. */}
+          {/* No `block` here: it would win over the grid display the fold is
+              made of, and the line would sit there invisible at full height. */}
+          <span className="collapse" data-open={!open}>
+            <span className="block text-xs text-ink-dim">
               {first}
               {first && figure ? ' · ' : null}
               {figure ? <span className="num">{figure}</span> : null}
             </span>
-          )}
+          </span>
         </span>
       </button>
 
-      {/* Outside the fold, and only once there is progress to show: how much of
-          the path is done is the one thing worth seeing without opening
-          anything, while an empty bar over «0 из 7» is forty pixels saying the
-          same as the line above it. */}
-      {hasPath && doneCount ? (
-        <div className="px-4 pb-3">
-          <ProgressBar
-            done={doneCount}
-            total={steps.length}
-            label={t('ui.profile.progress', { done: doneCount, total: steps.length })}
-          />
-          <p className="num mt-1 text-[11px] text-ink-faint">
-            {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
-          </p>
-        </div>
-      ) : null}
-
+      {/* The padding is a wrapper in, not on the row that animates: a closed
+          fold is `0fr` of *content*, and 16 pixels of padding on the collapsing
+          box itself stay behind as a strip of empty section. */}
       <div className="collapse" data-open={open}>
-        <div className="space-y-4 px-4 pb-4">
-          {course.deps.length ? (
-            <div>
-              <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
-              <ul className="grid gap-1.5 sm:grid-cols-2">
-                {course.deps.map((id) => (
-                  <li key={id}>
-                    <CourseLinkCard courseId={id} search={search} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {unlocks.length ? (
-            <div>
-              <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
-              <ul className="grid gap-1.5 sm:grid-cols-2">
-                {unlocks.map((step) => (
-                  <li key={step.id}>
-                    <CourseLinkCard courseId={step.id} search={search} behind={step.behind} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {hasPath ? (
-            <PathBlock
-              course={course}
-              steps={steps}
-              doneCount={doneCount}
-              totalHours={totalHours}
-              search={search}
-              outsideFilter={outsideFilter}
-            />
-          ) : null}
+        <div>
+          <div className="space-y-4 px-4 pb-4">{content}</div>
         </div>
       </div>
     </section>
