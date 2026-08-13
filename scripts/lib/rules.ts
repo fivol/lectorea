@@ -34,19 +34,20 @@ const MIN_PHRASE = 4;
 /**
  * Longest phrases first: «теория вероятностей» must win over «вероятность»,
  * otherwise every probability course collapses into the same match.
+ *
+ * Every language at once, from `sources.courseNames` — a playlist is titled in
+ * the language its author speaks, not the one the build renders in.
  */
 export function buildKeywordIndex(sources: Sources): KeywordIndex {
   const index: KeywordIndex = [];
   for (const course of sources.courses) {
     const phrases = new Set<string>();
-    const title = sources.i18n[`course.${course.id}.title`];
     // Cleaned the same way titles are, and for the same reason `normalize` is
     // shared with the client: a keyword written «theory of computation» has to
     // survive the pass that takes «of» out of every title, or it stops matching
     // anything at all.
-    if (title) phrases.add(cleanTitle(title));
-    for (const keyword of sources.keywords[`course.${course.id}`] ?? []) {
-      phrases.add(cleanTitle(keyword));
+    for (const name of sources.courseNames.get(course.id) ?? []) {
+      phrases.add(cleanTitle(name));
     }
     for (const phrase of phrases) {
       if (phrase.length >= MIN_PHRASE) index.push({ courseId: course.id, phrase });
@@ -129,8 +130,50 @@ export function cleanSegments(raw: string): string[] {
   return text
     .split(SEGMENT)
     .map((segment) => normalize(segment ?? ''))
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((segment) => !DEPARTMENT.has(segment));
 }
+
+/**
+ * A faculty, not a subject.
+ *
+ * NPTEL and the archives that mirror it file every playlist under the
+ * department that recorded it — «Electronics - Linux Programming & Scripting»,
+ * «Ocean - Port and Harbour Structures» — so the label arrives as a clause of
+ * its own, exactly like the lecturer a comma introduces. Read as a subject it
+ * beats the real one: it covers its whole clause, so it scores like a title,
+ * while the course's actual name sits in the next clause where it may match
+ * nothing at all. Sixty-six playlists bound to `electrical-circuits` and
+ * `oceanography` this way, among them Linux scripting and harbour construction.
+ *
+ * Dropped rather than down-weighted, because a title that is *nothing but* a
+ * department label — «Physics», «Electronics» — is a topic bin, and the bar in
+ * docs/harvest.md refuses those on their own account.
+ */
+const DEPARTMENT = new Set([
+  'electronics',
+  'electrical',
+  'ocean',
+  'mechanical',
+  'civil',
+  'aerospace',
+  'metallurgy',
+  'mining',
+  'textile',
+  'agriculture',
+  'biotechnology',
+  'management',
+  'humanities',
+  'physics',
+  'chemistry',
+  'chemistry and bio-chemistry',
+  'mathematics',
+  'computer',
+  'computer sc',
+  'computer science and engineering',
+  'atmospheric science',
+  'engineering design',
+]);
 
 /* ──────────────────────────  Not-a-course filter  ───────────────────────── */
 
@@ -149,7 +192,7 @@ const NOT_A_COURSE: RegExp[] = [
   /(?<![\p{L}\p{N}])(?:shorts|шортс|нарезки|клипы)(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:олимпиад\p{L}*|вступительн\p{L}*|абитуриент\p{L}*|егэ|огэ)(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:день открытых дверей|дни открытых дверей|приемная кампания)(?![\p{L}\p{N}])/u,
-  /(?<![\p{L}\p{N}])(?:интервью|конференци\p{L}*|коллоквиум|colloquium|seminar series)(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:интервью|interviews?|конференци\p{L}*|коллоквиум|colloquium|seminar series)(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:recent videos|popular videos|все видео|новые видео|остальное)(?![\p{L}\p{N}])/u,
 
   // Entertainment. Until the wide seams of docs/harvest.md existed, every
@@ -288,6 +331,11 @@ function matchSegment(segment: string, index: KeywordIndex): RuleCandidate | nul
 }
 
 export function matchByRules(playlist: PlaylistRow, index: KeywordIndex): RuleCandidate | null {
+  // A seam queues a playlist before the metadata pass has reached it, so the
+  // title can still be missing — and a pass that binds by the title alone has
+  // nothing to say about a playlist that has none. The same null that stopped
+  // `videoQueueTiers` on 2026-08-12, one step further down the pipeline.
+  if (!playlist.title) return null;
   const segments = cleanSegments(playlist.title);
   if (!segments.length) return null;
   // Support material is refused on the whole title: «homework» can sit in a

@@ -178,15 +178,35 @@ crawler would read yesterday's spend and stop before it started.
 The most laborious step, and the one that does not fully automate. A cascade,
 cheapest first:
 
-1. **Rules** — regex over the playlist and channel title, plus the synonym
-   dictionary from `keywords/ru.json`. Confidence 0.9 on an exact match. When
-   two courses claim the same title the match is *declined*, not guessed — an
-   ambiguous case is exactly what a human should see
+1. **Rules** — regex over the playlist and channel title, plus the course names
+   and synonym dictionaries of **every** interface language. Confidence 0.9 on
+   an exact match. When two courses claim the same title the match is
+   *declined*, not guessed — an ambiguous case is exactly what a human should see
 2. **LLM** — title, description and the first five lecture names, in batches of
    20, with the instruction to pick one course or answer `none`. It is shown the
    rule's own below-threshold guesses too, and has to beat them to replace them
 3. **Manual review** — anything still below 0.75 goes into the queue for
    `pnpm data:review`, and what it decides is crawled first next time round
+
+**Every language at once, and why that is not obvious.** `loadSources(lang)`
+picks the language a build renders in, and for the rule pass that question has
+no answer: it reads titles written by whoever uploaded the playlist. Reading one
+dictionary — the Russian default — left every course whose English name nobody
+had happened to add to `keywords/en.json` unable to recognise itself. «Cognitive
+Psychology» knew only «когнитивная психология», so sixty lectures of MIT 9.35
+fell through to `psychology-intro`, which did have an English synonym, and
+`cognitive-psychology` stayed empty with its material already crawled and paid
+for. Nine courses came out of that hole the day the index learned both
+languages, without a unit of quota.
+
+The correction it forces: **`keywords/{lang}.json` is a search file, and search
+is allowed to be loose in a way matching is not.** «ocean», «feedback»,
+«interviews», «study design», «inheritance» are all good things to type into a
+search box and all bad things to bind a course by, because an exact hit on a
+whole clause scores like a title. Two shapes were worth a rule — a department
+label filed in front of the real subject («Electronics - Linux Programming», 66
+playlists) and the English half of the interview-and-colloquium refusal. The
+rest is word sense, which a substring cannot hold, and is pinned by hand.
 
 The review server shows one playlist at a time: the playlist on the left, course
 search and buttons on the right. Keyboard: `1`–`9` for the top suggestions, `n`

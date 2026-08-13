@@ -9,6 +9,7 @@ import {
   SourceDomainSchema,
   OverridesSchema,
   ProviderSchema,
+  UI_LANGS,
   type Channel,
   type Course,
   type Domain,
@@ -206,6 +207,7 @@ export type Sources = {
   overrides: Overrides;
   i18n: Record<string, string>;
   keywords: Record<string, string[]>;
+  courseNames: Map<string, string[]>;
 };
 
 export function loadSources(lang = 'ru'): Sources {
@@ -235,7 +237,39 @@ export function loadSources(lang = 'ru'): Sources {
     overrides,
     i18n,
     keywords,
+    courseNames: loadCourseNames(courses),
   };
+}
+
+/**
+ * Every name a course goes by, in every language the interface speaks.
+ *
+ * `lang` above picks the language a build renders in, and for the rule pass in
+ * `lib/rules.ts` that question has no answer: it reads titles written by
+ * whoever uploaded the playlist, and the crawl is mostly English while the
+ * default build is Russian. Reading one dictionary left every course whose
+ * English name nobody had happened to add to `keywords/en.json` unable to
+ * recognise itself — «Cognitive Psychology» knew only «когнитивная
+ * психология», so an English title fell through to whichever broader course
+ * did have an English synonym, and the specific course stayed empty with its
+ * material already on disk.
+ */
+function loadCourseNames(courses: Course[]): Map<string, string[]> {
+  const dictionaries = UI_LANGS.map((language) => ({
+    i18n: loadDictionary(language.id),
+    keywords: loadKeywords(language.id),
+  }));
+  const names = new Map<string, string[]>();
+  for (const course of courses) {
+    const collected = new Set<string>();
+    for (const { i18n, keywords } of dictionaries) {
+      const title = i18n[`course.${course.id}.title`];
+      if (title) collected.add(title);
+      for (const keyword of keywords[`course.${course.id}`] ?? []) collected.add(keyword);
+    }
+    names.set(course.id, [...collected]);
+  }
+  return names;
 }
 
 /**

@@ -1,5 +1,5 @@
 {
-  "_comment": "Search keywords. Morphology is solved here, by hand, not by a stemmer on the client. Titles are indexed automatically — this file only adds what a title does not contain: abbreviations, slang, spelling variants, alternative names. Keys are `{type}.{id}`.",
+  "_comment": "Search keywords. Morphology is solved here, by hand, not by a stemmer on the client. Titles are indexed automatically — this file only adds what a title does not contain: abbreviations, slang, spelling variants, alternative names. Keys are `{type}.{id}`. Read by the rule matcher in scripts/lib/rules.ts as well as by search, in every language at once: a phrase here can bind a playlist to this course on its own. Slang that is a different subject's ordinary word — «inheritance», «feedback» — costs a wrong binding, so add loose synonyms knowing they are load-bearing.",
 
   "domain.math": ["mathematics", "maths", "math", "pure maths"],
   "domain.logic": ["logic", "formal logic"],
