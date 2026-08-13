@@ -271,12 +271,7 @@ const PORTRAIT_OPENING = { width: 0.45, height: 0.47 };
  * the size of the room it had. The water is scenery — it may run off the edges,
  * and on most windows it should.
  */
-function planOf(
-  map: ParsedMap,
-  depth: number,
-  variant: MapVariant,
-  chrome: { bottom: number; right: number }
-): MapPlan {
+function planOf(map: ParsedMap, depth: number, variant: MapVariant): MapPlan {
   const land = map.landmasses;
   const x0 = Math.min(...land.map((mass) => mass.x));
   const y0 = Math.min(...land.map((mass) => mass.y));
@@ -312,15 +307,7 @@ function planOf(
             h: content.h * PORTRAIT_OPENING.height,
           }
         : content,
-    // Whatever else is floating over the map comes off the same budget: the
-    // drawing is fitted to the part of the window nothing is standing on, and
-    // the profile summary — a bar at the foot on a narrow window, a card in the
-    // corner on a wide one — is something standing on it.
-    inset: {
-      ...CHROME[variant],
-      bottom: CHROME[variant].bottom + chrome.bottom,
-      right: chrome.right,
-    },
+    inset: CHROME[variant],
   };
 }
 
@@ -358,10 +345,6 @@ type Props = {
    * about the shape of the window, and the screen is what the window is.
    */
   variant: MapVariant;
-  /** Extra pixels of floating chrome along the bottom edge, if any. */
-  bottomChrome?: number;
-  /** The same along the right-hand edge. */
-  rightChrome?: number;
 };
 
 type Emphasis = 'full' | 'dim';
@@ -371,14 +354,7 @@ type Emphasis = 'full' | 'dim';
  * is not in the graph — but it still yields to `prefers-reduced-motion`, which
  * leaves colour changes and drops the movement.
  */
-export default function MapView({
-  matched,
-  searchActive,
-  allowed,
-  variant,
-  bottomChrome = 0,
-  rightChrome = 0,
-}: Props) {
+export default function MapView({ matched, searchActive, allowed, variant }: Props) {
   const catalog = useCatalog();
   const navigate = useNavigate();
   const { t, count } = useT();
@@ -397,8 +373,8 @@ export default function MapView({
   /** How deep the cliffs are on the file that actually loaded. */
   const depth = map ? depthOf(map) : 0;
   const plan = useMemo(
-    () => (map ? planOf(map, depth, variant, { bottom: bottomChrome, right: rightChrome }) : null),
-    [map, depth, variant, bottomChrome, rightChrome]
+    () => (map ? planOf(map, depth, variant) : null),
+    [map, depth, variant]
   );
   const viewport = useMapViewport(plan);
 

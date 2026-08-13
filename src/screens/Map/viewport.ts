@@ -178,7 +178,7 @@ export type MapPlan = {
    * Bands of the window, in screen pixels, that the drawing passes under but
    * does not come to rest under — whatever floats over the map.
    */
-  inset: { top: number; bottom: number; right: number };
+  inset: { top: number; bottom: number };
 };
 
 export type MapViewport = {
@@ -297,16 +297,7 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
     if (!frame || !plan) return null;
     const top = plan.inset.top * frame.unit;
     const bottom = plan.inset.bottom * frame.unit;
-    // A column down the right-hand side, when something is floating there. The
-    // land moves off it rather than shrinking to fit whenever the window is the
-    // taller constraint, which on a wide screen it usually is.
-    const right = plan.inset.right * frame.unit;
-    return {
-      x: frame.x,
-      y: frame.y + top,
-      w: Math.max(frame.w - right, 1),
-      h: Math.max(frame.h - top - bottom, 1),
-    };
+    return { x: frame.x, y: frame.y + top, w: frame.w, h: Math.max(frame.h - top - bottom, 1) };
   }, [frame, plan]);
 
   const roomRef = useRef<typeof room>(null);

@@ -481,6 +481,19 @@ export const ProfileSchema = z.object({
       })
     )
     .default([]),
+  /**
+   * The days something was studied, as local `YYYY-MM-DD`, oldest first.
+   *
+   * A log rather than a counter, because the question people ask is "how many
+   * days in a row" and a counter cannot answer it after the fact. Nothing else
+   * in the profile can either: every `at` here is a *last* time — study the
+   * same playlist for ten days running and it records one date, which would
+   * make a streak counted from it a lie.
+   *
+   * Local dates, not UTC: a lecture watched at eleven at night in Moscow
+   * belongs to the day it felt like, not to the next one.
+   */
+  days: z.array(z.string()).default([]),
   settings: z
     .object({
       // `catch` rather than `default`: a profile carrying a language this build
@@ -533,6 +546,9 @@ export type VideoMark = Profile['videos'][string];
 
 /** Long enough to cover "what was that lecture last month", short enough to stay in localStorage. */
 export const RECENT_LIMIT = 60;
+
+/** Two years of study days is four kilobytes, and nobody counts a streak longer. */
+export const DAYS_LIMIT = 730;
 
 /**
  * The storage slot. Still says `v1` because it names the slot rather than the

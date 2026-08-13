@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { useMediaQuery } from '@/lib/hooks';
 import {
+  DAYS_LIMIT,
   migrateProfile,
   PROFILE_KEY,
   PROFILE_VERSION,
@@ -27,7 +28,36 @@ function emptyProfile(): Profile {
     playlists: {},
     videos: {},
     recent: [],
+    days: [],
   });
+}
+
+/**
+ * Today, where the reader is standing.
+ *
+ * Not `toISOString().slice(0, 10)`, which is UTC: a lecture watched at eleven
+ * at night in Moscow would be filed under tomorrow, and a streak would break on
+ * a day somebody did study.
+ */
+export function localDay(date = new Date()): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/**
+ * Marks today as a day of study.
+ *
+ * Called from the writes that mean somebody was actually working — a lecture
+ * ticked, a position recorded, a playlist opened, a course moved on — and from
+ * none of the others. Switching the theme is not a day of study, and a streak
+ * that could be kept alive by pressing the light switch would be worth nothing.
+ */
+function stampToday(draft: Profile): void {
+  const day = localDay();
+  if (draft.days[draft.days.length - 1] === day) return;
+  // Sorted and unique: the tail is the only place a new day can belong, but a
+  // profile merged from another machine can arrive with days out of order.
+  draft.days = [...new Set([...draft.days, day])].sort().slice(-DAYS_LIMIT);
 }
 
 export type LoadOutcome = 'ok' | 'empty' | 'unsupported-version' | 'corrupt';
@@ -173,7 +203,11 @@ export type ProfileStore = {
 const initial = readProfile();
 
 export const useProfile = create<ProfileStore>((set, get) => {
-  const update = (mutate: (draft: Profile) => void): void => {
+  /**
+   * Every write goes through here. `studied` says whether this one was somebody
+   * working rather than somebody tidying — see `stampToday`.
+   */
+  const update = (mutate: (draft: Profile) => void, studied = false): void => {
     const current = get().profile;
     const next: Profile = {
       ...current,
@@ -181,10 +215,12 @@ export const useProfile = create<ProfileStore>((set, get) => {
       playlists: { ...current.playlists },
       videos: { ...current.videos },
       recent: [...current.recent],
+      days: [...current.days],
       settings: { ...current.settings },
       updatedAt: new Date().toISOString(),
     };
     mutate(next);
+    if (studied) stampToday(next);
     persist(next, get().locked);
     set({ profile: next });
   };
@@ -201,7 +237,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
         manual: status !== null,
         at: new Date().toISOString(),
       };
-    });
+    }, true);
 
   return {
     profile: initial.profile,
@@ -243,7 +279,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
           at: new Date().toISOString(),
         };
         if (ctx) reconcileStatus(draft, ctx);
-      }),
+      }, true),
 
     togglePlaylistFavorite: (id) =>
       update((draft) => {
@@ -282,7 +318,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
         }
         touchPlaylist(draft, ctx, done ? videoIds[videoIds.length - 1] : undefined);
         reconcileStatus(draft, ctx);
-      }),
+      }, true),
 
     recordPosition: (videoId, sec, ctx) =>
       update((draft) => {
@@ -290,7 +326,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
         if (!draft.settings.resume) return;
         if (draft.videos[videoId]?.done) return;
         draft.videos[videoId] = { sec: Math.round(sec), done: false };
-      }),
+      }, true),
 
     /** Re-opening a playlist moves it to the top rather than adding a duplicate. */
     recordRecent: (entry) =>
@@ -299,7 +335,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
           { ...entry, at: new Date().toISOString() },
           ...draft.recent.filter((item) => item.id !== entry.id),
         ].slice(0, RECENT_LIMIT);
-      }),
+      }, true),
 
     removeRecent: (id) =>
       update((draft) => {
@@ -381,6 +417,12 @@ export const useProfile = create<ProfileStore>((set, get) => {
         draft.recent = [...byId.values()]
           .sort((a, b) => b.at.localeCompare(a.at))
           .slice(0, RECENT_LIMIT);
+
+        // A day studied on either machine is a day studied — the union, which
+        // is the only merge that cannot break a streak somebody really kept.
+        draft.days = [...new Set([...draft.days, ...incoming.days])]
+          .sort()
+          .slice(-DAYS_LIMIT);
       }),
 
     resetProfile: () => {

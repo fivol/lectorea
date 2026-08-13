@@ -82,34 +82,4 @@ export function useGoalsProgress(detailed = true): GoalProgress & { goals: numbe
   return { ...useGoalProgress(steps, detailed), goals: goals.length };
 }
 
-/** The goal closest to being finished — the one worth naming on the front page. */
-export function useNearestGoal(): (Goal & GoalProgress) | null {
-  const goals = useGoals();
-  const catalog = useCatalog();
-  const profile = useProfile((state) => state.profile);
-
-  return useMemo(() => {
-    let best: (Goal & GoalProgress) | null = null;
-    for (const goal of goals) {
-      const progress = pathProgress(
-        goal.steps,
-        (id) => profile.courses[id]?.status === 'done',
-        () => null
-      );
-      let remainingHours = 0;
-      for (const id of goal.steps) {
-        if (profile.courses[id]?.status === 'done') continue;
-        remainingHours += catalog.courseById.get(id)?.hours ?? 0;
-      }
-      // A goal already reached is no longer the thing to point at, and among
-      // the rest the nearest one is the one with the least left to do.
-      if (progress.done >= progress.total) continue;
-      if (!best || progress.fraction > best.progress.fraction) {
-        best = { ...goal, progress, remainingHours };
-      }
-    }
-    return best;
-  }, [goals, profile.courses, catalog]);
-}
-
 const EMPTY: string[] = [];

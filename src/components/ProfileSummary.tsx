@@ -1,40 +1,39 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
+import { useActivity } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
-import { useNearestGoal, type Goal, type GoalProgress } from '@/lib/goals';
-import { percent, useResumePointer, type ResumePointer } from '@/lib/progress';
+import { useResumePointer, type ResumePointer } from '@/lib/progress';
 import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from './Icon';
-import ProgressBar from './ProgressBar';
 import { Button } from './ui';
 
 /**
  * The profile, said in one card, on the front page.
  *
  * A catalogue's front page answers "what is there"; somebody who has been here
- * before is asking "where was I". That answer used to be two presses away
- * behind an avatar in the corner, which is a fine place for settings and a poor
- * one for the single thing a returning reader wants. So the corner button grows
- * into what it was standing for: the lecture that was playing, how much is
- * behind you, and how far the nearest goal is.
+ * before is asking "where was I", and that answer used to be two presses away
+ * behind an avatar in the corner. So the front page carries it: the lecture
+ * that was playing, and the three numbers that say whether the habit is alive.
  *
- * Nothing here costs a download. Everything on this card is already in the
- * profile or in the catalogue the page has loaded anyway — the playlist that
- * was open last, the lecture that was playing, the ticks, and the paths between
- * courses. The one thing the profile cannot know without the shards is how far
- * through that playlist somebody is, so the card does not claim to: it says
- * what you were watching and leaves the percentage to the panel, where the
- * files are worth fetching.
+ * Every number here is labelled with what it counts. A bare «27» over the word
+ * «лекций» is four different facts depending on who is reading it — watched,
+ * saved, available, left — and a dashboard nobody can read is decoration.
+ *
+ * Nothing on it costs a download. The playlist that was open last, the lecture
+ * that was playing, the ticks and the days of study are all in the profile
+ * already; the one thing it cannot know without the playlist shards is how far
+ * through that playlist somebody is, so it does not claim to. That number is in
+ * the panel, where the files are worth fetching.
  */
 
 export type Highlights = {
   resume: ResumePointer | null;
-  nearest: (Goal & GoalProgress) | null;
   lectures: number;
   coursesDone: number;
+  streak: number;
   /** Whether there is anything at all worth showing. */
   any: boolean;
 };
@@ -43,7 +42,7 @@ export function useHighlights(): Highlights {
   const catalog = useCatalog();
   const profile = useProfile((state) => state.profile);
   const resume = useResumePointer();
-  const nearest = useNearestGoal();
+  const activity = useActivity();
 
   const counts = useMemo(() => {
     let coursesDone = 0;
@@ -57,9 +56,9 @@ export function useHighlights(): Highlights {
 
   return {
     resume,
-    nearest,
+    streak: activity.streak,
     ...counts,
-    any: Boolean(resume || nearest || counts.coursesDone || counts.lectures),
+    any: Boolean(resume || counts.coursesDone || counts.lectures || activity.total),
   };
 }
 
@@ -79,9 +78,9 @@ export default function ProfileSummary({
 }
 
 /**
- * The full statement: over the map it floats as a plate in the corner the
- * profile button used to be in; over the list it is the first section of the
- * page. Same content either way — only the material under it changes.
+ * The full statement: over the map it floats as a plate in the corner; over the
+ * list it is the first section of the page. Same content either way — only the
+ * material under it changes.
  */
 function SummaryCard({
   highlights,
@@ -92,8 +91,8 @@ function SummaryCard({
   variant: Variant;
   className: string;
 }) {
-  const { t } = useT();
-  const { resume, nearest, lectures, coursesDone } = highlights;
+  const { t, plural } = useT();
+  const { resume, lectures, coursesDone, streak } = highlights;
   const openProfile = useUi((state) => state.openProfile);
   const floating = variant === 'card';
 
@@ -107,7 +106,15 @@ function SummaryCard({
           <Icon name="profile" size={14} />
         </span>
         <span className="mono-label truncate text-ink-dim">{t('ui.home.title')}</span>
-        <Button variant="ghost" small className="ml-auto shrink-0" onClick={openProfile}>
+        {/* A ghost is a word rather than a plate, so it carries no layout of its
+            own — and a chevron after the word needs one, or it drops to a line
+            of its own the moment the row is tight. */}
+        <Button
+          variant="ghost"
+          small
+          className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap"
+          onClick={openProfile}
+        >
           {t('ui.nav.profile')}
           <Icon name="chevron-right" size={12} />
         </Button>
@@ -117,21 +124,41 @@ function SummaryCard({
         {resume ? <ResumeButton resume={resume} className={floating ? '' : 'sm:flex-1'} /> : null}
 
         <div className={`flex items-stretch gap-2 ${floating ? '' : 'shrink-0'}`}>
-          <Tile value={lectures} label={t('ui.profile.stats.lectures')} />
-          <Tile value={coursesDone} label={t('ui.profile.stats.courses')} />
+          {/* Only once there is one. A «0 дней подряд» is a scolding, and the
+              first day of a habit is not the moment to deliver one. */}
+          {streak ? (
+            <Tile
+              value={streak}
+              label={t('ui.profile.stats.streak', { noun: plural(streak, 'day') })}
+            />
+          ) : null}
+          <Tile
+            value={lectures}
+            label={t('ui.profile.stats.lectures', { noun: plural(lectures, 'lecture') })}
+          />
+          <Tile
+            value={coursesDone}
+            label={t('ui.profile.stats.courses', { noun: plural(coursesDone, 'course') })}
+          />
         </div>
       </div>
-
-      {nearest ? <GoalRow goal={nearest} className="mt-2.5" /> : null}
     </div>
   );
 }
 
-/** The same thing in one row, for a window with no corner to spare. */
+/**
+ * The same thing in one row, for a window with no corner to spare.
+ *
+ * The lecture is the whole of the press: the profile has its own button in the
+ * header on every screen, and a bar that is mostly a picture of a lecturer
+ * should do the obvious thing when you put a thumb on it. The run of days rides
+ * along at the end — one number, the one that is about today — and it is the
+ * one part of the bar that opens the panel.
+ */
 function SummaryBar({ highlights, className }: { highlights: Highlights; className: string }) {
-  const { t, count } = useT();
+  const { t, count, plural } = useT();
   const catalog = useCatalog();
-  const { resume, nearest, lectures } = highlights;
+  const { resume, lectures, streak } = highlights;
   const openProfile = useUi((state) => state.openProfile);
   const openResume = useOpenResume();
 
@@ -148,8 +175,10 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
           <Icon name="profile" size={13} />
         </span>
         <span className="num truncate">
+          {streak
+            ? `${t('ui.home.streak', { n: streak, noun: plural(streak, 'day') })} · `
+            : ''}
           {count(lectures, 'lecture')}
-          {nearest ? ` · ${t('ui.home.toGoal', { n: percent(nearest.progress.fraction) })}` : ''}
         </span>
         <Icon name="chevron-right" size={12} className="shrink-0" />
       </button>
@@ -163,11 +192,11 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
       <button
         type="button"
         onClick={() => openResume(resume)}
-        className="flex min-w-0 items-center gap-2 rounded-full py-1 pl-1 pr-2 text-left
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-full py-1 pl-1 pr-2 text-left
                    transition-colors duration-fast ease-out hover:bg-surface-2"
       >
         <Thumbnail videoId={resume.lastVideoId} className="h-8 w-12 shrink-0" iconSize={11} />
-        <span className="min-w-0">
+        <span className="min-w-0 flex-1">
           <span className="block truncate text-xs font-semibold text-ink">
             {resume.entry.title}
           </span>
@@ -176,15 +205,20 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
           </span>
         </span>
       </button>
-      <span className="plate-divider" aria-hidden="true" />
-      <button
-        type="button"
-        onClick={openProfile}
-        aria-label={t('ui.nav.profile')}
-        className="plate-disc shrink-0"
-      >
-        <Icon name="profile" size={14} />
-      </button>
+      {streak ? (
+        <>
+          <span className="plate-divider" aria-hidden="true" />
+          <button
+            type="button"
+            onClick={openProfile}
+            aria-label={`${t('ui.profile.stats.streak')}: ${streak}`}
+            className="plate-disc num shrink-0 gap-0.5 px-2 text-xs"
+          >
+            <Icon name="flame" size={12} />
+            {streak}
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -200,7 +234,13 @@ function ResumeButton({ resume, className = '' }: { resume: ResumePointer; class
     <button
       type="button"
       onClick={() => openResume(resume)}
-      className={`group flex min-w-0 items-center gap-2.5 rounded-card p-1 text-left
+      /*
+        `w-full` is not decoration: a button sizes itself to its content even
+        when it is a block-level flex container, so without it the row grows to
+        the width of the lecture's title and the truncation below never fires —
+        which is exactly how the name ran off the edge of the card.
+      */
+      className={`group flex w-full min-w-0 items-center gap-2.5 rounded-card p-1 text-left
                   transition-colors duration-fast ease-out hover:bg-surface-2 ${className}`}
     >
       <Thumbnail videoId={resume.lastVideoId} className="h-11 w-[4.5rem] shrink-0" iconSize={13} />
@@ -213,39 +253,6 @@ function ResumeButton({ resume, className = '' }: { resume: ResumePointer; class
           {course ? t(`course.${course.id}.title`) : resume.entry.courseId}
         </span>
       </span>
-    </button>
-  );
-}
-
-function GoalRow({ goal, className = '' }: { goal: Goal & GoalProgress; className?: string }) {
-  const { t } = useT();
-  const navigate = useNavigate();
-  const sliceAround = useCourseSlice();
-
-  return (
-    <button
-      type="button"
-      onClick={() => navigate(courseHref(goal.course.id, sliceAround(goal.course.id)))}
-      className="block w-full rounded-card p-1 text-left transition-colors duration-fast ease-out
-                 hover:bg-surface-2"
-    >
-      <span className={`flex items-baseline gap-2 ${className}`}>
-        <span className="mono-label shrink-0 text-ink-faint">{t('ui.home.goal')}</span>
-        <span className="min-w-0 flex-1 truncate text-xs text-ink">
-          {t(`course.${goal.course.id}.title`)}
-        </span>
-      </span>
-      {/* Whole courses only. The part-finished one in hand is drawn in the
-          panel, where the playlists it is measured in have been fetched. */}
-      <ProgressBar
-        className="mt-1.5"
-        done={goal.progress.done}
-        total={goal.progress.total}
-        label={t('ui.profile.progress', {
-          done: goal.progress.done,
-          total: goal.progress.total,
-        })}
-      />
     </button>
   );
 }
@@ -281,7 +288,7 @@ function Thumbnail({
 function Tile({ value, label }: { value: number; label: string }) {
   return (
     <span
-      className="flex min-w-[3.75rem] flex-1 flex-col items-center justify-center gap-0.5
+      className="flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5
                  rounded-card border border-line px-2 py-1.5 text-center"
     >
       <span className="num text-h3 leading-none text-ink">{value}</span>

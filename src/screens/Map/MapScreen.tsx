@@ -4,7 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
-import { useIsMobile, useIsPortrait, useMediaQuery } from '@/lib/hooks';
+import { useIsMobile, useIsPortrait } from '@/lib/hooks';
 import { useMapView, useUi } from '@/store/ui';
 import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
@@ -17,10 +17,6 @@ import ProfileSummary, { useHighlights } from '@/components/ProfileSummary';
 import { Plate, PlateDivider } from '@/components/ui';
 import MapView, { MAP_SEA } from './MapView';
 import BlocksView from './BlocksView';
-
-/** What the summary takes off the drawing, in pixels — its own size plus its margin. */
-const SUMMARY_BAR_HEIGHT = 56;
-const SUMMARY_CARD_WIDTH = 336;
 
 export default function MapScreen() {
   const catalog = useCatalog();
@@ -53,18 +49,11 @@ export default function MapScreen() {
   /**
    * Whether the reader has a past here worth putting on the front page.
    *
-   * Over the map the summary floats and never leaves the screen, so the avatar
-   * in the corner would be a second door to the room you are already looking
-   * into — it goes. Over the list the summary is the first section of a page
-   * that scrolls, and the button is what stays behind when it has scrolled
-   * away, so it stays.
+   * The avatar stays in the corner either way. The summary is a shortcut into
+   * the profile, not a replacement for the door to it: two ways in cost nothing
+   * next to a reader looking for the button where it has always been.
    */
-  const highlights = useHighlights();
-  const showSummary = highlights.any && showMap;
-  // The corner card needs room for itself beside the search column; below that
-  // the summary is a bar at the foot of the screen, and the drawing has to be
-  // told, because it fits itself to whatever the chrome leaves.
-  const wideEnoughForCard = useMediaQuery('(min-width: 1280px)');
+  const showSummary = useHighlights().any && showMap;
 
   /**
    * Which drawing of the world the window is the right shape for.
@@ -137,12 +126,8 @@ export default function MapScreen() {
           <Plate row>
             <LangToggle />
             <ThemeToggle />
-            {showSummary ? null : (
-              <>
-                <PlateDivider />
-                <ProfileButton label />
-              </>
-            )}
+            <PlateDivider />
+            <ProfileButton label />
           </Plate>
         </div>
       </header>
@@ -225,8 +210,6 @@ export default function MapScreen() {
             matched={results.matchedDomains}
             searchActive={Boolean(query.trim())}
             allowed={allowed}
-            bottomChrome={showSummary && !wideEnoughForCard ? SUMMARY_BAR_HEIGHT : 0}
-            rightChrome={showSummary && wideEnoughForCard ? SUMMARY_CARD_WIDTH : 0}
           />
         ) : (
           <BlocksView

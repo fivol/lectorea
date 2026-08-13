@@ -31,6 +31,7 @@ export type IconName =
   | 'sun'
   | 'moon'
   | 'warning'
+  | 'flame'
   | 'help';
 
 /** One inline sprite instead of an icon package — twenty glyphs is not a dependency. */
@@ -62,10 +63,14 @@ const PATHS: Record<IconName, string> = {
   sun: 'M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4',
   moon: 'M21 13a8.5 8.5 0 01-10-10 8.5 8.5 0 1010 10z',
   warning: 'M12 4l9 16H3zM12 10v4m0 3v.5',
+  // A run of days. Solid rather than drawn in outline: it is printed at twelve
+  // pixels beside a number, and a 1.8px outline at that size is a smudge.
+  flame:
+    'M12 2.6c.6 2.8 2.3 4 3.5 5.5A6.7 6.7 0 0117 12.2a5 5 0 01-10 0c0-1.9.8-3.3 2-4.5.2 1.2.7 1.9 1.4 2.3.3-2.7.7-5 1.6-7.4z',
   help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.6 9.4a2.5 2.5 0 114 2.4c-.9.6-1.6 1-1.6 2.2m0 3v.4',
 };
 
-const FILLED: IconName[] = ['star-filled', 'play', 'half', 'grid'];
+const FILLED: IconName[] = ['star-filled', 'play', 'half', 'grid', 'flame'];
 
 export default function Icon({ name, className = '', size = 16 }: IconProps) {
   const filled = FILLED.includes(name);

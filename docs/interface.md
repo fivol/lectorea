@@ -76,27 +76,26 @@ names.
 
 A front page answers "what is there"; somebody who has been here before is
 asking "where was I", and that answer used to be two presses away behind an
-avatar in the corner. So for a reader with a past here the avatar grows into
-what it was standing for: the lecture that was playing, the lectures and courses
-behind them, and the nearest goal with the path to it. On a wide window it is a
-plate in the corner the avatar was in, on a narrower one a bar at the foot of
-the screen — where a thumb reaches it — and on the blocks list the first section
-of the page. The avatar goes only where the summary is on screen for good: over
-the list it scrolls away, so the button stays in the header behind it. A profile
-with nothing in it yet gets the plain button, as before.
+avatar in the corner. So for a reader with a past here the front page carries
+it: the lecture that was playing, and the three numbers that say whether the
+habit is alive — days in a row, lectures watched, courses done. On a wide window
+it is a plate in the corner, on a narrower one a bar at the foot of the screen
+— where a thumb reaches it — and on the blocks list the first section of the
+page. A profile with nothing in it yet shows none of it.
+
+The avatar stays in the header either way. The summary is a shortcut into the
+profile, not a replacement for the door to it, and two ways in cost nothing next
+to a reader looking for the button where it has always been.
 
 Nothing on it costs a download. The playlist that was open last, the lecture
-that was playing, the ticks and the paths between courses are all in the profile
-or in the catalogue the page has loaded anyway; the one thing it cannot know
-without the playlist shards is how far through that playlist somebody is, so it
-does not claim to. That number is in the panel, where the files are worth
-fetching.
+that was playing, the ticks and the days of study are all in the profile
+already; the one thing it cannot know without the playlist shards is how far
+through that playlist somebody is, so it does not claim to. That number is in
+the panel, where the files are worth fetching.
 
-Both shapes are chrome, and chrome comes off the same budget: the drawing is
-fitted to what nothing is standing on, so the card takes a column off the right
-of it and the bar a band off the bottom. On a wide window that usually moves the
-land rather than shrinking it — the fit is limited by the height there — which is
-why the continents slide left when the card appears.
+The drawing is not moved out of its way. Both shapes float over open water at
+the size the map opens at, and a card that made the continents shrink to avoid
+covering sea would be charging the whole map for a corner of it.
 
 ### Two shapes of paper
 
@@ -262,7 +261,23 @@ two, and the × or the dimmed list behind it to close.
   ![The path, expanded](images/path.webp)
 
 - **Playlists** — the concrete recordings of that course, sorted by a bayesian
-  rating rather than raw views. Filter by language, provider, lecturer, lecture
+  rating rather than raw views.
+
+  A row says four things, in four places. The **name** leads: the recording's
+  own title with everything the screen already says taken out of it — the course
+  name, the university, the lecturer, the term and the year — so what is left is
+  the part that tells this recording from the one under it, and the university
+  and lecturer follow it in a quieter grey. Roughly half the catalogue has no
+  name of its own once that is done, and those rows simply start with who
+  recorded them. Under it are the **facts**: year, language when the filter
+  admits more than one, how many lectures and how long they run — or, once you
+  have started, how much of each is behind you. Opening that line is the **type**
+  — «Подборка», «Семинары», «Полный курс» — which says what the thing is and
+  never how good it is. On the right is the **status**, which says only how the
+  numbers came out, and nothing about what the thing is. A finished playlist
+  wears a «Просмотрен» plate, the same one a finished course wears.
+
+  Filter by language, provider, lecturer, type, lecture
   length, captions, year, completeness; hide what you have watched. The language
   filter starts on the language of the interface and stays there even for a
   course that has nothing in it: rather than quietly dropping the filter, the
@@ -342,10 +357,25 @@ were looking for before you could look.
 
 So it reads top to bottom as the routine it describes:
 
-- **The numbers.** Hours watched, lectures behind you, courses finished — and
-  under them the path to everything you have marked as a goal, as one bar with
-  the hours still to spend beside it. Three of the four only ever go up, which
-  is the point: a shelf of goals on its own is a list of debts.
+- **The numbers.** Hours watched, lectures behind you, courses finished, days in
+  a row — then four weeks of days as a strip, and the path to everything marked
+  as a goal, as one bar with the hours still to spend beside it. Three of them
+  only ever go up, one says whether it is still happening, and only the bar has
+  somewhere to get to: a shelf of goals on its own is a list of debts, and
+  opening the panel to nothing but debts is why people stop opening it.
+
+  Each caption names what it counts and agrees with the number over it — «4
+  курса пройдено», not «4 курсов пройдено». A bare «27» over the word «лекций»
+  is four different facts depending on who is reading: watched, saved,
+  available, left.
+
+  The run of days is the one thing here the rest of the profile cannot answer.
+  Every other timestamp in it is a *last* time — study the same playlist for ten
+  days running and it records one date — so the days are logged as they happen,
+  in `profile.days`, by the writes that mean somebody was working. Switching the
+  theme is not a day of study, and a streak that could be kept alive by pressing
+  the light switch would be worth nothing. A run may end yesterday rather than
+  today: a day is not lost until it is over.
 - **Продолжить** — the last thing opened that is not finished, at the lecture
   and the second it was left at, one press away. The only card in the profile
   about right now; everything under it is a shelf of things decided at some

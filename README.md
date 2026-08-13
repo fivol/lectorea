@@ -93,7 +93,8 @@ that have died or been half-deleted are dropped automatically.
 the profile shows a progress bar along its whole path, how many hours are left,
 and a button that takes you to the next course you can actually start. Above
 them the profile opens on the numbers — hours watched, lectures behind you,
-courses finished, and the path to everything you have marked, as one bar.
+courses finished, days in a row and the last four weeks as a strip, then the
+path to everything you have marked, as one bar.
 
 **Progress down to the lecture.** Watch in the built-in player and it remembers
 the second you stopped at — the profile opens on **Продолжить**, which puts you
@@ -110,8 +111,9 @@ you — each shelf showing a handful and opening into the whole of itself withou
 leaving the profile.
 
 **The front page remembers you.** Come back and the map carries the lecture you
-stopped at, the lectures and courses behind you and how far the nearest goal is —
-one press to carry on, one to open the profile.
+stopped at and the three numbers that say whether the habit is alive — days in a
+row, lectures watched, courses done. One press to carry on, one to open the
+profile.
 
 **Your data is yours.** There is no account and no server: everything lives in
 your browser. The **Данные** tab exports it all as one JSON file and imports it

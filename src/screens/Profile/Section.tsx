@@ -34,7 +34,12 @@ export default function Section({ title, hint, count, onExpand, children }: Prop
           <span className="num text-xs text-ink-faint">{count}</span>
         ) : null}
         {onExpand ? (
-          <Button variant="ghost" small className="ml-auto" onClick={onExpand}>
+          <Button
+            variant="ghost"
+            small
+            className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap"
+            onClick={onExpand}
+          >
             {t('ui.profile.showAll')}
             <Icon name="chevron-right" size={12} />
           </Button>
