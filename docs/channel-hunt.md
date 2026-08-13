@@ -137,6 +137,63 @@ Sciences (304 long playlists, nearly all schools and workshops), Simons
 Institute, Isaac Newton Institute, Google DeepMind. These are the expensive end:
 a 300-video bin is six units to crawl and is never shown.
 
+## The second hunt, 2026-08-13 — starting from the empty courses
+
+The first hunt asked "which channels teach?". This one asked the question the
+catalogue can answer for itself: **which courses have nothing, and who filmed
+them?** Every course was counted, the list was cut at nought or one playlist,
+and that list — not a ranked list of channels — was the brief.
+
+Two sources, and the difference between them is the finding.
+
+**Web search against the holes.** Five parallel searches, one per group of
+fields, each told the bar and the courses it had to fill. 103 candidates, and
+**all 103 resolved against the API** — no invented handles, which is what makes
+this shape of search worth repeating. The best of them fill zeros nothing else
+could: `@oer-vlc` (Handke's Marburg unit grid) covers morphology, historical
+linguistics, typology and corpus linguistics on its own; Николай Поселягин
+brings поэтика, Максим Жук античную литературу, Иван Соколов историю музыки,
+`@ibivubioinformatics3199` publishes playlists literally named for the two empty
+bioinformatics courses.
+
+**The cache, asked who it already knows.** A channel whose playlists keep
+binding to courses but which has never been crawled whole is a hole in
+`channels.yaml`, and the `matches` table names them for nothing. 160 such
+channels; **34 survived**. That ratio is the lesson — the cache is a good
+detector and a bad judge, because a mirror binds exactly as well as a source.
+
+129 channels added, taking the file from 136 to 265, and 3210 playlists for 321
+units of quota.
+
+### What this hunt refused
+
+Beyond the categories above, which held:
+
+**Aggregate playlists wearing a professor's name.** Gresham College — 381
+playlists, 96 of them past ten videos, and the ten-plus ones are *everything
+this professor ever gave*, across topics and years. A bin by lecturer is still a
+bin. Same reasoning retired History of Philosophy Without Any Gaps: 505 episodes
+in one playlist is a life's work, not a semester.
+
+**One playlist per chapter.** Andrew Carnie's own companion videos to his syntax
+textbook, 21 playlists, one per chapter. Every one would bind to `syntax`, and
+the course would show twenty-one entries that are each a fortieth of a course.
+The unit the catalogue publishes is the semester; a channel that is shaped
+smaller than that cannot be taken whole.
+
+**Tutorial farms.** TutorialsPoint, Simplilearn, CosmoLearning — hundreds of
+course-shaped playlists, and the courses are either re-hosted or the channel is
+a shop window. Refused for the mirror reason, at ten times the volume.
+
+### Courses with nothing on YouTube at all
+
+Reported so the next hunt does not spend a day rediscovering it: **bioethics**,
+**field archaeology** and **ethnomusicology** have no channel that clears the
+bar in either language — the courses exist, on university LMS pages and OCW text
+sites, not as video. **Typology** rests entirely on one unit of `@oer-vlc`, and
+**celestial mechanics** on one Лекториум course already crawled. Russian-language
+quantum chemistry, ТОЭ and ТАУ have single recordings but no channel.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this
@@ -144,6 +201,13 @@ used; they take a file of handles or ids and print the numbers above. Neither is
 wired into `pnpm` — a channel hunt happens once or twice a year, and the useful
 half of it is the judgement, not the script.
 
-The obvious next seam is the same trick applied to `data/overrides.yaml`: every
-playlist a human has bound by hand names a channel, and a channel that keeps
-turning up in reviewed decisions and is not in `channels.yaml` is a hole in it.
+The method that worked twice now: **count the holes first, and let the empty
+courses write the brief.** A ranked list of channels answers a question nobody
+asked; a list of courses with nought playlists is a search anyone can run.
+
+The seam still unspent is `data/overrides.yaml`: every playlist a human has
+bound by hand names a channel, and a channel that keeps turning up in reviewed
+decisions and is not in `channels.yaml` is a hole in it. The 2026-08-13 hunt
+used the whole `matches` table rather than the reviewed rows alone, which is the
+same trick with a worse signal-to-noise ratio — 34 of 160 — so the narrower
+version is still worth running.

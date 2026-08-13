@@ -581,3 +581,497 @@
 - id: unknown
   title: Прочие каналы
   type: individual
+
+# ─────────────────  Added by the hunt of 2026-08-13  ─────────────────
+
+- id: jeffhanson
+  title: Jeff Hanson
+  type: individual
+
+- id: andreyk
+  title: Andrey K
+  type: individual
+
+- id: atmosphericsciences
+  title: ATMOSPHERIC SCIENCES
+  type: individual
+
+- id: alanisbusinessacademy
+  title: Alanis Business Academy
+  type: platform
+
+- id: alphawithangela
+  title: Alpha with Angela
+  type: individual
+
+- id: anatomyzone
+  title: AnatomyZone
+  type: individual
+
+- id: arthistory101
+  title: Art History 101
+  type: individual
+
+- id: azelinguistics
+  title: Aze Linguistics
+  type: individual
+
+- id: bioinformagician
+  title: Bioinformagician
+  type: individual
+
+- id: cormedicale
+  title: Cor Medicale
+  type: individual
+
+- id: corpuslinganalysis
+  title: CorpusLingAnalysis
+  type: individual
+
+- id: drmattdrmike
+  title: Dr Matt & Dr Mike
+  type: individual
+
+- id: emblseuropeanbioinformat
+  title: 'EMBL''s European Bioinformatics Institute EMBL-EBI'
+  type: platform
+
+- id: earthrocks
+  title: Earth Rocks!
+  type: individual
+
+- id: geogirl
+  title: GEO GIRL
+  type: individual
+
+- id: nickzentner
+  title: Nick Zentner
+  type: individual
+
+- id: grahamrgibbs
+  title: Graham R Gibbs
+  type: individual
+
+- id: gregorybsadlerthatphilos
+  title: Gregory B. Sadler - That Philosophy Guy
+  type: individual
+
+- id: introductiontosociology
+  title: Introduction to Sociology
+  type: individual
+
+- id: jacobgran
+  title: Jacob Gran
+  type: individual
+
+- id: jasonkendall
+  title: Jason Kendall
+  type: individual
+
+- id: profjeremypatrich
+  title: Prof. Jeremy Patrich
+  type: individual
+
+- id: ucm0rwuqxalaw0lpwzrug2mq
+  title: Юлия Казанцева | Классика для всех
+  type: individual
+
+- id: justineloriaga
+  title: Justin Eloriaga
+  type: individual
+
+- id: kevinahernsyoutubevideos
+  title: 'Kevin Ahern''s YouTube Videos - Lectures and More'
+  type: individual
+
+- id: lawshelf
+  title: LawShelf
+  type: platform
+
+- id: drscottmasson
+  title: Dr Scott Masson
+  type: individual
+
+- id: ucbdsvnsogblcxggkc6ja
+  title: Наталия Лобачёва
+  type: individual
+
+- id: martinhilpert
+  title: Martin Hilpert
+  type: individual
+
+- id: uc2fahnqj3dmzzcpfng7f7a
+  title: Роман Мельниченко
+  type: individual
+
+- id: michaelrossipolisci
+  title: Michael Rossi Poli Sci
+  type: individual
+
+- id: uc125khsnygkqlonapderxpq
+  title: Николай Поселягин
+  type: individual
+
+- id: ninjanerd
+  title: Ninja Nerd
+  type: individual
+
+- id: danielbonevac
+  title: Daniel Bonevac
+  type: individual
+
+- id: psychexamreview
+  title: PsychExamReview
+  type: individual
+
+- id: qiime2
+  title: QIIME 2
+  type: platform
+
+- id: ryanmreeves
+  title: Ryan M Reeves
+  type: individual
+
+- id: samwebster
+  title: Sam Webster
+  type: individual
+
+- id: scorpiomartianus
+  title: ScorpioMartianus
+  type: individual
+
+- id: socialsciencesuva
+  title: Social Sciences - UvA
+  type: university
+
+- id: tmpchem
+  title: TMP Chem
+  type: individual
+
+- id: thecenterforhellenicstud
+  title: The Center for Hellenic Studies
+  type: university
+
+- id: themastersseminary
+  title: 'The Master''s Seminary'
+  type: university
+
+- id: trevtutor
+  title: TrevTutor
+  type: individual
+
+- id: ucimedia
+  title: UCI Media
+  type: university
+
+- id: washingtondeceit
+  title: WashingtonDeceit
+  type: individual
+
+- id: wrathofmath
+  title: Wrath of Math
+  type: individual
+
+- id: uceuxja5hj8t7yjpwpdo7zw
+  title: Максим Жук
+  type: individual
+
+- id: uc9mpm0xi9zxdktho6jhlypa
+  title: Уроки древнегреческого и латыни
+  type: individual
+
+- id: ucee8jg202ef0nqirjx9dja
+  title: Лекции А.Б. Зубова
+  type: individual
+
+- id: artemchernikov
+  title: Artem Chernikov
+  type: individual
+
+- id: antoniomontalban
+  title: Antonio Montalban
+  type: individual
+
+- id: bioinformaticsalgorithms
+  title: 'Bioinformatics Algorithms: An Active Learning Approach'
+  type: individual
+
+- id: bioinformaticsdotca
+  title: Bioinformatics DotCa
+  type: platform
+
+- id: bioinformaticsinstitute
+  title: Bioinformatics Institute | Институт биоинформатики
+  type: university
+
+- id: briannebarker
+  title: Brianne Barker
+  type: individual
+
+- id: drahmadnaumanshahsaqib
+  title: Dr. Ahmad Nauman Shah Saqib
+  type: individual
+
+- id: drmaples
+  title: Dr. Maples
+  type: individual
+
+- id: michaelsugrue
+  title: Michael Sugrue
+  type: individual
+
+- id: uchllca92i1ttqvv5av3woqg
+  title: Александр Марков
+  type: individual
+
+- id: federicoardila
+  title: Federico Ardila
+  type: individual
+
+- id: filmmediastudies
+  title: Film & Media Studies
+  type: individual
+
+- id: frankvantubergen
+  title: Frank van Tubergen
+  type: individual
+
+- id: ibivubioinformatics
+  title: ibivu bioinformatics
+  type: university
+
+- id: introductiontobioinforma
+  title: Introduction to Bioinformatics by Arne Elofsson at Stockholm University
+  type: university
+
+- id: latinalevis
+  title: Latina Levis | Латынь легко
+  type: individual
+
+- id: latintutorial
+  title: latintutorial
+  type: individual
+
+- id: marcobenini
+  title: Marco Benini
+  type: individual
+
+- id: mathematicalmonk
+  title: mathematicalmonk
+  type: individual
+
+- id: frdnmatthewkeil
+  title: Fr. Dn. Matthew Keil
+  type: individual
+
+- id: michaelwesch
+  title: Michael Wesch
+  type: individual
+
+- id: nathanieljue
+  title: Nathaniel Jue
+  type: individual
+
+- id: nudigitalclassroom
+  title: NU Digital Classroom
+  type: university
+
+- id: thevirtuallinguisticsand
+  title: The Virtual Linguistics and Literature Campus
+  type: university
+
+- id: profnealsartappreciation
+  title: 'Prof. Neal''s Art Appreciation & Art History'
+  type: individual
+
+- id: pwncollege
+  title: pwn.college
+  type: platform
+
+- id: richardsouthwell
+  title: Richard Southwell
+  type: individual
+
+- id: sanbomics
+  title: Sanbomics
+  type: individual
+
+- id: sergeyfrolov
+  title: Sergey Frolov
+  type: individual
+
+- id: svenholbik
+  title: Sven Holbik
+  type: individual
+
+- id: thesociologyprofessor
+  title: The Sociology Professor
+  type: individual
+
+- id: understandingpsychologyw
+  title: Understanding Psychology with Dr. Daniel Kaplin
+  type: individual
+
+- id: benlambert
+  title: Ben Lambert
+  type: individual
+
+- id: allaboutelectronics
+  title: ALL ABOUT ELECTRONICS
+  type: individual
+
+- id: ictppostgraduatediplomap
+  title: ICTP Postgraduate Diploma Programme
+  type: university
+
+- id: eigenchris
+  title: eigenchris
+  type: individual
+
+- id: ucwei5e1wyi7neyydcw2uw
+  title: Иван СОКОЛОВ. Лекции о классической Музыке.
+  type: individual
+
+- id: isopromat
+  title: iSopromat
+  type: individual
+
+- id: immolandwerthterrajobst
+  title: Immo Landwerth (terrajobst)
+  type: individual
+
+- id: briandouglas
+  title: Brian Douglas
+  type: individual
+
+- id: iainexplainssignalssyste
+  title: Iain Explains Signals, Systems, and Digital Comms
+  type: individual
+
+- id: ucz6fcxucy3jxyuoh4uwesa
+  title: Онлайн-курсы Юрайт
+  type: platform
+
+- id: missouristateuniversity
+  title: Missouri State University
+  type: university
+
+- id: aswathdamodaran
+  title: Aswath Damodaran
+  type: individual
+
+- id: alexandermaloney
+  title: Alexander Maloney
+  type: individual
+
+- id: williamfiset
+  title: WilliamFiset
+  type: individual
+
+- id: cvutfel
+  title: CVUTFEL
+  type: university
+
+- id: mohitiyyer
+  title: Mohit Iyyer
+  type: individual
+
+- id: stefanharmeling
+  title: Stefan Harmeling
+  type: individual
+
+- id: freecodecamporg
+  title: freeCodeCamp.org
+  type: platform
+
+- id: minhyuksung
+  title: Minhyuk Sung
+  type: individual
+
+- id: berthuang
+  title: Bert Huang
+  type: individual
+
+- id: geoffgordon
+  title: Geoff Gordon
+  type: individual
+
+- id: seanmullery
+  title: Sean Mullery
+  type: individual
+
+- id: minyenkan
+  title: Min-Yen Kan
+  type: individual
+
+- id: kathrynsimone
+  title: Kathryn Simone
+  type: individual
+
+- id: metuopencourseware
+  title: METUOpenCourseWare
+  type: university
+
+- id: bartoszmilewski
+  title: Bartosz Milewski
+  type: individual
+
+- id: dimitribertsekas
+  title: Dimitri Bertsekas
+  type: individual
+
+- id: wolfganghuerst
+  title: Wolfgang Huerst
+  type: individual
+
+- id: gautamkamath
+  title: Gautam Kamath
+  type: individual
+
+- id: williamspaniel
+  title: William Spaniel
+  type: individual
+
+- id: smrutirsarangi
+  title: Smruti R. Sarangi
+  type: individual
+
+- id: intuitivemetrixbenelsner
+  title: Intuitive MetriX – Ben Elsner
+  type: individual
+
+- id: matthiasniessner
+  title: Matthias Niessner
+  type: individual
+
+- id: paderbornuniversitydepar
+  title: Paderborn University - Department LEA
+  type: university
+
+- id: hugolarochelle
+  title: Hugo Larochelle
+  type: individual
+
+- id: nathankutz
+  title: Nathan Kutz
+  type: individual
+
+- id: eddiewoo
+  title: Eddie Woo
+  type: individual
+
+- id: pranavbhounsule
+  title: Pranav Bhounsule
+  type: individual
+
+- id: gregoryfalkovich
+  title: Gregory Falkovich
+  type: individual
+
+- id: ghassanshobakicomputersc
+  title: Ghassan Shobaki Computer Science Lectures
+  type: individual
+
+- id: billkinney
+  title: Bill Kinney
+  type: individual

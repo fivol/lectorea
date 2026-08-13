@@ -144,6 +144,19 @@ The queue lives in the same SQLite file as the data, so it survives `kill -9`.
   is the normal end of the working day
 - **404 / 403 on a playlist** marks `alive = 0` and is never retried
 - **5xx** retries with backoff
+- **a `nextPageToken` that leads back to its own page** ends the walk. Some
+  playlists answer this way for ever, and nothing downstream notices: the same
+  fifty ids arrive again, the ids are deduplicated, and the loop spends a unit a
+  turn until the day is gone. Six of them took 54 000 units on 2026-08-13 —
+  eighteen thousand pages for a playlist of 32 videos — and two had been spinning
+  since the previous evening, which is where that day's quota went too. A token
+  already seen is therefore the end of the playlist, not its next page
+
+**The shape of that bug is worth remembering, because the quota hides it.** A
+crawl that spends its day and stops is indistinguishable from a crawl that
+worked, and every counter this pipeline prints agreed the day had been spent —
+only the ratio of units to playlists gave it away. Anything that loops per
+request wants a bound that does not depend on the API agreeing to end it.
 
 `raw_responses` keeps every API body verbatim. With a daily quota this is the
 difference between "fix the parser and re-run" and "fix the parser and wait

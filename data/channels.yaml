@@ -747,3 +747,656 @@
   title: 'Маткульт-привет!'
   providerId: savvateev
   lang: ru
+
+# ───────────────────  Hunt of 2026-08-13: the empty courses  ───────────────────
+#
+# Five parallel searches over the courses with nought or one playlist, plus the
+# channels the cache already knew: a channel whose playlists keep binding to a
+# course but which nobody had ever crawled whole. 263 candidates went through
+# scripts/_vet.ts and the API answered for every one; what survives here is what
+# its numbers justify. docs/channel-hunt.md records the refusals.
+
+- id: '@1234jhanson'
+  title: Jeff Hanson
+  providerId: jeffhanson
+  lang: en
+
+- id: '@AKLECTURES'
+  title: Andrey K
+  providerId: andreyk
+  lang: en
+
+- id: '@ATMOSPHERICSCIENCES'
+  title: ATMOSPHERIC SCIENCES
+  providerId: atmosphericsciences
+  lang: en
+
+- id: '@Alanisbusinessacademy'
+  title: Alanis Business Academy
+  providerId: alanisbusinessacademy
+  lang: en
+
+- id: '@AlphawithAngela'
+  title: Alpha with Angela
+  providerId: alphawithangela
+  lang: en
+
+- id: '@Anatomyzone'
+  title: AnatomyZone
+  providerId: anatomyzone
+  lang: en
+
+- id: '@ArtHistory101'
+  title: Art History 101
+  providerId: arthistory101
+  lang: en
+
+- id: '@AzeLinguistics'
+  title: Aze Linguistics
+  providerId: azelinguistics
+  lang: en
+
+- id: '@Bioinformagician'
+  title: Bioinformagician
+  providerId: bioinformagician
+  lang: en
+
+- id: '@CorMedicale'
+  title: Cor Medicale
+  providerId: cormedicale
+  lang: ru
+
+- id: '@CorpusLingAnalysis'
+  title: CorpusLingAnalysis
+  providerId: corpuslinganalysis
+  lang: en
+
+- id: '@DrMattDrMike'
+  title: Dr Matt & Dr Mike
+  providerId: drmattdrmike
+  lang: en
+
+- id: '@EMBL-EBI'
+  title: 'EMBL''s European Bioinformatics Institute EMBL-EBI'
+  providerId: emblseuropeanbioinformat
+  lang: en
+
+- id: '@EarthRocks'
+  title: Earth Rocks!
+  providerId: earthrocks
+  lang: en
+
+- id: '@GEOGIRL'
+  title: GEO GIRL
+  providerId: geogirl
+  lang: en
+
+- id: '@GeologyNick'
+  title: Nick Zentner
+  providerId: nickzentner
+  lang: en
+
+- id: '@GrahamRGibbs'
+  title: Graham R Gibbs
+  providerId: grahamrgibbs
+  lang: en
+
+- id: '@GregoryBSadler'
+  title: Gregory B. Sadler - That Philosophy Guy
+  providerId: gregorybsadlerthatphilos
+  lang: en
+
+- id: '@IntroductiontoSociologyChannel'
+  title: Introduction to Sociology
+  providerId: introductiontosociology
+  lang: en
+
+- id: '@JacobGran'
+  title: Jacob Gran
+  providerId: jacobgran
+  lang: en
+
+- id: '@JasonKendallAstronomer'
+  title: Jason Kendall
+  providerId: jasonkendall
+  lang: en
+
+- id: '@Jeremy.Patrich'
+  title: Prof. Jeremy Patrich
+  providerId: profjeremypatrich
+  lang: en
+
+- id: '@JuliaKazantseva'
+  title: Юлия Казанцева | Классика для всех
+  providerId: ucm0rwuqxalaw0lpwzrug2mq
+  lang: ru
+
+- id: '@JustinEloriaga'
+  title: Justin Eloriaga
+  providerId: justineloriaga
+  lang: en
+
+- id: '@KevinAhern'
+  title: 'Kevin Ahern''s YouTube Videos - Lectures and More'
+  providerId: kevinahernsyoutubevideos
+  lang: en
+
+- id: '@LawShelf'
+  title: LawShelf
+  providerId: lawshelf
+  lang: en
+
+- id: '@LitProf'
+  title: Dr Scott Masson
+  providerId: drscottmasson
+  lang: en
+
+- id: '@Loba4eva'
+  title: Наталия Лобачёва
+  providerId: ucbdsvnsogblcxggkc6ja
+  lang: ru
+
+- id: '@MartinHilpert'
+  title: Martin Hilpert
+  providerId: martinhilpert
+  lang: en
+
+- id: '@Melnichenkorg'
+  title: Роман Мельниченко
+  providerId: uc2fahnqj3dmzzcpfng7f7a
+  lang: ru
+
+- id: '@MichaelRossiPoliSci'
+  title: Michael Rossi Poli Sci
+  providerId: michaelrossipolisci
+  lang: en
+
+- id: '@Nikolay_Poselyagin'
+  title: Николай Поселягин
+  providerId: uc125khsnygkqlonapderxpq
+  lang: ru
+
+- id: '@NinjaNerdOfficial'
+  title: Ninja Nerd
+  providerId: ninjanerd
+  lang: en
+
+- id: '@PhiloofAlexandria'
+  title: Daniel Bonevac
+  providerId: danielbonevac
+  lang: en
+
+- id: '@PsychExamReview'
+  title: PsychExamReview
+  providerId: psychexamreview
+  lang: en
+
+- id: '@QIIME2'
+  title: QIIME 2
+  providerId: qiime2
+  lang: en
+
+- id: '@RyanReevesM'
+  title: Ryan M Reeves
+  providerId: ryanmreeves
+  lang: en
+
+- id: '@SamWebster'
+  title: Sam Webster
+  providerId: samwebster
+  lang: en
+
+- id: '@ScorpioMartianus'
+  title: ScorpioMartianus
+  providerId: scorpiomartianus
+  lang: en
+
+- id: '@SocialSciencesUvA'
+  title: Social Sciences - UvA
+  providerId: socialsciencesuva
+  lang: en
+
+- id: '@TMPChem'
+  title: TMP Chem
+  providerId: tmpchem
+  lang: en
+
+- id: '@TheCenterforHellenicStudies'
+  title: The Center for Hellenic Studies
+  providerId: thecenterforhellenicstud
+  lang: en
+
+- id: '@TheMastersSeminary'
+  title: 'The Master''s Seminary'
+  providerId: themastersseminary
+  lang: en
+
+- id: '@Trevtutor'
+  title: TrevTutor
+  providerId: trevtutor
+  lang: en
+
+- id: '@UCIMedia'
+  title: UCI Media
+  providerId: ucimedia
+  lang: en
+
+- id: '@UCLACourses'
+  title: UCLACourses
+  providerId: ucla
+  lang: en
+
+- id: '@UrbanHSE'
+  title: Высшая школа урбанистики имени А.А. Высоковского (Vysokovsky Graduate School of Urbanism)
+  providerId: hse
+  lang: ru
+
+- id: '@WashingtonDeceit'
+  title: WashingtonDeceit
+  providerId: washingtondeceit
+  lang: en
+
+- id: '@WrathofMath'
+  title: Wrath of Math
+  providerId: wrathofmath
+  lang: en
+
+- id: '@ZHUK-FM'
+  title: Максим Жук
+  providerId: uceuxja5hj8t7yjpwpdo7zw
+  lang: ru
+
+- id: '@ancientgreek2022'
+  title: Уроки древнегреческого и латыни
+  providerId: uc9mpm0xi9zxdktho6jhlypa
+  lang: ru
+
+- id: '@andreybzubov'
+  title: Лекции А.Б. Зубова
+  providerId: ucee8jg202ef0nqirjx9dja
+  lang: ru
+
+- id: '@archernikov'
+  title: Artem Chernikov
+  providerId: artemchernikov
+  lang: en
+
+- id: '@atonmontalban'
+  title: Antonio Montalban
+  providerId: antoniomontalban
+  lang: en
+
+- id: '@bioinfalgorithms'
+  title: 'Bioinformatics Algorithms: An Active Learning Approach'
+  providerId: bioinformaticsalgorithms
+  lang: en
+
+- id: '@bioinformaticsdotca'
+  title: Bioinformatics DotCa
+  providerId: bioinformaticsdotca
+  lang: en
+
+- id: '@bioinforussia'
+  title: Bioinformatics Institute | Институт биоинформатики
+  providerId: bioinformaticsinstitute
+  lang: ru
+
+- id: '@briannebarker7680'
+  title: Brianne Barker
+  providerId: briannebarker
+  lang: en
+
+- id: '@dr.ahmadnaumanshah'
+  title: Dr. Ahmad Nauman Shah Saqib
+  providerId: drahmadnaumanshahsaqib
+  lang: en
+
+- id: '@dr.maples'
+  title: Dr. Maples
+  providerId: drmaples
+  lang: en
+
+- id: '@dr.michaelsugrue'
+  title: Michael Sugrue
+  providerId: michaelsugrue
+  lang: en
+
+- id: '@evolution2markov'
+  title: Александр Марков
+  providerId: uchllca92i1ttqvv5av3woqg
+  lang: ru
+
+- id: '@federicoelmatematico'
+  title: Federico Ardila
+  providerId: federicoardila
+  lang: en
+
+- id: '@filmandmediastudieschannel'
+  title: Film & Media Studies
+  providerId: filmmediastudies
+  lang: en
+
+- id: '@frankvantubergen'
+  title: Frank van Tubergen
+  providerId: frankvantubergen
+  lang: en
+
+- id: '@ibivubioinformatics3199'
+  title: ibivu bioinformatics
+  providerId: ibivubioinformatics
+  lang: en
+
+- id: '@introductiontobioinformati9910'
+  title: Introduction to Bioinformatics by Arne Elofsson at Stockholm University
+  providerId: introductiontobioinforma
+  lang: en
+
+- id: '@latinalevis'
+  title: Latina Levis | Латынь легко
+  providerId: latinalevis
+  lang: ru
+
+- id: '@latintutorial'
+  title: latintutorial
+  providerId: latintutorial
+  lang: en
+
+- id: '@marcobenini1968'
+  title: Marco Benini
+  providerId: marcobenini
+  lang: en
+
+- id: '@mathematicalmonk'
+  title: mathematicalmonk
+  providerId: mathematicalmonk
+  lang: en
+
+- id: '@matthewadamkeil'
+  title: Fr. Dn. Matthew Keil
+  providerId: frdnmatthewkeil
+  lang: en
+
+- id: '@mwesch'
+  title: Michael Wesch
+  providerId: michaelwesch
+  lang: en
+
+- id: '@nathanieljue2315'
+  title: Nathaniel Jue
+  providerId: nathanieljue
+  lang: en
+
+- id: '@nudigitalclassroom'
+  title: NU Digital Classroom
+  providerId: nudigitalclassroom
+  lang: en
+
+- id: '@oer-vlc'
+  title: The Virtual Linguistics and Literature Campus
+  providerId: thevirtuallinguisticsand
+  lang: en
+
+- id: '@profnealart'
+  title: 'Prof. Neal''s Art Appreciation & Art History'
+  providerId: profnealsartappreciation
+  lang: en
+
+- id: '@pwncollege'
+  title: pwn.college
+  providerId: pwncollege
+  lang: en
+
+- id: '@richardsouthwell'
+  title: Richard Southwell
+  providerId: richardsouthwell
+  lang: en
+
+- id: '@sanbomics'
+  title: Sanbomics
+  providerId: sanbomics
+  lang: en
+
+- id: '@spinespresso'
+  title: Sergey Frolov
+  providerId: sergeyfrolov
+  lang: en
+
+- id: '@svenholbik3043'
+  title: Sven Holbik
+  providerId: svenholbik
+  lang: en
+
+- id: '@thesociologyprofessor'
+  title: The Sociology Professor
+  providerId: thesociologyprofessor
+  lang: en
+
+- id: '@understandingpsychology'
+  title: Understanding Psychology with Dr. Daniel Kaplin
+  providerId: understandingpsychologyw
+  lang: en
+
+- id: UC3tFZR3eL1bDY8CqZDOQh-w
+  title: Ben Lambert
+  providerId: benlambert
+  lang: en
+
+- id: UCBkOVp1Cqz4MR0LYR8vKpZg
+  title: ALL ABOUT ELECTRONICS
+  providerId: allaboutelectronics
+  lang: en
+
+- id: UCBlqfZZYQWKyr6qLAB7LINw
+  title: ICTP Postgraduate Diploma Programme
+  providerId: ictppostgraduatediplomap
+  lang: en
+
+- id: UCN8wTUlSAroLslWyf87E2pw
+  title: eigenchris
+  providerId: eigenchris
+  lang: en
+
+- id: UCO6cpWSqqW9MKNCBtZFPJ0A
+  title: Факультет психологии МГУ имени М.В. Ломоносова
+  providerId: msu
+  lang: ru
+
+- id: UCWeI5E1-wYI7neyy_dcW2uw
+  title: Иван СОКОЛОВ. Лекции о классической Музыке.
+  providerId: ucwei5e1wyi7neyydcw2uw
+  lang: ru
+
+- id: UCY1VGmBzf2iFbKWJy3vy4KQ
+  title: iSopromat
+  providerId: isopromat
+  lang: ru
+
+- id: UCaFP8iQMTuPXinXBMEXsSuw
+  title: Immo Landwerth (terrajobst)
+  providerId: immolandwerthterrajobst
+  lang: en
+
+- id: UCq0imsn84ShAe9PBOFnoIrg
+  title: Brian Douglas
+  providerId: briandouglas
+  lang: en
+
+- id: UCrltzuSvRbL3rpsvLDnFkuQ
+  title: Iain Explains Signals, Systems, and Digital Comms
+  providerId: iainexplainssignalssyste
+  lang: en
+
+- id: UCz6FCXucY3_JXyuoH4UwESA
+  title: Онлайн-курсы Юрайт
+  providerId: ucz6fcxucy3jxyuoh4uwesa
+  lang: ru
+
+- id: UCIuFVDoogw9ujgLbpTCM3sQ
+  title: Missouri State University
+  providerId: missouristateuniversity
+  lang: en
+
+- id: UCnoYy1k6I5gLIxhlNiStrdQ
+  title: Carnegie Mellon Computer Architecture
+  providerId: cmu
+  lang: en
+
+- id: UCLvnJL8htRR1T9cbSccaoVw
+  title: Aswath Damodaran
+  providerId: aswathdamodaran
+  lang: en
+
+- id: UCLjdjfV5J-xsb2KP4AO-bZw
+  title: Alexander Maloney
+  providerId: alexandermaloney
+  lang: en
+
+- id: UCD8yeTczadqdARzQUp29PJw
+  title: WilliamFiset
+  providerId: williamfiset
+  lang: en
+
+- id: UCGrC9tG979gIyb8qgg-SaGw
+  title: CVUTFEL
+  providerId: cvutfel
+  lang: en
+
+- id: UCKccxTTLm4_IjJdu02ZQL-Q
+  title: Mohit Iyyer
+  providerId: mohitiyyer
+  lang: en
+
+- id: UCT20fjL4VKXFQA0m6ahEpVQ
+  title: Stefan Harmeling
+  providerId: stefanharmeling
+  lang: en
+
+- id: UC8butISFwT-Wl7EV0hUK0BQ
+  title: freeCodeCamp.org
+  providerId: freecodecamporg
+  lang: en
+
+- id: UCn1GqC7cQmtP_nL5hZZBy0w
+  title: Minhyuk Sung
+  providerId: minhyuksung
+  lang: en
+
+- id: UCleP-FrLBsyu33GUShi3XaQ
+  title: Bert Huang
+  providerId: berthuang
+  lang: en
+
+- id: UC4XBoaEXuvob0mQraQJ7wNw
+  title: Geoff Gordon
+  providerId: geoffgordon
+  lang: en
+
+- id: UCoIlaxeETOcT_gPvxNqsEyg
+  title: Sean Mullery
+  providerId: seanmullery
+  lang: en
+
+- id: UC-An3W4ZgszhZgBNh0WFbgQ
+  title: Min-Yen Kan
+  providerId: minyenkan
+  lang: en
+
+- id: UC5ERtGEKLCHD3O4CTp_UwFg
+  title: Kathryn Simone
+  providerId: kathrynsimone
+  lang: en
+
+- id: UC6Fkq1ovVbI-U352qv245UQ
+  title: METUOpenCourseWare
+  providerId: metuopencourseware
+  lang: en
+
+- id: UC8BtBl8PNgd3vWKtm2yJ7aA
+  title: Bartosz Milewski
+  providerId: bartoszmilewski
+  lang: en
+
+- id: UC8dkFFkj3tCoUo_FO5Az2rw
+  title: Dimitri Bertsekas
+  providerId: dimitribertsekas
+  lang: en
+
+- id: UCC6nn11Ozyz8ow91mf6RxFA
+  title: Wolfgang Huerst
+  providerId: wolfganghuerst
+  lang: en
+
+- id: UCD5br-GItnslpSPitvmIyfA
+  title: Gautam Kamath
+  providerId: gautamkamath
+  lang: en
+
+- id: UCGoxKRfTs0jQP52cfHCyyRQ
+  title: MITCBMM
+  providerId: mit
+  lang: en
+
+- id: UCJDIGW0ywWw9Kh9_vtwqxXA
+  title: William Spaniel
+  providerId: williamspaniel
+  lang: en
+
+- id: UCJYcpR8NLuYgAJpH73-4n9A
+  title: Smruti R. Sarangi
+  providerId: smrutirsarangi
+  lang: en
+
+- id: UCWVc6ii62HcbeK1G5w_Bbcw
+  title: Intuitive MetriX – Ben Elsner
+  providerId: intuitivemetrixbenelsner
+  lang: en
+
+- id: UCXN2nYjVT0cR9G61RPEzK5Q
+  title: Matthias Niessner
+  providerId: matthiasniessner
+  lang: en
+
+- id: UCbaacuEwmE2hp8VV_Lg89qA
+  title: Paderborn University - Department LEA
+  providerId: paderbornuniversitydepar
+  lang: en
+
+- id: UCiDouKcxRmAdc5OeZdiRwAg
+  title: Hugo Larochelle
+  providerId: hugolarochelle
+  lang: en
+
+- id: UCoUOaSVYkTV6W4uLvxvgiFA
+  title: Nathan Kutz
+  providerId: nathankutz
+  lang: en
+
+- id: UCq0EGvLTyy-LLT1oUSO_0FQ
+  title: Eddie Woo
+  providerId: eddiewoo
+  lang: en
+
+- id: UCrEhjXasXdkL0PnjK--USeA
+  title: Pranav Bhounsule
+  providerId: pranavbhounsule
+  lang: en
+
+- id: UCrKCPe_ppb_nBL_uQAvYO2w
+  title: Gregory Falkovich
+  providerId: gregoryfalkovich
+  lang: en
+
+- id: UCthr5rA6EA4c1S0L2OOiygA
+  title: Ghassan Shobaki Computer Science Lectures
+  providerId: ghassanshobakicomputersc
+  lang: en
+
+- id: UCzLIrCdw8yBcknEf5kt6jnw
+  title: Bill Kinney
+  providerId: billkinney
+  lang: en
+
+- id: UCc5whtb5eLlPOBxHClAPVUw
+  title: NPTEL - Indian Institute of Science, Bengaluru
+  providerId: nptel
+  lang: en
