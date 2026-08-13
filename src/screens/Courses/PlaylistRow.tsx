@@ -1,6 +1,7 @@
 import { memo } from 'react';
-import type { BuiltPlaylist } from '@shared/schema';
+import type { BuiltPlaylist, PlaylistStatus } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
+import { formatHours, hoursFromSeconds } from '@/lib/format';
 import { percent, playlistProgress } from '@/lib/progress';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
@@ -29,12 +30,31 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
     ? `https://i.ytimg.com/vi/${playlist.videos[0].id}/mqdefault.jpg`
     : null;
 
-  const subtitle = [
-    count(playlist.videoCount, 'lecture'),
-    t(`ui.playlist.length.${playlist.lectureLength}`),
-    playlist.year ? String(playlist.year) : null,
-    playlist.lang,
-  ]
+  /*
+   * Once a playlist is under way, the two facts that describe it — how many
+   * lectures and how long they run — are superseded by how much of each is
+   * behind you, so the progress takes their place rather than being squeezed in
+   * beside them. Nothing is lost: both numbers are still there, and both are
+   * now about the reader.
+   */
+  const subtitle = (
+    progress.started
+      ? [
+          t('ui.profile.progress', { done: progress.done, total: progress.total }),
+          t('ui.playlist.hoursOf', {
+            n: formatHours(hoursFromSeconds(progress.watchedSeconds)),
+            of: formatHours(hoursFromSeconds(progress.totalSeconds)),
+          }),
+          playlist.year ? String(playlist.year) : null,
+          playlist.lang,
+        ]
+      : [
+          count(playlist.videoCount, 'lecture'),
+          t(`ui.playlist.length.${playlist.lectureLength}`),
+          playlist.year ? String(playlist.year) : null,
+          playlist.lang,
+        ]
+  )
     .filter(Boolean)
     .join(' · ');
 
@@ -64,12 +84,17 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
         {/* Along the foot of the thumbnail, where every video player in the
             world puts it. A part-watched playlist is the one state the marks on
             the right cannot show — a tick is finished and no tick is untouched,
-            and "seven of thirty" is neither. */}
+            and "seven of thirty" is neither.
+
+            Filled by time rather than by lectures, like every other bar here,
+            and never quite empty: a playlist ten minutes into its first lecture
+            rounds to nothing, and a bar that is not there says "untouched",
+            which is the one thing it must not say. */}
         {progress.started && !watched ? (
-          <span className="absolute inset-x-0 bottom-0 h-[3px] bg-black/50">
+          <span className="absolute inset-x-0 bottom-0 h-1 bg-black/60">
             <span
               className="block h-full bg-accent"
-              style={{ width: `${Math.max(3, percent(progress.fraction))}%` }}
+              style={{ width: `${Math.max(4, percent(progress.fraction))}%` }}
             />
           </span>
         ) : null}
@@ -99,45 +124,67 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
             </span>
           </Tooltip>
         ) : null}
-        <QualityDot playlist={playlist} />
+        <StatusBadge playlist={playlist} />
       </span>
     </button>
   );
 }
 
 /**
- * The quality mark: a colour and the number beside it, never colour alone.
- *
- * The scale is the one in the design system — high, middling, and "too little
- * to tell" — and the tooltip says what the number is actually made of, because
- * an unexplained 61 next to an unexplained 49 is a decision nobody can make.
+ * How each status looks. Praise is accent, a caveat about the data is faint,
+ * and a shape is neutral — the colour repeats what the word says rather than
+ * carrying meaning of its own, so the row still reads without it.
  */
-export function QualityDot({ playlist }: { playlist: BuiltPlaylist }) {
+const STATUS_TONE: Record<Exclude<PlaylistStatus, 'none'>, { colour: string; text: string }> = {
+  excellent: { colour: 'var(--c-accent)', text: 'text-accent' },
+  retained: { colour: 'var(--c-accent)', text: 'text-accent' },
+  liked: { colour: 'var(--c-accent)', text: 'text-accent' },
+  discussed: { colour: 'var(--c-warning)', text: 'text-warning' },
+  reaching: { colour: 'var(--c-warning)', text: 'text-warning' },
+  classic: { colour: 'var(--c-warning)', text: 'text-warning' },
+  assorted: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
+  fresh: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
+  sparse: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
+};
+
+/**
+ * The one word the row says about a playlist.
+ *
+ * It replaced a number out of 100, which was worse in both directions: it
+ * implied a precision the data does not have, and it forced a verdict on every
+ * playlist including the two thirds the data has nothing to say about. A word
+ * can be absent. The tooltip always says what earned it, because an unexplained
+ * badge is a decision nobody can check.
+ */
+export function StatusBadge({ playlist }: { playlist: BuiltPlaylist }) {
   const { t } = useT();
-  const percent = playlist.scorePercent;
-  const colour =
-    percent >= 70 ? 'var(--c-accent)' : percent >= 40 ? 'var(--c-warning)' : 'var(--c-ink-faint)';
-  const band = percent >= 70 ? 'high' : percent >= 40 ? 'mid' : 'low';
+  if (playlist.status === 'none') {
+    return (
+      <Tooltip content={t('ui.playlist.noStatusHint')}>
+        <span className="h-2 w-2 rounded-full border border-line-strong" aria-hidden />
+      </Tooltip>
+    );
+  }
+
+  const tone = STATUS_TONE[playlist.status];
+  const retention =
+    playlist.retention !== undefined && playlist.curve !== 'assorted'
+      ? t('ui.playlist.retentionValue', { percent: `${Math.round(playlist.retention * 100)}%` })
+      : null;
 
   return (
     <Tooltip
       content={
         <>
-          <span className="block font-semibold">
-            {t(`ui.playlist.scoreBand.${band}`, { score: percent })}
-          </span>
-          <span className="mt-1 block">{t('ui.playlist.scoreTooltip')}</span>
-          <span className="num mt-1 block opacity-80">
-            {t('ui.playlist.scoreEngagement', {
-              engagement: `${(playlist.engagement * 100).toFixed(2)}%`,
-            })}
-          </span>
+          <span className="block font-semibold">{t(`ui.playlist.status.${playlist.status}`)}</span>
+          <span className="mt-1 block">{t(`ui.playlist.status.${playlist.status}.hint`)}</span>
+          {retention ? <span className="num mt-1 block opacity-80">{retention}</span> : null}
         </>
       }
     >
-      <span className="num flex items-center gap-1 text-[11px] text-ink-faint">
-        <span className="h-2 w-2 rounded-full" style={{ background: colour }} />
-        {percent}
+      <span className={`flex items-center gap-1 whitespace-nowrap text-[11px] ${tone.text}`}>
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: tone.colour }} />
+        {t(`ui.playlist.status.${playlist.status}`)}
       </span>
     </Tooltip>
   );

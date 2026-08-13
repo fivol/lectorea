@@ -394,6 +394,9 @@ export async function fetchPlaylistVideos(
   const durations: number[] = [];
   const captions = new Set<string>();
   let earliest = '';
+  // The last upload, not the first: a course still being recorded has not had
+  // time to gather the numbers the rating reads, and it is that end that says so.
+  let latest = '';
 
   const write = db.transaction(() => {
     // Stale rows first: a playlist can lose videos between crawls.
@@ -409,6 +412,7 @@ export async function fetchPlaylistVideos(
         captions.add(video.snippet.defaultAudioLanguage?.split('-')[0] ?? 'unknown');
       }
       if (!earliest || video.snippet.publishedAt < earliest) earliest = video.snippet.publishedAt;
+      if (!latest || video.snippet.publishedAt > latest) latest = video.snippet.publishedAt;
 
       insert.run(
         video.id,
@@ -427,6 +431,7 @@ export async function fetchPlaylistVideos(
       `UPDATE playlists SET video_count = ?, total_seconds = ?, median_seconds = ?,
                             views = ?, likes = ?, comments = ?, captions = ?,
                             published_at = COALESCE(?, published_at),
+                            last_video_at = COALESCE(?, last_video_at),
                             stats_fetched_at = ?, videos_fetched_at = ?, checked_at = ?,
                             next_refresh_at = ?
        WHERE id = ?`
@@ -439,6 +444,7 @@ export async function fetchPlaylistVideos(
       comments,
       [...captions].filter((c) => c !== 'unknown').join(','),
       earliest || null,
+      latest || null,
       nowIso(),
       nowIso(),
       nowIso(),

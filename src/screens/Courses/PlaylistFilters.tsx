@@ -44,8 +44,8 @@ export default function PlaylistFilters({
   /** Unfolds the strip into a wrapped block — scrolling is the default, not the only way. */
   const [expanded, setExpanded] = useState(false);
 
-  /** How the score is built, opened by a press — see the note beside it below. */
-  const [scoreHow, setScoreHow] = useState(false);
+  /** How the rating is built, opened by a press — see the note beside it below. */
+  const [statusHow, setStatusHow] = useState(false);
 
   // Languages the course has, plus whatever the filter is already asking for:
   // the filter defaults to the interface language even for a course that has
@@ -323,27 +323,27 @@ export default function PlaylistFilters({
               {t(`ui.sort.${key}`)}
             </RadioRow>
           ))}
-          {/* «Качество» is the default order, so the question of what that number
-              is belongs here as much as it does on the number in each row.
+          {/* «Оценка» is the default order, so the question of what that order
+              is belongs here as much as it does on the badge in each row.
 
               A question opened by a press rather than by hover: this was the one
-              place in the product that said what the score is made of, and it
+              place in the product that said what the rating is made of, and it
               said it in a tooltip — which is to say it said nothing at all to
               anyone reading on a phone. */}
           <div className="mt-1 border-t border-line px-2 pt-2">
             <button
               type="button"
-              onClick={() => setScoreHow((value) => !value)}
-              aria-expanded={scoreHow}
+              onClick={() => setStatusHow((value) => !value)}
+              aria-expanded={statusHow}
               className="flex w-full items-center gap-1.5 text-left text-[11px] text-ink-faint
                          transition-colors duration-fast ease-out hover:text-ink-dim"
             >
               <Icon name="help" size={12} />
-              {t('ui.playlist.scoreHow')}
+              {t('ui.playlist.statusHow')}
             </button>
-            {scoreHow ? (
+            {statusHow ? (
               <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
-                {t('ui.playlist.scoreTooltip')}
+                {t('ui.playlist.ratingTooltip')}
               </p>
             ) : null}
           </div>

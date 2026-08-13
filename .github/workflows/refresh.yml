@@ -61,6 +61,16 @@ jobs:
           YOUTUBE_API_KEY2: ${{ secrets.YOUTUBE_API_KEY2 }}
           YOUTUBE_API_KEY3: ${{ secrets.YOUTUBE_API_KEY3 }}
 
+      # Single digits of quota — `channels.list` is one unit per call whatever
+      # `part` asks for, and takes fifty ids at a time. Without it the rating's
+      # reach signal has no denominator and the «Разошёлся» badge goes quiet.
+      - name: Refresh channel subscriber counts
+        run: pnpm data:subscribers
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_KEY2: ${{ secrets.YOUTUBE_API_KEY2 }}
+          YOUTUBE_API_KEY3: ${{ secrets.YOUTUBE_API_KEY3 }}
+
       - name: Match playlists to courses
         run: pnpm data:match
         env:

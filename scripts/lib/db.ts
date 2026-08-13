@@ -19,7 +19,10 @@ CREATE TABLE IF NOT EXISTS channels (
   provider_id TEXT,
   uploads_playlist_id TEXT,
   handle TEXT,
-  last_discovered_at TEXT
+  last_discovered_at TEXT,
+  subscribers INTEGER,
+  subscribers_hidden INTEGER DEFAULT 0,
+  stats_fetched_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS playlists (
@@ -36,6 +39,7 @@ CREATE TABLE IF NOT EXISTS playlists (
   captions TEXT,
   total_seconds INTEGER,
   median_seconds INTEGER,
+  last_video_at TEXT,
   stats_fetched_at TEXT,
   videos_fetched_at TEXT,
   alive INTEGER DEFAULT 1,
@@ -103,8 +107,32 @@ export function openDb(options: { readonly?: boolean } = {}): Db {
   if (!options.readonly) {
     db.exec(SCHEMA);
     migrateQuotaPerKey(db);
+    addColumns(db);
   }
   return db;
+}
+
+/**
+ * Columns added to a table that already exists on disk.
+ *
+ * `CREATE TABLE IF NOT EXISTS` is a no-op on a 2 GB cache, so a new field in
+ * SCHEMA would be silently missing on every machine that has crawled before.
+ * Adding a nullable column is the one schema change SQLite does instantly and
+ * without rewriting the table, so the list is cheap to walk on every open.
+ */
+const ADDED_COLUMNS: Array<{ table: string; column: string; type: string }> = [
+  { table: 'channels', column: 'subscribers', type: 'INTEGER' },
+  { table: 'channels', column: 'subscribers_hidden', type: 'INTEGER DEFAULT 0' },
+  { table: 'channels', column: 'stats_fetched_at', type: 'TEXT' },
+  { table: 'playlists', column: 'last_video_at', type: 'TEXT' },
+];
+
+function addColumns(db: Db): void {
+  for (const { table, column, type } of ADDED_COLUMNS) {
+    const columns = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+    if (!columns.length || columns.some((existing) => existing.name === column)) continue;
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
 }
 
 /**
@@ -294,6 +322,7 @@ export type PlaylistRow = {
   captions: string | null;
   total_seconds: number | null;
   median_seconds: number | null;
+  last_video_at: string | null;
   stats_fetched_at: string | null;
   alive: number;
   checked_at: string | null;
@@ -305,6 +334,9 @@ export type VideoRow = {
   position: number;
   title: string;
   duration_seconds: number | null;
+  /** Both only read by the build, when it measures the shape of the view curve. */
+  views?: number | null;
+  published_at?: string | null;
 };
 
 export type MatchRow = {
@@ -336,4 +368,8 @@ export type ChannelRow = {
   uploads_playlist_id: string | null;
   handle: string | null;
   last_discovered_at: string | null;
+  /** Null until `data:subscribers` has run, and when the channel hides the count. */
+  subscribers: number | null;
+  subscribers_hidden: number | null;
+  stats_fetched_at: string | null;
 };

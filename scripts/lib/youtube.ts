@@ -156,6 +156,34 @@ export function createClient(db: Db) {
       };
     },
 
+    /**
+     * Subscriber counts for up to 50 channels per unit.
+     *
+     * A channel may hide the count, and then the API answers `hiddenSubscriberCount`
+     * with a zero — a real zero and a hidden one are the same number, so the flag
+     * is carried through rather than the caller guessing from `0`.
+     */
+    async channelStats(
+      ids: string[]
+    ): Promise<Array<{ id: string; subscribers: number; hidden: boolean }>> {
+      const collected: Array<{ id: string; subscribers: number; hidden: boolean }> = [];
+      for (const chunk of chunked(ids, 50)) {
+        const body = await call<ChannelStatsResponse>('channels', {
+          part: 'statistics',
+          id: chunk.join(','),
+          maxResults: '50',
+        });
+        for (const item of body.items ?? []) {
+          collected.push({
+            id: item.id,
+            subscribers: Number(item.statistics?.subscriberCount ?? 0),
+            hidden: Boolean(item.statistics?.hiddenSubscriberCount),
+          });
+        }
+      }
+      return collected;
+    },
+
     /** All playlists owned by a channel, paging 50 at a time. */
     async channelPlaylists(channelId: string): Promise<PlaylistItem[]> {
       const collected: PlaylistItem[] = [];
@@ -255,6 +283,13 @@ type ChannelListResponse = {
     id: string;
     snippet: { title: string };
     contentDetails: { relatedPlaylists: { uploads: string } };
+  }>;
+};
+
+type ChannelStatsResponse = {
+  items?: Array<{
+    id: string;
+    statistics?: { subscriberCount?: string; hiddenSubscriberCount?: boolean };
   }>;
 };
 

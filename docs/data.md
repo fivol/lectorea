@@ -158,27 +158,27 @@ On a playlist:
 | Field | How |
 |---|---|
 | `lectureLength` | bucket by `medianSeconds`: `lesson` ≤ 40 min, `pair` 40–100, `double` 100–200, `long` > 200 |
-| `engagement` | `(likes + comments) / views` |
-| `score` | bayesian rating, below |
-| `scorePercent` | `score` mapped onto 0..100 against the catalogue mean |
+| `engagement` | `(likes + comments) / views` — the raw column the modal shows |
+| `retention` | views of the last quarter of lectures over the first |
+| `curve` | `series` / `assorted` / `unclear` — is it a course or a subject bucket |
+| `rating` | the combined score the list sorts by, below |
+| `status` | the one word the row shows, below |
+| `signals` | the normalised parts behind the rating, for the tooltip |
+| `lastVideoAt` | last upload — what decides whether a playlist is still settling |
 
 ## Rating
 
-Dislikes have been private since 2021, so there is no public "percent liked"
-left. The only available proxy for quality is engagement — but raw engagement is
-useless for sorting: a playlist with 40 views and one enthusiastic comment would
-outrank an MIT course. Hence bayesian smoothing towards the catalogue average:
+Dislikes have been private since 2021, so nothing YouTube publishes states
+quality. Four things are measured instead — likes per view, how much of the
+audience is still there at the end, comments per view, and views per lecture
+per subscriber — and each is turned into a z-score against playlists of the
+same language and era before anything is added up. The list sorts by `rating`
+and shows one word from `status`.
 
-```
-score = (v / (v + m)) * R + (m / (v + m)) * C
-
-v — views of this playlist
-R — its engagement
-C — mean engagement across the catalogue
-m — confidence threshold in views (5000, tunable)
-```
-
-Computed at build time and written into the JSON. This is the default sort.
+**[docs/rating.md](rating.md) is the whole story**: what each signal is worth,
+why the peer groups exist, how «Подборка» is told from a course, what each
+status costs, and what the numbers still cannot say. Read it before changing a
+knob in `scripts/lib/score.ts`.
 
 ## Overrides
 

@@ -123,6 +123,7 @@ the matching, the map generators — is under [scripts/](scripts/README.md).
 **The data**
 
 - [data.md](data.md) — the data model, the files, and how to add content
+- [rating.md](rating.md) — how a playlist is scored and what its status means
 - [layout.md](layout.md) — levels, the topological sort, and how the columns are
   ordered
 - [pipeline.md](pipeline.md) — the crawl, the queue and the quota

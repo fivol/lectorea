@@ -26,6 +26,7 @@
     "data:build": "tsx scripts/08-build.ts",
     "data:import": "tsx scripts/09-import.ts",
     "data:mine": "tsx scripts/11-mine.ts",
+    "data:subscribers": "tsx scripts/12-subscribers.ts",
     "data:map": "tsx scripts/10-map.ts",
     "map:preview": "tsx scripts/map-poc.ts",
     "map:import": "tsx scripts/map-import.ts",

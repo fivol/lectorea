@@ -14,7 +14,7 @@ import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import { Button, ButtonLink, IconButton } from '@/components/ui';
 import Tooltip from '@/components/Tooltip';
-import { QualityDot } from './PlaylistRow';
+import { StatusBadge } from './PlaylistRow';
 
 type Props = {
   playlist: BuiltPlaylist;
@@ -295,6 +295,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                   <ProgressBar
                     done={progress.done}
                     total={progress.total}
+                    fill={progress.fraction}
                     label={`${percent(progress.fraction)}%`}
                   />
                   <p className="num mt-1 text-[11px] text-ink-faint">
@@ -302,7 +303,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                       done: progress.done,
                       total: progress.total,
                       hours: formatHours(hoursFromSeconds(progress.watchedSeconds)),
-                      of: formatHours(hoursFromSeconds(playlist.totalSeconds)),
+                      of: formatHours(hoursFromSeconds(progress.totalSeconds)),
                     })}
                   </p>
                 </div>
@@ -373,9 +374,21 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                   }
                   hint={t('ui.playlist.relativeHint')}
                 />
+                {/* The share of the audience still there at the end — the one
+                    number here that is about the course rather than its size. */}
+                {playlist.retention !== undefined && playlist.curve !== 'assorted' ? (
+                  <StatBar
+                    label={t('ui.playlist.retention')}
+                    value={`${Math.round(playlist.retention * 100)}%`}
+                    fraction={playlist.retention}
+                    hint={t('ui.playlist.retentionValue', {
+                      percent: `${Math.round(playlist.retention * 100)}%`,
+                    })}
+                  />
+                ) : null}
                 <div className="flex items-center justify-between gap-3 pt-1 text-xs text-ink-faint">
-                  <span>{t('ui.playlist.score')}</span>
-                  <QualityDot playlist={playlist} />
+                  <span>{t('ui.playlist.statusHow')}</span>
+                  <StatusBadge playlist={playlist} />
                 </div>
               </div>
 

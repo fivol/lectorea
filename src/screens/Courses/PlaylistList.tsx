@@ -30,7 +30,7 @@ export default function PlaylistList({ course }: Props) {
 
   const [playlists, setPlaylists] = useState<BuiltPlaylist[] | null>(null);
   const [filters, setFilters] = useState<PlaylistFilterState>(() => defaultFilters(lang));
-  const [sort, setSort] = useState<SortKey>('score');
+  const [sort, setSort] = useState<SortKey>('rating');
   const lastFocused = useRef<HTMLElement | null>(null);
 
   // The interface language is the starting point, not a leash: opening another

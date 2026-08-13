@@ -132,7 +132,8 @@ export function applyFilters(
 }
 
 export const SORT_KEYS = [
-  'score',
+  'rating',
+  'retention',
   'views',
   'viewsPerLecture',
   'engagement',
@@ -144,7 +145,10 @@ export const SORT_KEYS = [
 export type SortKey = (typeof SORT_KEYS)[number];
 
 const SORTERS: Record<SortKey, (playlist: BuiltPlaylist) => number> = {
-  score: (p) => p.score,
+  rating: (p) => p.rating,
+  // A playlist whose curve could not be read has no answer here, and −1 puts it
+  // below every playlist that does rather than in the middle of them.
+  retention: (p) => p.retention ?? -1,
   views: (p) => p.stats.views,
   // Normalises long courses: a 60-lecture series and a 6-lecture one are not
   // comparable on raw views.

@@ -8,6 +8,7 @@ import {
   type BuiltPlaylist,
   type BuiltProvider,
   type Meta,
+  type PlaylistStatus,
 } from '../../shared/schema.js';
 import { forwardClosureSizes, dependantsIndex } from '../../shared/graph.js';
 import { median } from './score.js';
@@ -132,6 +133,7 @@ export type CatalogStats = {
     byCompleteness: Bar[];
     byLength: Bar[];
     byScore: Point[];
+    byStatus: Bar[];
     byYear: Point[];
     topProviders: Bar[];
     topLecturers: Bar[];
@@ -296,6 +298,23 @@ const LENGTH_TITLES: Record<string, string> = {
   double: 'двойная, до 200 мин',
   long: 'длиннее 200 мин',
 };
+
+/**
+ * In the order the badge is chosen, so the chart reads as the decision itself:
+ * everything above a row has already been taken out of it.
+ */
+const STATUS_TITLES: Array<[PlaylistStatus, string]> = [
+  ['sparse', 'мало данных'],
+  ['fresh', 'новый'],
+  ['excellent', 'отличный'],
+  ['classic', 'классика'],
+  ['retained', 'досматривают'],
+  ['liked', 'нравится'],
+  ['discussed', 'обсуждают'],
+  ['reaching', 'разошёлся'],
+  ['assorted', 'подборка'],
+  ['none', 'без статуса'],
+];
 
 /** Playlists per course, in buckets — the shape of the coverage, not its average. */
 const COVERAGE_BUCKETS: Array<{ label: string; max: number; tone: Tone }> = [
@@ -499,13 +518,24 @@ function collectCatalog(notes: string[]): CatalogStats | null {
     },
   ];
 
-  const byScore: Point[] = Array.from({ length: 10 }, (_, bin) => ({
-    label: `${bin * 10}`,
-    value: playlists.filter((item) => {
-      const bucket = Math.min(9, Math.floor(item.scorePercent / 10));
-      return bucket === bin;
-    }).length,
-  }));
+  // The rating is a z-score around zero, so the bins are half a sigma wide and
+  // the labels say so. A histogram of it is the fastest way to see a build that
+  // has quietly collapsed everything onto one value.
+  const byScore: Point[] = Array.from({ length: 12 }, (_, bin) => {
+    const low = -3 + bin * 0.5;
+    return {
+      label: low.toFixed(1),
+      value: playlists.filter((item) => {
+        const bucket = Math.min(11, Math.max(0, Math.floor((item.rating + 3) / 0.5)));
+        return bucket === bin;
+      }).length,
+    };
+  });
+
+  const byStatus: Bar[] = STATUS_TITLES.map(([id, label]) => ({
+    label,
+    value: playlists.filter((item) => item.status === id).length,
+  })).filter((bar) => bar.value > 0);
 
   const years = playlists
     .map((item) => item.year)
@@ -602,6 +632,7 @@ function collectCatalog(notes: string[]): CatalogStats | null {
         value: playlists.filter((item) => item.lectureLength === id).length,
       })),
       byScore,
+      byStatus,
       byYear,
       topProviders: topBars(providerCounts, 14, 'остальные провайдеры'),
       topLecturers: topBars(countBy(playlists, (item) => item.lecturer), 10, 'остальные'),

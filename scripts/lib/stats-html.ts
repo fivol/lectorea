@@ -750,10 +750,11 @@ export function renderPage(stats: Stats): string {
   ${card('Полнота курса', '', bars(catalog.playlists.byCompleteness))}
   ${card('Длина лекции', 'по медианной длительности видео', bars(catalog.playlists.byLength))}
   ${card('Тип провайдера', '', bars(catalog.playlists.byProviderType))}
+  ${card('Статус', 'что показано в списке — первый подошедший сверху вниз', bars(catalog.playlists.byStatus))}
   ${card(
-    'Качество',
-    'байесовский рейтинг, приведённый к 0–100 относительно среднего по каталогу',
-    columns(catalog.playlists.byScore, { caption: 'оценка от ', unit: ' плейлистов' })
+    'Рейтинг',
+    'отклик и досматриваемость, приведённые к отклонению от медианы каталога',
+    columns(catalog.playlists.byScore, { caption: 'рейтинг от ', unit: ' плейлистов' })
   )}
   ${card(
     'Год записи',

@@ -26,7 +26,15 @@ import {
   validateReferences,
 } from './lib/graph.js';
 import { layoutColumns } from './lib/layout.js';
-import { bayesianScore, engagementOf, meanEngagement, median, scoreToPercent } from './lib/score.js';
+import {
+  clamp,
+  curveOf,
+  engagementOf,
+  isReversed,
+  median,
+  rateCatalogue,
+  type StatusThresholds,
+} from './lib/score.js';
 import {
   loadDictionary,
   loadKeywords,
@@ -59,6 +67,8 @@ const BUILD_VERSION = '1';
 type Assembled = {
   playlistsByCourse: Map<string, BuiltPlaylist[]>;
   total: number;
+  /** What each status cost this build — written to meta.json so it stays checkable. */
+  thresholds?: StatusThresholds;
 };
 
 async function main(): Promise<void> {
@@ -224,6 +234,7 @@ async function main(): Promise<void> {
     providers: Object.keys(providers).length,
     coverage: courses.length ? Math.round((withMaterials / courses.length) * 1000) / 1000 : 0,
     maxLevel,
+    statusThresholds: assembled.thresholds,
   };
   writeJson(path.join(paths.outData, 'meta.json'), meta);
 
@@ -291,8 +302,13 @@ function assemblePlaylists(sources: Sources): Assembled {
     const channelRows = db.prepare(`SELECT * FROM channels`).all() as ChannelRow[];
     const channels = new Map(channelRows.map((c) => [c.id, c]));
 
+    // `views` rides along for the rating: the shape of the view curve down a
+    // playlist is the only thing in the data that says whether people stayed.
     const videoRows = db
-      .prepare(`SELECT id, playlist_id, position, title, duration_seconds FROM videos ORDER BY playlist_id, position`)
+      .prepare(
+        `SELECT id, playlist_id, position, title, duration_seconds, views, published_at
+         FROM videos ORDER BY playlist_id, position`
+      )
       .all() as VideoRow[];
     const videosByPlaylist = new Map<string, VideoRow[]>();
     for (const video of videoRows) {
@@ -305,8 +321,10 @@ function assemblePlaylists(sources: Sources): Assembled {
     const providerIds = new Set(sources.providers.map((p) => p.id));
     const yamlChannels = new Map(sources.channels.map((c) => [c.id, c]));
 
-    // First pass: raw objects, so the catalogue mean is known before scoring.
-    const staged: Array<{ courseId: string; playlist: Omit<BuiltPlaylist, 'score' | 'scorePercent'> }> = [];
+    // First pass: raw objects. Nothing can be scored until every playlist is
+    // known, because every signal is measured against the rest of the catalogue.
+    type Staged = Omit<BuiltPlaylist, 'rating' | 'status' | 'signals'>;
+    const staged: Array<{ courseId: string; playlist: Staged }> = [];
 
     for (const row of playlistRows) {
       const override = sources.overrides.playlists[row.id];
@@ -318,11 +336,24 @@ function assemblePlaylists(sources: Sources): Assembled {
       const channel = channels.get(row.channel_id);
       const providerId = resolveProvider(row.channel_id, channel, yamlChannels, sources, providerIds);
 
-      const videos = (videosByPlaylist.get(row.id) ?? []).map((v) => ({
+      const videoRowsHere = videosByPlaylist.get(row.id) ?? [];
+      const videos = videoRowsHere.map((v) => ({
         id: v.id,
         title: v.title,
         seconds: v.duration_seconds ?? 0,
       }));
+
+      const dates = videoRowsHere.map((v) => v.published_at).filter((d): d is string => !!d);
+      const lastVideoAt =
+        row.last_video_at ?? (dates.length ? dates.reduce((a, b) => (a > b ? a : b)) : undefined);
+      // Half the catalogue's playlists are not in date order, which is fine —
+      // position is the order they are watched in. The 67 that run newest-first
+      // are not: read literally their audience grows towards the end.
+      const chronological = !isReversed(dates);
+      const curve = curveOf(
+        videoRowsHere.map((v) => v.views),
+        chronological
+      );
 
       const durations = videos.map((v) => v.seconds).filter((s) => s > 0);
       const totalSeconds = row.total_seconds ?? durations.reduce((a, b) => a + b, 0);
@@ -363,31 +394,30 @@ function assemblePlaylists(sources: Sources): Assembled {
           checkedAt: row.checked_at ?? nowIso(),
           lectureLength: lectureLengthOf(medianSeconds),
           engagement: engagementOf(stats),
+          retention: curve?.retention,
+          curve: curve?.kind,
+          lastVideoAt,
           videos,
         },
       });
     }
 
-    const catalogueMean = meanEngagement(staged.map((s) => s.playlist.stats));
+    const rated = rateCatalogue(
+      staged.map((s) => s.playlist),
+      (channelId) => channels.get(channelId)?.subscribers ?? null
+    );
 
     for (const { courseId, playlist } of staged) {
-      const score = bayesianScore(playlist.stats, catalogueMean);
-      const built = BuiltPlaylistSchema.parse({
-        ...playlist,
-        score,
-        // Mapped here rather than on the client, which would otherwise need the
-        // catalogue mean shipped alongside every shard to say anything.
-        scorePercent: scoreToPercent(score, catalogueMean),
-      });
+      const built = BuiltPlaylistSchema.parse({ ...playlist, ...rated.byId.get(playlist.id) });
       const list = byCourse.get(courseId) ?? [];
       list.push(built);
       byCourse.set(courseId, list);
     }
 
     // Default order inside a shard is the default sort in the UI.
-    for (const list of byCourse.values()) list.sort((a, b) => b.score - a.score);
+    for (const list of byCourse.values()) list.sort((a, b) => b.rating - a.rating);
 
-    return { playlistsByCourse: byCourse, total: staged.length };
+    return { playlistsByCourse: byCourse, total: staged.length, thresholds: rated.thresholds };
   } finally {
     db.close();
   }
@@ -539,7 +569,10 @@ function buildMaterialEntries(
         id: playlist.id,
         n: playlist.title,
         k: keywordsFor(`playlist.${playlist.id}`, playlist.title, playlist.channelTitle),
-        s: Math.round(playlist.score * 1000),
+        // `s` is a tiebreaker worth a thousandth of a match in `shared/search.ts`,
+        // so it has to stay small and positive. The rating is a z-score around
+        // zero; this is the same 0..50 band the old score happened to occupy.
+        s: Math.round(clamp((playlist.rating + 3) / 6, 0, 1) * 50),
         // Selecting a playlist has to open its course first, so the shard it
         // lives in must be known without loading every shard to find it.
         c: playlist.courseId,

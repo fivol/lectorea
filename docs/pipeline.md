@@ -17,6 +17,7 @@ scripts/
   09-import.ts         import courses from lists and catalogues
   10-map.ts            regenerate public/map.svg
   11-mine.ts           playlists linked from what is already crawled
+  12-subscribers.ts    channel subscriber counts, for the rating's reach signal
   refresh.ts           the nightly job: 02 → 03 → 04
   dev-seed.ts          synthetic playlists for development
   course-new.ts        scaffold a course across the files it needs
@@ -34,7 +35,7 @@ scripts/
     sources.ts        load and validate data/, with file and line
     graph.ts          build-time checks over shared/graph.ts
     classify.ts       language, lecturer, kind, completeness from a title
-    score.ts          bayesian rating
+    score.ts          rating and status — see rating.md
     layout.ts         column order: barycentric sweeps and domain bands
     mapgen.ts         the territory map generator behind `data:map`
     map-world.ts      run shared/mapgen.ts over this repo's own data

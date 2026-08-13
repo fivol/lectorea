@@ -200,12 +200,56 @@ export const VideoSchema = z.object({
 });
 export type Video = z.infer<typeof VideoSchema>;
 
+/**
+ * Shape of a playlist's view curve — see `docs/rating.md`.
+ *
+ * `series` falls off along a power law: people watch it in order and drop out.
+ * `assorted` has views unrelated to position: a subject bucket entered from
+ * search at a random point, whose retention means nothing and is not scored.
+ */
+export const CurveKind = z.enum(['series', 'assorted', 'unclear']);
+export type CurveKind = z.infer<typeof CurveKind>;
+
+/**
+ * The one word the list shows about a playlist. Neutral or positive only:
+ * the data can say "loved and finished", it cannot say "bad" — see
+ * `docs/rating.md` for why the negative half is deliberately missing.
+ */
+export const PlaylistStatus = z.enum([
+  'sparse', // too few views to say anything
+  'fresh', // still being uploaded, numbers not settled
+  'excellent', // above the catalogue on approval and retention at once
+  'retained', // watched to the end
+  'liked', // unusually many likes per view
+  'discussed', // unusually many comments per view
+  'reaching', // travelled far past its own channel
+  'classic', // old and still being found
+  'assorted', // a subject bucket rather than a course
+  'none',
+]);
+export type PlaylistStatus = z.infer<typeof PlaylistStatus>;
+
+/** The three normalised signals behind the rating, for the tooltip. */
+export const SignalsSchema = z.object({
+  approval: z.number().nullable(), // likes per view, vs peers and channel
+  retention: z.number().nullable(), // last quarter over first, vs catalogue
+  discussion: z.number().nullable(), // comments per view, vs peers
+  reach: z.number().nullable(), // views per lecture per subscriber
+});
+export type Signals = z.infer<typeof SignalsSchema>;
+
 export const BuiltPlaylistSchema = PlaylistSchema.extend({
   lectureLength: LectureLength,
   engagement: z.number(),
-  score: z.number(), // bayesian rating, see SPEC 1.5
-  /** `score` mapped onto 0..100 against the catalogue mean, for the quality dot. */
-  scorePercent: z.number(),
+  /** Combined z-score of the signals below. The default sort, never shown raw. */
+  rating: z.number(),
+  status: PlaylistStatus,
+  signals: SignalsSchema,
+  /** Views of the last quarter over the first. Absent under 8 videos with views. */
+  retention: z.number().optional(),
+  curve: CurveKind.optional(),
+  /** Last upload, which is what decides whether a playlist is still settling. */
+  lastVideoAt: z.string().optional(),
   /** Lecture list, shipped with the shard so the modal needs no API call. */
   videos: z.array(VideoSchema).default([]),
 });
@@ -270,6 +314,11 @@ export const MetaSchema = z.object({
   /** Share of courses that have at least one live playlist. 0..1 */
   coverage: z.number(),
   maxLevel: z.number(),
+  /**
+   * What each status cost in this build. Written out so that "why is this one
+   * merely good" is answerable from the published data alone.
+   */
+  statusThresholds: z.record(z.string(), z.number()).optional(),
 });
 export type Meta = z.infer<typeof MetaSchema>;
 
@@ -493,8 +542,9 @@ export function migrateProfile(raw: unknown): unknown {
 
 /* ────────────────────────────  Constants  ──────────────────────────── */
 
-/** Bayesian smoothing threshold, in views. See SPEC 1.5. */
-export const SCORE_CONFIDENCE_VIEWS = 5000;
+// The rating's own knobs live beside the formula in `scripts/lib/score.ts`:
+// nothing on the client needs them, and a copy here would drift from the one
+// place they are actually applied.
 
 /** Lecture length buckets, in seconds. */
 export const LECTURE_BUCKETS: Array<{ id: LectureLength; maxSeconds: number }> = [
