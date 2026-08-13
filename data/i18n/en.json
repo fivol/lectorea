@@ -29,11 +29,11 @@
   "ui.plural.minute.many": "minutes",
 
   "ui.nav.backTo.map": "Map",
-  "ui.nav.backTo.blocks": "Blocks",
+  "ui.nav.backTo.blocks": "List",
   "ui.nav.profile": "Profile",
 
   "ui.view.map": "Map",
-  "ui.view.blocks": "Blocks",
+  "ui.view.blocks": "List",
   "ui.view.switch": "Switch view",
 
   "ui.theme.toLight": "Light theme",

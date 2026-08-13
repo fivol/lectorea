@@ -29,11 +29,11 @@
   "ui.plural.minute.many": "минут",
 
   "ui.nav.backTo.map": "Карта",
-  "ui.nav.backTo.blocks": "Блоки",
+  "ui.nav.backTo.blocks": "Список",
   "ui.nav.profile": "Профиль",
 
   "ui.view.map": "Карта",
-  "ui.view.blocks": "Блоки",
+  "ui.view.blocks": "Список",
   "ui.view.switch": "Переключить вид",
 
   "ui.theme.toLight": "Светлая тема",
