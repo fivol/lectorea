@@ -288,8 +288,17 @@ export const UI_LANGS: ReadonlyArray<{ id: UiLang; short: string; name: string }
 export const CourseStatus = z.enum(['in_progress', 'done']);
 export type CourseStatus = z.infer<typeof CourseStatus>;
 
+/**
+ * How much of a lecture has to be behind you before it counts as watched.
+ *
+ * Not 100%: the last minutes of a recording are credits, a Q&A that trails off,
+ * or a camera left running, and a progress bar that refuses to complete because
+ * of them is a progress bar people stop trusting.
+ */
+export const VIDEO_DONE_FRACTION = 0.9;
+
 export const ProfileSchema = z.object({
-  version: z.literal(1),
+  version: z.literal(2),
   updatedAt: z.string(),
   courses: z
     .record(
@@ -297,6 +306,17 @@ export const ProfileSchema = z.object({
       z.object({
         status: CourseStatus.nullable().default(null),
         favorite: z.boolean().default(false),
+        /**
+         * Whether this status was set by hand.
+         *
+         * Watching lectures promotes a course on its own — started on the first
+         * one, finished when a whole playlist is behind you — and without this
+         * flag there would be no way to disagree: clearing a status the player
+         * would immediately set again is not a choice, it is a loop. Once
+         * somebody has answered the question themselves, the automation stops
+         * asking it.
+         */
+        manual: z.boolean().default(false),
         at: z.string(),
       })
     )
@@ -305,9 +325,54 @@ export const ProfileSchema = z.object({
     .record(
       z.string(),
       z.object({
+        /**
+         * The seal: "all of this is behind me", set by hand.
+         *
+         * It deliberately writes no per-lecture marks — a playlist here runs to
+         * 1192 videos — so taking it off uncovers whatever was actually watched
+         * underneath rather than wiping it. Everything that asks "is this
+         * finished" asks `playlistProgress`, which is this or a full house of
+         * ticks, whichever comes first.
+         */
         watched: z.boolean().default(false),
         favorite: z.boolean().default(false),
+        /** Where to drop somebody back in — the last lecture they had playing. */
+        lastVideoId: z.string().optional(),
+        /**
+         * Which course this playlist is for.
+         *
+         * Denormalised on purpose, and it earns it: it is the only way to know
+         * that a course has any lecture progress *without* fetching its shard.
+         * A path of nine courses would otherwise have to pull nine files —
+         * some of them three quarters of a megabyte — every time a panel opens,
+         * to discover that eight of them have nothing in them.
+         *
+         * Optional because a version 1 profile has no idea, and a playlist
+         * whose course is unknown simply behaves as it did before.
+         */
+        courseId: z.string().optional(),
         at: z.string(),
+      })
+    )
+    .default({}),
+  /**
+   * Lectures, keyed by YouTube id rather than by playlist.
+   *
+   * The same lecture turns up in a full course and in somebody's selection of
+   * six highlights, and watching it once is watching it once. Global keys make
+   * that true for free; per-playlist keys would make it a reconciliation
+   * problem.
+   *
+   * `sec` is where playback stopped and disappears once the lecture is done —
+   * a finished lecture has nowhere to resume from, and the bytes are better
+   * spent on the ones that are not.
+   */
+  videos: z
+    .record(
+      z.string(),
+      z.object({
+        sec: z.number().optional(),
+        done: z.boolean().default(false),
       })
     )
     .default({}),
@@ -355,6 +420,15 @@ export const ProfileSchema = z.object({
        * the profile over one string.
        */
       panelLinks: z.enum(['open', 'closed']).catch('closed'),
+      /**
+       * Whether the player remembers where you stopped.
+       *
+       * On by default, and worth a switch anyway: a site that quietly records
+       * the minute you paused at is a site some people would rather tell to
+       * stop. Only the position goes — which lectures are behind you is the
+       * progress itself, and turning that off would be turning the feature off.
+       */
+      resume: z.boolean().catch(true),
     })
     .default({
       lang: 'ru',
@@ -362,15 +436,50 @@ export const ProfileSchema = z.object({
       splitRatio: 0.62,
       maxStage: null,
       panelLinks: 'closed',
+      resume: true,
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
 export type RecentEntry = Profile['recent'][number];
+export type VideoMark = Profile['videos'][string];
 
 /** Long enough to cover "what was that lecture last month", short enough to stay in localStorage. */
 export const RECENT_LIMIT = 60;
 
+/**
+ * The storage slot. Still says `v1` because it names the slot rather than the
+ * shape in it — `version` inside does that — and renaming it would strand every
+ * profile already written.
+ */
 export const PROFILE_KEY = 'catalog.profile.v1';
+
+/** The shape this build writes. Anything higher was written by a newer site. */
+export const PROFILE_VERSION = 2;
+
+/**
+ * A stored profile brought up to the current shape.
+ *
+ * Version 1 knew nothing of lectures: it had a tick per course and a tick per
+ * playlist, and both mean exactly what they still mean, so the migration is
+ * only the version number — every field added since has a default, and zod
+ * fills them in. Returned as unknown rather than parsed here, so the caller
+ * keeps one parse and one place that decides what a failed parse means.
+ */
+export function migrateProfile(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  const version = (raw as { version?: unknown }).version;
+  if (version !== 1) return raw;
+
+  // Every status in a version 1 profile was pressed by hand — there was no
+  // other way to set one — so they all carry the flag that keeps the new
+  // automation from re-deciding them.
+  const courses = (raw as { courses?: Record<string, object> }).courses ?? {};
+  const claimed = Object.fromEntries(
+    Object.entries(courses).map(([id, entry]) => [id, { ...entry, manual: true }])
+  );
+
+  return { ...(raw as object), version: PROFILE_VERSION, courses: claimed };
+}
 
 /* ────────────────────────────  Constants  ──────────────────────────── */
 

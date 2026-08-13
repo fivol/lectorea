@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatDuration } from '@/lib/format';
+import { useRecentWatch } from '@/lib/progress';
 import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import EmptyState from '@/components/EmptyState';
+import ProgressBar from '@/components/ProgressBar';
 import { Button, IconButton } from '@/components/ui';
 
 /**
@@ -27,6 +29,7 @@ export default function RecentTab() {
   const recent = useProfile((state) => state.profile.recent);
   const removeRecent = useProfile((state) => state.removeRecent);
   const clearRecent = useProfile((state) => state.clearRecent);
+  const watched = useRecentWatch();
 
   const [confirming, setConfirming] = useState(false);
 
@@ -83,6 +86,7 @@ export default function RecentTab() {
         {recent.map((entry) => {
           const course = catalog.courseById.get(entry.courseId);
           const domain = course ? catalog.domainById.get(course.domains[0]) : undefined;
+          const watch = watched.get(entry.id);
           return (
             <li key={entry.id} className="surface flex items-center gap-3 p-2">
               <button
@@ -96,6 +100,27 @@ export default function RecentTab() {
                   {domain ? ` · ${t(`domain.${domain.id}.title`)}` : ''} ·{' '}
                   {formatDate(entry.at, lang)}
                 </span>
+                {/* Only for the few most recent, whose playlists are loaded —
+                    see `useRecentWatch`. The rest of the history is a list of
+                    names, which is what history is. */}
+                {watch?.progress.started ? (
+                  <ProgressBar
+                    className="mt-1.5"
+                    done={watch.progress.done}
+                    total={watch.progress.total}
+                    label={
+                      watch.progress.complete
+                        ? t('ui.playlist.watchedOn')
+                        : t('ui.profile.continueAt', {
+                            n: (watch.progress.next?.index ?? 0) + 1,
+                            total: watch.progress.total,
+                            at: watch.progress.next?.sec
+                              ? formatDuration(watch.progress.next.sec)
+                              : t('ui.profile.continueStart'),
+                          })
+                    }
+                  />
+                ) : null}
               </button>
               <IconButton
                 icon="close"

@@ -2,16 +2,15 @@
   "app.title": "Lectorea",
   "app.tagline": "A catalogue of educational playlists, in the order you learn them",
   "app.documentTitle": "Lectorea — a catalogue of courses in the order you learn them",
-
   "ui.common.close": "Close",
   "ui.common.cancel": "Cancel",
+  "ui.common.undo": "undo",
   "ui.common.all": "All",
   "ui.common.and": "and",
   "ui.common.back": "Back",
   "ui.common.reset": "Reset",
   "ui.common.loading": "Loading…",
   "ui.common.copied": "Copied",
-
   "ui.plural.course.one": "course",
   "ui.plural.course.few": "courses",
   "ui.plural.course.many": "courses",
@@ -27,20 +26,15 @@
   "ui.plural.minute.one": "minute",
   "ui.plural.minute.few": "minutes",
   "ui.plural.minute.many": "minutes",
-
   "ui.nav.backTo.domains": "Fields",
   "ui.nav.profile": "Profile",
-
   "ui.view.map": "Map",
   "ui.view.blocks": "List",
   "ui.view.switch": "Switch view",
-
   "ui.theme.toLight": "Light theme",
   "ui.theme.toDark": "Dark theme",
-
   "ui.lang.switchTo.ru": "Русский интерфейс",
   "ui.lang.switchTo.en": "English interface",
-
   "ui.search.placeholder": "Field, course, university…",
   "ui.search.open": "Search",
   "ui.search.empty": "Nothing found",
@@ -61,21 +55,18 @@
   "ui.search.kind.v": "universities",
   "ui.search.kind.l": "lecturers",
   "ui.search.hint": "There are also {kinds} — start typing",
-
   "ui.continent.formal": "Formal and natural",
   "ui.continent.social": "Social",
   "ui.continent.humanities": "Humanities",
   "ui.continent.formal.desc": "Mathematics, logic and the natural sciences. A claim is accepted once it has been proved or reproduced in an experiment — and anyone can check it again",
   "ui.continent.social.desc": "People and society: economics, sociology, psychology, law. They lean on data and statistics too, but what they study changes because it is being studied",
   "ui.continent.humanities.desc": "What people have made: languages, texts, art, religion, the past. The argument is about the source and how it is read, not about an experiment",
-
   "ui.map.emptyDomain": "no courses",
   "ui.map.zoomIn": "Zoom in",
   "ui.map.zoomOut": "Zoom out",
   "ui.map.fit": "Show the whole map",
   "ui.map.domainDone": "{n} done",
   "ui.map.legend": "Three continents — three branches of knowledge; inside a continent, the more courses a field has, the more room it takes",
-
   "ui.filter.provider.off": "Clear filter",
   "ui.filter.searchProvider": "Find a university…",
   "ui.filter.provider.all": "All universities",
@@ -87,14 +78,12 @@
   "ui.filter.largest": "Largest fields",
   "ui.filter.found": "Found: {n}",
   "ui.filter.resetAll": "Reset all",
-
   "ui.column.level": "Difficulty {n}",
   "ui.column.legend": "Columns go by difficulty: the further right a course sits, the longer the chain you have to work through to reach it",
   "ui.column.legendSelected": "“{course}” is selected — its chain of prerequisites and what it opens up next are lit; everything else is dimmed",
   "ui.column.scrollLeft": "Column to the left",
   "ui.column.scrollRight": "Column to the right",
   "ui.graph.empty": "No courses under the current filters",
-
   "ui.legend.title": "What is what here",
   "ui.legend.level": "Column number: how many courses the longest path to this place goes through",
   "ui.legend.levelGroup": "Group number: how many courses the longest path to this place goes through",
@@ -110,7 +99,6 @@
   "ui.legend.quality": "Playlist quality: high, average, little data",
   "ui.legend.noMaterials": "The course is in the catalogue, but no playlists have been found for it yet",
   "ui.legend.guest": "A field tag on the artwork means a course from another field, kept in the columns while you are reading it; pressing it moves you to that field along with the course",
-
   "ui.shortcuts.title": "Keyboard shortcuts",
   "ui.shortcuts.key.slash": "/",
   "ui.shortcuts.key.t": "T",
@@ -122,7 +110,6 @@
   "ui.shortcuts.m": "Map ↔ course catalogue",
   "ui.shortcuts.question": "This list",
   "ui.shortcuts.escape": "Close a panel, a modal or a hint",
-
   "ui.course.level": "difficulty {n}",
   "ui.stage.school-8": "school, year 8",
   "ui.stage.school-9": "school, year 9",
@@ -146,6 +133,7 @@
   "ui.course.start": "Start learning",
   "ui.course.finish": "Mark as done",
   "ui.course.done": "Done",
+  "ui.course.lecturesDone": "{done} of {total} lectures",
   "ui.course.inProgress": "In progress",
   "ui.course.statusToggle": "Mark progress",
   "ui.course.description.missing": "No description written yet",
@@ -154,29 +142,24 @@
   "ui.course.requires": "Requires",
   "ui.course.recommends": "Useful first",
   "ui.course.relatedTo": "Nearby",
-
   "ui.path.title": "Path",
   "ui.path.summary": "{courses}, ≈{hours} h, {done} done",
   "ui.path.hideDone": "Hide what is done",
   "ui.path.export": "Export the plan",
   "ui.path.goal": "goal",
   "ui.path.breaksFilter": "Part of the path is outside the current filter — those courses are not in the columns",
-
   "ui.prereq.title": "Builds on",
   "ui.unlocks.title": "Opens the way to",
   "ui.unlocks.behind": "and {n} more behind it",
-
   "ui.links.title": "Links and path",
   "ui.links.titleNoPath": "Links",
   "ui.links.first": "first “{course}”",
   "ui.links.opens": "opens {courses}",
   "ui.links.path": "path {courses}, ≈{hours} h",
-
   "ui.playlists.title": "Playlists",
   "ui.playlists.empty": "No playlists yet",
   "ui.playlists.emptyFiltered": "Nothing left under these filters",
   "ui.playlists.noneInLang": "Nothing here in {lang} — below are the recordings in other languages",
-
   "ui.playlist.length.lesson": "≤40 min",
   "ui.playlist.length.pair": "≤1.5 h",
   "ui.playlist.length.double": "≤3 h",
@@ -198,6 +181,11 @@
   "ui.playlist.noCaptions": "no captions",
   "ui.playlist.watched": "Mark as watched",
   "ui.playlist.watchedOn": "Watched",
+  "ui.playlist.watchedAll": "Mark all {n}",
+  "ui.playlist.markWatched": "Mark as watched",
+  "ui.playlist.watchedOf": "{done} of {total} lectures · {hours} of {of} h",
+  "ui.playlist.continueAt": "Continue from lecture {n}",
+  "ui.playlist.coursePromoted": "Course marked done",
   "ui.playlist.openYoutube": "Open on YouTube",
   "ui.playlist.play": "Watch",
   "ui.playlist.playHint": "The player loads on click",
@@ -214,7 +202,6 @@
   "ui.playlist.relativeHint": "The scale is relative: it shows this metric against the other playlists in the catalogue, not as a share of anything",
   "ui.playlist.avgLecture": "~{n} min",
   "ui.playlist.forCourse": "Course",
-
   "ui.sort.title": "Sorting",
   "ui.sort.score": "Quality",
   "ui.sort.views": "Views",
@@ -223,7 +210,6 @@
   "ui.sort.year": "Recency",
   "ui.sort.duration": "Length",
   "ui.sort.videoCount": "Number of lectures",
-
   "ui.filters.lang": "Language",
   "ui.filters.provider": "University / platform",
   "ui.filters.providerType": "Type of source",
@@ -247,7 +233,6 @@
   "ui.filters.mine.onlyFavorite": "Favourites only",
   "ui.filters.showAll": "All filters",
   "ui.filters.fewer": "Collapse",
-
   "ui.profile.title": "Profile",
   "ui.recent.empty": "Playlists you open will show up here",
   "ui.recent.count": "{n} in history",
@@ -267,6 +252,9 @@
   "ui.profile.group.favorite": "Goals",
   "ui.profile.group.favorite.hint": "A favourite course is a goal. Progress is counted along its path",
   "ui.profile.progress": "{done} of {total}",
+  "ui.profile.continue": "Continue",
+  "ui.profile.continueAt": "lecture {n} of {total}, {at}",
+  "ui.profile.continueStart": "from the start",
   "ui.profile.remaining": "≈{hours} h left",
   "ui.profile.noGoal": "Add a course to favourites on the map — it becomes a goal, and progress along its path shows up here",
   "ui.profile.toMap": "To the map",
@@ -279,6 +267,10 @@
   "ui.profile.settings.theme.auto": "Auto",
   "ui.profile.settings.theme.light": "Light",
   "ui.profile.settings.theme.dark": "Dark",
+  "ui.profile.settings.resume": "Playback position",
+  "ui.profile.settings.resume.on": "Remember",
+  "ui.profile.settings.resume.off": "Do not remember",
+  "ui.profile.settings.resumeHint": "The player picks up at the second you stopped on. Which lectures are behind you is kept either way.",
   "ui.profile.settings.reset": "Erase all data",
   "ui.profile.settings.resetConfirm": "Delete the whole profile? Marks, favourites and settings will be gone for good",
   "ui.profile.settings.resetDo": "Delete",
@@ -289,25 +281,21 @@
   "ui.profile.data.importPaste": "Paste the contents of the file here",
   "ui.profile.data.importFile": "Choose a file",
   "ui.profile.data.preview": "Preview",
-  "ui.profile.data.previewSummary": "{courses} {courseWord}, {playlists} {playlistWord}, {date}",
+  "ui.profile.data.previewSummary": "{courses} {courseWord}, {playlists} {playlistWord}, {videos} {videoWord}, {date}",
   "ui.profile.data.replace": "Replace",
   "ui.profile.data.merge": "Merge",
   "ui.profile.data.mergeHint": "On a conflict the more advanced status wins",
   "ui.profile.data.invalid": "This does not look like a profile file",
   "ui.profile.versionBanner": "This profile was saved by a newer version of the site. It is untouched but not shown — reload the page",
-
   "ui.mobile.levelGroup": "Difficulty {n}",
   "ui.mobile.legend": "Groups go by difficulty: further on, longer to reach",
-
   "ui.a11y.closePanel": "Close the panel",
   "ui.a11y.dragSplitter": "Resize the panel",
   "ui.a11y.mapRegion": "Map of the fields of knowledge",
   "ui.a11y.graphRegion": "Course graph",
-
   "ui.footer.contribute": "Missing a field, a course or a playlist?",
   "ui.footer.contributeCourses": "Missing a course, or is something wrong in the data?",
   "ui.footer.suggest": "Suggest it",
-
   "domain.math.title": "Mathematics",
   "domain.math.desc": "The language every other exact science speaks. Almost every chain starts here",
   "domain.logic.title": "Logic",
@@ -386,7 +374,6 @@
   "domain.history-of-science.desc": "How knowledge became knowledge: where theories, instruments and scientific institutions came from",
   "domain.bioethics.title": "Bioethics",
   "domain.bioethics.desc": "What may be done to the living: the limits of intervening in people and in nature",
-
   "course.school-algebra.title": "School mathematics",
   "course.school-algebra.desc": "Algebraic manipulation, functions, trigonometry — the level below which there is no point starting",
   "course.calculus-1.title": "Calculus 1",
@@ -429,7 +416,6 @@
   "course.numerical-methods.desc": "How to compute what cannot be computed exactly, without losing the accuracy on the way",
   "course.category-theory.title": "Category theory",
   "course.category-theory.desc": "The language in which links between different areas of mathematics are stated",
-
   "course.logic-intro.title": "Introduction to logic",
   "course.logic-intro.desc": "Propositions, quantifiers, forms of argument. The point where mathematics and philosophy meet",
   "course.mathematical-logic.title": "Mathematical logic",
@@ -440,7 +426,6 @@
   "course.computability.desc": "Turing machines, decidability, reductions",
   "course.model-theory.title": "Model theory",
   "course.model-theory.desc": "The link between formal theories and their interpretations",
-
   "course.probability.title": "Probability theory",
   "course.probability.desc": "Random variables, distributions, limit theorems",
   "course.statistics.title": "Mathematical statistics",
@@ -453,7 +438,6 @@
   "course.time-series.desc": "Stationarity, ARIMA, spectral analysis",
   "course.information-theory.title": "Information theory",
   "course.information-theory.desc": "Entropy, coding, channel capacity",
-
   "course.programming-intro.title": "Introduction to programming",
   "course.programming-intro.desc": "A first language, the basic constructs, debugging. The way into computer science",
   "course.data-structures.title": "Data structures",
@@ -484,7 +468,6 @@
   "course.software-engineering.desc": "Design, testing, refactoring, working in a team",
   "course.computer-security.title": "Computer security",
   "course.computer-security.desc": "Threat models, vulnerabilities, defending systems and protocols",
-
   "course.mechanics.title": "Mechanics",
   "course.mechanics.desc": "Kinematics, dynamics, conservation laws",
   "course.analytical-mechanics.title": "Analytical mechanics",
@@ -511,7 +494,6 @@
   "course.quantum-field-theory.desc": "Second quantization, Feynman diagrams, renormalization",
   "course.nuclear-physics.title": "Nuclear physics",
   "course.nuclear-physics.desc": "The structure of the nucleus, decays, reactions",
-
   "course.astronomy-intro.title": "General astronomy",
   "course.astronomy-intro.desc": "The celestial sphere, stellar magnitudes, the layout of the Solar System",
   "course.celestial-mechanics.title": "Celestial mechanics",
@@ -520,7 +502,6 @@
   "course.astrophysics.desc": "The structure and evolution of stars, the interstellar medium, galaxies",
   "course.cosmology.title": "Cosmology",
   "course.cosmology.desc": "The expansion of the universe, the microwave background, dark matter",
-
   "course.general-chemistry.title": "General chemistry",
   "course.general-chemistry.desc": "Atomic structure, bonding, the periodic law, stoichiometry",
   "course.inorganic-chemistry.title": "Inorganic chemistry",
@@ -533,7 +514,6 @@
   "course.analytical-chemistry.desc": "Ways of determining composition: from titration to spectroscopy",
   "course.quantum-chemistry.title": "Quantum chemistry",
   "course.quantum-chemistry.desc": "Molecular orbitals, Hartree–Fock and DFT methods",
-
   "course.geology.title": "Geology",
   "course.geology.desc": "Minerals, rocks, tectonics, the history of the Earth",
   "course.meteorology.title": "Meteorology",
@@ -542,7 +522,6 @@
   "course.oceanography.desc": "Currents, salinity, the coupling of ocean and atmosphere",
   "course.geophysics.title": "Geophysics",
   "course.geophysics.desc": "Seismics, gravimetry, the Earth's magnetic field",
-
   "course.general-biology.title": "General biology",
   "course.general-biology.desc": "The levels of organization of the living, the main groups of organisms",
   "course.cell-biology.title": "Cell biology",
@@ -561,19 +540,16 @@
   "course.microbiology.desc": "Bacteria, archaea, viruses and how they deal with a host",
   "course.neuroscience.title": "Neuroscience",
   "course.neuroscience.desc": "The neuron, the synapse, the pathways, how the brain is arranged",
-
   "course.biochemistry.title": "Biochemistry",
   "course.biochemistry.desc": "Proteins, lipids, carbohydrates, metabolic pathways",
   "course.enzymology.title": "Enzymology",
   "course.enzymology.desc": "Enzyme kinetics, catalysis, inhibition",
-
   "course.bioinformatics-intro.title": "Introduction to bioinformatics",
   "course.bioinformatics-intro.desc": "Data formats, alignments, sequence databases",
   "course.sequence-analysis.title": "Sequence analysis",
   "course.sequence-analysis.desc": "Hidden Markov models, genome assembly, annotation",
   "course.structural-bioinformatics.title": "Structural bioinformatics",
   "course.structural-bioinformatics.desc": "Predicting and analysing protein structure",
-
   "course.anatomy.title": "Human anatomy",
   "course.anatomy.desc": "How the body is built: systems, organs, topography",
   "course.pathology.title": "Pathology",
@@ -584,7 +560,6 @@
   "course.immunology.desc": "Innate and adaptive immunity, inflammation, vaccines",
   "course.epidemiology.title": "Epidemiology",
   "course.epidemiology.desc": "Study design, risks, how disease spreads",
-
   "course.strength-of-materials.title": "Strength of materials",
   "course.strength-of-materials.desc": "Stresses, strains, the stability of structures",
   "course.electrical-circuits.title": "Electrical circuit theory",
@@ -595,7 +570,6 @@
   "course.signal-processing.desc": "The Fourier transform, filters, sampling",
   "course.robotics.title": "Robotics",
   "course.robotics.desc": "Manipulator kinematics, motion planning, localization",
-
   "course.ml-intro.title": "Introduction to machine learning",
   "course.ml-intro.desc": "Regression, classification, overfitting, validation",
   "course.deep-learning.title": "Deep learning",
@@ -606,7 +580,6 @@
   "course.computer-vision.desc": "Detection, segmentation, multiple-view geometry",
   "course.reinforcement-learning.title": "Reinforcement learning",
   "course.reinforcement-learning.desc": "Markov decision processes, Q-learning, policy gradient",
-
   "course.econ-intro.title": "Introduction to economics",
   "course.econ-intro.desc": "Demand, supply, costs, the basic models of a market",
   "course.microeconomics.title": "Microeconomics",
@@ -619,12 +592,10 @@
   "course.finance.desc": "The time value of money, the portfolio, asset valuation",
   "course.behavioral-economics.title": "Behavioural economics",
   "course.behavioral-economics.desc": "Systematic departures from rationality and what follows from them",
-
   "course.econometrics.title": "Econometrics",
   "course.econometrics.desc": "Regression on economic data, endogeneity, identification",
   "course.time-series-econometrics.title": "Time series econometrics",
   "course.time-series-econometrics.desc": "Unit roots, cointegration, VAR models",
-
   "course.sociology-intro.title": "Introduction to sociology",
   "course.sociology-intro.desc": "The basic concepts, the schools and the subject of the discipline",
   "course.social-theory.title": "Sociological theory",
@@ -633,7 +604,6 @@
   "course.social-research-methods.desc": "Sampling, surveys, interviews, data analysis",
   "course.demography.title": "Demography",
   "course.demography.desc": "Fertility, mortality, migration, population projection",
-
   "course.political-science-intro.title": "Introduction to political science",
   "course.political-science-intro.desc": "The state, regimes, parties, elections",
   "course.comparative-politics.title": "Comparative politics",
@@ -642,7 +612,6 @@
   "course.international-relations.desc": "Theories of the international system, security, institutions",
   "course.political-philosophy.title": "Political philosophy",
   "course.political-philosophy.desc": "Justice, liberty, the legitimacy of power",
-
   "course.psychology-intro.title": "Introduction to psychology",
   "course.psychology-intro.desc": "The main schools, the history and the subject of the discipline",
   "course.cognitive-psychology.title": "Cognitive psychology",
@@ -655,39 +624,32 @@
   "course.psych-research-methods.desc": "Experiment, measurement, reproducibility",
   "course.clinical-psychology.title": "Clinical psychology",
   "course.clinical-psychology.desc": "Assessment, disorders, approaches to therapy",
-
   "course.cognitive-science-intro.title": "Introduction to cognitive science",
   "course.cognitive-science-intro.desc": "Thinking as information processing: where psychology, neuroscience and AI meet",
   "course.psycholinguistics.title": "Psycholinguistics",
   "course.psycholinguistics.desc": "How language is produced and understood in real time",
-
   "course.anthropology-intro.title": "Introduction to anthropology",
   "course.anthropology-intro.desc": "The subject, the methods and the history of the discipline",
   "course.cultural-anthropology.title": "Cultural anthropology",
   "course.cultural-anthropology.desc": "Fieldwork, kinship, ritual, exchange",
-
   "course.law-intro.title": "Introduction to law",
   "course.law-intro.desc": "The sources of law, legal systems, the basic institutions",
   "course.constitutional-law.title": "Constitutional law",
   "course.constitutional-law.desc": "How the state is arranged, rights and freedoms, judicial review",
   "course.international-law.title": "International law",
   "course.international-law.desc": "Treaties, custom, the responsibility of states",
-
   "course.management-intro.title": "Introduction to management",
   "course.management-intro.desc": "The functions of management, organizational structure, decision making",
   "course.organizational-behavior.title": "Organizational behaviour",
   "course.organizational-behavior.desc": "Motivation, leadership, communication, conflict",
-
   "course.human-geography-intro.title": "Human geography",
   "course.human-geography-intro.desc": "Settlement, regions, economic space",
   "course.urban-studies.title": "Urban studies",
   "course.urban-studies.desc": "How a city is put together and why it changes",
-
   "course.pedagogy-intro.title": "Introduction to pedagogy",
   "course.pedagogy-intro.desc": "The aims, the methods and the organization of teaching",
   "course.learning-sciences.title": "Learning sciences",
   "course.learning-sciences.desc": "What demonstrably works when knowledge has to stick",
-
   "course.philosophy-intro.title": "Introduction to philosophy",
   "course.philosophy-intro.desc": "The main questions, the branches and the ways of arguing",
   "course.ancient-philosophy.title": "Ancient philosophy",
@@ -704,7 +666,6 @@
   "course.philosophy-of-science.desc": "Demarcation, explanation, scientific revolutions",
   "course.philosophy-of-language.title": "Philosophy of language",
   "course.philosophy-of-language.desc": "Meaning, reference, speech acts",
-
   "course.ancient-history.title": "History of the ancient world",
   "course.ancient-history.desc": "The Near East, Greece, Rome — from the invention of writing to late antiquity",
   "course.medieval-history.title": "Medieval history",
@@ -717,10 +678,8 @@
   "course.historiography.desc": "How historians work with sources and argue with one another",
   "course.economic-history.title": "Economic history",
   "course.economic-history.desc": "Long-run growth, institutions, industrialization",
-
   "course.history-of-science-intro.title": "History of science",
   "course.history-of-science-intro.desc": "How the scientific disciplines took shape and what counted as knowledge",
-
   "course.linguistics-intro.title": "Introduction to linguistics",
   "course.linguistics-intro.desc": "The levels of language, the sign, the basic concepts of the discipline",
   "course.phonetics.title": "Phonetics and phonology",
@@ -737,12 +696,10 @@
   "course.sociolinguistics.desc": "Variation in language and its social causes",
   "course.typology.title": "Linguistic typology",
   "course.typology.desc": "What languages do differently, and what never happens at all",
-
   "course.computational-linguistics-intro.title": "Introduction to computational linguistics",
   "course.computational-linguistics-intro.desc": "Annotation, parsing, formal grammars in practice",
   "course.corpus-linguistics.title": "Corpus linguistics",
   "course.corpus-linguistics.desc": "How to build a corpus and draw statistical conclusions from it",
-
   "course.literary-theory.title": "Literary theory",
   "course.literary-theory.desc": "Genre, narrative, schools of interpretation",
   "course.poetics.title": "Poetics",
@@ -753,7 +710,6 @@
   "course.russian-literature.desc": "The main periods, the authors and the arguments around them",
   "course.world-literature.title": "World literature",
   "course.world-literature.desc": "The key texts of the European and world tradition",
-
   "course.art-history-intro.title": "Introduction to art history",
   "course.art-history-intro.desc": "How to look at an image and what can be said about it",
   "course.ancient-art.title": "Art of the ancient world",
@@ -762,38 +718,32 @@
   "course.renaissance-art.desc": "Italy and the North: perspective, the patron, the workshop",
   "course.modern-art.title": "Twentieth-century art",
   "course.modern-art.desc": "The avant-garde, modernism, post-war practice",
-
   "course.music-theory.title": "Music theory",
   "course.music-theory.desc": "Mode, harmony, rhythm, form",
   "course.music-history.title": "History of music",
   "course.music-history.desc": "From Gregorian chant to the 20th century",
   "course.ethnomusicology.title": "Ethnomusicology",
   "course.ethnomusicology.desc": "Music as the cultural practice of particular communities",
-
   "course.religious-studies-intro.title": "Introduction to religious studies",
   "course.religious-studies-intro.desc": "Approaches to the study of religion, the main traditions",
   "course.biblical-studies.title": "Biblical studies",
   "course.biblical-studies.desc": "Textual criticism, the historical-critical method, context",
   "course.history-of-religions.title": "History of religions",
   "course.history-of-religions.desc": "How the main traditions arose and spread",
-
   "course.archaeology-intro.title": "Introduction to archaeology",
   "course.archaeology-intro.desc": "Dating methods, stratigraphy, interpreting finds",
   "course.field-archaeology.title": "Field archaeology",
   "course.field-archaeology.desc": "Survey, excavation, recording and documentation",
-
   "course.latin.title": "Latin",
   "course.latin.desc": "Grammar, and reading texts in the original",
   "course.ancient-greek.title": "Ancient Greek",
   "course.ancient-greek.desc": "Grammar, and reading the classical authors",
   "course.classical-philology.title": "Classical philology",
   "course.classical-philology.desc": "Working with an ancient text: criticism, commentary, translation",
-
   "course.film-studies-intro.title": "Introduction to film theory",
   "course.film-studies-intro.desc": "Editing, the shot, narration, the language of cinema",
   "course.film-history.title": "History of cinema",
   "course.film-history.desc": "From early cinema to the contemporary schools",
-
   "course.bioethics-intro.title": "Bioethics",
   "course.bioethics-intro.desc": "Autonomy, consent, genome editing, the end of life"
 }

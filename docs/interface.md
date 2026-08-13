@@ -257,6 +257,49 @@ two, and the × or the dimmed list behind it to close.
 Marking a course cycles it through *nothing → in progress → done*, which is what
 makes "what can I study right now" answerable.
 
+## Progress, down to the lecture
+
+Three levels, and only the bottom one holds anything. A lecture is watched or it
+is not; a playlist and a course are arithmetic over that.
+
+- **A lecture** counts as watched at 90% of its length, or when the player says
+  it ended. The last minutes of a recording are credits and a Q&A that trails
+  off, and a bar that will not complete because of them is a bar people stop
+  trusting. Every lecture also carries a tick of its own, for the ones watched
+  on YouTube — without it, everything watched outside this player would be
+  invisible here, which makes the progress it shows a lie of omission. Shift
+  extends from the last tick, so twelve of thirty is one press and not twelve.
+- **A playlist** is the share of its lectures behind you. «Отметить все» is a
+  seal rather than thirty ticks — a playlist here runs to 1192 videos — so
+  taking it off uncovers what was actually watched underneath instead of wiping
+  it.
+- **A course** is the recording it is being studied by: the furthest-along one,
+  with the last one played breaking a tie. A course carries thirteen playlists
+  on average and they are alternatives, not parts; summing them would turn a
+  course barely begun into one nearly finished.
+
+Watching promotes the course on its own — started on the first lecture,
+finished when a whole playlist is behind you, and the modal says so with a way
+to disagree. Pressing the status button yourself claims the course, and the
+automation then leaves it alone; clearing the status is not an opinion but the
+withdrawal of one, so it hands the course back to being counted from lectures.
+
+The path bar is counted in whole courses and filled in fractions: the label
+says how many are behind you, and the lighter part of the bar is the course in
+hand. Counting only milestones leaves the bar still for a fortnight while
+somebody works through a forty-hour prerequisite; counting only fractions loses
+the milestone.
+
+**Coming back.** The embedded player is followed through the `postMessage`
+handshake that a YouTube embed answers when it is loaded with `enablejsapi=1` —
+no script from `youtube.com`, so the only third-party origin on the page stays
+the one already serving the video. It reports the position about four times a
+second and the profile writes one every five; it also reports which video is in
+the frame, which is what makes the playlist's own autoplay countable instead of
+losing the session after the first lecture. Reopening a part-watched lecture
+picks up where it stopped, and «Место остановки» in the settings turns that off
+without turning off which lectures are behind you.
+
 ## The profile
 
 ![The profile, with two goals in progress](images/profile.webp)
@@ -264,6 +307,13 @@ makes "what can I study right now" answerable.
 A modal, not a page — it opens over whatever you were looking at. Courses and
 playlists you have marked, a **Недавние** tab holding the playlists you have
 opened (clearable in full or row by row), and settings for language and theme.
+
+The first thing in it is **Продолжить** — the last thing opened that is not
+finished, at the lecture and the second it was left at, one press away. It is
+the only card in the profile about right now; everything under it is a shelf of
+things decided at some point. History carries the same bar for its most recent
+rows, and no further: progress lives in the playlist shards, and drawing a bar
+on all sixty rows would pull the catalogue down to decorate a list.
 
 Light and dark also have a one-click toggle in the header of both screens — that
 choice is about the room you are sitting in, not about your account, and behind

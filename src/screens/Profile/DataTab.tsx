@@ -95,6 +95,8 @@ export default function DataTab() {
                 courseWord: plural(preview.courses, 'course'),
                 playlists: preview.playlists,
                 playlistWord: plural(preview.playlists, 'playlist'),
+                videos: preview.videos,
+                videoWord: plural(preview.videos, 'lecture'),
                 date: formatDate(preview.updatedAt, lang),
               })}
             </p>

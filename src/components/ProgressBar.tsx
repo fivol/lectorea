@@ -3,6 +3,17 @@ import { useEffect, useRef, useState } from 'react';
 type Props = {
   done: number;
   total: number;
+  /**
+   * The part-finished share, as a fraction of the whole bar, drawn past the
+   * solid fill in a lighter tone.
+   *
+   * A path is counted in whole courses, but somebody three weeks into a
+   * forty-hour prerequisite has a bar that has not moved since they started —
+   * which is the opposite of what a progress bar is for. So the course in hand
+   * is drawn as the part of it that is done, and the label keeps counting whole
+   * ones: two facts, one bar, neither of them rounded into the other.
+   */
+  partial?: number;
   /** Rendered to the right of the bar; mono, so the digits do not jitter. */
   label?: string;
   className?: string;
@@ -16,10 +27,19 @@ type Props = {
  * done this much" is the moment you first look at it. After that it animates
  * only when the number itself changes.
  */
-export default function ProgressBar({ done, total, label, className = '' }: Props) {
+export default function ProgressBar({
+  done,
+  total,
+  partial = 0,
+  label,
+  className = '',
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [seen, setSeen] = useState(false);
-  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  const solid = total > 0 ? (done / total) * 100 : 0;
+  // Clamped against the remainder: a rounding error must never push the two
+  // segments past the end of the track and make a full bar out of a half one.
+  const soft = Math.max(0, Math.min(100 - solid, partial * 100));
 
   useEffect(() => {
     const node = ref.current;
@@ -38,11 +58,18 @@ export default function ProgressBar({ done, total, label, className = '' }: Prop
         aria-valuenow={done}
         aria-valuemin={0}
         aria-valuemax={total}
-        className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"
+        className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"
       >
         <span
-          className="block h-full rounded-full bg-accent transition-[width] duration-slow ease-out"
-          style={{ width: `${seen ? percent : 0}%` }}
+          className="h-full bg-accent transition-[width] duration-slow ease-out"
+          style={{ width: `${seen ? solid : 0}%` }}
+        />
+        {/* The same hue at a third of its weight rather than a second colour:
+            this is the same progress, less of it, and a new colour would read
+            as a different kind of thing. */}
+        <span
+          className="h-full bg-accent/35 transition-[width] duration-slow ease-out"
+          style={{ width: `${seen ? soft : 0}%` }}
         />
       </span>
       {label ? <span className="num shrink-0 text-[11px] text-ink-dim">{label}</span> : null}

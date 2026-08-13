@@ -41,6 +41,25 @@ export default function SettingsTab() {
         />
       </Row>
 
+      {/* Which lectures are behind you is the progress itself and has no
+          switch — turning that off would be turning the feature off. The
+          minute you paused at is a different thing to record, and some people
+          would rather it were not. */}
+      <div>
+        <Row label={t('ui.profile.settings.resume')}>
+          <Segmented
+            value={settings.resume ? 'on' : 'off'}
+            options={(['on', 'off'] as const).map((value) => ({
+              value,
+              label: t(`ui.profile.settings.resume.${value}`),
+            }))}
+            onChange={(value) => setSetting('resume', value === 'on')}
+            label={t('ui.profile.settings.resume')}
+          />
+        </Row>
+        <p className="mt-1 text-xs text-ink-faint">{t('ui.profile.settings.resumeHint')}</p>
+      </div>
+
       {/* Map or blocks is not here any more: the map is the front door and
           every visit opens on it, so the choice holds for the visit and lives
           in the switch on the map's own header, where the two views are. */}

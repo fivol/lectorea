@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { loadPlaylists } from '@/lib/data';
 import { formatHours, inkOn } from '@/lib/format';
+import { pathProgress, percent, useCourseProgress } from '@/lib/progress';
 import { courseHref } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
@@ -51,7 +52,14 @@ export default function PathBlock({
   const [hideDone, setHideDone] = useState(false);
   const [exportState, setExportState] = useState<'idle' | 'working' | 'done'>('idle');
 
-  const doneCount = steps.filter((step) => profile.courses[step.id]?.status === 'done').length;
+  const stepIds = useMemo(() => steps.map((step) => step.id), [steps]);
+  const byCourse = useCourseProgress(stepIds);
+  const path = pathProgress(
+    stepIds,
+    (id) => profile.courses[id]?.status === 'done',
+    (id) => byCourse.get(id) ?? null
+  );
+  const doneCount = path.done;
   const remainingHours = steps
     .filter((step) => profile.courses[step.id]?.status !== 'done')
     .reduce((sum, step) => sum + step.hours, 0);
@@ -121,13 +129,21 @@ export default function PathBlock({
       {/* Outside the fold, and only once there is progress to show: how much of
           the path is done is the one thing worth seeing without opening it,
           while an empty bar over «0 из 7» is forty pixels saying the same as
-          the line above. */}
-      {doneCount ? (
+          the line above.
+
+          Lectures count towards it as the fraction of a course they are, so
+          three weeks into a forty-hour prerequisite the bar has moved even
+          though the count has not. */}
+      {doneCount || path.partial ? (
         <div className="pt-2">
           <ProgressBar
             done={doneCount}
             total={steps.length}
-            label={t('ui.profile.progress', { done: doneCount, total: steps.length })}
+            partial={path.partial}
+            label={`${percent(path.fraction)}% · ${t('ui.profile.progress', {
+              done: doneCount,
+              total: steps.length,
+            })}`}
           />
           <p className="num mt-1 text-[11px] text-ink-faint">
             {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
@@ -177,8 +193,10 @@ export default function PathBlock({
                 if (hideDone && status === 'done' && !isGoal) return null;
                 const domain = catalog.domainById.get(step.domains[0]);
 
+                const watched = status === 'done' ? null : byCourse.get(step.id);
+
                 return (
-                  <li key={step.id}>
+                  <li key={step.id} className="relative">
                     <Link
                       to={courseHref(step.id, search)}
                       onMouseEnter={() => setEcho(step.id)}
@@ -219,6 +237,24 @@ export default function PathBlock({
                         </span>
                       )}
                     </Link>
+                    {/* How far into this one step, along the foot of its row.
+                        The plate above says «Изучается», which is true of a
+                        first lecture and of a twenty-ninth alike; this is the
+                        part of the answer a word cannot carry. */}
+                    {watched?.started && !watched.complete ? (
+                      <span
+                        className="pointer-events-none absolute inset-x-2 bottom-0 h-[2px] rounded-full bg-surface-2"
+                        title={t('ui.course.lecturesDone', {
+                          done: watched.done,
+                          total: watched.total,
+                        })}
+                      >
+                        <span
+                          className="block h-full rounded-full bg-accent/60"
+                          style={{ width: `${percent(watched.fraction)}%` }}
+                        />
+                      </span>
+                    ) : null}
                   </li>
                 );
               })}

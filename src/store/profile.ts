@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 import { useMediaQuery } from '@/lib/hooks';
 import {
+  migrateProfile,
   PROFILE_KEY,
+  PROFILE_VERSION,
   ProfileSchema,
   RECENT_LIMIT,
   type CourseStatus,
   type Profile,
   type RecentEntry,
+  type VideoMark,
 } from '@shared/schema';
 
 /**
@@ -18,10 +21,11 @@ import {
 
 function emptyProfile(): Profile {
   return ProfileSchema.parse({
-    version: 1,
+    version: PROFILE_VERSION,
     updatedAt: new Date().toISOString(),
     courses: {},
     playlists: {},
+    videos: {},
     recent: [],
   });
 }
@@ -44,14 +48,17 @@ function readProfile(): { profile: Profile; outcome: LoadOutcome } {
     return { profile: emptyProfile(), outcome: 'corrupt' };
   }
 
-  // An unknown version means a newer build of the site wrote this. Leave it
-  // untouched and say so, rather than migrating it into something lossy.
+  // A *higher* version means a newer build of the site wrote this. Leave it
+  // untouched and say so, rather than migrating it into something lossy. An
+  // older one is ours to bring forward — that is what `migrateProfile` is for,
+  // and the check used to reject those too, which would have locked every
+  // profile in existence the day the shape changed.
   const version = (parsed as { version?: unknown }).version;
-  if (typeof version === 'number' && version !== 1) {
+  if (typeof version === 'number' && version > PROFILE_VERSION) {
     return { profile: emptyProfile(), outcome: 'unsupported-version' };
   }
 
-  const result = ProfileSchema.safeParse(parsed);
+  const result = ProfileSchema.safeParse(migrateProfile(parsed));
   return result.success
     ? { profile: result.data, outcome: 'ok' }
     : { profile: emptyProfile(), outcome: 'corrupt' };
@@ -74,6 +81,60 @@ function persist(profile: Profile, blocked: boolean): void {
 const STATUS_CYCLE: Array<CourseStatus | null> = [null, 'in_progress', 'done'];
 const STATUS_RANK: Record<string, number> = { done: 2, in_progress: 1, null: 0 };
 
+/**
+ * Which playlist a lecture belongs to, and which course that playlist is for.
+ *
+ * Marking a lecture is the one write that has consequences above itself — it
+ * can finish a playlist, which can finish a course — and the store has no
+ * catalogue to look any of that up in. So the caller, which is holding the
+ * playlist already, says what it is part of.
+ */
+export type WatchContext = {
+  courseId: string;
+  playlistId: string;
+  /** Every lecture in the playlist, in order: what "all of it" means. */
+  videoIds: string[];
+};
+
+/**
+ * Bring a course's status in line with the lectures behind it.
+ *
+ * Runs on every watch event, and only while nobody has claimed the course by
+ * hand: an untouched status is a reflection of the data, so it goes forward on
+ * the first lecture and back if the lectures go away. `manual` is what stops
+ * that — see the schema. Clearing a status by hand releases the claim, which is
+ * how somebody hands the question back to the automation.
+ */
+function reconcileStatus(draft: Profile, ctx: WatchContext): void {
+  const course = draft.courses[ctx.courseId];
+  if (course?.manual) return;
+
+  const sealed = draft.playlists[ctx.playlistId]?.watched ?? false;
+  const watched = ctx.videoIds.filter((id) => draft.videos[id]?.done).length;
+  const complete = sealed || (ctx.videoIds.length > 0 && watched === ctx.videoIds.length);
+  const status: CourseStatus | null = complete ? 'done' : watched > 0 ? 'in_progress' : null;
+
+  if ((course?.status ?? null) === status) return;
+  draft.courses[ctx.courseId] = {
+    status,
+    favorite: course?.favorite ?? false,
+    manual: false,
+    at: new Date().toISOString(),
+  };
+}
+
+/** Notes which lecture was last playing, so "continue" has somewhere to go. */
+function touchPlaylist(draft: Profile, ctx: WatchContext, videoId?: string): void {
+  const current = draft.playlists[ctx.playlistId];
+  draft.playlists[ctx.playlistId] = {
+    watched: current?.watched ?? false,
+    favorite: current?.favorite ?? false,
+    lastVideoId: videoId ?? current?.lastVideoId,
+    courseId: ctx.courseId,
+    at: new Date().toISOString(),
+  };
+}
+
 export type ProfileStore = {
   profile: Profile;
   outcome: LoadOutcome;
@@ -84,12 +145,19 @@ export type ProfileStore = {
   isCourseFavorite: (id: string) => boolean;
   isPlaylistWatched: (id: string) => boolean;
   isPlaylistFavorite: (id: string) => boolean;
+  videoMark: (id: string) => VideoMark | undefined;
 
   cycleCourseStatus: (id: string) => void;
   setCourseStatus: (id: string, status: CourseStatus | null) => void;
   toggleCourseFavorite: (id: string) => void;
-  togglePlaylistWatched: (id: string) => void;
+  togglePlaylistWatched: (id: string, ctx?: WatchContext) => void;
   togglePlaylistFavorite: (id: string) => void;
+
+  /** Tick or untick lectures by hand. One id, or a range from a shift-click. */
+  setVideosDone: (videoIds: string[], done: boolean, ctx: WatchContext) => void;
+  /** Where playback stopped. Ignored when the reader has turned resuming off. */
+  recordPosition: (videoId: string, sec: number, ctx: WatchContext) => void;
+
   recordRecent: (entry: Omit<RecentEntry, 'at'>) => void;
   removeRecent: (id: string) => void;
   clearRecent: () => void;
@@ -111,6 +179,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
       ...current,
       courses: { ...current.courses },
       playlists: { ...current.playlists },
+      videos: { ...current.videos },
       recent: [...current.recent],
       settings: { ...current.settings },
       updatedAt: new Date().toISOString(),
@@ -119,6 +188,20 @@ export const useProfile = create<ProfileStore>((set, get) => {
     persist(next, get().locked);
     set({ profile: next });
   };
+
+  /** A status the reader set themselves, which the automation then leaves alone. */
+  const claim = (id: string, status: CourseStatus | null) =>
+    update((draft) => {
+      const current = draft.courses[id];
+      draft.courses[id] = {
+        status,
+        favorite: current?.favorite ?? false,
+        // Clearing is not an opinion, it is the withdrawal of one: the course
+        // goes back to being counted from the lectures.
+        manual: status !== null,
+        at: new Date().toISOString(),
+      };
+    });
 
   return {
     profile: initial.profile,
@@ -129,28 +212,14 @@ export const useProfile = create<ProfileStore>((set, get) => {
     isCourseFavorite: (id) => get().profile.courses[id]?.favorite ?? false,
     isPlaylistWatched: (id) => get().profile.playlists[id]?.watched ?? false,
     isPlaylistFavorite: (id) => get().profile.playlists[id]?.favorite ?? false,
+    videoMark: (id) => get().profile.videos[id],
 
-    cycleCourseStatus: (id) =>
-      update((draft) => {
-        const current = draft.courses[id];
-        const index = STATUS_CYCLE.indexOf(current?.status ?? null);
-        const status = STATUS_CYCLE[(index + 1) % STATUS_CYCLE.length];
-        draft.courses[id] = {
-          status,
-          favorite: current?.favorite ?? false,
-          at: new Date().toISOString(),
-        };
-      }),
+    cycleCourseStatus: (id) => {
+      const current = get().profile.courses[id]?.status ?? null;
+      claim(id, STATUS_CYCLE[(STATUS_CYCLE.indexOf(current) + 1) % STATUS_CYCLE.length]);
+    },
 
-    setCourseStatus: (id, status) =>
-      update((draft) => {
-        const current = draft.courses[id];
-        draft.courses[id] = {
-          status,
-          favorite: current?.favorite ?? false,
-          at: new Date().toISOString(),
-        };
-      }),
+    setCourseStatus: (id, status) => claim(id, status),
 
     toggleCourseFavorite: (id) =>
       update((draft) => {
@@ -158,18 +227,22 @@ export const useProfile = create<ProfileStore>((set, get) => {
         draft.courses[id] = {
           status: current?.status ?? null,
           favorite: !(current?.favorite ?? false),
+          manual: current?.manual ?? false,
           at: new Date().toISOString(),
         };
       }),
 
-    togglePlaylistWatched: (id) =>
+    togglePlaylistWatched: (id, ctx) =>
       update((draft) => {
         const current = draft.playlists[id];
         draft.playlists[id] = {
           watched: !(current?.watched ?? false),
           favorite: current?.favorite ?? false,
+          lastVideoId: current?.lastVideoId,
+          courseId: ctx?.courseId ?? current?.courseId,
           at: new Date().toISOString(),
         };
+        if (ctx) reconcileStatus(draft, ctx);
       }),
 
     togglePlaylistFavorite: (id) =>
@@ -178,8 +251,45 @@ export const useProfile = create<ProfileStore>((set, get) => {
         draft.playlists[id] = {
           watched: current?.watched ?? false,
           favorite: !(current?.favorite ?? false),
+          lastVideoId: current?.lastVideoId,
+          courseId: current?.courseId,
           at: new Date().toISOString(),
         };
+      }),
+
+    setVideosDone: (videoIds, done, ctx) =>
+      update((draft) => {
+        for (const videoId of videoIds) {
+          // A finished lecture keeps no position: there is nothing to resume.
+          if (done) draft.videos[videoId] = { done: true };
+          else delete draft.videos[videoId];
+        }
+        /*
+         * Ticking a lecture of a sealed playlist is a contradiction, and the
+         * tick is the more specific statement — so the seal comes off and what
+         * it was standing for is written out as the ticks it meant. Without
+         * this, unticking one lecture of a sealed playlist would appear to do
+         * nothing at all.
+         */
+        if (!done && draft.playlists[ctx.playlistId]?.watched) {
+          const untouched = ctx.videoIds.filter((id) => !videoIds.includes(id));
+          for (const id of untouched) draft.videos[id] = { done: true };
+          draft.playlists[ctx.playlistId] = {
+            ...draft.playlists[ctx.playlistId]!,
+            watched: false,
+            at: new Date().toISOString(),
+          };
+        }
+        touchPlaylist(draft, ctx, done ? videoIds[videoIds.length - 1] : undefined);
+        reconcileStatus(draft, ctx);
+      }),
+
+    recordPosition: (videoId, sec, ctx) =>
+      update((draft) => {
+        touchPlaylist(draft, ctx, videoId);
+        if (!draft.settings.resume) return;
+        if (draft.videos[videoId]?.done) return;
+        draft.videos[videoId] = { sec: Math.round(sec), done: false };
       }),
 
     /** Re-opening a playlist moves it to the top rather than adding a duplicate. */
@@ -222,9 +332,14 @@ export const useProfile = create<ProfileStore>((set, get) => {
           }
           const existingRank = STATUS_RANK[String(existing.status)] ?? 0;
           const incomingRank = STATUS_RANK[String(entry.status)] ?? 0;
+          const incomingWins = incomingRank > existingRank;
           draft.courses[id] = {
-            status: incomingRank > existingRank ? entry.status : existing.status,
+            status: incomingWins ? entry.status : existing.status,
             favorite: existing.favorite || entry.favorite,
+            // The claim travels with the status it was made about: a course
+            // finished by hand on one machine must not be walked back by the
+            // automation on the other.
+            manual: incomingWins ? entry.manual : existing.manual,
             at: entry.at > existing.at ? entry.at : existing.at,
           };
         }
@@ -234,9 +349,27 @@ export const useProfile = create<ProfileStore>((set, get) => {
             ? {
                 watched: existing.watched || entry.watched,
                 favorite: existing.favorite || entry.favorite,
+                lastVideoId:
+                  entry.at > existing.at
+                    ? (entry.lastVideoId ?? existing.lastVideoId)
+                    : (existing.lastVideoId ?? entry.lastVideoId),
+                courseId: existing.courseId ?? entry.courseId,
                 at: entry.at > existing.at ? entry.at : existing.at,
               }
             : entry;
+        }
+        // A lecture watched on either machine is watched; short of that, the
+        // further-along position is the useful one to come back to.
+        for (const [id, entry] of Object.entries(incoming.videos)) {
+          const existing = draft.videos[id];
+          if (!existing) {
+            draft.videos[id] = entry;
+            continue;
+          }
+          const done = existing.done || entry.done;
+          draft.videos[id] = done
+            ? { done: true }
+            : { done: false, sec: Math.max(existing.sec ?? 0, entry.sec ?? 0) };
         }
 
         // History interleaves by time and keeps the later visit of a repeat.

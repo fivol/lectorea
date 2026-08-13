@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatHours, inkOn, withAlpha } from '@/lib/format';
+import { percent, useCourseProgress } from '@/lib/progress';
 import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
 import { courseHref } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
+import ProgressBar from '@/components/ProgressBar';
 import { Button, Chip, IconButton } from '@/components/ui';
 import LinksBlock from './LinksBlock';
 import PlaylistList from './PlaylistList';
@@ -43,6 +45,11 @@ export default function CoursePanel({
   const toggleFavorite = useProfile((state) => state.toggleCourseFavorite);
   const setEcho = useUi((state) => state.setEcho);
   const scheme = useResolvedTheme();
+  // Its own shard and nothing else — the path's courses are `LinksBlock`'s
+  // business, and asking for eight more here would make opening any course
+  // cost the whole chain behind it.
+  const own = useMemo(() => [course.id], [course.id]);
+  const progress = useCourseProgress(own).get(course.id) ?? null;
 
   /**
    * The echo is set by hovering a link in here and cleared on mouse-out — but
@@ -124,6 +131,31 @@ export default function CoursePanel({
                 : t('ui.course.start')}
           </Button>
         </div>
+
+        {/*
+          The lectures behind this course, by the recording being watched.
+
+          Only once there are any — before that the line would say «0 из 30» of
+          a playlist nobody has chosen yet, which is a fact about the catalogue
+          rather than about the reader. It names the recording, because a course
+          carries a dozen and a bare «12 из 30» does not say which twelve.
+        */}
+        {progress ? (
+          <div className="mt-3">
+            <ProgressBar
+              done={progress.done}
+              total={progress.total}
+              label={`${percent(progress.fraction)}%`}
+            />
+            <p className="mt-1 truncate text-[11px] text-ink-faint">
+              <span className="num">
+                {t('ui.course.lecturesDone', { done: progress.done, total: progress.total })}
+              </span>
+              {' · '}
+              {progress.playlist.lecturer ?? progress.playlist.channelTitle}
+            </p>
+          </div>
+        ) : null}
       </header>
 
       <section className="px-4 pb-4">

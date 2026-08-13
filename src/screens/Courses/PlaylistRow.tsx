@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import type { BuiltPlaylist } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
+import { percent, playlistProgress } from '@/lib/progress';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import Tooltip from '@/components/Tooltip';
@@ -19,8 +20,10 @@ type Props = {
  */
 function PlaylistRowInner({ playlist, label, onOpen }: Props) {
   const { t, count } = useT();
-  const watched = useProfile((state) => state.profile.playlists[playlist.id]?.watched ?? false);
+  const profile = useProfile((state) => state.profile);
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
+  const progress = playlistProgress(profile, playlist);
+  const watched = progress.complete;
 
   const thumbnail = playlist.videos[0]?.id
     ? `https://i.ytimg.com/vi/${playlist.videos[0].id}/mqdefault.jpg`
@@ -57,6 +60,18 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
               event.currentTarget.style.display = 'none';
             }}
           />
+        ) : null}
+        {/* Along the foot of the thumbnail, where every video player in the
+            world puts it. A part-watched playlist is the one state the marks on
+            the right cannot show — a tick is finished and no tick is untouched,
+            and "seven of thirty" is neither. */}
+        {progress.started && !watched ? (
+          <span className="absolute inset-x-0 bottom-0 h-[3px] bg-black/50">
+            <span
+              className="block h-full bg-accent"
+              style={{ width: `${Math.max(3, percent(progress.fraction))}%` }}
+            />
+          </span>
         ) : null}
       </span>
 

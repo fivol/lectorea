@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { pathTo, useCatalog } from '@/lib/catalog';
-import { formatHours } from '@/lib/format';
+import { formatDuration, formatHours } from '@/lib/format';
+import { pathProgress, percent, useContinue, useCourseProgress } from '@/lib/progress';
 import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
@@ -43,7 +44,11 @@ export default function CoursesTab() {
     return { inProgress, done, goals };
   }, [profile.courses, catalog]);
 
-  const empty = !groups.inProgress.length && !groups.done.length && !groups.goals.length;
+  const empty =
+    !groups.inProgress.length &&
+    !groups.done.length &&
+    !groups.goals.length &&
+    !profile.recent.length;
   if (empty) {
     return (
       <EmptyState
@@ -56,6 +61,8 @@ export default function CoursesTab() {
 
   return (
     <div className="space-y-8 p-4">
+      <ContinueCard />
+
       {groups.goals.length ? (
         <section>
           <h3 className="mb-1 text-sm font-medium">{t('ui.profile.group.favorite')}</h3>
@@ -95,6 +102,83 @@ export default function CoursesTab() {
   );
 }
 
+/**
+ * One press back into the middle of a lecture.
+ *
+ * The first thing in the profile, above the goals, because it is the only card
+ * here that is about right now: everything else is a shelf of things somebody
+ * decided at some point, and this is the thing they were doing when they
+ * stopped. Absent entirely until there is something to come back to — a
+ * «продолжить» that starts a course from nothing is just a course.
+ */
+function ContinueCard() {
+  const { t } = useT();
+  const catalog = useCatalog();
+  const navigate = useNavigate();
+  const closeProfile = useUi((state) => state.closeProfile);
+  const sliceAround = useCourseSlice();
+  const target = useContinue();
+
+  if (!target) return null;
+
+  const { entry, playlist, progress } = target;
+  const next = progress.next!;
+  const course = catalog.courseById.get(entry.courseId);
+
+  const open = (): void => {
+    closeProfile();
+    const query = new URLSearchParams(sliceAround(entry.courseId));
+    query.set('playlist', playlist.id);
+    navigate(courseHref(entry.courseId, `?${query.toString()}`));
+  };
+
+  return (
+    <section>
+      <h3 className="mb-3 text-sm font-medium">{t('ui.profile.continue')}</h3>
+      <button
+        type="button"
+        onClick={open}
+        className="surface flex w-full gap-3 overflow-hidden p-3 text-left transition-colors
+                   duration-fast ease-out hover:border-accent"
+      >
+        <span className="relative h-14 w-24 shrink-0 overflow-hidden rounded bg-surface-2">
+          <img
+            src={`https://i.ytimg.com/vi/${next.video.id}/mqdefault.jpg`}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-canvas/70 text-ink">
+              <Icon name="play" size={12} />
+            </span>
+          </span>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">{next.video.title}</span>
+          <span className="num mt-0.5 block truncate text-xs text-ink-faint">
+            {course ? t(`course.${course.id}.title`) : entry.courseId}
+            {' · '}
+            {t('ui.profile.continueAt', {
+              n: next.index + 1,
+              total: progress.total,
+              // A lecture opened and left at the first minute resumes from the
+              // start, and saying «с 0:00» would be a promise about a place.
+              at: next.sec ? formatDuration(next.sec) : t('ui.profile.continueStart'),
+            })}
+          </span>
+          <ProgressBar
+            className="mt-2"
+            done={progress.done}
+            total={progress.total}
+            label={`${percent(progress.fraction)}%`}
+          />
+        </span>
+      </button>
+    </section>
+  );
+}
+
 function useCourseNavigation() {
   const navigate = useNavigate();
   const closeProfile = useUi((state) => state.closeProfile);
@@ -127,8 +211,14 @@ function CourseCard({ course }: { course: BuiltCourse }) {
   const profile = useProfile((state) => state.profile);
   const open = useCourseNavigation();
 
-  const steps = [...pathTo(catalog, course.id), course];
-  const doneIds = steps.filter((step) => profile.courses[step.id]?.status === 'done');
+  const steps = useMemo(() => [...pathTo(catalog, course.id), course], [catalog, course]);
+  const stepIds = useMemo(() => steps.map((step) => step.id), [steps]);
+  const byCourse = useCourseProgress(stepIds);
+  const path = pathProgress(
+    stepIds,
+    (id) => profile.courses[id]?.status === 'done',
+    (id) => byCourse.get(id) ?? null
+  );
   const remainingHours = steps
     .filter((step) => profile.courses[step.id]?.status !== 'done')
     .reduce((sum, step) => sum + step.hours, 0);
@@ -176,11 +266,17 @@ function CourseCard({ course }: { course: BuiltCourse }) {
           {domain ? t(`domain.${domain.id}.title`) : ''} · {t('ui.course.level', { n: course.level + 1 })}
         </p>
 
+        {/* The percentage carries the course in hand, the count carries the
+            milestones. Neither on its own is the answer to "how far am I". */}
         <ProgressBar
           className="mt-2"
-          done={doneIds.length}
-          total={steps.length}
-          label={t('ui.profile.progress', { done: doneIds.length, total: steps.length })}
+          done={path.done}
+          total={path.total}
+          partial={path.partial}
+          label={`${percent(path.fraction)}% · ${t('ui.profile.progress', {
+            done: path.done,
+            total: path.total,
+          })}`}
         />
 
         {/* Only while there is anything left. A finished path already says so

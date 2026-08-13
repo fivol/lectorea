@@ -5,6 +5,7 @@ import type {
   Profile,
   ProviderType,
 } from '@shared/schema';
+import { playlistProgress } from '@/lib/progress';
 
 /** Filter and sort state for the playlist list. Lives in the panel, not the URL. */
 
@@ -121,7 +122,10 @@ export function applyFilters(
       const [min, max] = state.years;
       if (!playlist.year || playlist.year < min || playlist.year > max) return false;
     }
-    if (state.hideWatched && profile.playlists[playlist.id]?.watched) return false;
+    // Every lecture ticked counts as watched even without the seal on top —
+    // otherwise the filter hides the playlists you sealed and keeps the ones
+    // you actually sat through.
+    if (state.hideWatched && playlistProgress(profile, playlist).complete) return false;
     if (state.onlyFavorite && !profile.playlists[playlist.id]?.favorite) return false;
     return true;
   });

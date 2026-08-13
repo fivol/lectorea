@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import type { BuiltPlaylist } from '@shared/schema';
+import type { BuiltPlaylist, Video } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
+import { percent, playlistProgress } from '@/lib/progress';
 import { courseHref, useCatalogParams } from '@/lib/url';
-import { useProfile } from '@/store/profile';
+import { embedSrc, isResumable, useYouTubeTracking } from '@/lib/youtube';
+import { useProfile, type WatchContext } from '@/store/profile';
 import Icon from '@/components/Icon';
+import ProgressBar from '@/components/ProgressBar';
 import { Button, ButtonLink, IconButton } from '@/components/ui';
 import Tooltip from '@/components/Tooltip';
 import { QualityDot } from './PlaylistRow';
@@ -18,16 +21,34 @@ type Props = {
   onClose: () => void;
 };
 
+/** What the player is showing, and where it was asked to start. */
+type Playing = { id: string; start: number };
+
 export default function PlaylistModal({ playlist, onClose }: Props) {
   const { t, lang } = useT();
   const catalog = useCatalog();
   const { search } = useCatalogParams();
 
-  const watched = useProfile((state) => state.profile.playlists[playlist.id]?.watched ?? false);
+  const profile = useProfile((state) => state.profile);
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
   const toggleWatched = useProfile((state) => state.togglePlaylistWatched);
   const toggleFavorite = useProfile((state) => state.togglePlaylistFavorite);
+  const setVideosDone = useProfile((state) => state.setVideosDone);
+  const recordPosition = useProfile((state) => state.recordPosition);
+  const setCourseStatus = useProfile((state) => state.setCourseStatus);
   const recordRecent = useProfile((state) => state.recordRecent);
+
+  const progress = playlistProgress(profile, playlist);
+
+  /** What the store needs in order to know what a tick is part of. */
+  const context: WatchContext = useMemo(
+    () => ({
+      courseId: playlist.courseId,
+      playlistId: playlist.id,
+      videoIds: playlist.videos.map((video) => video.id),
+    }),
+    [playlist]
+  );
 
   /**
    * History is recorded here rather than at the click, so a pasted `?playlist=`
@@ -39,7 +60,8 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
 
   // The iframe is mounted only after an explicit click: YouTube pulls ~800 KB
   // per embed, and opening a modal to read the lecture list must not cost that.
-  const [playing, setPlaying] = useState<string | null>(null);
+  const [playing, setPlaying] = useState<Playing | null>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
 
   const close = useCallback(() => onClose(), [onClose]);
   useEscape(true, close);
@@ -47,6 +69,40 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   const trapRef = useFocusTrap(true);
 
   useEffect(() => setPlaying(null), [playlist.id]);
+
+  /**
+   * Following the player.
+   *
+   * Both callbacks carry the whole context, because a lecture the player walked
+   * on to by itself can finish the playlist, and finishing the playlist is what
+   * finishes the course.
+   */
+  const { onLoad } = useYouTubeTracking({
+    enabled: playing !== null,
+    iframe: frame,
+    onPosition: (videoId, sec) => recordPosition(videoId, sec, context),
+    onWatched: (videoId) => setVideosDone([videoId], true, context),
+  });
+
+  /**
+   * When the automation finishes the course, say so where it happened.
+   *
+   * A status that changes on its own behind a modal is a status nobody knows
+   * they have. It is one line, it names the way out, and it goes away with the
+   * dialog — the panel underneath is where the state actually lives.
+   */
+  const [promoted, setPromoted] = useState(false);
+  const wasDone = useRef(profile.courses[playlist.courseId]?.status === 'done');
+  useEffect(() => {
+    const entry = profile.courses[playlist.courseId];
+    const done = entry?.status === 'done';
+    // And withdrawn the moment it stops being true: unticking a lecture puts
+    // the course back to «изучается», and a line still announcing that it is
+    // finished is worse than no line at all.
+    if (!done) setPromoted(false);
+    else if (!wasDone.current && !entry?.manual) setPromoted(true);
+    wasDone.current = done;
+  }, [profile.courses, playlist.courseId]);
 
   const provider = catalog.providers[playlist.providerId];
   const course = catalog.courseById.get(playlist.courseId);
@@ -61,9 +117,35 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
     ? `https://i.ytimg.com/vi/${playlist.videos[0].id}/hqdefault.jpg`
     : null;
 
-  const embedSrc = playing
-    ? `https://www.youtube-nocookie.com/embed/${playing}?list=${playlist.id}&autoplay=1&rel=0`
-    : `https://www.youtube-nocookie.com/embed/videoseries?list=${playlist.id}&autoplay=1&rel=0`;
+  /** Open a lecture, picking up where it was left unless it is already done. */
+  const play = (video: Video): void => {
+    const mark = profile.videos[video.id];
+    const sec = !mark?.done && isResumable(mark?.sec) ? mark.sec : 0;
+    setPlaying({ id: video.id, start: sec });
+  };
+
+  /** The poster plays the first lecture that is not behind you, not the first. */
+  const playNext = (): void => {
+    const next = progress.next;
+    if (next) play(next.video);
+    else if (playlist.videos[0]) play(playlist.videos[0]);
+  };
+
+  // Where the last tick was, so a shift-click has a range to work with.
+  const anchor = useRef<number | null>(null);
+
+  const tick = (index: number, next: boolean, extend: boolean): void => {
+    const from = extend && anchor.current !== null ? anchor.current : index;
+    const [start, end] = from <= index ? [from, index] : [index, from];
+    const ids = playlist.videos.slice(start, end + 1).map((video) => video.id);
+    setVideosDone(ids, next, context);
+    anchor.current = index;
+  };
+
+  const setAll = (next: boolean): void => {
+    if (next) toggleWatched(playlist.id, context);
+    else setVideosDone(context.videoIds, false, context);
+  };
 
   /*
    * Portalled, like every other layer that covers the window: on a phone this
@@ -130,7 +212,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                 <button
                   type="button"
                   className="group absolute inset-0"
-                  onClick={() => setPlaying(playlist.videos[0]?.id ?? '')}
+                  onClick={playNext}
                   aria-label={t('ui.playlist.play')}
                 >
                   {poster ? (
@@ -140,18 +222,32 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                     <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-canvas transition-transform group-hover:scale-105">
                       <Icon name="play" size={22} />
                     </span>
-                    <span className="text-xs text-white/80">{t('ui.playlist.playHint')}</span>
+                    {/* What the button will actually do. Half way through a
+                        course it is «продолжить», and pressing something
+                        labelled «смотреть» to be dropped at lecture nine is a
+                        surprise even when it is the one you wanted. */}
+                    <span className="text-xs text-white/80">
+                      {progress.started && progress.next
+                        ? t('ui.playlist.continueAt', { n: progress.next.index + 1 })
+                        : t('ui.playlist.playHint')}
+                    </span>
                   </span>
                 </button>
               ) : (
                 <iframe
-                  key={playing}
-                  src={embedSrc}
+                  ref={frame}
+                  key={`${playing.id}:${playing.start}`}
+                  src={embedSrc({
+                    playlistId: playlist.id,
+                    videoId: playing.id,
+                    start: playing.start,
+                  })}
                   title={playlist.title}
                   className="absolute inset-0 h-full w-full"
                   allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
                   referrerPolicy="strict-origin-when-cross-origin"
+                  onLoad={onLoad}
                 />
               )}
             </div>
@@ -160,23 +256,15 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
             <ol className="divide-y divide-line lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
               {playlist.videos.length ? (
                 playlist.videos.map((video, index) => (
-                  <li key={video.id}>
-                    <button
-                      type="button"
-                      onClick={() => setPlaying(video.id)}
-                      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm
-                                  transition-colors duration-fast ease-out hover:bg-surface-2
-                                  ${playing === video.id ? 'bg-accent-soft text-ink' : 'text-ink-dim'}`}
-                    >
-                      <span className="num w-6 shrink-0 text-right text-xs text-ink-faint">
-                        {index + 1}.
-                      </span>
-                      <span className="min-w-0 flex-1 truncate">{video.title}</span>
-                      <span className="num shrink-0 text-xs text-ink-faint">
-                        {formatDuration(video.seconds)}
-                      </span>
-                    </button>
-                  </li>
+                  <LectureRow
+                    key={video.id}
+                    video={video}
+                    index={index}
+                    playing={playing?.id === video.id}
+                    sealed={progress.complete && !profile.videos[video.id]?.done}
+                    onPlay={() => play(video)}
+                    onTick={(next, extend) => tick(index, next, extend)}
+                  />
                 ))
               ) : (
                 <li className="px-4 py-6 text-center text-sm text-ink-faint">
@@ -197,6 +285,28 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
               <p className="num mt-1 text-xs text-ink-faint">
                 {[provider?.title, playlist.year, playlist.lang].filter(Boolean).join(' · ')}
               </p>
+
+              {/* Above the fact sheet, because it is the one thing here that is
+                  about the reader rather than about the recording. Absent until
+                  there is something to say: an empty bar over «0 из 30» repeats
+                  the lecture count two lines below it. */}
+              {progress.started ? (
+                <div className="mt-4">
+                  <ProgressBar
+                    done={progress.done}
+                    total={progress.total}
+                    label={`${percent(progress.fraction)}%`}
+                  />
+                  <p className="num mt-1 text-[11px] text-ink-faint">
+                    {t('ui.playlist.watchedOf', {
+                      done: progress.done,
+                      total: progress.total,
+                      hours: formatHours(hoursFromSeconds(progress.watchedSeconds)),
+                      of: formatHours(hoursFromSeconds(playlist.totalSeconds)),
+                    })}
+                  </p>
+                </div>
+              ) : null}
 
               <dl className="num mt-4 space-y-1 text-xs">
                 <Fact
@@ -294,6 +404,22 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
             {/* Pinned to the bottom of whichever box scrolls — the dialog on a
                 phone, the sidebar itself once it is a column. */}
             <div className="sticky bottom-0 mt-auto space-y-1.5 border-t border-line bg-surface p-4">
+              {promoted && course ? (
+                <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-accent">
+                  <Icon name="check" size={12} />
+                  {t('ui.playlist.coursePromoted')}
+                  <button
+                    type="button"
+                    className="underline decoration-line underline-offset-2 hover:text-ink"
+                    onClick={() => {
+                      setCourseStatus(course.id, 'in_progress');
+                      setPromoted(false);
+                    }}
+                  >
+                    {t('ui.common.undo')}
+                  </button>
+                </p>
+              ) : null}
               <Button
                 variant={favorite ? 'primary' : 'default'}
                 icon={favorite ? 'star-filled' : 'star'}
@@ -303,14 +429,21 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
               >
                 {favorite ? t('ui.course.favoriteOn') : t('ui.course.favorite')}
               </Button>
+              {/* The label names what the press does. Half way through, that is
+                  «отметить все 30» — not «просмотрено», which is a claim about
+                  a state the row of ticks above already contradicts. */}
               <Button
-                variant={watched ? 'primary' : 'default'}
+                variant={progress.complete ? 'primary' : 'default'}
                 icon="check"
                 iconSize={16}
                 className="w-full justify-center"
-                onClick={() => toggleWatched(playlist.id)}
+                onClick={() => setAll(!progress.complete)}
               >
-                {watched ? t('ui.playlist.watchedOn') : t('ui.playlist.watched')}
+                {progress.complete
+                  ? t('ui.playlist.watchedOn')
+                  : progress.started
+                    ? t('ui.playlist.watchedAll', { n: progress.total })
+                    : t('ui.playlist.watched')}
               </Button>
               <ButtonLink
                 href={`https://www.youtube.com/playlist?list=${playlist.id}`}
@@ -326,6 +459,88 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
       </div>
     </div>,
     document.body
+  );
+}
+
+/**
+ * One lecture: a tick, a name that plays, and how long it runs.
+ *
+ * The tick is its own control rather than part of the row, and it has to be —
+ * a checkbox inside a button is not something HTML allows, and the two answer
+ * different questions anyway. «I watched this on YouTube» is the reason the
+ * tick exists at all: without it, everything watched outside this player is
+ * invisible to the site, which makes the progress it shows a lie of omission.
+ *
+ * Shift extends from the last one ticked, because the person who comes to this
+ * list having watched twelve of thirty elsewhere should not have to press
+ * twelve times.
+ */
+function LectureRow({
+  video,
+  index,
+  playing,
+  sealed,
+  onPlay,
+  onTick,
+}: {
+  video: Video;
+  index: number;
+  playing: boolean;
+  /** Counted watched by the playlist's seal rather than by a tick of its own. */
+  sealed: boolean;
+  onPlay: () => void;
+  onTick: (next: boolean, extend: boolean) => void;
+}) {
+  const { t } = useT();
+  const mark = useProfile((state) => state.profile.videos[video.id]);
+  const done = sealed || (mark?.done ?? false);
+  const left = !done && isResumable(mark?.sec) ? mark.sec : 0;
+
+  return (
+    <li className={`relative flex items-center ${playing ? 'bg-accent-soft' : ''}`}>
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={done}
+        aria-label={`${t('ui.playlist.markWatched')}: ${video.title}`}
+        onClick={(event) => onTick(!done, event.shiftKey)}
+        className="flex h-11 w-10 shrink-0 items-center justify-center text-ink-faint
+                   transition-colors duration-fast ease-out hover:text-ink"
+      >
+        <span
+          className={`flex h-[18px] w-[18px] items-center justify-center rounded border
+                      transition-colors duration-fast ease-out
+                      ${done ? 'border-accent bg-accent text-canvas' : 'border-line-strong'}`}
+        >
+          {done ? <Icon name="check" size={12} /> : null}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onPlay}
+        className={`flex min-w-0 flex-1 items-center gap-3 py-2 pr-4 text-left text-sm
+                    transition-colors duration-fast ease-out hover:bg-surface-2
+                    ${playing ? 'text-ink' : done ? 'text-ink-faint' : 'text-ink-dim'}`}
+      >
+        <span className="num w-4 shrink-0 text-right text-xs text-ink-faint">{index + 1}.</span>
+        <span className="min-w-0 flex-1 truncate">{video.title}</span>
+        {/* Where you stopped, in place of the length — the length of a lecture
+            you are part way through is the less useful of the two. */}
+        <span className={`num shrink-0 text-xs ${left ? 'text-accent' : 'text-ink-faint'}`}>
+          {left ? formatDuration(left) : formatDuration(video.seconds)}
+        </span>
+      </button>
+
+      {left ? (
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] bg-transparent">
+          <span
+            className="block h-full bg-accent/60"
+            style={{ width: `${Math.min(100, (left / Math.max(1, video.seconds)) * 100)}%` }}
+          />
+        </span>
+      ) : null}
+    </li>
   );
 }
 

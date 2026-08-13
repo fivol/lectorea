@@ -93,6 +93,13 @@ that have died or been half-deleted are dropped automatically.
 the profile shows a progress bar along its whole path, how many hours are left,
 and a button that takes you to the next course you can actually start.
 
+**Progress down to the lecture.** Watch in the built-in player and it remembers
+the second you stopped at — the profile opens on **Продолжить**, which puts you
+back there. Lectures watched on YouTube get a tick of their own, shift-click for
+a run of them, and one press marks a whole playlist. A course counts itself as
+started on the first lecture and finished when a playlist is behind you, until
+you say otherwise yourself. See [docs/interface.md](docs/interface.md#progress-down-to-the-lecture).
+
 ![The profile, with two goals in progress](docs/images/profile.webp)
 
 **Your marks, your playlists, your history.** Courses in progress and finished,
