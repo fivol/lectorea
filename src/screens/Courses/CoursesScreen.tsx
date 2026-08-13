@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
+import { bridgingAncestors, pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
@@ -23,6 +23,9 @@ import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
 import LegendPopover from './LegendPopover';
 import MobileCourseList from './MobileCourseList';
+
+/** Nothing selected, nothing to join up — one set, so the memo below is stable. */
+const NO_BRIDGES: Set<string> = new Set();
 
 export default function CoursesScreen() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -97,10 +100,39 @@ export default function CoursesScreen() {
     return ids;
   }, [guests, visible, selected]);
 
+  /**
+   * The prerequisites the chain would otherwise be missing.
+   *
+   * The trail above is about where the reader has been; this is about whether
+   * what is on screen can be read at all. A filter that hides one course in the
+   * middle of a path leaves the cards on either side of it lit and the curve
+   * between them undrawn — the chain arrives in two pieces, and nothing on
+   * screen says the piece on the left leads to the piece on the right.
+   *
+   * Recomputed per selection rather than accumulated: these cards are here to
+   * join up a particular chain, and the moment that chain is no longer the one
+   * being read they have no claim on the columns.
+   */
+  const bridges = useMemo(() => {
+    if (!selected) return NO_BRIDGES;
+    const canvas = guestIds.size ? new Set([...visible, ...guestIds]) : visible;
+    return bridgingAncestors(catalog, selected.id, canvas);
+  }, [catalog, selected, visible, guestIds]);
+
   const onCanvas = useMemo(() => {
-    if (!guestIds.size) return visible;
-    return new Set([...visible, ...guestIds]);
-  }, [visible, guestIds]);
+    if (!guestIds.size && !bridges.size) return visible;
+    return new Set([...visible, ...guestIds, ...bridges]);
+  }, [visible, guestIds, bridges]);
+
+  /**
+   * Every card standing in a column the filter did not put it in — the trail
+   * and the borrowed prerequisites alike. Both are foreign to the filter, so
+   * both name the field they came from.
+   */
+  const outsiders = useMemo(() => {
+    if (!bridges.size) return guestIds;
+    return new Set([...guestIds, ...bridges]);
+  }, [guestIds, bridges]);
 
   /** Courses the path needs that are nowhere on the canvas — the panel says so. */
   const pathOutsideFilter = useMemo(
@@ -296,7 +328,7 @@ export default function CoursesScreen() {
                 <ColumnsView
                   courses={catalog.courses}
                   visible={onCanvas}
-                  guests={guestIds}
+                  guests={outsiders}
                   selectedId={selected?.id ?? null}
                   onSelect={onSelect}
                   onDeselect={onDeselect}

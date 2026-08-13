@@ -171,6 +171,50 @@ export function pathTo(catalog: Catalog, courseId: string): BuiltCourse[] {
     .sort((a, b) => a.level - b.level || a.row - b.row);
 }
 
+/**
+ * The ancestors a filter hides that the chain cannot be read without.
+ *
+ * A filter drops one course out of the middle of a path and the path stops
+ * being one: game theory needs probability, probability needs combinatorics,
+ * and with probability filed under another field the two ends light up with
+ * nothing between them — two unrelated groups of green cards and a gap where
+ * the answer was. Those are borrowed back, and they arrive as guests, with the
+ * tag naming the field they came from.
+ *
+ * Connectivity, not completeness. A hidden ancestor is borrowed only when
+ * something already on the canvas stands behind it, so a branch that is hidden
+ * from end to end has nothing to join up and stays out — which is what keeps a
+ * filter a filter rather than an invitation to show the whole catalogue every
+ * time a course is clicked.
+ */
+export function bridgingAncestors(
+  catalog: Catalog,
+  courseId: string,
+  onCanvas: Set<string>
+): Set<string> {
+  // Prerequisites first: the build guarantees `level(dep) < level(course)`, so
+  // one pass in column order settles every course after everything it needs.
+  const ordered = [...upstreamOf(catalog.courseById, courseId)]
+    .map((id) => catalog.courseById.get(id))
+    .filter((course): course is BuiltCourse => Boolean(course))
+    .sort((a, b) => a.level - b.level);
+
+  const bridges = new Set<string>();
+  // On the canvas already, or borrowed onto it just now — a run of hidden
+  // ancestors is bridged along its whole length or not at all.
+  const reached = new Set<string>();
+
+  for (const course of ordered) {
+    if (onCanvas.has(course.id)) reached.add(course.id);
+    else if (course.deps.some((dep) => reached.has(dep))) {
+      bridges.add(course.id);
+      reached.add(course.id);
+    }
+  }
+
+  return bridges;
+}
+
 export type Unlock = { id: string; behind: number };
 
 /**

@@ -202,6 +202,17 @@ A domain filter shows that field and nothing else — not even a prerequisite fr
 elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead.
 
+Two kinds of card are borrowed back, and only while a course is selected: the
+selected course itself when the filter does not cover it, and any prerequisite
+the chain would visibly break without. Game theory needs probability,
+probability needs combinatorics — with probability filed under another field the
+two ends of the path lit up with nothing drawn between them, two unrelated
+groups of cards and a gap where the answer was. A borrowed card carries a tag
+naming the field it came from, and pressing it moves the columns to that field
+with the course still selected. The rule is connectivity, not completeness: a
+branch the filter hides from end to end has nothing to join up and stays out,
+counted in «Путь» in the panel like every other course off the canvas.
+
 ## Search
 
 ![Searching for «теорвер»](images/search.webp)
