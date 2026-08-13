@@ -28,8 +28,7 @@
   "ui.plural.minute.few": "minutes",
   "ui.plural.minute.many": "minutes",
 
-  "ui.nav.backTo.map": "Map",
-  "ui.nav.backTo.blocks": "List",
+  "ui.nav.backTo.domains": "Fields",
   "ui.nav.profile": "Profile",
 
   "ui.view.map": "Map",

@@ -28,8 +28,7 @@
   "ui.plural.minute.few": "минуты",
   "ui.plural.minute.many": "минут",
 
-  "ui.nav.backTo.map": "Карта",
-  "ui.nav.backTo.blocks": "Список",
+  "ui.nav.backTo.domains": "Области",
   "ui.nav.profile": "Профиль",
 
   "ui.view.map": "Карта",

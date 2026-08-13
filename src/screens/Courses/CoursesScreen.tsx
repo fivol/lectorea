@@ -9,7 +9,7 @@ import { courseHref, useCatalogParams } from '@/lib/url';
 import { useIsDesktop, useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp, inkOn } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
-import { useMapView, useUi } from '@/store/ui';
+import { useUi } from '@/store/ui';
 import SearchBox from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
 import GlobalFilters from '@/components/GlobalFilters';
@@ -34,7 +34,6 @@ export default function CoursesScreen() {
   const isDesktop = useIsDesktop();
 
   const requestFocus = useUi((state) => state.requestFocus);
-  const mapView = useMapView();
   const splitRatio = useProfile((state) => state.profile.settings.splitRatio);
   const setSetting = useProfile((state) => state.setSetting);
 
@@ -171,23 +170,24 @@ export default function CoursesScreen() {
       <header className="z-30 flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-4 py-2 sm:px-3">
         {/* The way back is set like the switch it came from — same plate, same
             spaced caps, so the two screens read as two views and not as two
-            sites. It names the view it returns to rather than always saying
-            «Карта»: whoever entered the columns from the blocks left a screen
-            of blocks behind, and that is the screen they get back.
+            sites. It names what waits there — the fields — rather than the
+            drawing it is drawn as: «Карта» and «Список» are the same shelf seen
+            twice, and which of the two the reader left by is their business,
+            not a thing the corner has to keep score of.
 
             With no room for the word, the plate closes up around the arrow
             instead of keeping the width the word would have had. */}
         <Cap
           to="/"
           icon="arrow-left"
-          ariaLabel={t(`ui.nav.backTo.${mapView}`)}
-          label={<span className="hidden sm:inline">{t(`ui.nav.backTo.${mapView}`)}</span>}
+          ariaLabel={t('ui.nav.backTo.domains')}
+          label={<span className="hidden sm:inline">{t('ui.nav.backTo.domains')}</span>}
           className="aspect-square px-0 sm:aspect-auto sm:px-3.5"
         />
 
-        {/* No breadcrumb trail: with «Карта» already on the left and the domain
-            filter naming the field it leads to, the path repeated both of them
-            and left the row too loud to read at a glance.
+        {/* No breadcrumb trail: with «Области» already on the left and the
+            domain filter naming the field it leads to, the path repeated both
+            of them and left the row too loud to read at a glance.
 
             Below `xl` the three of them are a strip of their own that scrolls
             sideways: the labels are the values, so their widths change as the
