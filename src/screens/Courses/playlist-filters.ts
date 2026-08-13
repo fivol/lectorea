@@ -61,6 +61,22 @@ export function langLabel(langs: string[]): string {
   return langs.map((lang) => LANG_LABELS[lang] ?? lang).join(', ');
 }
 
+/**
+ * What language to print on a row, if any.
+ *
+ * A list filtered down to one language is a list where every row says the same
+ * thing, and a column of «ru» down the side of it is forty repetitions of the
+ * chip already sitting above the list. So the language appears only when it
+ * separates anything: when the filter admits more than one, when it admits none
+ * and the list is whatever the course has, or — the case worth catching — when
+ * this row is not in the language that was asked for, which happens when a
+ * course has nothing in it and the list says so and shows the rest.
+ */
+export function languageLabel(lang: string, selected: string[]): string | null {
+  if (selected.length === 1 && selected[0] === lang) return null;
+  return LANG_LABELS[lang] ?? lang;
+}
+
 export function activeFilterCount(state: PlaylistFilterState): number {
   let n = 0;
   if (state.langs.length) n += 1;

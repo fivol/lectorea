@@ -15,6 +15,7 @@ import {
   applyFilters,
   defaultFilters,
   langLabel,
+  languageLabel,
   sortPlaylists,
   type PlaylistFilterState,
   type SortKey,
@@ -149,6 +150,7 @@ export default function PlaylistList({ course }: Props) {
                 key={playlist.id}
                 playlist={playlist}
                 label={labels.get(playlist.id) ?? { heading: playlist.title, detail: null }}
+                language={languageLabel(playlist.lang, filters.langs)}
                 onOpen={(id) => {
                   lastFocused.current = document.activeElement as HTMLElement;
                   params.setPlaylist(id);

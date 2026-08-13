@@ -13,6 +13,8 @@ type Props = {
   playlist: BuiltPlaylist;
   /** Source-first heading for this row; see playlist-label.ts. */
   label: LabelParts;
+  /** «Русский», or null when the filter makes the language a foregone conclusion. */
+  language: string | null;
   onOpen: (id: string) => void;
 };
 
@@ -20,7 +22,7 @@ type Props = {
  * One row of the list. Only marks, never raw views and likes: those numbers turn
  * the list into a spreadsheet and make it harder, not easier, to compare.
  */
-function PlaylistRowInner({ playlist, label, onOpen }: Props) {
+function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
   const { t, count } = useT();
   const profile = useProfile((state) => state.profile);
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
@@ -32,11 +34,18 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
     : null;
 
   /*
-   * Once a playlist is under way, the two facts that describe it — how many
-   * lectures and how long they run — are superseded by how much of each is
-   * behind you, so the progress takes their place rather than being squeezed in
-   * beside them. Nothing is lost: both numbers are still there, and both are
-   * now about the reader.
+   * The year and the language are not here.
+   *
+   * The heading already carries the year — it is one of the things that tells
+   * two recordings by the same faculty apart — and printing it again three
+   * millimetres below was the same fact twice. The language joins it up there
+   * for the same reason, and only when it distinguishes anything: see
+   * `languageLabel`.
+   *
+   * What is left is what the row is: how many lectures and how long they run —
+   * until the playlist is under way, at which point how much of each is behind
+   * you supersedes both. Nothing is lost in the swap; both numbers are still
+   * there, and both are now about the reader.
    */
   const subtitle = (
     progress.started
@@ -46,101 +55,90 @@ function PlaylistRowInner({ playlist, label, onOpen }: Props) {
             n: formatHours(hoursFromSeconds(progress.watchedSeconds)),
             of: formatHours(hoursFromSeconds(progress.totalSeconds)),
           }),
-          playlist.year ? String(playlist.year) : null,
-          playlist.lang,
         ]
       : [
           count(playlist.videoCount, 'lecture'),
           t(`ui.playlist.length.${playlist.lectureLength}`),
-          playlist.year ? String(playlist.year) : null,
-          playlist.lang,
         ]
   )
     .filter(Boolean)
     .join(' · ');
 
-  /*
-   * The card is a container with the row inside it rather than one big button,
-   * so the bar can sit underneath as a sibling.
-   *
-   * It used to be four pixels along the foot of the thumbnail, which is where
-   * every video player in the world puts it — but a player puts it on a frame
-   * that fills the screen, and here the frame is seventy by forty and often
-   * dark. It was unreadable. Given its own line under the row it is the same
-   * bar the panel and the profile draw, at the width of the card, and the row
-   * grows by twelve pixels to hold it.
-   *
-   * The hover lives on the container so the whole card lights up, bar included.
-   */
+  const heading = language ? `${label.heading} · ${language}` : label.heading;
+
   return (
-    <div
-      className={`rounded-card border border-transparent px-2 py-2 transition-colors
-                  duration-fast ease-out hover:border-line-strong hover:bg-surface-2
-                  ${watched ? 'opacity-70' : ''}`}
+    <button
+      type="button"
+      onClick={() => onOpen(playlist.id)}
+      className={`flex w-full items-center gap-3 rounded-card border border-transparent px-2 py-2
+                  text-left transition-colors duration-fast ease-out
+                  hover:border-line-strong hover:bg-surface-2 ${watched ? 'opacity-70' : ''}`}
     >
-      <button
-        type="button"
-        onClick={() => onOpen(playlist.id)}
-        className="flex w-full items-center gap-3 text-left"
-      >
-        {/* Fixed size, so a thumbnail that never arrives costs no layout shift. */}
-        <span className="h-10 w-[70px] shrink-0 overflow-hidden rounded bg-surface-2">
-          {thumbnail ? (
-            <img
-              src={thumbnail}
-              alt=""
-              loading="lazy"
-              width={70}
-              height={40}
-              className="h-full w-full object-cover"
-              onError={(event) => {
-                event.currentTarget.style.display = 'none';
-              }}
-            />
-          ) : null}
-        </span>
+      {/* Fixed size, so a thumbnail that never arrives costs no layout shift.
+          Sized to the two lines and the bar beside it rather than to the two
+          lines alone: a row this tall with a stamp-sized frame in it reads as a
+          list that lost its pictures. */}
+      <span className="h-[54px] w-24 shrink-0 overflow-hidden rounded bg-surface-2">
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt=""
+            loading="lazy"
+            width={96}
+            height={54}
+            className="h-full w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : null}
+      </span>
 
-        <span className="min-w-0 flex-1">
-          {/* The canonical name lives in the tooltip and in the player: the row
-              says who made it and which of theirs it is. */}
-          <Tooltip content={label.detail}>
-            <span className="block truncate text-caption text-ink">{label.heading}</span>
+      <span className="min-w-0 flex-1">
+        {/* The canonical name lives in the tooltip and in the player: the row
+            says who made it and which of theirs it is. */}
+        <Tooltip content={label.detail}>
+          <span className="block truncate text-caption text-ink">{heading}</span>
+        </Tooltip>
+        <span className="num mt-0.5 block truncate text-[11px] text-ink-faint">{subtitle}</span>
+
+        {/* Inside the text column, so it runs from the picture to the status and
+            under neither of them: a bar that starts under a thumbnail is not
+            measuring the thumbnail, and one that runs beneath the status word
+            reads as belonging to it.
+
+            Only while there is a way to go — a finished playlist is already
+            dimmed and ticked, and a full bar on every one of those would add a
+            line to half the list to repeat what the tick says. */}
+        {progress.started && !watched ? (
+          <ProgressBar
+            className="mt-1.5"
+            done={progress.done}
+            total={progress.total}
+            fill={progress.fraction}
+            label={`${percent(progress.fraction)}%`}
+          />
+        ) : null}
+      </span>
+
+      <span className="flex shrink-0 items-center gap-1.5">
+        {favorite ? (
+          <Tooltip content={t('ui.course.favoriteOn')}>
+            <span className="inline-flex text-warning">
+              <Icon name="star-filled" size={13} />
+            </span>
           </Tooltip>
-          <span className="num mt-0.5 block truncate text-[11px] text-ink-faint">{subtitle}</span>
-        </span>
-
-        <span className="flex shrink-0 items-center gap-1.5">
-          {favorite ? (
-            <Tooltip content={t('ui.course.favoriteOn')}>
-              <span className="inline-flex text-warning">
-                <Icon name="star-filled" size={13} />
-              </span>
-            </Tooltip>
-          ) : null}
-          {watched ? (
-            <Tooltip content={t('ui.playlist.watchedOn')}>
-              <span className="inline-flex text-accent">
-                <Icon name="check" size={13} />
-              </span>
-            </Tooltip>
-          ) : null}
-          <StatusBadge playlist={playlist} />
-        </span>
-      </button>
-
-      {/* Only while there is a way to go. A finished playlist is already dimmed
-          and ticked, and a full bar on every one of them would add a line to
-          half the list to repeat what the tick says. */}
-      {progress.started && !watched ? (
-        <ProgressBar
-          className="mt-1.5"
-          done={progress.done}
-          total={progress.total}
-          fill={progress.fraction}
-          label={`${percent(progress.fraction)}%`}
-        />
-      ) : null}
-    </div>
+        ) : null}
+        {watched ? (
+          <Tooltip content={t('ui.playlist.watchedOn')}>
+            <span className="inline-flex text-accent">
+              <Icon name="check" size={13} />
+            </span>
+          </Tooltip>
+        ) : null}
+        <StatusBadge playlist={playlist} />
+      </span>
+    </button>
   );
 }
 

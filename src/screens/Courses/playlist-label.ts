@@ -9,10 +9,14 @@ import type { BuiltPlaylist } from '@shared/schema';
  * word and pushes the part that differs off the end. The course is named by the
  * heading above the list, so here the row leads with the source instead.
  *
- * Rows that still collide then earn the thing that separates them — the year,
- * failing that the lecture length, failing that whatever is left of the
- * canonical title. Only the colliding rows get it: an unadorned «Лекториум» is
- * clearer than «Лекториум · 2016» when there is only one of them.
+ * The year comes next, on every row that has one. It used to be added only to
+ * rows that collided — an unadorned «Лекториум» being clearer than «Лекториум ·
+ * 2016» when there is only one of them — but the year was then printed a second
+ * time in the line below, for every row, which is the same fact twice and the
+ * worse of the two placements. One place, and the heading is it.
+ *
+ * Rows that still collide after that earn whatever else separates them: the
+ * lecture length, failing that the number of lectures.
  */
 export type LabelParts = { heading: string; detail: string | null };
 
@@ -50,8 +54,13 @@ export function playlistHeadings(
   const out = new Map<string, LabelParts>();
   for (const [key, group] of byBase) {
     for (const playlist of group) {
+      const dated = playlist.year ? `${key} · ${playlist.year}` : key;
+      // Two recordings by the same faculty in the same year — or two with no
+      // year at all — are still indistinguishable, and only those pay for a
+      // third part to the name.
+      const twins = group.filter((other) => other.year === playlist.year).length > 1;
       out.set(playlist.id, {
-        heading: group.length > 1 ? `${key} · ${discriminator(playlist, group, context)}` : key,
+        heading: twins ? `${dated} · ${discriminator(playlist, group, context)}` : dated,
         detail: stripCoursePrefix(playlist.title, courseTitle),
       });
     }
@@ -59,7 +68,12 @@ export function playlistHeadings(
   return out;
 }
 
-/** The first field that actually tells this playlist apart from its twins. */
+/**
+ * The first field that tells this playlist apart from its twins.
+ *
+ * The year is not among them: it is already in the name by the time this is
+ * reached, and this is only reached when it failed to separate anything.
+ */
 function discriminator(
   playlist: BuiltPlaylist,
   group: BuiltPlaylist[],
@@ -68,8 +82,6 @@ function discriminator(
   const unique = <T>(pick: (p: BuiltPlaylist) => T): boolean =>
     group.filter((other) => pick(other) === pick(playlist)).length === 1;
 
-  if (playlist.year && unique((p) => p.year)) return String(playlist.year);
   if (unique((p) => p.lectureLength)) return context.lengthLabel(playlist);
-  if (unique((p) => p.videoCount)) return `${playlist.videoCount}`;
-  return String(playlist.year ?? playlist.videoCount);
+  return `${playlist.videoCount}`;
 }

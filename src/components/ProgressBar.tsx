@@ -45,7 +45,7 @@ export default function ProgressBar({
   label,
   className = '',
 }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLSpanElement>(null);
   const [seen, setSeen] = useState(false);
   const solid =
     fill === undefined ? (total > 0 ? (done / total) * 100 : 0) : Math.min(100, fill * 100);
@@ -63,8 +63,16 @@ export default function ProgressBar({
     return () => observer.disconnect();
   }, [seen]);
 
+  /*
+   * A span rather than a div, all the way down.
+   *
+   * Half the places this appears are inside a button — a playlist row, a card
+   * in the profile — and a div inside a button is not something HTML allows.
+   * `display: flex` does not care what the element is called, so the cheap fix
+   * is to be phrasing content everywhere and never think about it again.
+   */
   return (
-    <div ref={ref} className={`flex items-center gap-2 ${className}`}>
+    <span ref={ref} className={`flex items-center gap-2 ${className}`}>
       <span
         role="progressbar"
         aria-valuenow={done}
@@ -85,6 +93,6 @@ export default function ProgressBar({
         />
       </span>
       {label ? <span className="num shrink-0 text-[11px] text-ink-dim">{label}</span> : null}
-    </div>
+    </span>
   );
 }
