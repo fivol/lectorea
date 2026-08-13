@@ -18,6 +18,7 @@ scripts/
   10-map.ts            regenerate public/map.svg
   11-mine.ts           playlists linked from what is already crawled
   12-subscribers.ts    channel subscriber counts, for the rating's reach signal
+  13-embeds.ts         which playlists the embedded player refuses as `list=`
   refresh.ts           the nightly job: 02 → 03 → 04
   dev-seed.ts          synthetic playlists for development
   course-new.ts        scaffold a course across the files it needs
@@ -148,6 +149,30 @@ The queue lives in the same SQLite file as the data, so it survives `kill -9`.
 difference between "fix the parser and re-run" and "fix the parser and wait
 until tomorrow".
 
+### The playlists the player will not open
+
+Alive is not the same as playable, and the API cannot tell the difference.
+`playlists.list` answers `privacyStatus: "public"` for playlists the embedded
+player then meets with «This video is unavailable» — measured on Khan Academy's
+Linear Algebra, Stanford CS229 and ИТМО's discrete mathematics, all of them
+public, every video in them playing on its own. Drop `list=` from the embed and
+the same video plays; keep it and nothing does, on `youtube.com` and
+`youtube-nocookie.com` alike. What YouTube is doing there is not known here.
+
+oEmbed refuses exactly the same playlists — three times out of three against the
+player — so `pnpm data:embeds` uses it as the detector and writes
+`list_playable`. It costs **no quota at all**: oEmbed is not the Data API. Only
+playlists a reader can reach are asked about, which is why the step runs after
+matching.
+
+The shard carries the answer, and the app gives the player the playlist only
+when the player will take it. For the rest the frame holds one lecture and the
+app walks to the next itself — the order is ours, out of the shard, so the
+course loses nothing but YouTube's own next-up rail. **31 of 2902 published
+playlists** on 2026-08-13. Deleting them instead would have been the wrong
+trade: the material is public and complete, and for those thirty-one this
+catalogue is the only place the lectures are in order.
+
 ## Incremental refresh
 
 A full crawl happens once. After that everything is driven by `next_refresh_at`:
@@ -159,6 +184,7 @@ A full crawl happens once. After that everything is driven by `next_refresh_at`:
 | Statistics, the rest | 30 days |
 | Liveness | 14 days |
 | Discovering new playlists on a channel | 30 days |
+| Whether the player takes the playlist as `list=` | 30 days |
 
 Without this every run burns the quota again and half the jobs never finish.
 

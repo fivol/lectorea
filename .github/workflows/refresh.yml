@@ -77,6 +77,12 @@ jobs:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
+      # No key and no quota: this one asks oEmbed, not the Data API, because the
+      # Data API's answer to it is wrong. After the match, since it only asks
+      # about playlists a reader can reach and matching is what decides that.
+      - name: Which playlists the player refuses as list=
+        run: pnpm data:embeds
+
       # An interrupted crawl is still worth keeping — the queue lives in the
       # database and the next run resumes from it. A run that never got as far
       # as a playlist is not: `openDb` writes the whole schema before the first

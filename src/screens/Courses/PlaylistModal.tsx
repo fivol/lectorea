@@ -8,7 +8,7 @@ import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
 import { percent, playlistProgress } from '@/lib/progress';
 import { courseHref, useCatalogParams } from '@/lib/url';
-import { embedSrc, isResumable, useYouTubeTracking } from '@/lib/youtube';
+import { embedSrc, isResumable, useYouTubeTracking, watchUrl } from '@/lib/youtube';
 import { useProfile, type WatchContext } from '@/store/profile';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
@@ -71,6 +71,16 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   useEffect(() => setPlaying(null), [playlist.id]);
 
   /**
+   * The playlist to hand the player, or nothing.
+   *
+   * A few perfectly public playlists are met with «This video is unavailable»
+   * the moment their id is passed as `list=`, while every lecture in them plays
+   * on its own — so those are given to the frame one lecture at a time. The
+   * course is not diminished by it: the order is ours, out of the shard.
+   */
+  const listId = playlist.listPlayable ? playlist.id : null;
+
+  /**
    * Following the player.
    *
    * Both callbacks carry the whole context, because a lecture the player walked
@@ -82,6 +92,16 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
     iframe: frame,
     onPosition: (videoId, sec) => recordPosition(videoId, sec, context),
     onWatched: (videoId) => setVideosDone([videoId], true, context),
+    // Without `list=` there is no rail behind the frame to walk along, so the
+    // walking is done here. With one, YouTube is already doing it and a second
+    // mover would fight it.
+    onEnded: listId
+      ? undefined
+      : (videoId) => {
+          const index = playlist.videos.findIndex((video) => video.id === videoId);
+          const next = index === -1 ? undefined : playlist.videos[index + 1];
+          if (next) play(next);
+        },
   });
 
   /**
@@ -238,7 +258,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                   ref={frame}
                   key={`${playing.id}:${playing.start}`}
                   src={embedSrc({
-                    playlistId: playlist.id,
+                    playlistId: listId,
                     videoId: playing.id,
                     start: playing.start,
                   })}
@@ -459,7 +479,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                     : t('ui.playlist.watched')}
               </Button>
               <ButtonLink
-                href={`https://www.youtube.com/playlist?list=${playlist.id}`}
+                href={watchUrl(listId, playing?.id ?? playlist.videos[0]?.id)}
                 icon="external"
                 iconSize={16}
                 className="w-full justify-center"

@@ -392,6 +392,10 @@ function assemblePlaylists(sources: Sources): Assembled {
           stats,
           alive: true,
           checkedAt: row.checked_at ?? nowIso(),
+          // Null is «not asked yet», and the honest default for that is the way
+          // the overwhelming majority behave: `data:embeds` names the few that
+          // do not.
+          listPlayable: row.list_playable !== 0,
           lectureLength: lectureLengthOf(medianSeconds),
           engagement: engagementOf(stats),
           retention: curve?.retention,

@@ -23,6 +23,7 @@ export const REFRESH_DAYS = {
   statsRegular: 30,
   liveness: 14,
   discover: 30,
+  listPlayable: 30,
 };
 
 export function inDays(days: number): string {
@@ -563,4 +564,90 @@ export async function checkLiveness(
   }
 
   return { checked, dead, quotaExhausted: false, remaining };
+}
+
+/* ─────────────────────────  Playlists the player refuses  ───────────────── */
+
+/**
+ * Does YouTube's player accept this playlist as `list=`?
+ *
+ * A question that has to be asked because the API's answer to it is wrong.
+ * `playlists.list` reports `privacyStatus: "public"` for playlists the embedded
+ * player then refuses with «This video is unavailable» — measured on Khan
+ * Academy's Linear Algebra, Stanford CS229 and ИТМО's discrete mathematics,
+ * all of them public, all of them with every video individually playable. Drop
+ * `list=` and the same video plays; keep it and nothing does, on
+ * `youtube.com` and `youtube-nocookie.com` alike. Twenty-seven of 2661
+ * published playlists on 2026-08-13.
+ *
+ * What the root cause is on YouTube's side is not known here. What is known is
+ * that oEmbed refuses exactly the same playlists — three times out of three
+ * against the player — so it serves as the detector, and it costs no quota at
+ * all: it is not the Data API.
+ *
+ * Only playlists a reader can actually reach are worth asking about, hence
+ * `published`. Unreachable ones are the overwhelming majority and no answer
+ * about them would ever be read.
+ */
+export async function checkListPlayable(
+  db: Db,
+  published: Set<string>,
+  limit = Infinity
+): Promise<{ checked: number; refused: number; remaining: number }> {
+  const allDue = (
+    db
+      .prepare(`SELECT id, list_checked_at FROM playlists WHERE alive = 1`)
+      .all() as Array<{ id: string; list_checked_at: string | null }>
+  )
+    .filter((row) => published.has(row.id) && isDue(row.list_checked_at, REFRESH_DAYS.listPlayable))
+    .map((row) => row.id);
+
+  const due = allDue.slice(0, limit);
+  const remaining = allDue.length - due.length;
+  if (!due.length) return { checked: 0, refused: 0, remaining };
+
+  const write = db.prepare(
+    `UPDATE playlists SET list_playable = ?, list_checked_at = ? WHERE id = ?`
+  );
+
+  let checked = 0;
+  let refused = 0;
+
+  // Six at a time, the same handful the crawler uses: this is somebody else's
+  // server and the point is to get an answer, not to race for it.
+  for (const chunk of chunked(due, 6)) {
+    const answers = await Promise.all(chunk.map((id) => askOembed(id)));
+    const save = db.transaction(() => {
+      chunk.forEach((id, index) => {
+        const playable = answers[index];
+        // A request that failed for its own reasons — a timeout, a hiccup —
+        // says nothing about the playlist, so the old answer stands and the
+        // date is not touched, which brings it back round next time.
+        if (playable === null) return;
+        write.run(playable ? 1 : 0, nowIso(), id);
+        checked += 1;
+        if (!playable) refused += 1;
+      });
+    });
+    save();
+  }
+
+  return { checked, refused, remaining };
+}
+
+/** `true` playable, `false` refused, `null` no answer worth recording. */
+async function askOembed(playlistId: string): Promise<boolean | null> {
+  const url =
+    'https://www.youtube.com/oembed?format=json&url=' +
+    encodeURIComponent(`https://www.youtube.com/playlist?list=${playlistId}`);
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (response.status === 200) return true;
+    // 401 is the refusal this is looking for. 404 means the playlist is gone,
+    // which is liveness's question and not answered twice here.
+    if (response.status === 401) return false;
+    return null;
+  } catch {
+    return null;
+  }
 }

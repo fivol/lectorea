@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS playlists (
   videos_fetched_at TEXT,
   alive INTEGER DEFAULT 1,
   checked_at TEXT,
-  next_refresh_at TEXT
+  next_refresh_at TEXT,
+  list_playable INTEGER,
+  list_checked_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_playlists_channel ON playlists(channel_id);
 CREATE INDEX IF NOT EXISTS idx_playlists_refresh ON playlists(next_refresh_at);
@@ -125,6 +127,8 @@ const ADDED_COLUMNS: Array<{ table: string; column: string; type: string }> = [
   { table: 'channels', column: 'subscribers_hidden', type: 'INTEGER DEFAULT 0' },
   { table: 'channels', column: 'stats_fetched_at', type: 'TEXT' },
   { table: 'playlists', column: 'last_video_at', type: 'TEXT' },
+  { table: 'playlists', column: 'list_playable', type: 'INTEGER' },
+  { table: 'playlists', column: 'list_checked_at', type: 'TEXT' },
 ];
 
 function addColumns(db: Db): void {
@@ -326,6 +330,15 @@ export type PlaylistRow = {
   stats_fetched_at: string | null;
   alive: number;
   checked_at: string | null;
+  /**
+   * Whether YouTube's player will accept this playlist as `list=`.
+   *
+   * Null until checked, and read as "yes" while it is — the overwhelming
+   * majority work, and a shard is better slightly optimistic than withholding
+   * the next-lecture rail from everything it has not got round to.
+   */
+  list_playable: number | null;
+  list_checked_at: string | null;
 };
 
 export type VideoRow = {

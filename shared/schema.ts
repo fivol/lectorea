@@ -190,6 +190,17 @@ export const PlaylistSchema = z.object({
   }),
   alive: z.boolean(),
   checkedAt: z.string(),
+  /**
+   * Whether YouTube's player will take this playlist as `list=`.
+   *
+   * A handful of perfectly public playlists — Khan Academy's Linear Algebra
+   * among them — are met with «This video is unavailable» when the id is passed
+   * to the embed, while every video in them plays on its own. So the player
+   * gets the playlist only when it is known to accept it, and the app walks the
+   * lectures itself for the rest. Defaulted to `true` so a shard built before
+   * the check existed behaves as it always did.
+   */
+  listPlayable: z.boolean().default(true),
 });
 export type Playlist = z.infer<typeof PlaylistSchema>;
 

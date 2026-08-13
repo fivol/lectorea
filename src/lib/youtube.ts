@@ -47,27 +47,44 @@ type Info = {
  * of what comes next survives jumping into the middle of it. `start` is how a
  * resume is asked for — seeking after load is a race against the player's own
  * startup, and the parameter is not.
+ *
+ * `playlistId` is null for the playlists the player refuses to open by id —
+ * see `listPlayable` in the schema. Then the frame carries one lecture and
+ * nothing else, and walking to the next one becomes this app's job rather than
+ * YouTube's.
  */
 export function embedSrc({
   playlistId,
   videoId,
   start,
 }: {
-  playlistId: string;
+  playlistId: string | null;
   videoId?: string | null;
   start?: number;
 }): string {
   const path = videoId ? `embed/${videoId}` : 'embed/videoseries';
   const query = new URLSearchParams({
-    list: playlistId,
     autoplay: '1',
     rel: '0',
     enablejsapi: '1',
     // Named so the player knows who it is allowed to answer.
     origin: window.location.origin,
   });
+  if (playlistId) query.set('list', playlistId);
   if (start && start >= RESUME_FLOOR_SEC) query.set('start', String(Math.floor(start)));
   return `${YT_ORIGIN}/${path}?${query.toString()}`;
+}
+
+/**
+ * Where to send a reader who wants this on YouTube itself.
+ *
+ * The playlist page is the better destination — it is the whole course — but it
+ * is exactly as broken as the embed for the playlists the player refuses, so
+ * those get the lecture instead.
+ */
+export function watchUrl(playlistId: string | null, videoId?: string | null): string {
+  if (playlistId) return `https://www.youtube.com/playlist?list=${playlistId}`;
+  return `https://www.youtube.com/watch?v=${videoId ?? ''}`;
 }
 
 /** A saved position worth offering. Anything less is the beginning of the video. */
@@ -83,6 +100,13 @@ type Options = {
   onPosition: (videoId: string, sec: number) => void;
   /** Once per lecture, when enough of it is behind the reader. */
   onWatched: (videoId: string) => void;
+  /**
+   * The lecture actually ran out — not the same event as `onWatched`, which
+   * fires at `VIDEO_DONE_FRACTION` with the last minutes still to play. Only
+   * the frames loaded without `list=` need it: there is nothing behind them to
+   * walk to, so the app walks instead.
+   */
+  onEnded?: (videoId: string) => void;
 };
 
 /**
@@ -91,17 +115,21 @@ type Options = {
  * Returns the handler for the iframe's `load`: the handshake has to go out
  * after the frame exists, and React knows when that is.
  */
-export function useYouTubeTracking({ enabled, iframe, onPosition, onWatched }: Options) {
+export function useYouTubeTracking({ enabled, iframe, onPosition, onWatched, onEnded }: Options) {
   // Through refs so that a re-render — of which there is one per write — does
   // not tear the listener down and lose the handshake with it.
   const position = useRef(onPosition);
   const watched = useRef(onWatched);
+  const ended = useRef(onEnded);
   position.current = onPosition;
   watched.current = onWatched;
+  ended.current = onEnded;
 
   const current = useRef<{ id: string; sec: number } | null>(null);
   const lastWrite = useRef(0);
   const counted = useRef(new Set<string>());
+  /** Lectures already walked away from, so one ending moves on exactly once. */
+  const walked = useRef(new Set<string>());
 
   const flush = useCallback(() => {
     const playing = current.current;
@@ -147,12 +175,24 @@ export function useYouTubeTracking({ enabled, iframe, onPosition, onWatched }: O
       if (typeof sec === 'number') current.current.sec = sec;
 
       const at = current.current;
+      const finished = info.playerState === ENDED;
       const enough =
         typeof duration === 'number' && duration > 0 && at.sec / duration >= VIDEO_DONE_FRACTION;
-      if ((enough || info.playerState === ENDED) && !counted.current.has(at.id)) {
+      if ((enough || finished) && !counted.current.has(at.id)) {
         counted.current.add(at.id);
         watched.current(at.id);
-        return; // A finished lecture keeps no position.
+        if (!finished) return; // A finished lecture keeps no position.
+      }
+      // Running out is its own event: `onWatched` has usually fired minutes
+      // ago, at `VIDEO_DONE_FRACTION`, and the lecture was still playing. Only
+      // a frame loaded without `list=` has anything to do about it, which is
+      // why `onEnded` is undefined for every other one.
+      if (finished) {
+        if (!walked.current.has(at.id)) {
+          walked.current.add(at.id);
+          ended.current?.(at.id);
+        }
+        return;
       }
 
       if (info.playerState !== undefined && info.playerState !== PLAYING) {
