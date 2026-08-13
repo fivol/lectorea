@@ -26,15 +26,21 @@ export type Frame = { x: number; y: number; w: number; h: number };
 /**
  * How far in the reader may go.
  *
- * Four times the size the map opened at, and counted from it rather than from
- * the drawing's own scale, so that every screen gets the same journey: from the
- * opening view down to about one continent filling the window. That is where the
- * map runs out of things to say — past it a reader is looking at two territories
- * and a lot of hexagons, which is a worse view of the catalogue than the one
- * they started from, not a better one.
+ * Four times the view of the whole land — the same place the corner button
+ * comes back out to — so that every screen ends the journey in the same spot:
+ * about one continent filling the window. That is where the map runs out of
+ * things to say; past it a reader is looking at two territories and a lot of
+ * hexagons, which is a worse view of the catalogue than the one they started
+ * from, not a better one.
  *
- * Out is bounded by the whole of the land, which on a tall window is further out
- * than the map opened. There is no page behind that to reveal.
+ * Measured from the whole land rather than from wherever the map opened,
+ * because those are no longer the same thing. A tall window opens part-way in
+ * already — see `MapPlan.opening` — and counting four doublings from *there*
+ * would let a phone go twice as deep as a desk for no reason but the shape of
+ * its screen.
+ *
+ * Out is bounded by the whole of the land too. There is no page behind that to
+ * reveal.
  */
 export const MAX_MAGNIFICATION = 4;
 
@@ -179,17 +185,20 @@ export type MapViewport = {
   ref: React.RefObject<SVGSVGElement>;
   /** What to put on the group the whole drawing lives in. */
   transform: string;
-  /** How far in the reader is; `rest` is where the map opened. */
+  /** How far in the reader is; `world` is as far out as it goes. */
   zoom: number;
   /**
-   * The magnification the map opens at on this screen: the one that fits
-   * `opening` into whatever is not covered by the chrome, unless that would
-   * draw it wider than is comfortable to read. Everything written on the map is
-   * sized against it, so a name is the same size on a laptop and on a wall
-   * display — and on a phone, where the map opens closer in, the names it opens
-   * with are the ones it was drawn for.
+   * The magnification at which the whole of the land is in the window — as far
+   * out as the map goes, and where the corner button comes back to.
+   *
+   * Everything written on the map is sized against it, so a name is the same
+   * size on a laptop and on a wall display. Against this and not against the
+   * magnification the map opened at, which used to be the same number and no
+   * longer is: a tall window opens part-way into its world, and lettering
+   * measured from there would set a phone's names at the size a desk's are and
+   * then draw them twice as large because the phone came in closer.
    */
-  rest: number;
+  world: number;
   /** The part of the drawing the window shows, in map units — null until measured. */
   window: Frame | null;
   /** True while the map is being dragged. */
@@ -442,7 +451,7 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
       const point = at(clientX, clientY);
       if (!point) return;
       const from = wanted.current;
-      const k = clamp(from.k * factor, floor, rest * MAX_MAGNIFICATION);
+      const k = clamp(from.k * factor, floor, floor * MAX_MAGNIFICATION);
       const ratio = k / from.k;
       glide(
         settle({
@@ -617,13 +626,13 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
     ref,
     transform: `translate(${view.x} ${view.y}) scale(${view.k})`,
     zoom: view.k,
-    rest,
+    world: floor,
     window,
     panning,
     // At the resting size the map is smaller than the window on both axes, so
     // it is centred by the clamp and there is no position left to compare.
     fitted: view.k <= floor * 1.001,
-    deepest: view.k >= rest * MAX_MAGNIFICATION * 0.999,
+    deepest: view.k >= floor * MAX_MAGNIFICATION * 0.999,
     moved: useCallback(() => dragged.current, []),
     zoomBy,
     reset,

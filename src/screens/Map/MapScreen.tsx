@@ -208,18 +208,25 @@ export default function MapScreen() {
           bottom of the scrolling column instead of standing over the middle of
           a card. The zero-height row is what keeps it out of the flow: the grid
           under it does not have to leave a gap for something that floats.
+
+          Over the map the contribute line comes with it, as the last thing at
+          the foot of the screen — see the footer below for why it is up here
+          and not down there.
         */}
         {isMobile ? (
           <div
             className="pointer-events-none sticky bottom-0 z-30 flex h-0 items-end justify-center
                        pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           >
-            <ViewSwitch
-              large
-              value={mapView}
-              onChange={setMapView}
-              className="pointer-events-auto shadow-[var(--shadow-pop)]"
-            />
+            <div className="flex flex-col items-center gap-1.5">
+              <ViewSwitch
+                large
+                value={mapView}
+                onChange={setMapView}
+                className="pointer-events-auto shadow-[var(--shadow-pop)]"
+              />
+              {showMap ? <ContributeBar floating>{t('ui.footer.contribute')}</ContributeBar> : null}
+            </div>
           </div>
         ) : null}
       </main>
@@ -230,8 +237,17 @@ export default function MapScreen() {
         its course panel and a missing course has the search — this covers the
         rest, and says the catalogue is written by the people reading it rather
         than merely licensed to them.
+
+        A row of its own everywhere except over the map on a phone, where it
+        has already been drawn above, floating under the view switch. Its own
+        row there costs the map a strip of flat colour along the bottom of a
+        drawing that otherwise runs to the edge of the screen — which is a lot
+        to charge for one line of small print, and the whole of what a phone has
+        to spare. Wider windows keep the row: the legend is written across the
+        foot of the drawing on those, and a line floating over it would be two
+        sentences in the same place.
       */}
-      <ContributeBar>{t('ui.footer.contribute')}</ContributeBar>
+      {isMobile && showMap ? null : <ContributeBar>{t('ui.footer.contribute')}</ContributeBar>}
     </div>
   );
 }

@@ -143,14 +143,16 @@ const CONTINENT_AIR = { x: 2, y: 0.5 };
  * mistake, and the one this started as: standing over a continent that fills
  * the window and reading it through eight-pixel labels is a magnifying glass
  * pointed at everything except the words. A share of the growth gets both — the
- * names shrink against the ground, so a territory too small to be named at rest
- * names itself as the reader goes in, and they still come up large enough to be
- * read comfortably at the end of the journey.
+ * names shrink against the ground, so a territory too small to be named with
+ * the whole world on screen names itself as the reader goes in, and they still
+ * come up large enough to be read comfortably at the end of the journey.
  *
- * Measured from the resting size and not from 1, so that a map drawn small
- * because the display is large is still lettered for the size it was drawn at —
- * otherwise the names on a wall display would come out twice the weight of the
- * same names on a laptop.
+ * Measured from the view of the whole land and not from 1, so that a map drawn
+ * small because the display is large is still lettered for the size it was
+ * drawn at — otherwise the names on a wall display would come out twice the
+ * weight of the same names on a laptop. That view is where the tall map is
+ * lettered for too, though it is not where it opens: it opens part-way in, and
+ * takes the smaller names that go with having come in that far.
  */
 const LETTERING_GROWTH = 0.4;
 
@@ -167,8 +169,8 @@ const LETTERING_GROWTH = 0.4;
 const LETTERING_STEPS = 4;
 
 /** One unit of lettering, in map units, at a given magnification. */
-const letteringScale = (zoom: number, rest: number): number => {
-  const times = Math.max(zoom / rest, 1);
+const letteringScale = (zoom: number, world: number): number => {
+  const times = Math.max(zoom / world, 1);
   const stepped = 2 ** (Math.round(Math.log2(times) * LETTERING_STEPS) / LETTERING_STEPS);
   return stepped ** (LETTERING_GROWTH - 1);
 };
@@ -203,10 +205,11 @@ const LETTERING: Record<MapVariant, number> = { wide: 1, portrait: 1.3 };
  */
 const CHROME: Record<MapVariant, { top: number; bottom: number }> = {
   wide: { top: 132, bottom: 48 },
-  // A tall window carries more of it: the search sits closer to the top of a
-  // narrow screen, and along the bottom there is the view switch under the
-  // plate of map controls, with the contribute line under that again.
-  portrait: { top: 124, bottom: 108 },
+  // A tall window carries more of it, and all of it is inside the drawing: the
+  // search sits closer to the top of a narrow screen, and the whole of the foot
+  // — the plate of map controls, the view switch under it, the contribute line
+  // under that again — floats over the map rather than standing below it.
+  portrait: { top: 124, bottom: 144 },
 };
 
 /**
@@ -228,21 +231,25 @@ const CONTENT_AIR: Record<MapVariant, { x: number; top: number; bottom: number }
 };
 
 /**
- * How far down its world the tall map opens, as a share of the land.
+ * The window the tall map opens on, as a share of the box that holds the whole
+ * of its world — across and down.
  *
- * Not all of it. Three continents fitted into a phone is the whole catalogue at
- * four pixels a letter — and it is not what a map is for either: a map opens
- * where you are standing and the rest is a drag away. This much puts the first
- * continent and the whole of the second on the screen and leaves the third
- * showing its northern coast, which is what says there is more below.
+ * Not the whole of it, and not most of it. The three continents fitted into a
+ * phone is the entire catalogue at four pixels a letter, with no territory
+ * large enough to aim a thumb at: an index of the map rather than the map. A
+ * map opens where the reader is standing and the rest is a drag away, so this
+ * one opens on the first continent at the size it was drawn to be read at, and
+ * the other two are a thumb's travel south.
  *
- * The number is also what stops the tall map wasting its width. The land is
- * about six parts wide to ten tall, a phone's map area about nine to ten, so
- * fitting the whole of the land to it fills the height and leaves a third of the
- * screen in open water. Four fifths of the land is nearly the shape of the room
- * it is going into.
+ * The two shares are not two decisions. The width is the one that sets the
+ * magnification — a phone is narrower than it is tall by more than this box is,
+ * so the width runs out first — and the height only decides where in its world
+ * the map comes to rest, because a box shorter than the room it is centred in
+ * is a box with slack above and below it. Which is why the height is the larger
+ * share of the two and still does nothing: give it any more and the height
+ * begins to bind instead, and the map opens further out than it was asked to.
  */
-const PORTRAIT_OPENING = 0.72;
+const PORTRAIT_OPENING = { width: 0.45, height: 0.47 };
 
 /**
  * What the map asks the viewport for: the box it covers, the box it is worth
@@ -277,12 +284,18 @@ function planOf(map: ParsedMap, depth: number, variant: MapVariant): MapPlan {
   return {
     extent: { width: map.width, height: map.height + depth },
     content,
-    // Measured down from the northern coast rather than from the middle: the
-    // first continent is the one the reader lands on, and it keeps the air over
-    // its own title.
+    // Anchored to the northern coast rather than to the middle, and centred
+    // across: the first continent is the one the reader lands on, it keeps the
+    // air over its own title, and what the map cuts off it cuts off evenly on
+    // both flanks instead of pushing the whole of it to one side.
     opening:
       variant === 'portrait'
-        ? { ...content, h: air.top + (y1 - y0) * PORTRAIT_OPENING }
+        ? {
+            x: content.x + (content.w * (1 - PORTRAIT_OPENING.width)) / 2,
+            y: content.y,
+            w: content.w * PORTRAIT_OPENING.width,
+            h: content.h * PORTRAIT_OPENING.height,
+          }
         : content,
     inset: CHROME[variant],
   };
@@ -364,7 +377,7 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
    * three arrive everywhere at once.
    */
   const scale =
-    letteringScale(viewport.zoom, viewport.rest) *
+    letteringScale(viewport.zoom, viewport.world) *
     ((map?.grid?.r ?? CELL_FALLBACK) / CELL_FALLBACK) *
     LETTERING[variant];
 
@@ -892,10 +905,13 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
           is the only thing between the legend and a sentence written over a row
           of buttons.
 
-          Gone entirely on a phone. Wrapped onto four lines it is a paragraph
-          lying across the bottom of the drawing, and what it says — that a
-          field's area is its course count — the map goes on saying by itself. */}
-      <p className="pointer-events-none absolute bottom-3 left-4 hidden max-w-[calc(100%-11rem)] text-xs text-ink-faint sm:block">
+          Gone entirely on a phone, turned either way. Wrapped onto four lines it
+          is a paragraph lying across the bottom of the drawing, and what it says
+          — that a field's area is its course count — the map goes on saying by
+          itself. The foot of the screen is spoken for there in any case: the
+          view switch and the contribute line float over it, and a second
+          sentence in the same place is one too many. */}
+      <p className="pointer-events-none absolute bottom-3 left-4 hidden max-w-[calc(100%-11rem)] text-xs text-ink-faint md:block">
         {t('ui.map.legend')}
       </p>
 
@@ -907,10 +923,11 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
         a gesture.
 
         Lifted a row on a phone, where the corner below belongs to the view
-        switch: the switch is what a thumb reaches for, so it gets the bottom of
-        the screen and the map's own controls stand above it.
+        switch and the contribute line under it: the switch is what a thumb
+        reaches for, so it gets the bottom of the screen and the map's own
+        controls stand above it.
       */}
-      <Plate row className="absolute bottom-[4.25rem] right-4 sm:bottom-3">
+      <Plate row className="absolute bottom-[6.5rem] right-4 sm:bottom-3">
         <IconButton
           icon="minus"
           label={t('ui.map.zoomOut')}
