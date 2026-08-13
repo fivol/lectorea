@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { BuiltPlaylist, LectureLength, ProviderType } from '@shared/schema';
+import type { BuiltPlaylist, LectureLength, PlaylistType, ProviderType } from '@shared/schema';
 import { normalize } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
@@ -24,8 +24,13 @@ type Props = {
   onReset: () => void;
 };
 
-const LECTURE_LENGTHS: LectureLength[] = ['lesson', 'pair', 'double', 'long'];
-const KINDS: BuiltPlaylist['kind'][] = ['lectures', 'seminars', 'mixed'];
+const LECTURE_LENGTHS: LectureLength[] = ['short', 'lesson', 'pair', 'double', 'long'];
+/**
+ * All four, «Лекции» included — the row does not print it because it describes
+ * two thirds of the catalogue, but «show me the courses and not the shelves» is
+ * exactly what somebody would come to this dropdown to ask.
+ */
+const TYPES: PlaylistType[] = ['lectures', 'course', 'seminars', 'collection'];
 const PROVIDER_TYPES: ProviderType[] = ['university', 'platform', 'individual'];
 
 export default function PlaylistFilters({
@@ -178,14 +183,14 @@ export default function PlaylistFilters({
             </Dropdown>
           ) : null}
 
-          <Dropdown label={t('ui.filters.kind')} active={state.kinds.length > 0}>
-            {KINDS.map((kind) => (
+          <Dropdown label={t('ui.filters.kind')} active={state.types.length > 0}>
+            {TYPES.map((type) => (
               <CheckRow
-                key={kind}
-                checked={state.kinds.includes(kind)}
-                onChange={() => toggle('kinds', state.kinds, kind)}
+                key={type}
+                checked={state.types.includes(type)}
+                onChange={() => toggle('types', state.types, type)}
               >
-                {t(`ui.playlist.kind.${kind}`)}
+                {t(`ui.playlist.type.${type}`)}
               </CheckRow>
             ))}
           </Dropdown>
@@ -403,11 +408,11 @@ function ActiveChips({
         }),
     });
   }
-  for (const kind of state.kinds) {
+  for (const type of state.types) {
     chips.push({
-      key: `kind:${kind}`,
-      label: t(`ui.playlist.kind.${kind}`),
-      clear: () => onChange({ ...state, kinds: state.kinds.filter((item) => item !== kind) }),
+      key: `type:${type}`,
+      label: t(`ui.playlist.type.${type}`),
+      clear: () => onChange({ ...state, types: state.types.filter((item) => item !== type) }),
     });
   }
   if (state.lecturer.trim()) {

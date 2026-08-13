@@ -404,7 +404,13 @@ function assemblePlaylists(sources: Sources): Assembled {
           videoCount,
           totalSeconds,
           medianSeconds,
-          kind: override?.kind ?? detectKind(title, row.description ?? ''),
+          kind:
+            override?.kind ??
+            detectKind(
+              title,
+              row.description ?? '',
+              videos.map((v) => v.title)
+            ),
           completeness:
             override?.completeness ?? detectCompleteness(title, videoCount, row.description ?? ''),
           stats,

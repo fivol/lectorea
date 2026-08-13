@@ -268,8 +268,6 @@ describe('status', () => {
     retentionZ: 1,
     discussionZ: 0,
     reachZ: 0,
-    collection: false,
-    fullCourse: false,
   };
   const cuts = { excellent: 0.5, classic: 0.5, retained: 0.5, liked: 0.5, discussed: 0.5, reaching: 0.5 };
 
@@ -283,19 +281,10 @@ describe('status', () => {
     expect(statusOf({ ...base, lastVideoAt: '2026-07-01T00:00:00Z' }, cuts, NOW)).toBe('fresh');
   });
 
-  it('names the shape before praising a shelf for being liked', () => {
-    expect(statusOf({ ...base, collection: true, approvalZ: 3 }, cuts, NOW)).toBe('assorted');
-  });
-
-  it('says what a playlist is when it has nothing to say about how good it is', () => {
-    const plain = { ...base, rating: 0, approvalZ: 0, retentionZ: 0 };
-    expect(statusOf(plain, cuts, NOW)).toBe('none');
-    expect(statusOf({ ...plain, fullCourse: true }, cuts, NOW)).toBe('course');
-    // Structure is not praise, so it survives signals that would block a word.
-    const unloved = { ...plain, approvalZ: -2, retentionZ: -2, rating: -2, fullCourse: true };
-    expect(statusOf(unloved, cuts, NOW)).toBe('course');
-    // But it never displaces one that was earned.
-    expect(statusOf({ ...base, fullCourse: true }, cuts, NOW)).toBe('excellent');
+  it('says nothing at all when nothing was earned', () => {
+    // The shape of the playlist used to answer here — «Полный курс» — and
+    // saying it in this slot cost the rating of everything it described.
+    expect(statusOf({ ...base, rating: 0, approvalZ: 0, retentionZ: 0 }, cuts, NOW)).toBe('none');
   });
 
   it('reserves «excellent» for playlists neither signal contradicts', () => {
@@ -386,7 +375,7 @@ describe('the catalogue as a whole', () => {
     expect(Number.isFinite(thresholds.excellent)).toBe(true);
   });
 
-  it('marks every shelf as such and scores none of them on retention', () => {
+  it('scores no shelf on retention, and still lets one be liked', () => {
     const items = Array.from({ length: 30 }, (_, index) =>
       playlist({
         id: `p${index}`,
@@ -397,8 +386,11 @@ describe('the catalogue as a whole', () => {
     );
     const { byId } = rateCatalogue(items, () => 50_000, NOW);
     for (let index = 0; index < 10; index++) {
-      expect(byId.get(`p${index}`)!.status).toBe('assorted');
+      // The curve is unreadable, so retention is not scored — but approval is,
+      // and whatever it earns is now said out loud instead of being replaced by
+      // a word about the playlist's shape.
       expect(byId.get(`p${index}`)!.signals.retention).toBeNull();
+      expect(byId.get(`p${index}`)!.signals.approval).not.toBeNull();
     }
     expect(byId.get('p20')!.signals.retention).not.toBeNull();
   });

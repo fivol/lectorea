@@ -120,8 +120,8 @@ export const CURVE = {
  *   views unrelated to order   62.3%              8.9%   ← the old sole test
  *
  * So the curve still decides whether retention may be scored — that is a
- * question about the statistics — but the word «Подборка» is only said when
- * the way the playlist was built agrees.
+ * question about the statistics — but the row says «Подборка» only when the way
+ * the playlist was built agrees.
  */
 export const COLLECTION = {
   /** More lectures than a course has. Only 1 of 630 numbered courses is this long. */
@@ -431,9 +431,9 @@ export function durationSpreadOf(seconds: Array<number | null | undefined>): num
  * ТФКП, Onur Mutlu's Computer Architecture. Showing a reader nothing about
  * those is a worse answer than showing them what the thing is.
  *
- * Deliberately says nothing about quality, and so is only reached when no
- * earned word applies. It is allowed on a playlist the signals are unkind to:
- * «this is a full ordered course» stays true either way.
+ * Deliberately says nothing about quality, which is why it is a type and not a
+ * status: «this is a whole ordered course» stays true of a playlist the signals
+ * are unkind to, and saying it costs the rating nothing.
  */
 export const FULL_COURSE = {
   /** A term's worth. Below this «complete» is a claim the data cannot support. */
@@ -626,14 +626,21 @@ export function ratingOf(parts: RatingParts): number | null {
 /* ───────────────────────────────  Status  ───────────────────────────── */
 
 /**
- * The one word the list shows.
+ * The one word the list shows about the numbers.
  *
  * Deliberately all neutral or positive. The rating can honestly say "this one
  * is loved and finished"; it cannot say "this one is bad" — the same low like
  * rate is earned by NPTEL, whose audience simply does not press the button,
  * and by a genuinely dull recording, and nothing in the data separates them.
  * So a weak playlist gets no word at all and sinks in the sort, which is the
- * true statement, and «Подборка» describes a shape rather than a verdict.
+ * true statement.
+ *
+ * What the playlist *is* is not here. «Подборка» and «Полный курс» were words
+ * on this same ladder, and being a ladder it let only one of them speak: a
+ * shelf people plainly like was told it was a shelf and nothing else, which is
+ * 440 playlists — 15% of the catalogue — whose rating was thrown away to
+ * describe their shape. Shape is answered separately now, by `playlistTypeOf`,
+ * and both facts fit on the row at once.
  */
 export const STATUS_ORDER = [
   'sparse',
@@ -644,8 +651,6 @@ export const STATUS_ORDER = [
   'liked',
   'discussed',
   'reaching',
-  'assorted',
-  'course',
   'none',
 ] as const;
 
@@ -666,10 +671,6 @@ export type StatusInput = {
   retentionZ: number | null;
   discussionZ: number | null;
   reachZ: number | null;
-  /** A shelf of videos rather than a course — see `isCollection`. */
-  collection: boolean;
-  /** A whole term of ordered lectures — see `isFullCourse`. */
-  fullCourse: boolean;
 };
 
 /**
@@ -799,10 +800,10 @@ export const CLASSIC_YEAR = 2016;
 /**
  * The one word, chosen in three steps.
  *
- * First the gates, in order, because each outranks anything built on top of it:
- * that the numbers are not evidence beats any praise drawn from them, that a
- * playlist is still being uploaded beats a verdict on figures still moving, and
- * that it is a subject bucket rather than a course beats a course word.
+ * First the two gates, in order, because each outranks anything built on top of
+ * it: that the numbers are not evidence beats any praise drawn from them, and
+ * that a playlist is still being uploaded beats a verdict on figures still
+ * moving.
  *
  * Then the two compound claims, in order. Then, of the four single scales, the
  * one the playlist clears by the widest margin — the thing it is most unusual
@@ -822,13 +823,6 @@ export function statusOf(
     if (Number.isFinite(days) && days >= 0 && days < FRESH_DAYS) return 'fresh';
   }
 
-  // Ahead of every earned word, because it is a different kind of statement.
-  // «Нравится» on a channel's 878-video «Biology» shelf is true and useless:
-  // what the reader needs to know first is that it is not a course to work
-  // through. Left at the foot of the ladder, the head of the sorted catalogue
-  // filled with well-liked shelves wearing course words.
-  if (input.collection) return 'assorted';
-
   for (const rung of COMPOUND_RUNGS) {
     if (!rung.eligible(input)) continue;
     const value = rung.metric(input);
@@ -847,11 +841,7 @@ export function statusOf(
       best = rung.key;
     }
   }
-  if (best) return best;
-
-  // Nothing was earned. Before falling silent, say what the thing is if that
-  // much is certain — the same courtesy «Подборка» does at the other end.
-  return input.fullCourse ? 'course' : 'none';
+  return best ?? 'none';
 }
 
 /** Unreachable cuts, so `statusOf` reports only what the gates above decided. */
@@ -896,10 +886,6 @@ export type Rateable = {
   stats: Stats;
   retention?: number;
   curve?: CurveKind;
-  /** A shelf of videos rather than a course — see `isCollection`. */
-  collection?: boolean;
-  /** A whole term of ordered lectures — see `isFullCourse`. */
-  fullCourse?: boolean;
   lastVideoAt?: string;
 };
 
@@ -1037,8 +1023,6 @@ export function rateCatalogue(
       retentionZ: retentionZ.get(item.id) ?? null,
       discussionZ: discussionZ.get(item.id) ?? null,
       reachZ: reachZ.get(item.id) ?? null,
-      collection: item.collection ?? false,
-      fullCourse: item.fullCourse ?? false,
     });
   }
   const thresholds = thresholdsFor([...inputs.values()], now);

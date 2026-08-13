@@ -293,6 +293,7 @@ const COMPLETENESS_TITLES: Record<string, string> = {
 };
 
 const LENGTH_TITLES: Record<string, string> = {
+  short: 'короткие, до 15 мин',
   lesson: 'урок, до 40 мин',
   pair: 'пара, до 100 мин',
   double: 'двойная, до 200 мин',
@@ -306,14 +307,12 @@ const LENGTH_TITLES: Record<string, string> = {
 const STATUS_TITLES: Array<[PlaylistStatus, string]> = [
   ['sparse', 'мало данных'],
   ['fresh', 'новый'],
-  ['assorted', 'подборка'],
   ['excellent', 'отличный'],
   ['classic', 'классика'],
   ['retained', 'досматривают'],
   ['liked', 'нравится'],
   ['discussed', 'обсуждают'],
-  ['reaching', 'разошёлся'],
-  ['course', 'полный курс'],
+  ['reaching', 'ушёл в народ'],
   ['none', 'без статуса'],
 ];
 

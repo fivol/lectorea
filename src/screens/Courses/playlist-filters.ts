@@ -1,9 +1,11 @@
-import type {
-  BuiltPlaylist,
-  BuiltProvider,
-  LectureLength,
-  Profile,
-  ProviderType,
+import {
+  playlistTypeOf,
+  type BuiltPlaylist,
+  type BuiltProvider,
+  type LectureLength,
+  type PlaylistType,
+  type Profile,
+  type ProviderType,
 } from '@shared/schema';
 import { playlistProgress } from '@/lib/progress';
 
@@ -17,7 +19,8 @@ export type PlaylistFilterState = {
   videoCount: [number, number] | null;
   lectureLengths: LectureLength[];
   captions: 'any' | 'ru' | null;
-  kinds: BuiltPlaylist['kind'][];
+  /** What the playlist is — «Подборка», «Семинары», «Полный курс», «Лекции». */
+  types: PlaylistType[];
   fullOnly: boolean;
   years: [number, number] | null;
   hideWatched: boolean;
@@ -32,7 +35,7 @@ export const EMPTY_FILTERS: PlaylistFilterState = {
   videoCount: null,
   lectureLengths: [],
   captions: null,
-  kinds: [],
+  types: [],
   fullOnly: false,
   years: null,
   hideWatched: false,
@@ -86,7 +89,7 @@ export function activeFilterCount(state: PlaylistFilterState): number {
   if (state.videoCount) n += 1;
   if (state.lectureLengths.length) n += 1;
   if (state.captions) n += 1;
-  if (state.kinds.length) n += 1;
+  if (state.types.length) n += 1;
   if (state.fullOnly) n += 1;
   if (state.years) n += 1;
   if (state.hideWatched) n += 1;
@@ -132,8 +135,11 @@ export function applyFilters(
     }
     if (state.captions === 'any' && !playlist.captions.length) return false;
     if (state.captions === 'ru' && !playlist.captions.includes('ru')) return false;
-    if (state.kinds.length && !state.kinds.includes(playlist.kind)) return false;
-    if (state.fullOnly && playlist.completeness !== 'full') return false;
+    if (state.types.length && !state.types.includes(playlistTypeOf(playlist))) return false;
+    // `completeness` used to answer this, and it answered it for 77% of the
+    // catalogue: a regex over the title plus «twelve videos or more». The
+    // structural test is the honest one — see `isFullCourse`.
+    if (state.fullOnly && !playlist.fullCourse) return false;
     if (state.years) {
       const [min, max] = state.years;
       if (!playlist.year || playlist.year < min || playlist.year > max) return false;

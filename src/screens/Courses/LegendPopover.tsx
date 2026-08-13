@@ -194,6 +194,18 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
                 >
                   {t('ui.legend.quality')}
                 </Row>
+                {/* The other badge on a playlist row, and the one most likely to
+                    be mistaken for a mark out of ten. It says what the thing is;
+                    the dot beside it says how it did. */}
+                <Row
+                  mark={
+                    <span className="rounded-chip border border-warning px-1 py-px text-[10px] leading-4 text-warning">
+                      {t('ui.playlist.type.collection')}
+                    </span>
+                  }
+                >
+                  {t('ui.legend.playlistType')}
+                </Row>
                 <Row
                   mark={
                     <span className="text-[10px] text-ink-faint">{t('ui.course.noMaterials')}</span>

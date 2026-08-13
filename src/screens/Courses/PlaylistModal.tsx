@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import type { BuiltPlaylist, Video } from '@shared/schema';
+import { playlistTypeOf, type BuiltPlaylist, type Video } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
@@ -346,21 +346,27 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
                     n: formatMinutes(playlist.medianSeconds),
                   })} · ${t(`ui.playlist.length.${playlist.lectureLength}`)}`}
                 />
-                {/* «Полнота: неизвестна» is a line about the catalogue, not
-                    about the playlist: it costs a row and answers nothing. The
-                    unknown ones drop out, and the sheet is what is known. */}
-                {playlist.completeness === 'unknown' ? null : (
+                {/* Only «фрагмент», which is the half of this field worth
+                    printing. «Полнота: неизвестна» is a line about the
+                    catalogue rather than about the playlist, and «полнота:
+                    полный курс» is a regex over the title plus «twelve videos
+                    or more» — 77% of the catalogue passes it, and it sat
+                    directly above a «тип» row making the same claim on
+                    structural evidence. Two answers, one of them cheap. */}
+                {playlist.completeness !== 'partial' ? null : (
                   <Fact
                     label={t('ui.playlist.label.completeness')}
                     value={t(`ui.playlist.completeness.${playlist.completeness}`)}
                   />
                 )}
-                {playlist.kind === 'unknown' ? null : (
-                  <Fact
-                    label={t('ui.playlist.label.kind')}
-                    value={t(`ui.playlist.kind.${playlist.kind}`)}
-                  />
-                )}
+                {/* Here even when it is «Лекции», which the row leaves unsaid:
+                    the row is a list to be scanned and this is a sheet about
+                    one recording, where the ordinary answer is still an
+                    answer. */}
+                <Fact
+                  label={t('ui.playlist.label.type')}
+                  value={t(`ui.playlist.type.${playlistTypeOf(playlist)}`)}
+                />
                 <Fact
                   label={t('ui.playlist.label.captions')}
                   value={

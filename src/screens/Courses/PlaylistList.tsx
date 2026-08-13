@@ -148,7 +148,13 @@ export default function PlaylistList({ course }: Props) {
               <PlaylistRow
                 key={playlist.id}
                 playlist={playlist}
-                label={labels.get(playlist.id) ?? { heading: playlist.title, detail: null }}
+                label={
+                  labels.get(playlist.id) ?? {
+                    name: null,
+                    source: playlist.title,
+                    detail: playlist.title,
+                  }
+                }
                 language={languageLabel(playlist.lang, filters.langs)}
                 onOpen={(id) => {
                   lastFocused.current = document.activeElement as HTMLElement;

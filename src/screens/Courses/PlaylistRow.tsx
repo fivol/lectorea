@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { BuiltPlaylist, PlaylistStatus } from '@shared/schema';
+import { playlistTypeOf, type BuiltPlaylist, type PlaylistStatus } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { formatHours, hoursFromSeconds } from '@/lib/format';
 import { percent, playlistProgress } from '@/lib/progress';
@@ -11,7 +11,7 @@ import type { LabelParts } from './playlist-label';
 
 type Props = {
   playlist: BuiltPlaylist;
-  /** Source-first heading for this row; see playlist-label.ts. */
+  /** The recording's own name and who recorded it; see playlist-label.ts. */
   label: LabelParts;
   /** «Русский», or null when the filter makes the language a foregone conclusion. */
   language: string | null;
@@ -34,22 +34,20 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
     : null;
 
   /*
-   * The year and the language are not here.
+   * The second line is everything about the recording that is not its name: the
+   * year it was filmed, the language when the filter admits more than one, and
+   * how much of it there is. The year sat in the heading while the heading was
+   * «МФТИ · 2016» and was the only thing in it that separated two rows; now
+   * that the recording's own name leads, the year is one fact among the facts.
    *
-   * The heading already carries the year — it is one of the things that tells
-   * two recordings by the same faculty apart — and printing it again three
-   * millimetres below was the same fact twice. The language joins it up there
-   * for the same reason, and only when it distinguishes anything: see
-   * `languageLabel`.
-   *
-   * What is left is what the row is: how many lectures and how long they run —
-   * until the playlist is under way, at which point how much of each is behind
-   * you supersedes both. Nothing is lost in the swap; both numbers are still
-   * there, and both are now about the reader.
+   * Once the playlist is under way, how much of it is behind you supersedes how
+   * much of it there is. Nothing is lost in the swap — both numbers are still
+   * on the line, and both are now about the reader.
    */
   const subtitle = (
     progress.started
       ? [
+          language,
           // Named, because «4 из 15 · 6.1 из 21 ч» is two bare ratios in a row
           // and the eye has to work out which of them is which.
           t('ui.course.lecturesDone', { done: progress.done, total: progress.total }),
@@ -59,6 +57,8 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
           }),
         ]
       : [
+          playlist.year ? String(playlist.year) : null,
+          language,
           count(playlist.videoCount, 'lecture'),
           t(`ui.playlist.length.${playlist.lectureLength}`),
         ]
@@ -66,15 +66,13 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
     .filter(Boolean)
     .join(' · ');
 
-  const heading = language ? `${label.heading} · ${language}` : label.heading;
-
   return (
     <button
       type="button"
       onClick={() => onOpen(playlist.id)}
       className={`flex w-full items-center gap-3 rounded-card border border-transparent px-2 py-2
                   text-left transition-colors duration-fast ease-out
-                  hover:border-line-strong hover:bg-surface-2 ${watched ? 'opacity-70' : ''}`}
+                  hover:border-line-strong hover:bg-surface-2 ${watched ? 'opacity-80' : ''}`}
     >
       {/* Fixed size, so a thumbnail that never arrives costs no layout shift.
           Sized to the two lines and the bar beside it rather than to the two
@@ -97,25 +95,57 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
       </span>
 
       <span className="min-w-0 flex-1">
-        {/* The canonical name lives in the tooltip and in the player: the row
-            says who made it and which of theirs it is. */}
+        {/* The recording's own name, then who recorded it in a quieter colour.
+            Two tones rather than two lines: it is one answer to one question —
+            «which of these am I looking at» — and the tail is the half of it
+            that repeats down the list. The whole title, course name and all,
+            lives in the tooltip and in the player. */}
         <Tooltip content={label.detail}>
-          <span className="block truncate text-caption text-ink">{heading}</span>
+          <span className="block truncate text-caption text-ink">
+            {label.name ? (
+              <>
+                {label.name}
+                {label.source ? <span className="text-ink-faint"> · {label.source}</span> : null}
+              </>
+            ) : (
+              label.source
+            )}
+          </span>
         </Tooltip>
-        <span className="num mt-0.5 block truncate text-[11px] text-ink-faint">{subtitle}</span>
+        <span className="num mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-ink-faint">
+          {/* Filled, and first on the line, because it is the one label here
+              that is about the reader. It used to be a tick in the right-hand
+              column over a row at 70% opacity, which is two faint signals for
+              a fact that decides whether the row is worth reading at all. The
+              solid fill also survives the dimming the tick was lost in. */}
+          {watched ? (
+            // The same plate the course card wears when it is finished — see
+            // `StatusMark`. One vocabulary for «this is behind you», whether the
+            // thing behind you is a course or one recording of it.
+            <span
+              className="mark-pop inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full
+                         bg-accent px-1.5 text-[10px] font-medium leading-none text-canvas"
+            >
+              <Icon name="check" size={10} />
+              {t('ui.playlist.watchedBadge')}
+            </span>
+          ) : null}
+          <TypeBadge playlist={playlist} />
+          <span className="truncate">{subtitle}</span>
+        </span>
 
         {/* Inside the text column, so it runs from the picture to the status and
             under neither of them: a bar that starts under a thumbnail is not
             measuring the thumbnail, and one that runs beneath the status word
             reads as belonging to it.
 
-            Only while there is a way to go — a finished playlist is already
-            dimmed and ticked, and a full bar on every one of those would add a
-            line to half the list to repeat what the tick says. */}
+            Only while there is a way to go — a finished playlist already wears
+            «Просмотрено» in solid accent, and a full bar on every one of those
+            would add a line to half the list to say it a second time. */}
         {progress.started && !watched ? (
           <ProgressBar
             // Held clear of the status word on the right: the percentage and
-            // «Подборка» are both small grey type on the same optical line, and
+            // «Нравится» are both small grey type on the same optical line, and
             // with only the row's own gap between them they read as one label
             // that has come apart.
             className="mt-1.5 pr-10"
@@ -135,13 +165,6 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
             </span>
           </Tooltip>
         ) : null}
-        {watched ? (
-          <Tooltip content={t('ui.playlist.watchedOn')}>
-            <span className="inline-flex text-accent">
-              <Icon name="check" size={13} />
-            </span>
-          </Tooltip>
-        ) : null}
         <StatusBadge playlist={playlist} />
       </span>
     </button>
@@ -149,9 +172,39 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
 }
 
 /**
- * How each status looks. Praise is accent, a caveat about the data is faint,
- * and a shape is neutral — the colour repeats what the word says rather than
- * carrying meaning of its own, so the row still reads without it.
+ * What the playlist is, said in one word beside the facts.
+ *
+ * Only three of the four types are ever printed: `lectures` is two thirds of a
+ * lecture catalogue and a badge everybody wears separates nobody. «Подборка»
+ * carries a warning colour because it is the one that changes what you would do
+ * with the thing — a shelf is entered anywhere, a course is started at the top.
+ */
+const TYPE_TONE: Record<'collection' | 'seminars' | 'course', string> = {
+  collection: 'border-warning text-warning',
+  seminars: 'border-line-strong text-ink-dim',
+  course: 'border-line-strong text-ink-dim',
+};
+
+export function TypeBadge({ playlist }: { playlist: BuiltPlaylist }) {
+  const { t } = useT();
+  const type = playlistTypeOf(playlist);
+  if (type === 'lectures') return null;
+
+  return (
+    <Tooltip content={t(`ui.playlist.type.${type}.hint`)}>
+      <span
+        className={`shrink-0 rounded-chip border px-1.5 py-px text-[10px] leading-4 ${TYPE_TONE[type]}`}
+      >
+        {t(`ui.playlist.type.${type}`)}
+      </span>
+    </Tooltip>
+  );
+}
+
+/**
+ * How each status looks. Praise is accent, a caveat about the data is faint —
+ * the colour repeats what the word says rather than carrying meaning of its
+ * own, so the row still reads without it.
  */
 const STATUS_TONE: Record<Exclude<PlaylistStatus, 'none'>, { colour: string; text: string }> = {
   excellent: { colour: 'var(--c-accent)', text: 'text-accent' },
@@ -160,8 +213,6 @@ const STATUS_TONE: Record<Exclude<PlaylistStatus, 'none'>, { colour: string; tex
   discussed: { colour: 'var(--c-warning)', text: 'text-warning' },
   reaching: { colour: 'var(--c-warning)', text: 'text-warning' },
   classic: { colour: 'var(--c-warning)', text: 'text-warning' },
-  assorted: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
-  course: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
   fresh: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
   sparse: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
 };
@@ -174,6 +225,10 @@ const STATUS_TONE: Record<Exclude<PlaylistStatus, 'none'>, { colour: string; tex
  * playlist including the two thirds the data has nothing to say about. A word
  * can be absent. The tooltip always says what earned it, because an unexplained
  * badge is a decision nobody can check.
+ *
+ * What the playlist *is* is not said here — that is `TypeBadge`, on the line
+ * below. A row can now carry both, which is the point: «Подборка» used to
+ * occupy this slot and silence the rating of every shelf in the catalogue.
  */
 export function StatusBadge({ playlist }: { playlist: BuiltPlaylist }) {
   const { t } = useT();

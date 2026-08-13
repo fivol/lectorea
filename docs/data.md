@@ -157,14 +157,15 @@ On a playlist:
 
 | Field | How |
 |---|---|
-| `lectureLength` | bucket by `medianSeconds`: `lesson` ≤ 40 min, `pair` 40–100, `double` 100–200, `long` > 200 |
+| `lectureLength` | bucket by `medianSeconds`: `short` ≤ 15 min, `lesson` 15–40, `pair` 40–100, `double` 100–200, `long` > 200 |
+| `kind` | `lectures` / `seminars` / `mixed` / `unknown`, from what a majority of the **lecture** titles call themselves |
 | `engagement` | `(likes + comments) / views` — the raw column the modal shows |
 | `retention` | views of the last quarter of lectures over the first |
 | `curve` | `series` / `assorted` / `unclear` — the shape of the view curve, which decides whether retention may be scored |
 | `collection` | a shelf of videos rather than a course — read off the titles, upload dates and lengths, not off the curve |
 | `fullCourse` | a whole term of ordered lectures in equal slots — the mirror of `collection` |
 | `rating` | the combined score the list sorts by, below |
-| `status` | the one word the row shows, below |
+| `status` | the one word the row says about the numbers, below |
 | `signals` | the normalised parts behind the rating, for the tooltip |
 | `lastVideoAt` | last upload — what decides whether a playlist is still settling |
 
@@ -175,11 +176,14 @@ quality. Four things are measured instead — likes per view, how much of the
 audience is still there at the end, comments per view, and views per lecture
 per subscriber — and each is turned into a z-score against playlists of the
 same language and era before anything is added up. The list sorts by `rating`
-and shows one word from `status`.
+and shows one word from `status`. What a playlist *is* — «Подборка»,
+«Семинары», «Полный курс» — is a separate badge, derived from `collection`,
+`kind` and `fullCourse` by `playlistTypeOf`: it is not a verdict, and while it
+shared the `status` slot it silenced the verdict on 15% of the catalogue.
 
 **[docs/rating.md](rating.md) is the whole story**: what each signal is worth,
-why the peer groups exist, how «Подборка» is told from a course, what each
-status costs, and what the numbers still cannot say. Read it before changing a
+why the peer groups exist, how «Подборка» is told from a course, why the type
+is not a status, what each word costs, and what the numbers still cannot say. Read it before changing a
 knob in `scripts/lib/score.ts`.
 
 ## Overrides

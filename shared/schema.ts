@@ -163,7 +163,7 @@ export const PlaylistKind = z.enum(['lectures', 'seminars', 'mixed', 'unknown'])
 export type PlaylistKind = z.infer<typeof PlaylistKind>;
 export const Completeness = z.enum(['full', 'partial', 'unknown']);
 export type Completeness = z.infer<typeof Completeness>;
-export const LectureLength = z.enum(['lesson', 'pair', 'double', 'long']);
+export const LectureLength = z.enum(['short', 'lesson', 'pair', 'double', 'long']);
 export type LectureLength = z.infer<typeof LectureLength>;
 
 export const PlaylistSchema = z.object({
@@ -222,9 +222,19 @@ export const CurveKind = z.enum(['series', 'assorted', 'unclear']);
 export type CurveKind = z.infer<typeof CurveKind>;
 
 /**
- * The one word the list shows about a playlist. Neutral or positive only:
- * the data can say "loved and finished", it cannot say "bad" — see
- * `docs/rating.md` for why the negative half is deliberately missing.
+ * What the numbers say about a playlist, and nothing else.
+ *
+ * Neutral or positive only: the data can say "loved and finished", it cannot
+ * say "bad" — see `docs/rating.md` for why the negative half is deliberately
+ * missing. `sparse` and `fresh` are not verdicts either; they are the two ways
+ * of saying the verdict has been withheld, and they belong here because they
+ * are statements about the rating rather than about the recording.
+ *
+ * What the playlist *is* — a shelf, a whole course, a term of seminars — used
+ * to be said in this same word, and it was the wrong slot for it: «Подборка»
+ * is not a mark out of ten, and while it sat at the head of the ladder it also
+ * silenced the rating for the 440 playlists whose shape it described. That
+ * question now has its own answer in `PlaylistType`.
  */
 export const PlaylistStatus = z.enum([
   'sparse', // too few views to say anything
@@ -235,11 +245,23 @@ export const PlaylistStatus = z.enum([
   'discussed', // unusually many comments per view
   'reaching', // travelled far past its own channel
   'classic', // old and still being found
-  'assorted', // a shelf of videos rather than a course
-  'course', // nothing earned, but it is a whole term of ordered lectures
   'none',
 ]);
 export type PlaylistStatus = z.infer<typeof PlaylistStatus>;
+
+/**
+ * What the thing is, as opposed to how good it is.
+ *
+ * One word, so the row can wear it beside the rating without the two competing.
+ * The order below is the order they are tried, and it is a claim about which
+ * fact a reader needs first: that this is not a course to work through beats
+ * everything, then that these are seminars rather than lectures, then that the
+ * course is a whole one. `lectures` is what is left over — two thirds of a
+ * lecture catalogue — and is never shown, because a badge everyone wears
+ * separates nobody.
+ */
+export const PlaylistType = z.enum(['collection', 'seminars', 'course', 'lectures']);
+export type PlaylistType = z.infer<typeof PlaylistType>;
 
 /** The three normalised signals behind the rating, for the tooltip. */
 export const SignalsSchema = z.object({
@@ -261,7 +283,7 @@ export const BuiltPlaylistSchema = PlaylistSchema.extend({
   retention: z.number().optional(),
   curve: CurveKind.optional(),
   /**
-   * A shelf of videos rather than a course, which is what «Подборка» reports.
+   * A shelf of videos rather than a course — the `collection` type.
    *
    * Not the same question as `curve`, and deliberately kept apart from it.
    * `curve` is about the statistics — whether retention may be scored at all —
@@ -273,8 +295,8 @@ export const BuiltPlaylistSchema = PlaylistSchema.extend({
   collection: z.boolean().default(false),
   /**
    * A whole term of ordered lectures in equal slots — the counterpart of
-   * `collection`, and what «Полный курс» reports. Also structural, also silent
-   * about quality.
+   * `collection`, and the `course` type. Also structural, also silent about
+   * quality.
    */
   fullCourse: z.boolean().default(false),
   /** Last upload, which is what decides whether a playlist is still settling. */
@@ -591,8 +613,17 @@ export function migrateProfile(raw: unknown): unknown {
 // nothing on the client needs them, and a copy here would drift from the one
 // place they are actually applied.
 
-/** Lecture length buckets, in seconds. */
+/**
+ * Lecture length buckets, in seconds.
+ *
+ * `short` is not a finer slice of `lesson` but a different kind of recording:
+ * 1055 playlists in the catalogue have a median lecture under a quarter of an
+ * hour — Khan Academy, Neso Academy, Michel van Biezen — and calling an eight
+ * minute explainer «урок», as the old four buckets did, told the reader the
+ * one thing about it that is not true.
+ */
 export const LECTURE_BUCKETS: Array<{ id: LectureLength; maxSeconds: number }> = [
+  { id: 'short', maxSeconds: 15 * 60 },
   { id: 'lesson', maxSeconds: 40 * 60 },
   { id: 'pair', maxSeconds: 100 * 60 },
   { id: 'double', maxSeconds: 200 * 60 },
@@ -601,4 +632,22 @@ export const LECTURE_BUCKETS: Array<{ id: LectureLength; maxSeconds: number }> =
 
 export function lectureLengthOf(medianSeconds: number): LectureLength {
   return LECTURE_BUCKETS.find((b) => medianSeconds <= b.maxSeconds)!.id;
+}
+
+/**
+ * Which of the four things a playlist is — see `PlaylistType`.
+ *
+ * Read off fields the build has already worked out, rather than stored: all
+ * three inputs ship with the shard, and a fifth derived field would be one more
+ * thing to keep in step with them.
+ */
+export function playlistTypeOf(playlist: {
+  collection?: boolean;
+  fullCourse?: boolean;
+  kind: PlaylistKind;
+}): PlaylistType {
+  if (playlist.collection) return 'collection';
+  if (playlist.kind === 'seminars') return 'seminars';
+  if (playlist.fullCourse) return 'course';
+  return 'lectures';
 }

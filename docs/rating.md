@@ -183,7 +183,7 @@ better than how it is watched:
 | lecture lengths all over | 50.7% | 4.9% |
 | *views unrelated to order* | *62.3%* | *8.9%* |
 
-**«Подборка»** (`isCollection`) now needs two witnesses and survives a veto: the
+**«Подборка»** (`isCollection`) needs two witnesses and survives a veto: the
 curve must not say the views follow the order, at least one structural mark must
 agree — two if the curve only came out `unclear` — the playlist must have 20
 videos or more, and the titles must not number themselves. A playlist that says
@@ -191,15 +191,42 @@ videos or more, and the titles must not number themselves. A playlist that says
 views do. That cuts the word from 16.7% of the catalogue to **7.6%**, and what
 is left is unmistakable: Udacity's 1197-video «Intro to Psychology», Khan
 Academy's 421-video «Algebra I», The Organic Chemistry Tutor's subject shelves.
+Today it is **8.2%**.
 
 **«Полный курс»** (`isFullCourse`) is the mirror image: ordered titles, 20+
-lectures, filmed inside 400 days, lecture lengths within 0.35 of their median.
-It says nothing about quality, so it is only reached when no earned word applies
-— and it is allowed on a playlist the signals are unkind to, because «this is a
-full ordered course» stays true either way. It gives a word to **7.6%** of the
-catalogue that previously got none: MIT 7.016, Половинкин's ТФКП, Onur Mutlu's
-Computer Architecture, UMass CS685. The two are mutually exclusive by
-construction.
+lectures, filmed inside 400 days, lecture lengths within 0.35 of their median —
+**14.0%** of the catalogue: MIT 7.016, Половинкин's ТФКП, Onur Mutlu's Computer
+Architecture, UMass CS685. The two are mutually exclusive by construction.
+
+### Neither of them is a status
+
+Both were words on the status ladder once, and being a ladder it let only one of
+them speak. A shelf people plainly like was told it was a shelf and nothing
+else: **440 playlists — 15% of the catalogue — had their rating thrown away to
+describe their shape.** So shape moved to its own answer, `playlistTypeOf`, and
+the row wears both at once — «Подборка» beside «Ушёл в народ» is two true
+statements about one playlist, and neither had to lose.
+
+The type is one of four, tried in this order, and read off fields the build has
+already worked out rather than stored:
+
+| Type | Read from | Share |
+|---|---|---|
+| **Подборка** | `collection` — the curve and the build agree it is a shelf | 8.2% |
+| **Семинары** | `kind` — a clear majority of the lecture titles say so | 6.0% |
+| **Полный курс** | `fullCourse` — a whole ordered term in equal slots | 14.0% |
+| **Лекции** | everything else | 71.9% |
+
+«Лекции» is never printed on a row: it is what two thirds of a lecture catalogue
+is, and a badge everybody wears separates nobody. It exists so the filter can
+ask for courses and not shelves.
+
+`kind` is read off the **lecture titles**, not the playlist's own. Read off the
+playlist title and description alone — which is how it worked until now — 90% of
+the catalogue came out «неизвестно» and the content-type filter offered three
+values that between them described 297 playlists out of 2902. The lecture titles
+ship with the shard anyway, and they are where the distinction is actually
+written down: `unknown` falls to 61%, seminars go from 29 playlists to 180.
 
 ## The rating
 
@@ -247,28 +274,29 @@ is most unusual for. Not a priority list, which was tried and does not work —
 every rung sees only what the rungs above refused, and the last one described
 0.4% of the catalogue.
 
-**4. What it is**, if nothing was earned and the shape is certain.
+Nothing at all if none of the three answered, which is most of the catalogue and
+the honest reading of it.
 
 | Status | Condition | Share |
 |---|---|---|
 | **Мало данных** | `views < 1000` or `views/lecture < 150` | 6.0% |
 | **Новый** | last upload under 120 days ago | 2.9% |
-| **Подборка** | the curve and the build agree it is a shelf | 7.6% |
-| **Отличный** | both signals measured, neither below its peers, top of the rating | 6.5% |
-| **Классика** | recorded ≤2016 and the rating still holds up | 6.2% |
-| **Досматривают** | widest margin on retention | 7.5% |
-| **Нравится** | widest margin on approval | 7.1% |
-| **Обсуждают** | widest margin on discussion | 6.2% |
-| **Разошёлся** | widest margin on reach | 6.8% |
-| **Полный курс** | earned nothing, but it is a whole ordered term | 7.6% |
-| *(no badge)* | cleared nothing, and the shape is not certain either | 35.7% |
+| **Отличный** | both signals measured, neither below its peers, top of the rating | 7.0% |
+| **Классика** | recorded ≤2016 and the rating still holds up | 8.2% |
+| **Досматривают** | widest margin on retention | 7.6% |
+| **Нравится** | widest margin on approval | 8.0% |
+| **Обсуждают** | widest margin on discussion | 7.0% |
+| **Ушёл в народ** | widest margin on reach | 7.4% |
+| *(no badge)* | cleared nothing | 45.9% |
 
-`«Подборка»` sits above the earned words on purpose. «Нравится» on a channel's
-878-video «Biology» shelf is true and useless; what a reader needs first is
-that it is not a course to work through. Left at the foot of the ladder, the
-head of the sorted catalogue filled with well-liked shelves wearing course
-words. «Полный курс» sits at the very bottom for the opposite reason: it is the
-weakest thing worth saying, so anything earned outranks it.
+Every word here is about the numbers. What the playlist *is* — a shelf, a whole
+term, a set of seminars — is a separate badge on the row and is described
+[above](#neither-of-them-is-a-status); it used to be said in this same slot, and
+it silenced the rating of everything it described.
+
+«Ушёл в народ» was «Разошёлся», which reads as «diverged» at least as readily as
+«spread», and was the wrong half of the word for a metric that measures being
+watched far outside your own subscriber base.
 
 ### Not being contradicted
 
@@ -282,7 +310,7 @@ This replaced a gate on the composite rating — «rating ≥ 0» — which soun
 the same idea and was not. Rating is the mean of approval and retention, so the
 old gate refused every word to half the catalogue by construction: **803
 playlists, 28% of the catalogue, cleared a threshold and were told nothing**, and
-531 of those would have been «Разошёлся». That was not the gate working. It was
+531 of those would have been «Ушёл в народ». That was not the gate working. It was
 the gate papering over a reach metric that measured channel size, and the paper
 covered a great deal besides.
 
@@ -302,10 +330,12 @@ by playlists another rung has claimed.
 
 Because the rungs overlap, a target is not the share of the catalogue that ends
 up wearing the word: several rungs claim the same playlist and only one speaks.
-The six were solved for on the built catalogue to land each word between 6.2%
-and 7.6%, with «Без статуса» at 35.7%; every cut they produce is still at least
-a fifth of a sigma above peers, so the shares are chosen but the words are not
-cheap. Rerun them when the catalogue grows.
+The six were solved for on the built catalogue to land each word between 7.0%
+and 8.2%, with «Без статуса» at 45.9% — a bigger silent share than before,
+because the two shape words no longer fill it in with a statement about
+something else. Every cut they produce is still at least a fifth of a sigma
+above peers, so the shares are chosen but the words are not cheap. Rerun them
+when the catalogue grows.
 
 ## What this still cannot do
 
@@ -318,11 +348,12 @@ cheap. Rerun them when the catalogue grows.
   not the same thing, and the curve can tell them apart only statistically.
 - «Подборка» and «Полный курс» describe how a playlist was assembled, not how
   good it is. A shelf can be excellent teaching and a complete term can be dull.
+  That is exactly why they are types and not statuses.
 - A course that was re-published over several years — MIT 18.03's Spring 2006
   lectures were uploaded across a decade — cannot be confirmed as one term, so
-  it gets neither shape word. It is treated as unknown, not as a shelf.
+  it is typed «Лекции» rather than «Полный курс». Unknown, not a shelf.
 - `reach` is unmeasurable for the 898 playlists with no channel or too small a
-  one, so «Разошёлся» and the reach bar are simply absent there.
+  one, so «Ушёл в народ» and the reach bar are simply absent there.
 - Nothing here knows whether the content is correct.
 - «Нравится» can outrank «Отличный» in the sorted list. That is by design: the
   status is the most useful true thing to say, not a rank. A playlist with
