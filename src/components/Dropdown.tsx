@@ -186,7 +186,7 @@ export function CheckRow({
   children: ReactNode;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-dim hover:bg-surface-2">
+    <label className="menu-row cursor-pointer">
       <input
         type="checkbox"
         checked={checked}
@@ -215,7 +215,7 @@ export function ActionRow({ onClick, children }: { onClick: () => void; children
   return (
     <button
       type="button"
-      className="w-full rounded px-2 py-1 text-left text-xs text-ink-faint hover:bg-surface-2"
+      className="menu-row text-xs text-ink-faint"
       onClick={() => {
         onClick();
         close();
@@ -244,8 +244,7 @@ export function RadioRow({
         onChange();
         close();
       }}
-      className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm
-                  ${checked ? 'bg-surface-2 text-ink' : 'text-ink-dim hover:bg-surface-2'}`}
+      className={`menu-row ${checked ? 'bg-surface-2 text-ink' : ''}`}
     >
       <span
         className={`h-3 w-3 shrink-0 rounded-full border ${checked ? 'border-accent bg-accent' : 'border-line'}`}

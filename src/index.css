@@ -234,6 +234,34 @@
     color: var(--c-canvas);
   }
 
+  /*
+   * A control is pressed, not read.
+   *
+   * Two things the browser does to a phone by default and neither belongs to
+   * this interface: it paints a grey rectangle over whatever was tapped —
+   * square, over capsules — and it turns a long press on a button into a text
+   * selection, so holding «СПИСОК» a moment too long highlights the word
+   * instead of switching the view. Content keeps both: only buttons and the
+   * links dressed as them give them up.
+   *
+   * `touch-action: manipulation` is the third: it drops the wait for a possible
+   * second tap, which is what makes a button on a phone feel a beat slow.
+   */
+  button,
+  a,
+  label,
+  summary,
+  [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  label,
+  [role='button'] {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   /* Scrollbars, dark-mode friendly and unobtrusive. */
   * {
     scrollbar-width: thin;
@@ -558,6 +586,27 @@
   }
 
   /*
+   * A row in a menu — a filter to tick, an option to pick, a list to clear.
+   *
+   * Dense under a mouse, because a filter menu is read as a list before
+   * anything in it is clicked. Under a finger the rows are the thing being
+   * aimed at, and eight names in a 240px panel at 32px apiece is a column of
+   * targets a thumb covers two of at once.
+   */
+  .menu-row {
+    @apply flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm
+           text-ink-dim transition-colors duration-fast ease-out;
+  }
+  .menu-row:hover {
+    background: var(--c-surface-2);
+  }
+  @media (pointer: coarse) {
+    .menu-row {
+      min-height: 40px;
+    }
+  }
+
+  /*
    * A tab in a row of them. The chosen one is the same accent inlay as the
    * chosen half of the view switch — there are five of these and their widths
    * all differ, which is the one case a sliding pill cannot serve.
@@ -822,7 +871,8 @@
        them, a row of these comes to exactly the 40 of the plates beside it. */
     .icon-btn,
     .lang-btn,
-    .seg-item {
+    .seg-item,
+    .tab {
       height: 34px;
     }
     .icon-btn {

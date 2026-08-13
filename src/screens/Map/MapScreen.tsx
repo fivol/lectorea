@@ -126,12 +126,17 @@ export default function MapScreen() {
         The search field floats over the map with a blur behind it rather than
         being nailed to an edge — except on mobile, where a floating element
         just gets in the way of the content.
+
+        Over the list it keeps a band of canvas under it: the cards scroll to
+        the top edge of what is below, and with the field sitting flush on that
+        edge a heading was cut through the middle a pixel under the pill, which
+        reads as a fault rather than as a list carrying on.
       */}
       <div
         className={
           showMap
             ? 'pointer-events-none absolute inset-x-0 top-[72px] z-30 flex flex-col items-center gap-2 px-4'
-            : 'z-30 flex flex-col items-center gap-2 px-4 pt-3 sm:px-6'
+            : 'z-30 flex flex-col items-center gap-2 px-4 py-3 sm:px-6'
         }
       >
         <div className="pointer-events-auto w-full max-w-xl">
