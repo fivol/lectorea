@@ -89,7 +89,6 @@ export default function PlaylistList({ course }: Props) {
     () =>
       playlistHeadings(playlists ?? [], t(`course.${course.id}.title`), {
         providerTitle: (id) => catalog.providers[id]?.title,
-        lengthLabel: (playlist) => t(`ui.playlist.length.${playlist.lectureLength}`),
       }),
     [playlists, course.id, catalog.providers, t]
   );

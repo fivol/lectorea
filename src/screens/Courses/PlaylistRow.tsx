@@ -50,7 +50,9 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
   const subtitle = (
     progress.started
       ? [
-          t('ui.profile.progress', { done: progress.done, total: progress.total }),
+          // Named, because «4 из 15 · 6.1 из 21 ч» is two bare ratios in a row
+          // and the eye has to work out which of them is which.
+          t('ui.course.lecturesDone', { done: progress.done, total: progress.total }),
           t('ui.playlist.hoursOf', {
             n: formatHours(hoursFromSeconds(progress.watchedSeconds)),
             of: formatHours(hoursFromSeconds(progress.totalSeconds)),
@@ -112,7 +114,11 @@ function PlaylistRowInner({ playlist, label, language, onOpen }: Props) {
             line to half the list to repeat what the tick says. */}
         {progress.started && !watched ? (
           <ProgressBar
-            className="mt-1.5"
+            // Held clear of the status word on the right: the percentage and
+            // «Подборка» are both small grey type on the same optical line, and
+            // with only the row's own gap between them they read as one label
+            // that has come apart.
+            className="mt-1.5 pr-10"
             done={progress.done}
             total={progress.total}
             fill={progress.fraction}
