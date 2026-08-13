@@ -102,6 +102,41 @@ export const CURVE = {
   assortedScatter: 1.2,
 } as const;
 
+/**
+ * What the curve alone gets wrong, and why a second witness is needed.
+ *
+ * `assortedRho` fires on 8.3% of playlists whose own lecture titles are numbered
+ * in order — MIT 18.03, Stanford CS224N, Professor Leonard's Calculus 3. They
+ * are courses; what happened is that each lecture is famous enough to be found
+ * from search on its own, so position stops predicting views. Measured against
+ * 630 playlists whose titles number themselves, and 69 that are unmistakably
+ * channel shelves, the shape of the thing is far better told by how it was
+ * made than by how it is watched:
+ *
+ *                            shelves   numbered courses
+ *   over 120 videos            79.7%              0.2%
+ *   uploaded across 2+ years  100.0%              7.3%
+ *   lecture lengths all over   50.7%              4.9%
+ *   views unrelated to order   62.3%              8.9%   ← the old sole test
+ *
+ * So the curve still decides whether retention may be scored — that is a
+ * question about the statistics — but the word «Подборка» is only said when
+ * the way the playlist was built agrees.
+ */
+export const COLLECTION = {
+  /** More lectures than a course has. Only 1 of 630 numbered courses is this long. */
+  videos: 120,
+  /** Filmed across years rather than one term. */
+  spanDays: 730,
+  /** Lecture lengths scattered around their own median. */
+  durationSpread: 0.45,
+  /** Below this a playlist is too small to be a pile, whatever its curve says. */
+  minVideos: 20,
+} as const;
+
+/** Shares of a playlist's titles that settle the question on their own. */
+export const TITLE_ORDER = { numbered: 0.6, lectureWords: 0.7 } as const;
+
 /* ─────────────────────────────  Helpers  ────────────────────────────── */
 
 export function median(values: number[]): number {
@@ -305,13 +340,153 @@ export function curveKind(rho: number, scatter: number): CurveKind {
   return 'unclear';
 }
 
+/* ─────────────────────  How the playlist was built  ─────────────────── */
+
 /**
- * Views per lecture per subscriber — how far past its own channel it went.
+ * How the lectures themselves were made, as opposed to how they are watched.
+ *
+ * None of it comes from the API's playlist record — it is read off the videos:
+ * their titles, their upload dates and their lengths. A course is a term's work
+ * by one person and looks like it from every angle at once.
+ */
+export type Structure = {
+  /** Titles carry their own position, or all say «lecture». */
+  ordered: boolean;
+  /** Days between the first upload and the last, or null under three dates. */
+  spanDays: number | null;
+  /** Scatter of lecture lengths around their median, or null under five. */
+  durationSpread: number | null;
+  videoCount: number;
+};
+
+/** A number in the title equal to the video's own place in the playlist. */
+const TITLE_NUMBER = /(?:^|[^\d])(\d{1,3})(?:[^\d]|$)/g;
+
+/**
+ * Words that mean «this is one instalment of something», in both catalogue
+ * languages. Deliberately not «course» or «курс»: those name the whole, and a
+ * shelf is quite happy to call itself one.
+ */
+const LECTURE_WORD =
+  /(?:^|\W)(lecture|lec|lesson|part|chapter|episode|week|unit|module|seminar|лекция|лекции|занятие|урок|часть|семинар)(?:\W|$)/i;
+
+/**
+ * True when the titles themselves say what order to watch in.
+ *
+ * The numbering test matches a video's position, not merely the presence of a
+ * digit — a shelf full of «Physics 101» does not pass, and a course whose files
+ * are named after their chapter does. It is the one witness that never fires on
+ * a shelf: of 69 unmistakable ones, not a single one numbers itself in order.
+ */
+export function titlesOrdered(titles: string[]): boolean {
+  if (titles.length < 5) return false;
+  let numbered = 0;
+  let worded = 0;
+  for (const [index, title] of titles.entries()) {
+    const text = title ?? '';
+    TITLE_NUMBER.lastIndex = 0;
+    for (const match of text.matchAll(TITLE_NUMBER)) {
+      if (Number(match[1]) === index + 1) {
+        numbered++;
+        break;
+      }
+    }
+    if (LECTURE_WORD.test(text)) worded++;
+  }
+  return (
+    numbered / titles.length >= TITLE_ORDER.numbered ||
+    worded / titles.length >= TITLE_ORDER.lectureWords
+  );
+}
+
+/** Days from the first upload to the last. Three dates before it means anything. */
+export function uploadSpanDays(dates: Array<string | null | undefined>): number | null {
+  const times = dates
+    .map((date) => (date ? Date.parse(date) : NaN))
+    .filter((time) => Number.isFinite(time));
+  if (times.length < 3) return null;
+  return (Math.max(...times) - Math.min(...times)) / 864e5;
+}
+
+/**
+ * How unequal the lecture lengths are — MAD over the median.
+ *
+ * A term's lectures are all the same slot: 0.09 for a numbered course, 0.46 for
+ * a shelf that mixes a three-minute answer with a ninety-minute lecture.
+ */
+export function durationSpreadOf(seconds: Array<number | null | undefined>): number | null {
+  const lengths = seconds.filter((value): value is number => typeof value === 'number' && value > 0);
+  if (lengths.length < 5) return null;
+  const center = median(lengths);
+  if (center <= 0) return null;
+  return (median(lengths.map((value) => Math.abs(value - center))) * 1.4826) / center;
+}
+
+/**
+ * What a complete course looks like from the outside.
+ *
+ * The mirror image of `isCollection`, and it earns its place for the same
+ * reason: of the playlists the numbers had nothing to say about, 17% are a
+ * whole term of numbered lectures in equal slots — MIT 7.016, Половинкин's
+ * ТФКП, Onur Mutlu's Computer Architecture. Showing a reader nothing about
+ * those is a worse answer than showing them what the thing is.
+ *
+ * Deliberately says nothing about quality, and so is only reached when no
+ * earned word applies. It is allowed on a playlist the signals are unkind to:
+ * «this is a full ordered course» stays true either way.
+ */
+export const FULL_COURSE = {
+  /** A term's worth. Below this «complete» is a claim the data cannot support. */
+  videos: 20,
+  /** Filmed to a timetable, not accumulated. */
+  spanDays: 400,
+  /** Every lecture the same slot. */
+  durationSpread: 0.35,
+} as const;
+
+export function isFullCourse(structure: Structure): boolean {
+  return (
+    structure.ordered &&
+    structure.videoCount >= FULL_COURSE.videos &&
+    structure.spanDays !== null &&
+    structure.spanDays <= FULL_COURSE.spanDays &&
+    structure.durationSpread !== null &&
+    structure.durationSpread <= FULL_COURSE.durationSpread
+  );
+}
+
+/**
+ * Whether to call the thing a shelf out loud.
+ *
+ * Two witnesses, and a veto. The curve must not say the views follow the order,
+ * the structural marks must agree, and the titles must not be numbering
+ * themselves — a playlist that says «Lecture 7» on its seventh video has
+ * answered the question already, whatever its views do.
+ *
+ * The weaker the curve's evidence, the more structure has to carry: one mark
+ * when the views plainly ignore the order, two when the curve came out
+ * `unclear`. That second case is not a technicality — Khan Academy's «Algebra
+ * I» is 421 videos put up across six and a half years, and its rho lands a
+ * hair short of the line. Six and a half years of uploads is the better witness.
+ */
+export function isCollection(curve: Curve | null, structure: Structure): boolean {
+  if (!curve || curve.kind === 'series') return false;
+  if (structure.videoCount < COLLECTION.minVideos) return false;
+  if (structure.ordered) return false;
+  const marks =
+    Number(structure.videoCount >= COLLECTION.videos) +
+    Number((structure.spanDays ?? 0) >= COLLECTION.spanDays) +
+    Number((structure.durationSpread ?? 0) >= COLLECTION.durationSpread);
+  return marks >= (curve.kind === 'assorted' ? 1 : 2);
+}
+
+/**
+ * Views per lecture against the size of the channel — how far past it it went.
  *
  * Raw views cannot answer that: they measure the size of the channel more than
  * anything about the playlist, and putting them in the rank brought back the
  * bias the whole rewrite exists to remove (a 0.30 rank correlation with views).
- * Divided by subscribers, the same number says something a small channel can
+ * Divided by the channel, the same number says something a small channel can
  * also win.
  */
 export function reachOf(
@@ -319,9 +494,38 @@ export function reachOf(
   videoCount: number,
   subscribers: number | null | undefined
 ): number | null {
-  if (views <= 0 || videoCount <= 0 || !subscribers || subscribers <= 0) return null;
-  return views / videoCount / subscribers;
+  if (views <= 0 || videoCount <= 0 || !subscribers) return null;
+  if (subscribers < MIN_REACH_SUBSCRIBERS) return null;
+  return views / videoCount / subscribers ** REACH_EXPONENT;
 }
+
+/**
+ * Views per lecture grow as the 0.68 power of subscribers across the catalogue,
+ * not in step with them — a channel ten times the size gets five times the
+ * views per lecture, not ten. Dividing by the count itself therefore
+ * over-corrected, and reach came out at −0.23 against channel size: a metric
+ * for «small channel» wearing the name of one for «travelled far». At 0.8 the
+ * correlation is +0.005 and the number finally means what it says.
+ *
+ * 0.8 rather than the measured 0.68 because the fit is dominated by the large
+ * channels, where most of the catalogue is; the gentler exponent leaves a
+ * little of the advantage with the small ones rather than betting the badge on
+ * a slope read off forty thin bins.
+ */
+export const REACH_EXPONENT = 0.8;
+
+/**
+ * Below this the ratio has no denominator worth dividing by.
+ *
+ * 53 channels in the catalogue have under a thousand subscribers and 94% of
+ * them hold exactly one playlist: they are private accounts somebody used to
+ * mirror a Stanford or MIT course. A nine-subscriber channel with 1.6M views on
+ * Susskind's «Cosmology» topped the reach scale by a mile, and the fix is not
+ * a gentler exponent — the shape of the thing is wrong. There is no channel
+ * there for the playlist to have travelled past, so the question is unanswered
+ * rather than answered spectacularly.
+ */
+export const MIN_REACH_SUBSCRIBERS = 1000;
 
 /* ──────────────────────────  Peer calibration  ──────────────────────── */
 
@@ -441,6 +645,7 @@ export const STATUS_ORDER = [
   'discussed',
   'reaching',
   'assorted',
+  'course',
   'none',
 ] as const;
 
@@ -461,7 +666,10 @@ export type StatusInput = {
   retentionZ: number | null;
   discussionZ: number | null;
   reachZ: number | null;
-  curve: CurveKind | null;
+  /** A shelf of videos rather than a course — see `isCollection`. */
+  collection: boolean;
+  /** A whole term of ordered lectures — see `isFullCourse`. */
+  fullCourse: boolean;
 };
 
 /**
@@ -477,22 +685,29 @@ export type StatusInput = {
  * above it had already claimed them. So every rung is cut against everyone it
  * applies to, overlaps and all, and the priority order below merely decides
  * which of several true words gets said.
+ *
+ * Because the rungs overlap, a share here is not the share of the catalogue
+ * that ends up wearing the word — several rungs claim the same playlist and
+ * only one of them speaks. These six were solved for on the built catalogue to
+ * land each word between 6.5% and 7.7% of it, and «Без статуса» at 35%. Every
+ * cut they produce is still at least a fifth of a sigma above peers, so the
+ * shares are chosen but the words are not cheap. Rerun the numbers when the
+ * catalogue grows: `meta.json` records what each one cost this build.
  */
 export const STATUS_TARGETS: Record<EarnedStatus, number> = {
-  excellent: 0.6,
-  classic: 0.75,
-  retained: 0.65,
-  liked: 0.65,
-  discussed: 0.5,
-  reaching: 0.6,
+  excellent: 0.59,
+  classic: 0.43,
+  retained: 0.39,
+  liked: 0.31,
+  discussed: 0.25,
+  reaching: 0.22,
 };
 
 /**
  * What each rung asks for, beyond clearing its threshold.
  *
- * `sound` — the rating as a whole is not negative — guards every single-signal
- * word. Without it «Разошёлся» landed on a playlist a full two sigma below its
- * peers on approval, which is a compliment the data did not make.
+ * `uncontradicted` guards every single-signal word: praise for one number is
+ * withdrawn when another one flatly disagrees.
  */
 type Rung = {
   key: EarnedStatus;
@@ -501,7 +716,32 @@ type Rung = {
   eligible: (input: StatusInput) => boolean;
 };
 
-const sound = (input: StatusInput): boolean => (input.rating ?? 0) >= 0;
+/**
+ * How far below its peers a signal has to be before it cancels the other one.
+ *
+ * A sigma. Half the catalogue sits within a third of one either way, so this
+ * catches only a playlist the data is actually arguing about, not one that is
+ * merely unremarkable.
+ */
+export const CONTRADICTION = -1;
+
+/**
+ * The two signals about the lectures themselves must not disagree with the word.
+ *
+ * This replaces a gate on the composite rating, which sounded like the same
+ * idea and was not. Rating is the mean of approval and retention, so «rating
+ * ≥ 0» refused every word to half the catalogue by construction: 803 playlists
+ * — 28% of everything — cleared a threshold and were told nothing, and 531 of
+ * those were «Разошёлся». That was not the gate working. It was the gate
+ * papering over a reach metric that measured channel size (see
+ * `MIN_REACH_SUBSCRIBERS`), and the paper covered a great deal besides.
+ *
+ * Only approval and retention count as contradiction. Reach and discussion are
+ * circumstances — a channel's size, whether comments are on — and a playlist
+ * being unremarkable on either says nothing against it being loved.
+ */
+const uncontradicted = (input: StatusInput): boolean =>
+  (input.approvalZ ?? 0) >= CONTRADICTION && (input.retentionZ ?? 0) >= CONTRADICTION;
 
 /**
  * Said before any of the single scales, because each is a claim the others
@@ -523,10 +763,12 @@ export const COMPOUND_RUNGS: Rung[] = [
   },
   {
     key: 'classic',
-    // Old and still being found. Ranked by reach so "still watched" means
-    // watched relative to its channel, not merely published by a large one.
-    metric: (input) => input.reachZ,
-    eligible: (input) => sound(input) && (input.year ?? 9999) <= CLASSIC_YEAR,
+    // Old and still worth the time. Ranked by the rating rather than by reach:
+    // reach needs a subscriber count, and 832 playlists in the catalogue were
+    // found on GitHub course pages and carry no channel at all — ranking by it
+    // withheld «Классика» from 29% of the catalogue over where we found it.
+    metric: (input) => input.rating,
+    eligible: (input) => uncontradicted(input) && (input.year ?? 9999) <= CLASSIC_YEAR,
   },
 ];
 
@@ -543,10 +785,10 @@ export const COMPOUND_RUNGS: Rung[] = [
  * with an answer, and it is a better answer than an order fixed in advance.
  */
 export const SIGNAL_RUNGS: Rung[] = [
-  { key: 'retained', metric: (input) => input.retentionZ, eligible: sound },
-  { key: 'liked', metric: (input) => input.approvalZ, eligible: sound },
-  { key: 'discussed', metric: (input) => input.discussionZ, eligible: sound },
-  { key: 'reaching', metric: (input) => input.reachZ, eligible: sound },
+  { key: 'retained', metric: (input) => input.retentionZ, eligible: uncontradicted },
+  { key: 'liked', metric: (input) => input.approvalZ, eligible: uncontradicted },
+  { key: 'discussed', metric: (input) => input.discussionZ, eligible: uncontradicted },
+  { key: 'reaching', metric: (input) => input.reachZ, eligible: uncontradicted },
 ];
 
 export const RUNGS: Rung[] = [...COMPOUND_RUNGS, ...SIGNAL_RUNGS];
@@ -581,11 +823,11 @@ export function statusOf(
   }
 
   // Ahead of every earned word, because it is a different kind of statement.
-  // «Нравится» on a channel's 878-video «Biology» bucket is true and useless:
+  // «Нравится» on a channel's 878-video «Biology» shelf is true and useless:
   // what the reader needs to know first is that it is not a course to work
   // through. Left at the foot of the ladder, the head of the sorted catalogue
-  // filled with well-liked buckets wearing course words.
-  if (input.curve === 'assorted') return 'assorted';
+  // filled with well-liked shelves wearing course words.
+  if (input.collection) return 'assorted';
 
   for (const rung of COMPOUND_RUNGS) {
     if (!rung.eligible(input)) continue;
@@ -605,7 +847,11 @@ export function statusOf(
       best = rung.key;
     }
   }
-  return best ?? 'none';
+  if (best) return best;
+
+  // Nothing was earned. Before falling silent, say what the thing is if that
+  // much is certain — the same courtesy «Подборка» does at the other end.
+  return input.fullCourse ? 'course' : 'none';
 }
 
 /** Unreachable cuts, so `statusOf` reports only what the gates above decided. */
@@ -650,6 +896,10 @@ export type Rateable = {
   stats: Stats;
   retention?: number;
   curve?: CurveKind;
+  /** A shelf of videos rather than a course — see `isCollection`. */
+  collection?: boolean;
+  /** A whole term of ordered lectures — see `isFullCourse`. */
+  fullCourse?: boolean;
   lastVideoAt?: string;
 };
 
@@ -787,7 +1037,8 @@ export function rateCatalogue(
       retentionZ: retentionZ.get(item.id) ?? null,
       discussionZ: discussionZ.get(item.id) ?? null,
       reachZ: reachZ.get(item.id) ?? null,
-      curve: item.curve ?? null,
+      collection: item.collection ?? false,
+      fullCourse: item.fullCourse ?? false,
     });
   }
   const thresholds = thresholdsFor([...inputs.values()], now);

@@ -235,7 +235,8 @@ export const PlaylistStatus = z.enum([
   'discussed', // unusually many comments per view
   'reaching', // travelled far past its own channel
   'classic', // old and still being found
-  'assorted', // a subject bucket rather than a course
+  'assorted', // a shelf of videos rather than a course
+  'course', // nothing earned, but it is a whole term of ordered lectures
   'none',
 ]);
 export type PlaylistStatus = z.infer<typeof PlaylistStatus>;
@@ -259,6 +260,23 @@ export const BuiltPlaylistSchema = PlaylistSchema.extend({
   /** Views of the last quarter over the first. Absent under 8 videos with views. */
   retention: z.number().optional(),
   curve: CurveKind.optional(),
+  /**
+   * A shelf of videos rather than a course, which is what «Подборка» reports.
+   *
+   * Not the same question as `curve`, and deliberately kept apart from it.
+   * `curve` is about the statistics — whether retention may be scored at all —
+   * and is read off the views. This is about how the playlist was made, and is
+   * read off the lecture titles, upload dates and lengths. A famous course
+   * whose lectures are each found from search has an `assorted` curve and is
+   * not a shelf.
+   */
+  collection: z.boolean().default(false),
+  /**
+   * A whole term of ordered lectures in equal slots — the counterpart of
+   * `collection`, and what «Полный курс» reports. Also structural, also silent
+   * about quality.
+   */
+  fullCourse: z.boolean().default(false),
   /** Last upload, which is what decides whether a playlist is still settling. */
   lastVideoAt: z.string().optional(),
   /** Lecture list, shipped with the shard so the modal needs no API call. */

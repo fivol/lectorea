@@ -306,13 +306,14 @@ const LENGTH_TITLES: Record<string, string> = {
 const STATUS_TITLES: Array<[PlaylistStatus, string]> = [
   ['sparse', 'мало данных'],
   ['fresh', 'новый'],
+  ['assorted', 'подборка'],
   ['excellent', 'отличный'],
   ['classic', 'классика'],
   ['retained', 'досматривают'],
   ['liked', 'нравится'],
   ['discussed', 'обсуждают'],
   ['reaching', 'разошёлся'],
-  ['assorted', 'подборка'],
+  ['course', 'полный курс'],
   ['none', 'без статуса'],
 ];
 

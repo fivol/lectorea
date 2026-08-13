@@ -29,6 +29,11 @@ import { layoutColumns } from './lib/layout.js';
 import {
   clamp,
   curveOf,
+  durationSpreadOf,
+  isCollection,
+  isFullCourse,
+  titlesOrdered,
+  uploadSpanDays,
   engagementOf,
   isReversed,
   median,
@@ -355,6 +360,19 @@ function assemblePlaylists(sources: Sources): Assembled {
         chronological
       );
 
+      // How the playlist was made, which the curve alone gets wrong: a famous
+      // course whose lectures are each found from search looks exactly like a
+      // shelf until you notice it was filmed in one term, in equal slots, and
+      // numbers its own titles. See `isCollection`.
+      const structure = {
+        ordered: titlesOrdered(videoRowsHere.map((v) => v.title ?? '')),
+        spanDays: uploadSpanDays(videoRowsHere.map((v) => v.published_at)),
+        durationSpread: durationSpreadOf(videoRowsHere.map((v) => v.duration_seconds)),
+        videoCount: row.video_count ?? videoRowsHere.length,
+      };
+      const collection = isCollection(curve, structure);
+      const fullCourse = isFullCourse(structure);
+
       const durations = videos.map((v) => v.seconds).filter((s) => s > 0);
       const totalSeconds = row.total_seconds ?? durations.reduce((a, b) => a + b, 0);
       const medianSeconds = row.median_seconds ?? median(durations);
@@ -400,6 +418,8 @@ function assemblePlaylists(sources: Sources): Assembled {
           engagement: engagementOf(stats),
           retention: curve?.retention,
           curve: curve?.kind,
+          collection,
+          fullCourse,
           lastVideoAt,
           videos,
         },

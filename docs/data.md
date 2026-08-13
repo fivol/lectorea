@@ -160,7 +160,9 @@ On a playlist:
 | `lectureLength` | bucket by `medianSeconds`: `lesson` ≤ 40 min, `pair` 40–100, `double` 100–200, `long` > 200 |
 | `engagement` | `(likes + comments) / views` — the raw column the modal shows |
 | `retention` | views of the last quarter of lectures over the first |
-| `curve` | `series` / `assorted` / `unclear` — is it a course or a subject bucket |
+| `curve` | `series` / `assorted` / `unclear` — the shape of the view curve, which decides whether retention may be scored |
+| `collection` | a shelf of videos rather than a course — read off the titles, upload dates and lengths, not off the curve |
+| `fullCourse` | a whole term of ordered lectures in equal slots — the mirror of `collection` |
 | `rating` | the combined score the list sorts by, below |
 | `status` | the one word the row shows, below |
 | `signals` | the normalised parts behind the rating, for the tooltip |

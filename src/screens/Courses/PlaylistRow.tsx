@@ -161,6 +161,7 @@ const STATUS_TONE: Record<Exclude<PlaylistStatus, 'none'>, { colour: string; tex
   reaching: { colour: 'var(--c-warning)', text: 'text-warning' },
   classic: { colour: 'var(--c-warning)', text: 'text-warning' },
   assorted: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
+  course: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
   fresh: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
   sparse: { colour: 'var(--c-ink-faint)', text: 'text-ink-faint' },
 };

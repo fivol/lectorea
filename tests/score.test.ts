@@ -7,8 +7,12 @@ import {
   curveOf,
   discussionOf,
   engagementOf,
+  durationSpreadOf,
+  isCollection,
+  isFullCourse,
   isReversed,
   MAX_PLAUSIBLE_APPROVAL,
+  MIN_REACH_SUBSCRIBERS,
   median,
   peerKey,
   rateCatalogue,
@@ -20,6 +24,8 @@ import {
   spreadOf,
   statusOf,
   thresholdsFor,
+  titlesOrdered,
+  uploadSpanDays,
   Z_LIMIT,
   type Rateable,
   type StatusInput,
@@ -52,6 +58,23 @@ describe('raw signals', () => {
     const large = reachOf(400_000, 10, 4_000_000);
     expect(small).toBeGreaterThan(large!);
     expect(reachOf(1000, 10, null)).toBeNull();
+  });
+
+  it('does not turn reach into a prize for having a small channel', () => {
+    // Views per lecture grow as the 0.68 power of subscribers across the
+    // catalogue. Dividing by the count itself made reach −0.23 against channel
+    // size: two channels on the real curve should now come out level.
+    const modest = reachOf(20_000 * 10, 10, 20_000)!;
+    const huge = reachOf(20_000 * 10 * 100 ** 0.68 * 10, 10, 20_000 * 100)!;
+    expect(huge / modest).toBeGreaterThan(1);
+    expect(huge / modest).toBeLessThan(12);
+  });
+
+  it('has no answer for a channel that is not one', () => {
+    // 53 channels in the catalogue are private accounts holding one mirrored
+    // course. Nine subscribers is not an audience the playlist travelled past.
+    expect(reachOf(1_586_393, 8, MIN_REACH_SUBSCRIBERS - 1)).toBeNull();
+    expect(reachOf(1_586_393, 8, MIN_REACH_SUBSCRIBERS)).not.toBeNull();
   });
 });
 
@@ -96,6 +119,86 @@ describe('the view curve', () => {
     expect(curveKind(-0.9, 1.5)).toBe('assorted'); // decays, but wildly scattered
     expect(curveKind(0.1, 0.2)).toBe('assorted'); // tight, but unrelated to order
     expect(curveKind(-0.35, 0.9)).toBe('unclear');
+  });
+});
+
+describe('how the playlist was built', () => {
+  const numbered = Array.from({ length: 12 }, (_, index) => `Lecture ${index + 1}: topic`);
+  const unnumbered = ['Photosynthesis', 'Mitosis', 'The cell wall', 'Enzymes', 'Osmosis', 'DNA'];
+
+  it('reads an order off the titles when the titles state one', () => {
+    expect(titlesOrdered(numbered)).toBe(true);
+    expect(titlesOrdered(unnumbered)).toBe(false);
+  });
+
+  it('wants the number to be the video own place, not just any number', () => {
+    // A shelf of «Physics 101» clips is not numbered, however many digits it has.
+    expect(titlesOrdered(Array.from({ length: 10 }, () => 'Physics 101 problem'))).toBe(false);
+  });
+
+  it('takes «lecture» on every title as an order of its own', () => {
+    expect(titlesOrdered(Array.from({ length: 10 }, (_, i) => `Лекция про ${i * 7}`))).toBe(true);
+  });
+
+  it('says nothing about a handful of titles', () => {
+    expect(titlesOrdered(['Lecture 1', 'Lecture 2', 'Lecture 3'])).toBe(false);
+  });
+
+  it('measures the stretch the uploads cover', () => {
+    expect(uploadSpanDays(['2020-01-01', '2020-01-11', '2020-01-21'])).toBe(20);
+    expect(uploadSpanDays(['2020-01-01', '2020-01-11'])).toBeNull();
+  });
+
+  it('measures how unequal the lecture lengths are', () => {
+    expect(durationSpreadOf([3000, 3000, 3000, 3000, 3000])).toBe(0);
+    expect(durationSpreadOf([180, 3000, 400, 5400, 900, 240])!).toBeGreaterThan(0.5);
+    expect(durationSpreadOf([3000, 3000])).toBeNull();
+  });
+
+  const shelfCurve = { retention: 1, rho: 0.1, scatter: 1.4, reversed: false, kind: 'assorted' } as const;
+  const courseCurve = { retention: 0.4, rho: -0.8, scatter: 0.3, reversed: false, kind: 'series' } as const;
+  const vagueCurve = { retention: 0.8, rho: -0.35, scatter: 0.9, reversed: false, kind: 'unclear' } as const;
+  const shelf = { ordered: false, spanDays: 2400, durationSpread: 0.6, videoCount: 300 };
+
+  it('needs the curve and the way it was built to agree before saying «shelf»', () => {
+    expect(isCollection(shelfCurve, shelf)).toBe(true);
+    // The curve alone used to decide, and called MIT 18.03 a shelf: a famous
+    // course whose lectures are each found from search has exactly this curve.
+    expect(isCollection(shelfCurve, { ...shelf, spanDays: 90, durationSpread: 0.1, videoCount: 30 })).toBe(
+      false
+    );
+    // Titles that number themselves have already answered the question.
+    expect(isCollection(shelfCurve, { ...shelf, ordered: true })).toBe(false);
+    // And a curve that plainly follows the order is not overruled by structure.
+    expect(isCollection(courseCurve, shelf)).toBe(false);
+    expect(isCollection(null, shelf)).toBe(false);
+  });
+
+  it('asks more of the structure when the curve is unsure', () => {
+    // One mark is enough behind an assorted curve, two behind an unclear one.
+    const oneMark = { ordered: false, spanDays: 2400, durationSpread: 0.1, videoCount: 30 };
+    expect(isCollection(shelfCurve, oneMark)).toBe(true);
+    expect(isCollection(vagueCurve, oneMark)).toBe(false);
+    expect(isCollection(vagueCurve, { ...oneMark, videoCount: 300 })).toBe(true);
+  });
+
+  it('will not call twenty-odd videos a shelf whatever their curve', () => {
+    expect(isCollection(shelfCurve, { ...shelf, videoCount: 12 })).toBe(false);
+  });
+
+  it('recognises a whole term of lectures filmed to a timetable', () => {
+    const term = { ordered: true, spanDays: 110, durationSpread: 0.08, videoCount: 26 };
+    expect(isFullCourse(term)).toBe(true);
+    expect(isFullCourse({ ...term, ordered: false })).toBe(false); // no stated order
+    expect(isFullCourse({ ...term, videoCount: 9 })).toBe(false); // not a term
+    expect(isFullCourse({ ...term, spanDays: 1800 })).toBe(false); // accumulated
+    expect(isFullCourse({ ...term, durationSpread: 0.8 })).toBe(false); // uneven slots
+    expect(isFullCourse({ ...term, spanDays: null })).toBe(false); // unknown, so unclaimed
+  });
+
+  it('never calls the same playlist both a shelf and a whole course', () => {
+    const term = { ordered: true, spanDays: 110, durationSpread: 0.08, videoCount: 26 };
+    expect(isFullCourse(term) && isCollection(shelfCurve, term)).toBe(false);
   });
 });
 
@@ -165,7 +268,8 @@ describe('status', () => {
     retentionZ: 1,
     discussionZ: 0,
     reachZ: 0,
-    curve: 'series',
+    collection: false,
+    fullCourse: false,
   };
   const cuts = { excellent: 0.5, classic: 0.5, retained: 0.5, liked: 0.5, discussed: 0.5, reaching: 0.5 };
 
@@ -179,8 +283,19 @@ describe('status', () => {
     expect(statusOf({ ...base, lastVideoAt: '2026-07-01T00:00:00Z' }, cuts, NOW)).toBe('fresh');
   });
 
-  it('names the shape before praising a bucket for being liked', () => {
-    expect(statusOf({ ...base, curve: 'assorted', approvalZ: 3 }, cuts, NOW)).toBe('assorted');
+  it('names the shape before praising a shelf for being liked', () => {
+    expect(statusOf({ ...base, collection: true, approvalZ: 3 }, cuts, NOW)).toBe('assorted');
+  });
+
+  it('says what a playlist is when it has nothing to say about how good it is', () => {
+    const plain = { ...base, rating: 0, approvalZ: 0, retentionZ: 0 };
+    expect(statusOf(plain, cuts, NOW)).toBe('none');
+    expect(statusOf({ ...plain, fullCourse: true }, cuts, NOW)).toBe('course');
+    // Structure is not praise, so it survives signals that would block a word.
+    const unloved = { ...plain, approvalZ: -2, retentionZ: -2, rating: -2, fullCourse: true };
+    expect(statusOf(unloved, cuts, NOW)).toBe('course');
+    // But it never displaces one that was earned.
+    expect(statusOf({ ...base, fullCourse: true }, cuts, NOW)).toBe('excellent');
   });
 
   it('reserves «excellent» for playlists neither signal contradicts', () => {
@@ -196,14 +311,24 @@ describe('status', () => {
     expect(statusOf(talkative, cuts, NOW)).toBe('discussed');
   });
 
-  it('never praises a playlist its rating calls below average', () => {
+  it('withdraws a word when another signal flatly contradicts it', () => {
     const contradicted = { ...base, rating: -1, approvalZ: -2, retentionZ: -2, reachZ: 3 };
     expect(statusOf(contradicted, cuts, NOW)).toBe('none');
+    // Merely unremarkable is not a contradiction: the old gate on the composite
+    // rating refused a word to 28% of the catalogue on numbers like these.
+    const quiet = { ...base, rating: -0.4, approvalZ: -0.5, retentionZ: -0.3, reachZ: 3 };
+    expect(statusOf(quiet, cuts, NOW)).toBe('reaching');
   });
 
-  it('calls an old playlist people still find a classic', () => {
-    const old = { ...base, year: CLASSIC_YEAR - 2, retentionZ: 0.1, approvalZ: 0.1, rating: 0.1, reachZ: 2 };
+  it('calls an old playlist that still holds up a classic', () => {
+    // Approval a shade under its peers, so «excellent» is out of reach and the
+    // rung being tested is the one that answers.
+    const old = { ...base, year: CLASSIC_YEAR - 2, retentionZ: 0.1, approvalZ: -0.2, rating: 0.6, reachZ: 2 };
     expect(statusOf(old, cuts, NOW)).toBe('classic');
+    // Ranked by the rating, not by reach: 832 playlists in the catalogue have
+    // no channel behind them and would be refused the word over that alone.
+    const noChannel = { ...old, reachZ: null };
+    expect(statusOf(noChannel, cuts, NOW)).toBe('classic');
   });
 
   it('hands each rung a share of its own candidates', () => {
@@ -248,6 +373,7 @@ describe('the catalogue as a whole', () => {
         },
         retention: 0.2 + ((index * 17) % 60) * 0.02,
         curve: index % 7 === 0 ? 'assorted' : 'series',
+        collection: index % 7 === 0,
       })
     );
     const { byId, thresholds } = rateCatalogue(items, () => 50_000, NOW);
@@ -260,12 +386,13 @@ describe('the catalogue as a whole', () => {
     expect(Number.isFinite(thresholds.excellent)).toBe(true);
   });
 
-  it('marks every assorted playlist as such and scores none of them on retention', () => {
+  it('marks every shelf as such and scores none of them on retention', () => {
     const items = Array.from({ length: 30 }, (_, index) =>
       playlist({
         id: `p${index}`,
         retention: 0.5,
         curve: index < 10 ? 'assorted' : 'series',
+        collection: index < 10,
       })
     );
     const { byId } = rateCatalogue(items, () => 50_000, NOW);

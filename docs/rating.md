@@ -18,7 +18,7 @@ quality. Four things can be measured instead:
 | `approval` | `likes / views` | did the people who came like it |
 | `retention` | views of the last quarter over the first | did they stay |
 | `discussion` | `comments / views` | did they have something to say |
-| `reach` | `views / videoCount / subscribers` | did it travel past its channel |
+| `reach` | `views / videoCount / subscribers^0.8` | did it travel past its channel |
 
 The design rests on these being independent. Measured over the catalogue,
 approval and retention agree at **−0.04** — knowing one tells you nothing about
@@ -28,7 +28,9 @@ the other, so together they say roughly twice as much as either alone.
 has stored all along — 588 591 rows, no extra quota. `reach` needs
 `channels.subscribers`, which `pnpm data:subscribers` fetches; `channels.list`
 costs one unit per call whatever `part` asks for and takes fifty ids at a time,
-so the whole catalogue is single digits of quota.
+so the whole catalogue is single digits of quota. It is measured on 2004 of the
+2902 playlists — 832 were found on GitHub course pages and carry no channel at
+all, and 62 sit on a channel too small to divide by (see below).
 
 ## Why nothing is used raw
 
@@ -56,8 +58,15 @@ recorded in Urdu scored 100.
 less often than МГУ's.
 
 **The shape.** A playlist's view curve says nothing until you know whether it is
-a course at all. A channel's «Astronomy» bucket is entered from search at a
+a course at all. A channel's «Astronomy» shelf is entered from search at a
 random point; its retention is an artefact of arrival, not of staying.
+
+**The size of the channel.** Views per lecture grow as the **0.68** power of
+subscribers across the catalogue — a channel ten times the size gets five times
+the views per lecture, not ten. Dividing by the subscriber count itself
+therefore over-corrected, and `reach` came out at **−0.23** against channel
+size: a metric for «small channel» wearing the name of one for «travelled
+far».
 
 So each signal is turned into a z-score against the right yardstick first.
 
@@ -92,6 +101,16 @@ people either way.
 **Saturation, not clipping.** `saturate(z) = 3·tanh(z/3)`. A hard clamp put 60
 playlists on exactly 2.40 and made the head of the sorted list alphabetical.
 
+**A denominator worth dividing by.** `reach` uses `subscribers^0.8`, which puts
+its correlation with channel size at **+0.06**, and is not computed at all below
+`MIN_REACH_SUBSCRIBERS` (1000). The exponent alone was not enough: 53 channels
+in the catalogue have under a thousand subscribers and **94%** of them hold
+exactly one playlist — they are private accounts somebody used to mirror a
+Stanford or MIT course. A nine-subscriber channel with 1.6M views on Susskind's
+«Cosmology» topped the reach scale by a mile at any exponent, because there is
+no channel there for the playlist to have travelled past. The question is
+unanswered rather than answered spectacularly.
+
 ## The view curve
 
 For any playlist with at least 8 videos that have views, in playlist order:
@@ -108,8 +127,11 @@ scatter = robust MAD of the residuals of ln(views) ~ a + b·ln(position+1)
 | `unclear` | anything else | 325 |
 
 Khan Academy sits at `rho = −0.13`, `scatter = 0.80` — the signature of a
-bucket, and the explanation for its otherwise puzzling high retention: its
+shelf, and the explanation for its otherwise puzzling high retention: its
 videos are searched for individually, not watched through.
+
+The curve decides one thing only: **whether retention may be scored**. It is
+not allowed to decide what the playlist *is* — see the next section for why.
 
 Two corrections are applied. **67 playlists run newest-first**; read literally
 their audience grows towards the end, so `isReversed` detects a clear majority
@@ -121,6 +143,63 @@ playlist's retention is not scored at all**: it is not a fact about staying.
 Checked and found not to matter: the tail being recently uploaded (median
 retention 0.446 for tails under 6 months versus 0.418 for tails over 3 years)
 and playlist length (0.406 at 6–12 videos, 0.378 at 100+).
+
+## How the playlist was built
+
+The curve alone used to decide whether to call something «Подборка», and it was
+wrong a quarter of the time: **120 of the 485** playlists it labelled a shelf
+have their own lectures numbered in order — MIT 18.03, Stanford CS224N,
+Professor Leonard's Calculus 3, Сурдин's «Общая астрономия». They are courses.
+What happened to them is that each lecture is famous enough to be found from
+search on its own, so position stops predicting views. `rho ≥ −0.25` alone
+triggered **80%** of all shelf verdicts, and it fires on 8.3% of playlists that
+number themselves.
+
+Those 120 are indistinguishable from courses on every measure except the curve:
+
+| | flagged shelves that number themselves | all `series` |
+|---|---|---|
+| median upload span | 82 days | 98 days |
+| median duration spread | 0.14 | 0.13 |
+| span over 2 years | 8.6% | 12.8% |
+
+So three facts are read off the videos themselves — their titles, upload dates
+and lengths — none of which come from the playlist record:
+
+```
+ordered         ≥60% of titles carry their own position, or ≥70% say «lecture»
+spanDays        first upload to last
+durationSpread  robust MAD of lecture lengths over their median
+```
+
+Measured against 630 playlists whose titles number themselves and 69 that are
+unmistakable channel shelves, how the thing was made tells them apart far
+better than how it is watched:
+
+| Fires on | shelves | numbered courses |
+|---|---|---|
+| over 120 videos | 79.7% | 0.2% |
+| uploaded across 2+ years | 100.0% | 7.3% |
+| lecture lengths all over | 50.7% | 4.9% |
+| *views unrelated to order* | *62.3%* | *8.9%* |
+
+**«Подборка»** (`isCollection`) now needs two witnesses and survives a veto: the
+curve must not say the views follow the order, at least one structural mark must
+agree — two if the curve only came out `unclear` — the playlist must have 20
+videos or more, and the titles must not number themselves. A playlist that says
+«Lecture 7» on its seventh video has answered the question already, whatever its
+views do. That cuts the word from 16.7% of the catalogue to **7.6%**, and what
+is left is unmistakable: Udacity's 1197-video «Intro to Psychology», Khan
+Academy's 421-video «Algebra I», The Organic Chemistry Tutor's subject shelves.
+
+**«Полный курс»** (`isFullCourse`) is the mirror image: ordered titles, 20+
+lectures, filmed inside 400 days, lecture lengths within 0.35 of their median.
+It says nothing about quality, so it is only reached when no earned word applies
+— and it is allowed on a playlist the signals are unkind to, because «this is a
+full ordered course» stays true either way. It gives a word to **7.6%** of the
+catalogue that previously got none: MIT 7.016, Половинкин's ТФКП, Onur Mutlu's
+Computer Architecture, UMass CS685. The two are mutually exclusive by
+construction.
 
 ## The rating
 
@@ -146,9 +225,10 @@ ones agreeing.
 | Rank correlation with | old score | rating |
 |---|---|---|
 | year | 0.49 | **0.02** |
-| views | −0.25 | 0.14 |
-| video count | −0.22 | **−0.04** |
-| language (ru) | 0.31 | **0.04** |
+| views | −0.25 | **0.06** |
+| video count | −0.22 | **−0.06** |
+| language (ru) | 0.31 | **0.01** |
+| channel subscribers | — | **0.05** |
 
 ## The status
 
@@ -167,28 +247,49 @@ is most unusual for. Not a priority list, which was tried and does not work —
 every rung sees only what the rungs above refused, and the last one described
 0.4% of the catalogue.
 
+**4. What it is**, if nothing was earned and the shape is certain.
+
 | Status | Condition | Share |
 |---|---|---|
 | **Мало данных** | `views < 1000` or `views/lecture < 150` | 6.0% |
 | **Новый** | last upload under 120 days ago | 2.9% |
-| **Подборка** | curve is `assorted` | 16.7% |
-| **Отличный** | both signals measured, neither below its peers, top of the rating | 7.1% |
-| **Классика** | recorded ≤2016 and still reaching | 4.4% |
-| **Досматривают** | widest margin on retention | 5.3% |
-| **Нравится** | widest margin on approval | 6.2% |
-| **Обсуждают** | widest margin on discussion | 4.9% |
-| **Разошёлся** | widest margin on reach | 5.7% |
-| *(no badge)* | cleared nothing | 40.7% |
-
-Every single-scale word additionally requires the rating not to be negative, so
-that a playlist two sigma below its peers on approval is never complimented for
-travelling far.
+| **Подборка** | the curve and the build agree it is a shelf | 7.6% |
+| **Отличный** | both signals measured, neither below its peers, top of the rating | 6.5% |
+| **Классика** | recorded ≤2016 and the rating still holds up | 6.2% |
+| **Досматривают** | widest margin on retention | 7.5% |
+| **Нравится** | widest margin on approval | 7.1% |
+| **Обсуждают** | widest margin on discussion | 6.2% |
+| **Разошёлся** | widest margin on reach | 6.8% |
+| **Полный курс** | earned nothing, but it is a whole ordered term | 7.6% |
+| *(no badge)* | cleared nothing, and the shape is not certain either | 35.7% |
 
 `«Подборка»` sits above the earned words on purpose. «Нравится» on a channel's
-878-video «Biology» bucket is true and useless; what a reader needs first is
+878-video «Biology» shelf is true and useless; what a reader needs first is
 that it is not a course to work through. Left at the foot of the ladder, the
-head of the sorted catalogue filled with well-liked buckets wearing course
-words.
+head of the sorted catalogue filled with well-liked shelves wearing course
+words. «Полный курс» sits at the very bottom for the opposite reason: it is the
+weakest thing worth saying, so anything earned outranks it.
+
+### Not being contradicted
+
+Every single-scale word requires that neither approval nor retention is a full
+sigma below its peers, so a playlist the data argues about is never complimented
+for travelling far. Reach and discussion do not count as contradiction: a
+channel's size and whether comments are switched on are circumstances, and being
+unremarkable on either says nothing against being loved.
+
+This replaced a gate on the composite rating — «rating ≥ 0» — which sounded like
+the same idea and was not. Rating is the mean of approval and retention, so the
+old gate refused every word to half the catalogue by construction: **803
+playlists, 28% of the catalogue, cleared a threshold and were told nothing**, and
+531 of those would have been «Разошёлся». That was not the gate working. It was
+the gate papering over a reach metric that measured channel size, and the paper
+covered a great deal besides.
+
+«Классика» is ranked by the rating rather than by reach for a related reason:
+reach needs a subscriber count, and 832 playlists have no channel behind them at
+all, so ranking by it withheld the word from 29% of the catalogue over where the
+playlist happened to be found.
 
 ### Thresholds
 
@@ -199,8 +300,12 @@ this year's population makes it mean; shares of candidates rather than of the
 catalogue because the rungs overlap and a quantile over everyone is met mostly
 by playlists another rung has claimed.
 
-The aim is that no word is so rare a reader never learns it and none so common
-it says nothing. Everything currently lands between 2.9% and 16.7%.
+Because the rungs overlap, a target is not the share of the catalogue that ends
+up wearing the word: several rungs claim the same playlist and only one speaks.
+The six were solved for on the built catalogue to land each word between 6.2%
+and 7.6%, with «Без статуса» at 35.7%; every cut they produce is still at least
+a fifth of a sigma above peers, so the shares are chosen but the words are not
+cheap. Rerun them when the catalogue grows.
 
 ## What this still cannot do
 
@@ -211,6 +316,13 @@ it says nothing. Everything currently lands between 2.9% and 16.7%.
   compare thirty-nine channels inside one course, which is the point.
 - High retention on an `assorted` playlist and high retention on a course are
   not the same thing, and the curve can tell them apart only statistically.
+- «Подборка» and «Полный курс» describe how a playlist was assembled, not how
+  good it is. A shelf can be excellent teaching and a complete term can be dull.
+- A course that was re-published over several years — MIT 18.03's Spring 2006
+  lectures were uploaded across a decade — cannot be confirmed as one term, so
+  it gets neither shape word. It is treated as unknown, not as a shelf.
+- `reach` is unmeasurable for the 898 playlists with no channel or too small a
+  one, so «Разошёлся» and the reach bar are simply absent there.
 - Nothing here knows whether the content is correct.
 - «Нравится» can outrank «Отличный» in the sorted list. That is by design: the
   status is the most useful true thing to say, not a rank. A playlist with
@@ -223,7 +335,9 @@ All in `scripts/lib/score.ts`, each with the observation that set it:
 `CONFIDENCE_VIEWS`, `CONFIDENCE_VIEWS_PER_VIDEO`, `SPARSE_VIEWS`,
 `SPARSE_VIEWS_PER_VIDEO`, `FRESH_DAYS`, `CHANNEL_PULL`, `CHANNEL_PRIOR`,
 `WEIGHTS`, `SINGLE_SIGNAL_TRUST`, `Z_LIMIT`, `MIN_CURVE_VIDEOS`, `CURVE`,
-`CLASSIC_YEAR`, `MAX_PLAUSIBLE_APPROVAL`, `STATUS_TARGETS`.
+`COLLECTION`, `TITLE_ORDER`, `FULL_COURSE`, `CONTRADICTION`, `REACH_EXPONENT`,
+`MIN_REACH_SUBSCRIBERS`, `CLASSIC_YEAR`, `MAX_PLAUSIBLE_APPROVAL`,
+`STATUS_TARGETS`.
 
 After changing any of them, `pnpm data:build` then `pnpm stats` — the
 dashboard's «Статус» and «Рейтинг» cards are the fastest way to see a build
