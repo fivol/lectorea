@@ -270,10 +270,13 @@ two, and the × or the dimmed list behind it to close.
   and lecturer follow it in a quieter grey. Roughly half the catalogue has no
   name of its own once that is done, and those rows simply start with who
   recorded them. Under it are the **facts**: year, language when the filter
-  admits more than one, how many lectures and how long they run — or, once you
-  have started, how much of each is behind you. Opening that line is the **type**
-  — «Подборка», «Семинары», «Полный курс» — which says what the thing is and
-  never how good it is. On the right is the **status**, which says only how the
+  admits more than one, how many lectures there are and how many hours they come
+  to — or, once you have started, how much of each is behind you. The hours
+  replaced a word for the average lecture («пара», «урок»), which named a number
+  the reader could already divide out and answered the question nobody asks
+  first. Opening that line is the **type** — «Подборка», «Семинары», «Полный
+  курс», «Разная длина» — which says what the thing is and never how good it
+  is. On the right is the **status**, which says only how the
   numbers came out, and nothing about what the thing is. A finished playlist
   wears a «Просмотрен» plate, the same one a finished course wears.
 

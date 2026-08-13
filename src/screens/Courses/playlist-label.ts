@@ -132,9 +132,19 @@ function tidySegments(text: string, hasLecturer: boolean): string {
     .join(' · ');
 }
 
-/** «(fall 2019)», «[s1 | 2025]» — brackets that carry no word of their own. */
+/** «(fall 2019)», «(2013)» — brackets that carry nothing of their own. */
 const BRACKETED = /[([]([^()[\]]*)[)\]]/g;
-const REAL_WORD = /\p{L}{3,}/u;
+
+/**
+ * What has to be inside a bracket for it to survive.
+ *
+ * A word of three letters — «(hard)», «(теория операторов)» — or a token that
+ * mixes letters and digits: «s1», «1к ФИВТ», «PH703», «М1». That second kind is
+ * how ИТМО numbers its semesters and МФТИ its streams, and it is the whole of
+ * what tells «[s1 | 2020] Дискретная математика» from «[s2 | 2020]» once the
+ * year has been taken out and put on the line below.
+ */
+const REAL_WORD = /\p{L}{3,}|\p{L}\d|\d\p{L}/u;
 
 /**
  * Initials in either order: «А. В. Ершов», «Ершов А.В.», «Маркеев. А. П.».

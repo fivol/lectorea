@@ -432,6 +432,7 @@ function assemblePlaylists(sources: Sources): Assembled {
           curve: curve?.kind,
           collection,
           fullCourse,
+          durationSpread: structure.durationSpread ?? undefined,
           lastVideoAt,
           videos,
         },

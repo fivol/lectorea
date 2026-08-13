@@ -87,7 +87,12 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
           playlist.year ? String(playlist.year) : null,
           language,
           count(playlist.videoCount, 'lecture'),
-          t(`ui.playlist.length.${playlist.lectureLength}`),
+          // How long the whole thing runs, not what one lecture is called.
+          // «пара» was a word for a number the reader already had — 15 lectures
+          // of about ninety minutes — and it answered the question nobody asks
+          // first. «21 ч» answers «can I take this on», and the average is
+          // still one division away for anyone who wants it.
+          t('ui.playlist.hours', { n: formatHours(hoursFromSeconds(playlist.totalSeconds)) }),
         ]),
   ]
     .filter(Boolean)
@@ -201,15 +206,16 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
 /**
  * What the playlist is, said in one word beside the facts.
  *
- * Only three of the four types are ever printed: `lectures` is two thirds of a
- * lecture catalogue and a badge everybody wears separates nobody. «Подборка»
- * carries a warning colour because it is the one that changes what you would do
- * with the thing — a shelf is entered anywhere, a course is started at the top.
+ * Four of the five types are printed: `lectures` is two thirds of a lecture
+ * catalogue and a badge everybody wears separates nobody. «Подборка» carries a
+ * warning colour because it is the one that changes what you would do with the
+ * thing — a shelf is entered anywhere, a course is started at the top.
  */
-const TYPE_TONE: Record<'collection' | 'seminars' | 'course', string> = {
+const TYPE_TONE: Record<'collection' | 'seminars' | 'course' | 'uneven', string> = {
   collection: 'border-warning text-warning',
   seminars: 'border-line-strong text-ink-dim',
   course: 'border-line-strong text-ink-dim',
+  uneven: 'border-line-strong text-ink-dim',
 };
 
 export function TypeBadge({ playlist }: { playlist: BuiltPlaylist }) {

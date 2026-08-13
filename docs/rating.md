@@ -215,11 +215,20 @@ already worked out rather than stored:
 | **Подборка** | `collection` — the curve and the build agree it is a shelf | 8.2% |
 | **Семинары** | `kind` — a clear majority of the lecture titles say so | 6.0% |
 | **Полный курс** | `fullCourse` — a whole ordered term in equal slots | 14.0% |
-| **Лекции** | everything else | 71.9% |
+| **Разная длина** | `durationSpread ≥ 0.45` — the lengths are a mixture | 8.8% |
+| **Лекции** | everything else | 63.1% |
 
-«Лекции» is never printed on a row: it is what two thirds of a lecture catalogue
-is, and a badge everybody wears separates nobody. It exists so the filter can
-ask for courses and not shelves.
+«Разная длина» is the quietest of them and the one a reader is most likely to
+want anyway: a playlist that is a course by every other test, but whose lectures
+run ninety minutes, then eight, then eighty. It cannot be «Полный курс», which
+requires the lengths to sit within 0.35 of their median, and it is not a shelf,
+which needs the views to ignore the order as well. What it warns is that the
+running time is spread unevenly — the one case where the numbers on the row
+would otherwise mislead.
+
+«Лекции» is never printed on a row: it is what most of a lecture catalogue is,
+and a badge everybody wears separates nobody. It exists so the filter can ask
+for courses and not shelves.
 
 `kind` is read off the **lecture titles**, not the playlist's own. Read off the
 playlist title and description alone — which is how it worked until now — 90% of

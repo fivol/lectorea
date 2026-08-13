@@ -776,10 +776,12 @@
   "ui.playlist.length.short": "short",
   "ui.playlist.type.lectures": "Lectures",
   "ui.playlist.type.course": "Full course",
+  "ui.playlist.type.uneven": "Uneven lengths",
   "ui.playlist.type.seminars": "Seminars",
   "ui.playlist.type.collection": "Collection",
   "ui.playlist.type.lectures.hint": "An ordinary lecture series — what most of the catalogue is",
   "ui.playlist.type.course.hint": "A whole term of lectures in a row: numbered in order, filmed over one period, all the same length. It says nothing about quality — only that the course is complete",
+  "ui.playlist.type.uneven.hint": "Lectures of very unequal length: ten-minute ones next to ninety-minute ones. Not a shelf — a course, but its «average lecture» says little, and no two sittings are alike",
   "ui.playlist.type.seminars.hint": "Problem sessions rather than lectures: that is what most of the recordings inside call themselves",
   "ui.playlist.type.collection.hint": "Not a course but a shelf on a subject: views do not fall off along the order, and it shows how it was put together — over years, in unequal lengths, unnumbered. People arrive at these from search, anywhere in the middle",
   "ui.playlist.label.type": "type"

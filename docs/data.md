@@ -165,6 +165,7 @@ On a playlist:
 | `curve` | `series` / `assorted` / `unclear` — the shape of the view curve, which decides whether retention may be scored |
 | `collection` | a shelf of videos rather than a course — read off the titles, upload dates and lengths, not off the curve |
 | `fullCourse` | a whole term of ordered lectures in equal slots — the mirror of `collection` |
+| `durationSpread` | how unequal the lecture lengths are — MAD over the median, 0.09 for a term filmed to a timetable and 0.8 for a mixture |
 | `rating` | the combined score the list sorts by, below |
 | `status` | the one word the row says about the numbers, below |
 | `signals` | the normalised parts behind the rating, for the tooltip |
@@ -178,8 +179,8 @@ audience is still there at the end, comments per view, and views per lecture
 per subscriber — and each is turned into a z-score against playlists of the
 same language and era before anything is added up. The list sorts by `rating`
 and shows one word from `status`. What a playlist *is* — «Подборка»,
-«Семинары», «Полный курс» — is a separate badge, derived from `collection`,
-`kind` and `fullCourse` by `playlistTypeOf`: it is not a verdict, and while it
+«Семинары», «Полный курс», «Разная длина» — is a separate badge, derived from
+`collection`, `kind`, `fullCourse` and `durationSpread` by `playlistTypeOf`: it is not a verdict, and while it
 shared the `status` slot it silenced the verdict on 15% of the catalogue.
 
 **[docs/rating.md](rating.md) is the whole story**: what each signal is worth,

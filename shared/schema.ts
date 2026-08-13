@@ -277,11 +277,13 @@ export type PlaylistStatus = z.infer<typeof PlaylistStatus>;
  * The order below is the order they are tried, and it is a claim about which
  * fact a reader needs first: that this is not a course to work through beats
  * everything, then that these are seminars rather than lectures, then that the
- * course is a whole one. `lectures` is what is left over — two thirds of a
- * lecture catalogue — and is never shown, because a badge everyone wears
- * separates nobody.
+ * course is a whole one, and last that its lectures are not one length —
+ * ninety minutes next to eight is a different thing to sit down to, and it is
+ * the one case where a reader who checked the running time would be misled.
+ * `lectures` is what is left over — two thirds of a lecture catalogue — and is
+ * never shown, because a badge everyone wears separates nobody.
  */
-export const PlaylistType = z.enum(['collection', 'seminars', 'course', 'lectures']);
+export const PlaylistType = z.enum(['collection', 'seminars', 'course', 'uneven', 'lectures']);
 export type PlaylistType = z.infer<typeof PlaylistType>;
 
 /** The three normalised signals behind the rating, for the tooltip. */
@@ -320,6 +322,12 @@ export const BuiltPlaylistSchema = PlaylistSchema.extend({
    * quality.
    */
   fullCourse: z.boolean().default(false),
+  /**
+   * Scatter of the lecture lengths around their median — 0.09 for a term filmed
+   * to a timetable, 0.8 for a playlist that mixes ninety-minute lectures with
+   * eight-minute answers. Absent under five lectures with a length.
+   */
+  durationSpread: z.number().optional(),
   /** Last upload, which is what decides whether a playlist is still settling. */
   lastVideoAt: z.string().optional(),
   /** Lecture list, shipped with the shard so the modal needs no API call. */
@@ -665,13 +673,26 @@ export function lectureLengthOf(medianSeconds: number): LectureLength {
 export function playlistTypeOf(playlist: {
   collection?: boolean;
   fullCourse?: boolean;
+  durationSpread?: number;
   kind: PlaylistKind;
 }): PlaylistType {
   if (playlist.collection) return 'collection';
   if (playlist.kind === 'seminars') return 'seminars';
   if (playlist.fullCourse) return 'course';
+  if ((playlist.durationSpread ?? 0) >= UNEVEN_SPREAD) return 'uneven';
   return 'lectures';
 }
+
+/**
+ * How unequal the lectures have to be before the row says so.
+ *
+ * The same line a shelf's lengths have to cross to count as a structural mark
+ * (`COLLECTION.durationSpread` in `scripts/lib/score.ts`), and for the same
+ * reason: below it a playlist is a term's lectures in one slot, above it the
+ * lengths are a mixture. 14% of the catalogue is above it — enough to be worth
+ * a word, rare enough that the word means something.
+ */
+export const UNEVEN_SPREAD = 0.45;
 
 /**
  * The share of the audience still there at the end — when that is a fact.
