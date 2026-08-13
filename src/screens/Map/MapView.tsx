@@ -185,13 +185,23 @@ const letteringScale = (zoom: number, world: number): number => {
  *
  * The tall map is then set larger still, and that part is not a correction but
  * a decision: it is read on a phone held at arm's length, where the comfortable
- * floor for a name is around eleven pixels rather than the eight a desk can get
+ * floor for a name is around twelve pixels rather than the eight a desk can get
  * away with. Bigger names mean fewer of them fit inside their own borders and
  * more are pushed out to sea or wait for the reader to come closer — which on a
  * screen this size is the better trade. A map with every name on it and half of
- * them unreadable is worth less than a map with fewer.
+ * them unreadable is worth less than a map with fewer. At this size the narrow
+ * fields — Вероятность и статистика is the one to watch — hold their icon and
+ * wait a step before naming themselves, which is the trade being made and not a
+ * fault.
+ *
+ * There is a ceiling on it, and this is nearly it: the continent titles are set
+ * from the same number, and by 1.4 «ФОРМАЛЬНО-ЕСТЕСТВЕННЫЕ» reaches within a
+ * few percent of both edges of the screen. That margin is the same on every
+ * phone — the tall map is fitted to the width of the window, so everything on
+ * it keeps its share of the screen whatever the screen is — so the number can
+ * be read off one device and trusted on the rest.
  */
-const LETTERING: Record<MapVariant, number> = { wide: 1, portrait: 1.3 };
+const LETTERING: Record<MapVariant, number> = { wide: 1, portrait: 1.4 };
 
 /**
  * The chrome the map is drawn under but not fitted under, in screen pixels.
