@@ -41,3 +41,28 @@
   stage: bachelor-4
   deps: [control-theory, linear-algebra]
   soft: [programming-intro]
+
+- id: digital-logic
+  domains: [engineering]
+  stage: bachelor-1
+  deps: [school-algebra]
+
+- id: analog-electronics
+  domains: [engineering]
+  stage: bachelor-2
+  deps: [electrical-circuits]
+
+- id: metrology
+  domains: [engineering]
+  stage: bachelor-2
+  deps: [electrical-circuits, probability]
+
+- id: transport-phenomena
+  domains: [engineering]
+  stage: bachelor-3
+  deps: [differential-equations, thermodynamics]
+
+- id: ocean-engineering
+  domains: [engineering]
+  stage: bachelor-4
+  deps: [strength-of-materials]

@@ -39,3 +39,8 @@
   stage: bachelor-1
   deps: [general-chemistry]
   soft: [statistics]
+
+- id: molecular-spectroscopy
+  domains: [chemistry]
+  stage: master-1
+  deps: [quantum-chemistry]

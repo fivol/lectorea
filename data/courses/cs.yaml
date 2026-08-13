@@ -34,7 +34,10 @@
 - id: computer-architecture
   domains: [cs]
   stage: bachelor-1
-  deps: [programming-intro]
+  # Digital logic was assumed rather than written: this course opens on gates and
+  # flip-flops and never teaches them. The edge exists in every curriculum that
+  # gives them separate semesters, so it belongs here.
+  deps: [programming-intro, digital-logic]
 
 - id: operating-systems
   domains: [cs]

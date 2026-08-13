@@ -34,3 +34,23 @@
   domains: [earth-science]
   stage: bachelor-3
   deps: [geology, mechanics]
+
+- id: geodesy
+  domains: [earth-science]
+  stage: bachelor-2
+  deps: [statistics]
+
+- id: climatology
+  domains: [earth-science]
+  stage: bachelor-3
+  deps: [meteorology]
+
+- id: historical-geology
+  domains: [earth-science]
+  stage: bachelor-2
+  deps: [geology, general-biology]
+
+- id: geochemistry
+  domains: [earth-science]
+  stage: bachelor-3
+  deps: [geology]

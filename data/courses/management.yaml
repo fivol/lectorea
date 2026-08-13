@@ -24,3 +24,28 @@
   domains: [management]
   stage: bachelor-2
   deps: [management-intro, social-psychology]
+
+- id: operations-management
+  domains: [management]
+  stage: bachelor-3
+  deps: [management-intro, optimization]
+
+- id: human-resource-management
+  domains: [management]
+  stage: bachelor-3
+  deps: [organizational-behavior]
+
+- id: strategic-management
+  domains: [management]
+  stage: bachelor-4
+  deps: [management-intro]
+
+- id: project-management
+  domains: [management]
+  stage: bachelor-3
+  deps: [management-intro]
+
+- id: marketing
+  domains: [management]
+  stage: bachelor-2
+  deps: [management-intro]

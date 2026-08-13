@@ -29,3 +29,23 @@
   stage: bachelor-1
   deps: [law-intro]
   related: [international-relations]
+
+- id: civil-law
+  domains: [law]
+  stage: bachelor-2
+  deps: [law-intro]
+
+- id: criminal-law
+  domains: [law]
+  stage: bachelor-2
+  deps: [law-intro]
+
+- id: administrative-law
+  domains: [law]
+  stage: bachelor-3
+  deps: [constitutional-law]
+
+- id: labour-law
+  domains: [law]
+  stage: bachelor-3
+  deps: [civil-law]

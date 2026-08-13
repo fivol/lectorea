@@ -1,267 +1,1260 @@
 {
   "_comment": "Search keywords. Morphology is solved here, by hand, not by a stemmer on the client. Titles are indexed automatically — this file only adds what a title does not contain: abbreviations, slang, transliterations, alternative names. Keys are `{type}.{id}`. Read by the rule matcher in scripts/lib/rules.ts as well as by search, in every language at once: a phrase here can bind a playlist to this course on its own. Slang that is a different subject's ordinary word — «inheritance», «feedback» — costs a wrong binding, so add loose synonyms knowing they are load-bearing.",
-
-  "domain.math": ["математика", "математический", "матан", "мат", "math", "maths"],
-  "domain.logic": ["логика", "логический", "logic"],
-  "domain.probability": ["вероятность", "вероятности", "теорвер", "статистика", "статистический", "статы", "probability", "statistics", "stats"],
-  "domain.cs": ["информатика", "компьютерные науки", "программирование", "computer science", "cs", "ит", "it"],
-  "domain.physics": ["физика", "физический", "физ", "physics"],
-  "domain.astronomy": ["астрономия", "астрофизика", "космос", "astronomy"],
-  "domain.chemistry": ["химия", "химический", "хим", "chemistry"],
-  "domain.earth-science": ["науки о земле", "геология", "геофизика", "география физическая", "earth science"],
-  "domain.biology": ["биология", "биологический", "био", "biology", "bio"],
-  "domain.medicine": ["медицина", "медицинский", "мед", "medicine"],
-  "domain.engineering": ["инженерия", "инженерный", "техника", "engineering"],
-  "domain.biochemistry": ["биохимия", "биохимический", "biochemistry"],
-  "domain.bioinformatics": ["биоинформатика", "bioinformatics"],
-  "domain.quantum-chemistry": ["квантовая химия", "quantum chemistry"],
-  "domain.machine-learning": ["машинное обучение", "мл", "ml", "искусственный интеллект", "ии", "ai", "machine learning", "нейросети", "нейронные сети"],
-  "domain.economics": ["экономика", "экономический", "эконом", "economics", "econ"],
-  "domain.sociology": ["социология", "социологический", "соц", "sociology"],
-  "domain.political-science": ["политология", "политика", "политический", "political science"],
-  "domain.psychology": ["психология", "психологический", "психо", "psychology"],
-  "domain.anthropology": ["антропология", "anthropology"],
-  "domain.law": ["право", "юриспруденция", "юридический", "law"],
-  "domain.management": ["менеджмент", "управление", "management"],
-  "domain.human-geography": ["социальная география", "география", "geography"],
-  "domain.education": ["образование", "педагогика", "education"],
-  "domain.econometrics": ["эконометрика", "econometrics"],
-  "domain.cognitive-science": ["когнитивистика", "когнитивная наука", "cognitive science"],
-  "domain.philosophy": ["философия", "философский", "фил", "philosophy"],
-  "domain.history": ["история", "исторический", "ист", "history"],
-  "domain.linguistics": ["лингвистика", "языкознание", "linguistics"],
-  "domain.literature": ["литература", "литературоведение", "literature"],
-  "domain.art-history": ["история искусства", "искусствоведение", "art history"],
-  "domain.musicology": ["музыка", "музыковедение", "music"],
-  "domain.religion": ["религия", "религиоведение", "religion"],
-  "domain.archaeology": ["археология", "archaeology"],
-  "domain.classics": ["классическая филология", "античность", "classics"],
-  "domain.film-studies": ["кино", "кинотеория", "film studies"],
-  "domain.computational-linguistics": ["компьютерная лингвистика", "computational linguistics", "nlp"],
-  "domain.history-of-science": ["история науки", "history of science"],
-  "domain.bioethics": ["биоэтика", "bioethics"],
-
-  "course.school-algebra": ["школьная математика", "школьная алгебра", "алгебра 7 класс", "алгебра 8 класс", "алгебра 9 класс", "тригонометрия", "егэ", "pre algebra", "algebra 1", "algebra 2", "algebra i", "algebra ii", "high school math", "elementary algebra", "intermediate algebra", "algebra"],
-  "course.calculus-1": ["матанализ", "матан", "анализ", "производная", "интеграл", "calculus", "calculus 1", "calculus i", "single variable calculus"],
-  "course.calculus-2": ["матанализ 2", "ряды", "calculus 2", "calculus ii"],
-  "course.calculus-3": ["матанализ 3", "кратные интегралы", "векторный анализ", "многие переменные", "multivariable", "multivariable calculus", "vector calculus", "calculus 3", "calculus iii"],
-  "course.linear-algebra": ["линал", "линейная алгебра", "матрицы", "векторы", "linear algebra"],
-  "course.discrete-math": ["дискретка", "дискретная математика", "discrete math"],
-  "course.combinatorics": ["комбинаторика", "combinatorics"],
-  "course.number-theory": ["теория чисел", "числа", "number theory"],
-  "course.abstract-algebra": ["общая алгебра", "высшая алгебра", "алгебра", "группы", "кольца", "поля", "abstract algebra", "modern algebra", "algebra"],
-  "course.real-analysis": ["вещественный анализ", "действительный анализ", "real analysis"],
-  "course.complex-analysis": ["тфкп", "комплексный анализ", "complex analysis"],
-  "course.topology": ["топология", "topology"],
-  "course.measure-theory": ["теория меры", "лебег", "measure theory"],
-  "course.functional-analysis": ["функан", "функциональный анализ", "functional analysis"],
-  "course.differential-equations": ["диффуры", "дифуры", "оду", "дифференциальные уравнения", "differential equations", "ode"],
-  "course.pde": ["урматы", "уравнения математической физики", "частные производные", "pde"],
-  "course.differential-geometry": ["диффгем", "дифференциальная геометрия", "differential geometry"],
-  "course.graph-theory": ["теория графов", "графы", "graph theory"],
-  "course.optimization": ["оптимизация", "выпуклая оптимизация", "optimization"],
-  "course.numerical-methods": ["численные методы", "вычматы", "numerical methods"],
-  "course.category-theory": ["теория категорий", "category theory"],
-
-  "course.logic-intro": ["логика", "введение в логику", "logic"],
-  "course.mathematical-logic": ["матлогика", "математическая логика", "гёдель", "mathematical logic"],
-  "course.set-theory": ["теория множеств", "zfc", "set theory"],
-  "course.computability": ["вычислимость", "тьюринг", "computability"],
-  "course.model-theory": ["теория моделей", "model theory"],
-
-  "course.probability": ["теорвер", "теория вероятностей", "вероятность", "вероятностей", "probability"],
-  "course.statistics": ["матстат", "математическая статистика", "статистика", "statistics"],
-  "course.random-processes": ["случайные процессы", "марковские цепи", "stochastic processes"],
-  "course.bayesian-statistics": ["байес", "байесовская статистика", "mcmc", "bayesian"],
-  "course.time-series": ["временные ряды", "arima", "time series"],
-  "course.information-theory": ["теория информации", "энтропия", "шеннон", "information theory"],
-
-  "course.programming-intro": ["программирование", "питон", "python", "введение в программирование", "programming"],
-  "course.data-structures": ["структуры данных", "data structures"],
-  "course.algorithms": ["алгоритмы", "сложность", "algorithms"],
-  "course.computer-architecture": ["архитектура компьютера", "computer architecture"],
-  "course.operating-systems": ["операционные системы", "ос", "linux", "operating systems", "os"],
-  "course.networks": ["сети", "компьютерные сети", "tcp", "networks"],
-  "course.databases": ["базы данных", "бд", "sql", "databases"],
-  "course.theory-of-computation": ["теория вычислений", "автоматы", "формальные языки", "theory of computation"],
-  "course.compilers": ["компиляторы", "compilers"],
-  "course.distributed-systems": ["распределённые системы", "распределенные системы", "distributed systems"],
-  "course.cryptography": ["криптография", "шифрование", "cryptography", "crypto"],
-  "course.computer-graphics": ["компьютерная графика", "computer graphics"],
-  "course.functional-programming": ["функциональное программирование", "haskell", "functional programming"],
-  "course.software-engineering": ["программная инженерия", "разработка", "software engineering"],
-  "course.computer-security": ["безопасность", "информационная безопасность", "иб", "security"],
-
-  "course.mechanics": ["механика", "mechanics"],
-  "course.analytical-mechanics": ["аналитическая механика", "лагранж", "гамильтон", "теормех", "analytical mechanics"],
-  "course.oscillations-waves": ["колебания", "волны", "waves"],
-  "course.electrodynamics": ["электродинамика", "максвелл", "электричество", "electrodynamics"],
-  "course.thermodynamics": ["термодинамика", "термех", "thermodynamics"],
-  "course.optics": ["оптика", "optics"],
-  "course.special-relativity": ["сто", "специальная теория относительности", "special relativity"],
-  "course.general-relativity": ["ото", "общая теория относительности", "general relativity"],
-  "course.quantum-mechanics": ["квантмех", "квантовая механика", "шрёдингер", "шредингер", "quantum mechanics"],
-  "course.statistical-physics": ["статфизика", "статистическая физика", "statistical physics"],
-  "course.condensed-matter": ["физика твёрдого тела", "конденсированное состояние", "condensed matter"],
-  "course.quantum-field-theory": ["ктп", "квантовая теория поля", "фейнман", "qft"],
-  "course.nuclear-physics": ["ядерная физика", "nuclear physics"],
-
-  "course.astronomy-intro": ["астрономия", "astronomy"],
-  "course.celestial-mechanics": ["небесная механика", "celestial mechanics"],
-  "course.astrophysics": ["астрофизика", "звёзды", "astrophysics"],
-  "course.cosmology": ["космология", "вселенная", "cosmology"],
-
-  "course.general-chemistry": ["общая химия", "general chemistry"],
-  "course.inorganic-chemistry": ["неорганика", "неорганическая химия", "inorganic"],
-  "course.organic-chemistry": ["органика", "органическая химия", "organic chemistry"],
-  "course.physical-chemistry": ["физхимия", "физическая химия", "physical chemistry"],
-  "course.analytical-chemistry": ["аналитическая химия", "analytical chemistry"],
-  "course.quantum-chemistry": ["квантовая химия", "dft", "quantum chemistry"],
-
-  "course.geology": ["геология", "geology"],
-  "course.meteorology": ["метеорология", "погода", "meteorology"],
-  "course.oceanography": ["океанология", "океанография", "oceanography"],
-  "course.geophysics": ["геофизика", "geophysics"],
-
-  "course.general-biology": ["общая биология", "biology"],
-  "course.cell-biology": ["клеточная биология", "цитология", "cell biology"],
-  "course.genetics": ["генетика", "гены", "genetics"],
-  "course.molecular-biology": ["молекулярная биология", "молбиол", "molecular biology"],
-  "course.evolution": ["эволюция", "дарвин", "evolution"],
-  "course.ecology": ["экология", "ecology"],
-  "course.physiology": ["физиология", "physiology"],
-  "course.microbiology": ["микробиология", "microbiology"],
-  "course.neuroscience": ["нейробиология", "нейронаука", "мозг", "neuroscience"],
-
-  "course.biochemistry": ["биохимия", "белки", "biochemistry"],
-  "course.enzymology": ["энзимология", "ферменты", "enzymology"],
-
-  "course.bioinformatics-intro": ["биоинформатика", "bioinformatics"],
-  "course.sequence-analysis": ["анализ последовательностей", "геном", "sequence analysis"],
-  "course.structural-bioinformatics": ["структурная биоинформатика", "белковые структуры"],
-
-  "course.anatomy": ["анатомия", "anatomy"],
-  "course.pathology": ["патология", "pathology"],
-  "course.pharmacology": ["фармакология", "лекарства", "pharmacology"],
-  "course.immunology": ["иммунология", "иммунитет", "immunology"],
-  "course.epidemiology": ["эпидемиология", "epidemiology"],
-
-  "course.strength-of-materials": ["сопромат", "сопротивление материалов"],
-  "course.electrical-circuits": ["тоэ", "электрические цепи", "circuits"],
-  "course.control-theory": ["тау", "теория управления", "control theory"],
-  "course.signal-processing": ["цос", "обработка сигналов", "фурье", "signal processing", "dsp"],
-  "course.robotics": ["робототехника", "роботы", "robotics"],
-
-  "course.ml-intro": ["машинное обучение", "мл", "ml", "machine learning"],
-  "course.deep-learning": ["глубокое обучение", "нейросети", "трансформеры", "deep learning"],
-  "course.nlp": ["nlp", "обработка языка", "языковые модели", "llm"],
-  "course.computer-vision": ["компьютерное зрение", "cv", "computer vision"],
-  "course.reinforcement-learning": ["обучение с подкреплением", "rl", "reinforcement learning"],
-
-  "course.econ-intro": ["экономика", "введение в экономику", "economics"],
-  "course.microeconomics": ["микроэкономика", "микра", "microeconomics"],
-  "course.macroeconomics": ["макроэкономика", "макра", "macroeconomics"],
-  "course.game-theory": ["теория игр", "нэш", "game theory"],
-  "course.finance": ["финансы", "инвестиции", "finance"],
-  "course.behavioral-economics": ["поведенческая экономика", "канеман", "behavioral economics"],
-
-  "course.econometrics": ["эконометрика", "econometrics"],
-  "course.time-series-econometrics": ["эконометрика временных рядов", "var"],
-
-  "course.sociology-intro": ["социология", "sociology"],
-  "course.social-theory": ["социологическая теория", "вебер", "дюркгейм"],
-  "course.social-research-methods": ["методы социальных исследований", "опросы"],
-  "course.demography": ["демография", "население", "demography"],
-
-  "course.political-science-intro": ["политология", "political science"],
-  "course.comparative-politics": ["сравнительная политология", "comparative politics"],
-  "course.international-relations": ["международные отношения", "мо", "international relations"],
-  "course.political-philosophy": ["политическая философия", "political philosophy"],
-
-  "course.psychology-intro": ["психология", "psychology"],
-  "course.cognitive-psychology": ["когнитивная психология", "память", "внимание"],
-  "course.social-psychology": ["социальная психология", "social psychology"],
-  "course.developmental-psychology": ["психология развития", "возрастная психология"],
-  "course.psych-research-methods": ["методы психологии", "эксперимент"],
-  "course.clinical-psychology": ["клиническая психология", "психотерапия"],
-
-  "course.cognitive-science-intro": ["когнитивистика", "когнитивная наука", "cognitive science"],
-  "course.psycholinguistics": ["психолингвистика", "psycholinguistics"],
-
-  "course.anthropology-intro": ["антропология", "anthropology"],
-  "course.cultural-anthropology": ["культурная антропология", "этнография"],
-
-  "course.law-intro": ["право", "введение в право", "law"],
-  "course.constitutional-law": ["конституционное право", "конституция"],
-  "course.international-law": ["международное право", "international law"],
-
-  "course.management-intro": ["менеджмент", "управление", "management"],
-  "course.organizational-behavior": ["организационное поведение", "лидерство"],
-
-  "course.human-geography-intro": ["социальная география", "geography"],
-  "course.urban-studies": ["городские исследования", "урбанистика", "urban studies"],
-
-  "course.pedagogy-intro": ["педагогика", "pedagogy"],
-  "course.learning-sciences": ["науки об обучении", "как учиться", "learning"],
-
-  "course.philosophy-intro": ["философия", "philosophy"],
-  "course.ancient-philosophy": ["античная философия", "платон", "аристотель"],
-  "course.medieval-philosophy": ["средневековая философия", "схоластика"],
-  "course.modern-philosophy": ["философия нового времени", "кант", "декарт"],
-  "course.ethics": ["этика", "мораль", "ethics"],
-  "course.epistemology": ["теория познания", "гносеология", "epistemology"],
-  "course.philosophy-of-science": ["философия науки", "кун", "поппер"],
-  "course.philosophy-of-language": ["философия языка", "витгенштейн"],
-
-  "course.ancient-history": ["история древнего мира", "античность", "рим", "греция"],
-  "course.medieval-history": ["средние века", "средневековье", "medieval"],
-  "course.modern-history": ["новое время", "новая история"],
-  "course.contemporary-history": ["новейшая история", "двадцатый век", "xx век"],
-  "course.historiography": ["историография", "источниковедение"],
-  "course.economic-history": ["экономическая история", "economic history"],
-
-  "course.history-of-science-intro": ["история науки", "history of science"],
-
-  "course.linguistics-intro": ["языкознание", "лингвистика", "linguistics"],
-  "course.phonetics": ["фонетика", "фонология", "phonetics"],
-  "course.morphology": ["морфология", "morphology"],
-  "course.syntax": ["синтаксис", "syntax"],
-  "course.semantics": ["семантика", "значение", "semantics"],
-  "course.historical-linguistics": ["историческая лингвистика", "компаративистика"],
-  "course.sociolinguistics": ["социолингвистика", "sociolinguistics"],
-  "course.typology": ["типология языков", "typology"],
-
-  "course.computational-linguistics-intro": ["компьютерная лингвистика", "computational linguistics"],
-  "course.corpus-linguistics": ["корпусная лингвистика", "корпус"],
-
-  "course.literary-theory": ["теория литературы", "literary theory"],
-  "course.poetics": ["поэтика", "стиховедение"],
-  "course.ancient-literature": ["античная литература", "гомер"],
-  "course.russian-literature": ["русская литература", "пушкин", "достоевский"],
-  "course.world-literature": ["зарубежная литература", "мировая литература"],
-
-  "course.art-history-intro": ["история искусства", "art history"],
-  "course.ancient-art": ["искусство древнего мира", "античное искусство"],
-  "course.renaissance-art": ["возрождение", "ренессанс", "renaissance"],
-  "course.modern-art": ["современное искусство", "авангард", "modern art"],
-
-  "course.music-theory": ["теория музыки", "гармония", "сольфеджио", "music theory"],
-  "course.music-history": ["история музыки", "music history"],
-  "course.ethnomusicology": ["этномузыкология", "фольклор"],
-
-  "course.religious-studies-intro": ["религиоведение", "religion"],
-  "course.biblical-studies": ["библеистика", "библия"],
-  "course.history-of-religions": ["история религий", "history of religions"],
-
-  "course.archaeology-intro": ["археология", "archaeology"],
-  "course.field-archaeology": ["полевая археология", "раскопки"],
-
-  "course.latin": ["латынь", "латинский язык", "latin"],
-  "course.ancient-greek": ["древнегреческий", "греческий язык", "greek"],
-  "course.classical-philology": ["классическая филология", "classics"],
-
-  "course.film-studies-intro": ["теория кино", "киноязык", "film"],
-  "course.film-history": ["история кино", "film history"],
-
-  "course.bioethics-intro": ["биоэтика", "bioethics"]
+  "domain.math": [
+    "математика",
+    "математический",
+    "матан",
+    "мат",
+    "math",
+    "maths"
+  ],
+  "domain.logic": [
+    "логика",
+    "логический",
+    "logic"
+  ],
+  "domain.probability": [
+    "вероятность",
+    "вероятности",
+    "теорвер",
+    "статистика",
+    "статистический",
+    "статы",
+    "probability",
+    "statistics",
+    "stats"
+  ],
+  "domain.cs": [
+    "информатика",
+    "компьютерные науки",
+    "программирование",
+    "computer science",
+    "cs",
+    "ит",
+    "it"
+  ],
+  "domain.physics": [
+    "физика",
+    "физический",
+    "физ",
+    "physics"
+  ],
+  "domain.astronomy": [
+    "астрономия",
+    "астрофизика",
+    "космос",
+    "astronomy"
+  ],
+  "domain.chemistry": [
+    "химия",
+    "химический",
+    "хим",
+    "chemistry"
+  ],
+  "domain.earth-science": [
+    "науки о земле",
+    "геология",
+    "геофизика",
+    "география физическая",
+    "earth science"
+  ],
+  "domain.biology": [
+    "биология",
+    "биологический",
+    "био",
+    "biology",
+    "bio"
+  ],
+  "domain.medicine": [
+    "медицина",
+    "медицинский",
+    "мед",
+    "medicine"
+  ],
+  "domain.engineering": [
+    "инженерия",
+    "инженерный",
+    "техника",
+    "engineering"
+  ],
+  "domain.biochemistry": [
+    "биохимия",
+    "биохимический",
+    "biochemistry"
+  ],
+  "domain.bioinformatics": [
+    "биоинформатика",
+    "bioinformatics"
+  ],
+  "domain.quantum-chemistry": [
+    "квантовая химия",
+    "quantum chemistry"
+  ],
+  "domain.machine-learning": [
+    "машинное обучение",
+    "мл",
+    "ml",
+    "искусственный интеллект",
+    "ии",
+    "ai",
+    "machine learning",
+    "нейросети",
+    "нейронные сети"
+  ],
+  "domain.economics": [
+    "экономика",
+    "экономический",
+    "эконом",
+    "economics",
+    "econ"
+  ],
+  "domain.sociology": [
+    "социология",
+    "социологический",
+    "соц",
+    "sociology"
+  ],
+  "domain.political-science": [
+    "политология",
+    "политика",
+    "политический",
+    "political science"
+  ],
+  "domain.psychology": [
+    "психология",
+    "психологический",
+    "психо",
+    "psychology"
+  ],
+  "domain.anthropology": [
+    "антропология",
+    "anthropology"
+  ],
+  "domain.law": [
+    "право",
+    "юриспруденция",
+    "юридический",
+    "law"
+  ],
+  "domain.management": [
+    "менеджмент",
+    "управление",
+    "management"
+  ],
+  "domain.human-geography": [
+    "социальная география",
+    "география",
+    "geography"
+  ],
+  "domain.education": [
+    "образование",
+    "педагогика",
+    "education"
+  ],
+  "domain.econometrics": [
+    "эконометрика",
+    "econometrics"
+  ],
+  "domain.cognitive-science": [
+    "когнитивистика",
+    "когнитивная наука",
+    "cognitive science"
+  ],
+  "domain.philosophy": [
+    "философия",
+    "философский",
+    "фил",
+    "philosophy"
+  ],
+  "domain.history": [
+    "история",
+    "исторический",
+    "ист",
+    "history"
+  ],
+  "domain.linguistics": [
+    "лингвистика",
+    "языкознание",
+    "linguistics"
+  ],
+  "domain.literature": [
+    "литература",
+    "литературоведение",
+    "literature"
+  ],
+  "domain.art-history": [
+    "история искусства",
+    "искусствоведение",
+    "art history"
+  ],
+  "domain.musicology": [
+    "музыка",
+    "музыковедение",
+    "music"
+  ],
+  "domain.religion": [
+    "религия",
+    "религиоведение",
+    "religion"
+  ],
+  "domain.archaeology": [
+    "археология",
+    "archaeology"
+  ],
+  "domain.classics": [
+    "классическая филология",
+    "античность",
+    "classics"
+  ],
+  "domain.film-studies": [
+    "кино",
+    "кинотеория",
+    "film studies"
+  ],
+  "domain.computational-linguistics": [
+    "компьютерная лингвистика",
+    "computational linguistics",
+    "nlp"
+  ],
+  "domain.history-of-science": [
+    "история науки",
+    "history of science"
+  ],
+  "domain.bioethics": [
+    "биоэтика",
+    "bioethics"
+  ],
+  "course.school-algebra": [
+    "школьная математика",
+    "школьная алгебра",
+    "алгебра 7 класс",
+    "алгебра 8 класс",
+    "алгебра 9 класс",
+    "тригонометрия",
+    "егэ",
+    "pre algebra",
+    "algebra 1",
+    "algebra 2",
+    "algebra i",
+    "algebra ii",
+    "high school math",
+    "elementary algebra",
+    "intermediate algebra",
+    "algebra"
+  ],
+  "course.calculus-1": [
+    "матанализ",
+    "матан",
+    "анализ",
+    "производная",
+    "интеграл",
+    "calculus",
+    "calculus 1",
+    "calculus i",
+    "single variable calculus"
+  ],
+  "course.calculus-2": [
+    "матанализ 2",
+    "ряды",
+    "calculus 2",
+    "calculus ii"
+  ],
+  "course.calculus-3": [
+    "матанализ 3",
+    "кратные интегралы",
+    "векторный анализ",
+    "многие переменные",
+    "multivariable",
+    "multivariable calculus",
+    "vector calculus",
+    "calculus 3",
+    "calculus iii"
+  ],
+  "course.linear-algebra": [
+    "линал",
+    "линейная алгебра",
+    "матрицы",
+    "векторы",
+    "linear algebra"
+  ],
+  "course.discrete-math": [
+    "дискретка",
+    "дискретная математика",
+    "discrete math"
+  ],
+  "course.combinatorics": [
+    "комбинаторика",
+    "combinatorics"
+  ],
+  "course.number-theory": [
+    "теория чисел",
+    "числа",
+    "number theory"
+  ],
+  "course.abstract-algebra": [
+    "общая алгебра",
+    "высшая алгебра",
+    "алгебра",
+    "группы",
+    "кольца",
+    "поля",
+    "abstract algebra",
+    "modern algebra",
+    "algebra"
+  ],
+  "course.real-analysis": [
+    "вещественный анализ",
+    "действительный анализ",
+    "real analysis"
+  ],
+  "course.complex-analysis": [
+    "тфкп",
+    "комплексный анализ",
+    "complex analysis"
+  ],
+  "course.topology": [
+    "топология",
+    "topology"
+  ],
+  "course.measure-theory": [
+    "теория меры",
+    "лебег",
+    "measure theory"
+  ],
+  "course.functional-analysis": [
+    "функан",
+    "функциональный анализ",
+    "functional analysis"
+  ],
+  "course.differential-equations": [
+    "диффуры",
+    "дифуры",
+    "оду",
+    "дифференциальные уравнения",
+    "differential equations",
+    "ode"
+  ],
+  "course.pde": [
+    "урматы",
+    "уравнения математической физики",
+    "частные производные",
+    "pde"
+  ],
+  "course.differential-geometry": [
+    "диффгем",
+    "дифференциальная геометрия",
+    "differential geometry"
+  ],
+  "course.graph-theory": [
+    "теория графов",
+    "графы",
+    "graph theory"
+  ],
+  "course.optimization": [
+    "оптимизация",
+    "выпуклая оптимизация",
+    "optimization"
+  ],
+  "course.numerical-methods": [
+    "численные методы",
+    "вычматы",
+    "numerical methods"
+  ],
+  "course.category-theory": [
+    "теория категорий",
+    "category theory"
+  ],
+  "course.logic-intro": [
+    "логика",
+    "введение в логику",
+    "logic"
+  ],
+  "course.mathematical-logic": [
+    "матлогика",
+    "математическая логика",
+    "гёдель",
+    "mathematical logic"
+  ],
+  "course.set-theory": [
+    "теория множеств",
+    "zfc",
+    "set theory"
+  ],
+  "course.computability": [
+    "вычислимость",
+    "тьюринг",
+    "computability"
+  ],
+  "course.model-theory": [
+    "теория моделей",
+    "model theory"
+  ],
+  "course.probability": [
+    "теорвер",
+    "теория вероятностей",
+    "вероятность",
+    "вероятностей",
+    "probability"
+  ],
+  "course.statistics": [
+    "матстат",
+    "математическая статистика",
+    "статистика",
+    "statistics"
+  ],
+  "course.random-processes": [
+    "случайные процессы",
+    "марковские цепи",
+    "stochastic processes"
+  ],
+  "course.bayesian-statistics": [
+    "байес",
+    "байесовская статистика",
+    "mcmc",
+    "bayesian"
+  ],
+  "course.time-series": [
+    "временные ряды",
+    "arima",
+    "time series"
+  ],
+  "course.information-theory": [
+    "теория информации",
+    "энтропия",
+    "шеннон",
+    "information theory"
+  ],
+  "course.programming-intro": [
+    "программирование",
+    "питон",
+    "python",
+    "введение в программирование",
+    "programming"
+  ],
+  "course.data-structures": [
+    "структуры данных",
+    "data structures"
+  ],
+  "course.algorithms": [
+    "алгоритмы",
+    "сложность",
+    "algorithms"
+  ],
+  "course.computer-architecture": [
+    "архитектура компьютера",
+    "computer architecture"
+  ],
+  "course.operating-systems": [
+    "операционные системы",
+    "ос",
+    "linux",
+    "operating systems",
+    "os"
+  ],
+  "course.networks": [
+    "сети",
+    "компьютерные сети",
+    "tcp",
+    "networks"
+  ],
+  "course.databases": [
+    "базы данных",
+    "бд",
+    "sql",
+    "databases"
+  ],
+  "course.theory-of-computation": [
+    "теория вычислений",
+    "автоматы",
+    "формальные языки",
+    "theory of computation"
+  ],
+  "course.compilers": [
+    "компиляторы",
+    "compilers"
+  ],
+  "course.distributed-systems": [
+    "распределённые системы",
+    "распределенные системы",
+    "distributed systems"
+  ],
+  "course.cryptography": [
+    "криптография",
+    "шифрование",
+    "cryptography",
+    "crypto"
+  ],
+  "course.computer-graphics": [
+    "компьютерная графика",
+    "computer graphics"
+  ],
+  "course.functional-programming": [
+    "функциональное программирование",
+    "haskell",
+    "functional programming"
+  ],
+  "course.software-engineering": [
+    "программная инженерия",
+    "разработка",
+    "software engineering"
+  ],
+  "course.computer-security": [
+    "безопасность",
+    "информационная безопасность",
+    "иб",
+    "security"
+  ],
+  "course.mechanics": [
+    "механика",
+    "mechanics"
+  ],
+  "course.analytical-mechanics": [
+    "аналитическая механика",
+    "лагранж",
+    "гамильтон",
+    "теормех",
+    "analytical mechanics"
+  ],
+  "course.oscillations-waves": [
+    "колебания",
+    "волны",
+    "waves"
+  ],
+  "course.electrodynamics": [
+    "электродинамика",
+    "максвелл",
+    "электричество",
+    "electrodynamics"
+  ],
+  "course.thermodynamics": [
+    "термодинамика",
+    "термех",
+    "thermodynamics"
+  ],
+  "course.optics": [
+    "оптика",
+    "optics"
+  ],
+  "course.special-relativity": [
+    "сто",
+    "специальная теория относительности",
+    "special relativity"
+  ],
+  "course.general-relativity": [
+    "ото",
+    "общая теория относительности",
+    "general relativity"
+  ],
+  "course.quantum-mechanics": [
+    "квантмех",
+    "квантовая механика",
+    "шрёдингер",
+    "шредингер",
+    "quantum mechanics"
+  ],
+  "course.statistical-physics": [
+    "статфизика",
+    "статистическая физика",
+    "statistical physics"
+  ],
+  "course.condensed-matter": [
+    "физика твёрдого тела",
+    "конденсированное состояние",
+    "condensed matter"
+  ],
+  "course.quantum-field-theory": [
+    "ктп",
+    "квантовая теория поля",
+    "фейнман",
+    "qft"
+  ],
+  "course.nuclear-physics": [
+    "ядерная физика",
+    "nuclear physics"
+  ],
+  "course.astronomy-intro": [
+    "астрономия",
+    "astronomy"
+  ],
+  "course.celestial-mechanics": [
+    "небесная механика",
+    "celestial mechanics"
+  ],
+  "course.astrophysics": [
+    "астрофизика",
+    "звёзды",
+    "astrophysics"
+  ],
+  "course.cosmology": [
+    "космология",
+    "вселенная",
+    "cosmology"
+  ],
+  "course.general-chemistry": [
+    "общая химия",
+    "general chemistry"
+  ],
+  "course.inorganic-chemistry": [
+    "неорганика",
+    "неорганическая химия",
+    "inorganic"
+  ],
+  "course.organic-chemistry": [
+    "органика",
+    "органическая химия",
+    "organic chemistry"
+  ],
+  "course.physical-chemistry": [
+    "физхимия",
+    "физическая химия",
+    "physical chemistry"
+  ],
+  "course.analytical-chemistry": [
+    "аналитическая химия",
+    "analytical chemistry"
+  ],
+  "course.quantum-chemistry": [
+    "квантовая химия",
+    "dft",
+    "quantum chemistry"
+  ],
+  "course.geology": [
+    "геология",
+    "geology"
+  ],
+  "course.meteorology": [
+    "метеорология",
+    "погода",
+    "meteorology"
+  ],
+  "course.oceanography": [
+    "океанология",
+    "океанография",
+    "oceanography"
+  ],
+  "course.geophysics": [
+    "геофизика",
+    "geophysics"
+  ],
+  "course.general-biology": [
+    "общая биология",
+    "biology"
+  ],
+  "course.cell-biology": [
+    "клеточная биология",
+    "цитология",
+    "cell biology"
+  ],
+  "course.genetics": [
+    "генетика",
+    "гены",
+    "genetics"
+  ],
+  "course.molecular-biology": [
+    "молекулярная биология",
+    "молбиол",
+    "molecular biology"
+  ],
+  "course.evolution": [
+    "эволюция",
+    "дарвин",
+    "evolution"
+  ],
+  "course.ecology": [
+    "экология",
+    "ecology"
+  ],
+  "course.physiology": [
+    "физиология",
+    "physiology"
+  ],
+  "course.microbiology": [
+    "микробиология",
+    "microbiology"
+  ],
+  "course.neuroscience": [
+    "нейробиология",
+    "нейронаука",
+    "мозг",
+    "neuroscience"
+  ],
+  "course.biochemistry": [
+    "биохимия",
+    "белки",
+    "biochemistry"
+  ],
+  "course.enzymology": [
+    "энзимология",
+    "ферменты",
+    "enzymology"
+  ],
+  "course.bioinformatics-intro": [
+    "биоинформатика",
+    "bioinformatics"
+  ],
+  "course.sequence-analysis": [
+    "анализ последовательностей",
+    "геном",
+    "sequence analysis"
+  ],
+  "course.structural-bioinformatics": [
+    "структурная биоинформатика",
+    "белковые структуры"
+  ],
+  "course.anatomy": [
+    "анатомия",
+    "anatomy"
+  ],
+  "course.pathology": [
+    "патология",
+    "pathology"
+  ],
+  "course.pharmacology": [
+    "фармакология",
+    "лекарства",
+    "pharmacology"
+  ],
+  "course.immunology": [
+    "иммунология",
+    "иммунитет",
+    "immunology"
+  ],
+  "course.epidemiology": [
+    "эпидемиология",
+    "epidemiology"
+  ],
+  "course.strength-of-materials": [
+    "сопромат",
+    "сопротивление материалов"
+  ],
+  "course.electrical-circuits": [
+    "тоэ",
+    "электрические цепи",
+    "circuits"
+  ],
+  "course.control-theory": [
+    "тау",
+    "теория управления",
+    "control theory"
+  ],
+  "course.signal-processing": [
+    "цос",
+    "обработка сигналов",
+    "фурье",
+    "signal processing",
+    "dsp"
+  ],
+  "course.robotics": [
+    "робототехника",
+    "роботы",
+    "robotics"
+  ],
+  "course.ml-intro": [
+    "машинное обучение",
+    "мл",
+    "ml",
+    "machine learning"
+  ],
+  "course.deep-learning": [
+    "глубокое обучение",
+    "нейросети",
+    "трансформеры",
+    "deep learning"
+  ],
+  "course.nlp": [
+    "nlp",
+    "обработка языка",
+    "языковые модели",
+    "llm"
+  ],
+  "course.computer-vision": [
+    "компьютерное зрение",
+    "cv",
+    "computer vision"
+  ],
+  "course.reinforcement-learning": [
+    "обучение с подкреплением",
+    "rl",
+    "reinforcement learning"
+  ],
+  "course.econ-intro": [
+    "экономика",
+    "введение в экономику",
+    "economics"
+  ],
+  "course.microeconomics": [
+    "микроэкономика",
+    "микра",
+    "microeconomics"
+  ],
+  "course.macroeconomics": [
+    "макроэкономика",
+    "макра",
+    "macroeconomics"
+  ],
+  "course.game-theory": [
+    "теория игр",
+    "нэш",
+    "game theory"
+  ],
+  "course.finance": [
+    "финансы",
+    "инвестиции",
+    "finance"
+  ],
+  "course.behavioral-economics": [
+    "поведенческая экономика",
+    "канеман",
+    "behavioral economics"
+  ],
+  "course.econometrics": [
+    "эконометрика",
+    "econometrics"
+  ],
+  "course.time-series-econometrics": [
+    "эконометрика временных рядов",
+    "var"
+  ],
+  "course.sociology-intro": [
+    "социология",
+    "sociology"
+  ],
+  "course.social-theory": [
+    "социологическая теория",
+    "вебер",
+    "дюркгейм"
+  ],
+  "course.social-research-methods": [
+    "методы социальных исследований",
+    "опросы"
+  ],
+  "course.demography": [
+    "демография",
+    "население",
+    "demography"
+  ],
+  "course.political-science-intro": [
+    "политология",
+    "political science"
+  ],
+  "course.comparative-politics": [
+    "сравнительная политология",
+    "comparative politics"
+  ],
+  "course.international-relations": [
+    "международные отношения",
+    "мо",
+    "international relations"
+  ],
+  "course.political-philosophy": [
+    "политическая философия",
+    "political philosophy"
+  ],
+  "course.psychology-intro": [
+    "психология",
+    "psychology"
+  ],
+  "course.cognitive-psychology": [
+    "когнитивная психология",
+    "память",
+    "внимание"
+  ],
+  "course.social-psychology": [
+    "социальная психология",
+    "social psychology"
+  ],
+  "course.developmental-psychology": [
+    "психология развития",
+    "возрастная психология"
+  ],
+  "course.psych-research-methods": [
+    "методы психологии",
+    "эксперимент"
+  ],
+  "course.clinical-psychology": [
+    "клиническая психология",
+    "психотерапия"
+  ],
+  "course.cognitive-science-intro": [
+    "когнитивистика",
+    "когнитивная наука",
+    "cognitive science"
+  ],
+  "course.psycholinguistics": [
+    "психолингвистика",
+    "psycholinguistics"
+  ],
+  "course.anthropology-intro": [
+    "антропология",
+    "anthropology"
+  ],
+  "course.cultural-anthropology": [
+    "культурная антропология",
+    "этнография"
+  ],
+  "course.law-intro": [
+    "право",
+    "введение в право",
+    "law"
+  ],
+  "course.constitutional-law": [
+    "конституционное право",
+    "конституция"
+  ],
+  "course.international-law": [
+    "международное право",
+    "international law"
+  ],
+  "course.management-intro": [
+    "менеджмент",
+    "управление",
+    "management"
+  ],
+  "course.organizational-behavior": [
+    "организационное поведение",
+    "лидерство"
+  ],
+  "course.human-geography-intro": [
+    "социальная география",
+    "geography"
+  ],
+  "course.urban-studies": [
+    "городские исследования",
+    "урбанистика",
+    "urban studies"
+  ],
+  "course.pedagogy-intro": [
+    "педагогика",
+    "pedagogy"
+  ],
+  "course.learning-sciences": [
+    "науки об обучении",
+    "как учиться",
+    "learning"
+  ],
+  "course.philosophy-intro": [
+    "философия",
+    "philosophy"
+  ],
+  "course.ancient-philosophy": [
+    "античная философия",
+    "платон",
+    "аристотель"
+  ],
+  "course.medieval-philosophy": [
+    "средневековая философия",
+    "схоластика"
+  ],
+  "course.modern-philosophy": [
+    "философия нового времени",
+    "кант",
+    "декарт"
+  ],
+  "course.ethics": [
+    "этика",
+    "мораль",
+    "ethics"
+  ],
+  "course.epistemology": [
+    "теория познания",
+    "гносеология",
+    "epistemology"
+  ],
+  "course.philosophy-of-science": [
+    "философия науки",
+    "кун",
+    "поппер"
+  ],
+  "course.philosophy-of-language": [
+    "философия языка",
+    "витгенштейн"
+  ],
+  "course.ancient-history": [
+    "история древнего мира",
+    "античность",
+    "рим",
+    "греция"
+  ],
+  "course.medieval-history": [
+    "средние века",
+    "средневековье",
+    "medieval"
+  ],
+  "course.modern-history": [
+    "новое время",
+    "новая история"
+  ],
+  "course.contemporary-history": [
+    "новейшая история",
+    "двадцатый век",
+    "xx век"
+  ],
+  "course.historiography": [
+    "историография",
+    "источниковедение"
+  ],
+  "course.economic-history": [
+    "экономическая история",
+    "economic history"
+  ],
+  "course.history-of-science-intro": [
+    "история науки",
+    "history of science"
+  ],
+  "course.linguistics-intro": [
+    "языкознание",
+    "лингвистика",
+    "linguistics"
+  ],
+  "course.phonetics": [
+    "фонетика",
+    "фонология",
+    "phonetics"
+  ],
+  "course.morphology": [
+    "морфология",
+    "morphology"
+  ],
+  "course.syntax": [
+    "синтаксис",
+    "syntax"
+  ],
+  "course.semantics": [
+    "семантика",
+    "значение",
+    "semantics"
+  ],
+  "course.historical-linguistics": [
+    "историческая лингвистика",
+    "компаративистика"
+  ],
+  "course.sociolinguistics": [
+    "социолингвистика",
+    "sociolinguistics"
+  ],
+  "course.typology": [
+    "типология языков",
+    "typology"
+  ],
+  "course.computational-linguistics-intro": [
+    "компьютерная лингвистика",
+    "computational linguistics"
+  ],
+  "course.corpus-linguistics": [
+    "корпусная лингвистика",
+    "корпус"
+  ],
+  "course.literary-theory": [
+    "теория литературы",
+    "literary theory"
+  ],
+  "course.poetics": [
+    "поэтика",
+    "стиховедение"
+  ],
+  "course.ancient-literature": [
+    "античная литература",
+    "гомер"
+  ],
+  "course.russian-literature": [
+    "русская литература",
+    "пушкин",
+    "достоевский"
+  ],
+  "course.world-literature": [
+    "зарубежная литература",
+    "мировая литература"
+  ],
+  "course.art-history-intro": [
+    "история искусства",
+    "art history"
+  ],
+  "course.ancient-art": [
+    "искусство древнего мира",
+    "античное искусство"
+  ],
+  "course.renaissance-art": [
+    "возрождение",
+    "ренессанс",
+    "renaissance"
+  ],
+  "course.modern-art": [
+    "современное искусство",
+    "авангард",
+    "modern art"
+  ],
+  "course.music-theory": [
+    "теория музыки",
+    "гармония",
+    "сольфеджио",
+    "music theory"
+  ],
+  "course.music-history": [
+    "история музыки",
+    "music history"
+  ],
+  "course.ethnomusicology": [
+    "этномузыкология",
+    "фольклор"
+  ],
+  "course.religious-studies-intro": [
+    "религиоведение",
+    "religion"
+  ],
+  "course.biblical-studies": [
+    "библеистика",
+    "библия"
+  ],
+  "course.history-of-religions": [
+    "история религий",
+    "history of religions"
+  ],
+  "course.archaeology-intro": [
+    "археология",
+    "archaeology"
+  ],
+  "course.field-archaeology": [
+    "полевая археология",
+    "раскопки"
+  ],
+  "course.latin": [
+    "латынь",
+    "латинский язык",
+    "latin"
+  ],
+  "course.ancient-greek": [
+    "древнегреческий",
+    "греческий язык",
+    "greek"
+  ],
+  "course.classical-philology": [
+    "классическая филология",
+    "classics"
+  ],
+  "course.film-studies-intro": [
+    "теория кино",
+    "киноязык",
+    "film"
+  ],
+  "course.film-history": [
+    "история кино",
+    "film history"
+  ],
+  "course.bioethics-intro": [
+    "биоэтика",
+    "bioethics"
+  ],
+  "course.civil-law": [
+    "гражданское право",
+    "гражданка",
+    "обязательственное право",
+    "договорное право"
+  ],
+  "course.criminal-law": [
+    "уголовное право",
+    "уголовка",
+    "преступление",
+    "состав преступления"
+  ],
+  "course.administrative-law": [
+    "административное право",
+    "админправо",
+    "государственное управление"
+  ],
+  "course.labour-law": [
+    "трудовое право",
+    "трудовой договор",
+    "охрана труда"
+  ],
+  "course.systematic-theology": [
+    "систематическое богословие",
+    "догматика",
+    "богословие"
+  ],
+  "course.operations-management": [
+    "операционный менеджмент",
+    "управление операциями",
+    "логистика",
+    "управление запасами"
+  ],
+  "course.human-resource-management": [
+    "управление персоналом",
+    "кадры",
+    "hr",
+    "эйчар"
+  ],
+  "course.strategic-management": [
+    "стратегический менеджмент",
+    "стратегия",
+    "конкурентная стратегия"
+  ],
+  "course.project-management": [
+    "управление проектами",
+    "проектное управление",
+    "сетевой график"
+  ],
+  "course.marketing": [
+    "маркетинг",
+    "продвижение",
+    "бренд",
+    "реклама"
+  ],
+  "course.digital-logic": [
+    "цифровая схемотехника",
+    "цифровая логика",
+    "булева алгебра",
+    "триггеры"
+  ],
+  "course.analog-electronics": [
+    "аналоговая электроника",
+    "электроника",
+    "транзисторы",
+    "операционный усилитель"
+  ],
+  "course.metrology": [
+    "метрология",
+    "измерения",
+    "погрешность",
+    "датчики"
+  ],
+  "course.transport-phenomena": [
+    "явления переноса",
+    "тепломассообмен",
+    "перенос",
+    "гидродинамика"
+  ],
+  "course.ocean-engineering": [
+    "морская инженерия",
+    "морские сооружения",
+    "офшорные платформы"
+  ],
+  "course.molecular-spectroscopy": [
+    "молекулярная спектроскопия",
+    "спектроскопия",
+    "ямр",
+    "нмр"
+  ],
+  "course.geodesy": [
+    "геодезия",
+    "съёмка",
+    "топография",
+    "gnss",
+    "дистанционное зондирование"
+  ],
+  "course.climatology": [
+    "климатология",
+    "климат",
+    "изменение климата"
+  ],
+  "course.historical-geology": [
+    "историческая геология",
+    "палеонтология",
+    "стратиграфия",
+    "ископаемые"
+  ],
+  "course.geochemistry": [
+    "геохимия",
+    "изотопы",
+    "биогеохимия"
+  ]
 }

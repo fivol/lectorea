@@ -29,3 +29,8 @@
   domains: [religion]
   stage: bachelor-1
   deps: [religious-studies-intro, ancient-history]
+
+- id: systematic-theology
+  domains: [religion]
+  stage: bachelor-3
+  deps: [biblical-studies]
