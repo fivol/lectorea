@@ -142,6 +142,8 @@ the matching, the map generators — is under [scripts/](scripts/README.md).
 **Running it**
 
 - [setup.md](setup.md) — API keys, quota, and the environment variables
+- [hosting.md](hosting.md) — the domain and its DNS, what the build knows about
+  where it lives, and the static pages the crawlers are given
 - [scripts/](scripts/README.md) — every command, in four pages:
   [catalogue](scripts/catalogue.md), [map](scripts/map.md),
   [crawl](scripts/crawl.md), [matching](scripts/matching.md)

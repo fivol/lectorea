@@ -4,6 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
+import { useDocumentMeta } from '@/lib/meta';
 import { useIsMobile, useIsPortrait } from '@/lib/hooks';
 import { useMapView, useUi } from '@/store/ui';
 import SearchBox, { SuggestCourse } from '@/components/SearchBox';
@@ -29,6 +30,10 @@ export default function MapScreen() {
 
   const [query, setQuery] = useState('');
   const results = useSearchResults(query);
+
+  // The front page is the catalogue itself, filters and all: a view of the map
+  // with two universities ticked is the same page, not one worth its own entry.
+  useDocumentMeta(t('app.documentTitle'), t('app.tagline'), '');
 
   /**
    * With a global filter on, territories that filter leaves nothing in are

@@ -77,12 +77,6 @@ jobs:
           VITE_REPO: ${{ github.repository }}
           BASE_PATH: ${{ github.repository == 'fivol/lectorea' && '/' || '' }}
 
-      # Pages serves static files and knows nothing about client-side routes,
-      # so a direct hit on /courses/:id would 404. Serving the app as the 404
-      # page hands those URLs back to the router.
-      - name: Serve the app for unknown paths too
-        run: cp dist/index.html dist/404.html
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -69,15 +69,18 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, [lang]);
 
   /**
-   * The page itself is part of the interface: the tab's name and the `lang` a
-   * screen reader picks its voice from follow the dictionary that is actually
-   * on screen, not the setting that may still be loading.
+   * The page itself is part of the interface: the `lang` a screen reader picks
+   * its voice from follows the dictionary that is actually on screen, not the
+   * setting that may still be loading.
+   *
+   * The tab's name is not set here any more. It belongs to the view rather than
+   * to the catalogue — a course has its own — and a parent's effect runs after
+   * its children's, so naming the page here would overwrite whatever the screen
+   * had just chosen every time the language changed. See `useDocumentMeta`.
    */
   useEffect(() => {
     if (!language) return;
     document.documentElement.lang = language.lang;
-    const title = language.dict['app.documentTitle'];
-    if (title) document.title = title;
   }, [language]);
 
   /**

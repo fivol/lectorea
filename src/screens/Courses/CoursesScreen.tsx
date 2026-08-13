@@ -6,6 +6,7 @@ import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
 import { courseHref, useCatalogParams } from '@/lib/url';
+import { useDocumentMeta } from '@/lib/meta';
 import { useIsDesktop, useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp, inkOn } from '@/lib/format';
 import { useProfile, useResolvedTheme } from '@/store/profile';
@@ -45,6 +46,28 @@ export default function CoursesScreen() {
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
   const visible = useFilteredCourses(params.domains, params.providers, params.lecturers, maxStage);
+
+  /**
+   * What this screen is, as far as a tab, a shared link and a search result are
+   * concerned: the open course if there is one, the field of knowledge if the
+   * filter is on exactly one, and the whole catalogue otherwise. A filter on
+   * two fields, or on a university, is a way of looking at the columns rather
+   * than a place — it keeps the name of the page it is looking at.
+   */
+  const field = !selected && params.domains.length === 1 ? params.domains[0] : null;
+  const courseName = selected ? t(`course.${selected.id}.title`) : '';
+  const pageTitle = selected
+    ? selected.playlistCount
+      ? t('seo.course.title', { title: courseName })
+      : t('seo.course.titlePlain', { title: courseName })
+    : field
+      ? t('seo.domain.title', { title: t(`domain.${field}.title`) })
+      : t('seo.courses.title');
+  useDocumentMeta(
+    pageTitle,
+    selected ? t(`course.${selected.id}.desc`) : field ? t(`domain.${field}.desc`) : t('app.tagline'),
+    selected ? `courses/${selected.id}` : field ? `courses?domain=${field}` : 'courses'
+  );
 
   /*
    * Whoever is here has already picked a field, a stage, a university — the
