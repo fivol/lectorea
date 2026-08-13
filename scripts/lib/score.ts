@@ -356,6 +356,8 @@ export type Structure = {
   spanDays: number | null;
   /** Scatter of lecture lengths around their median, or null under five. */
   durationSpread: number | null;
+  /** Share of lectures nothing like the rest in length, or null under eight. */
+  oddLengths: number | null;
   videoCount: number;
 };
 
@@ -423,6 +425,38 @@ export function durationSpreadOf(seconds: Array<number | null | undefined>): num
 }
 
 /**
+ * How many of the lectures are nothing like the rest of them.
+ *
+ * Not the same question as `durationSpreadOf`, and the difference is the whole
+ * point. That one is a MAD — deliberately robust, so a couple of outliers move
+ * it barely at all. Станкевич's discrete maths is fourteen lectures of about
+ * eighty-five minutes with an eight-minute one and a ten-minute one among them:
+ * MAD says 0.15, which is «even», and the reader looking at the list says the
+ * opposite. Robustness is right for deciding whether a playlist is a shelf and
+ * wrong for warning that its lectures are not one thing.
+ *
+ * So this counts instead of averaging: what share of the lectures are more than
+ * `ratio` away from the middle one, in either direction.
+ */
+export const ODD_LENGTHS = {
+  /** Two and a half times the median, up or down, is not the same kind of thing. */
+  ratio: 2.5,
+  /** Under this many lectures one odd one out says nothing about the rest. */
+  minVideos: 8,
+} as const;
+
+export function oddLengthShare(seconds: Array<number | null | undefined>): number | null {
+  const lengths = seconds.filter((value): value is number => typeof value === 'number' && value > 0);
+  if (lengths.length < ODD_LENGTHS.minVideos) return null;
+  const center = median(lengths);
+  if (center <= 0) return null;
+  const odd = lengths.filter(
+    (value) => value < center / ODD_LENGTHS.ratio || value > center * ODD_LENGTHS.ratio
+  ).length;
+  return odd / lengths.length;
+}
+
+/**
  * What a complete course looks like from the outside.
  *
  * The mirror image of `isCollection`, and it earns its place for the same
@@ -436,23 +470,49 @@ export function durationSpreadOf(seconds: Array<number | null | undefined>): num
  * are unkind to, and saying it costs the rating nothing.
  */
 export const FULL_COURSE = {
-  /** A term's worth. Below this «complete» is a claim the data cannot support. */
-  videos: 20,
+  /**
+   * A term's worth.
+   *
+   * It was 20, which is not a term but a year and a half of one: a Russian
+   * semester is one lecture a week for thirteen to sixteen weeks, and 20
+   * refused the word to 1039 playlists — a third of the catalogue — for being
+   * exactly the length a course actually is.
+   */
+  videos: 12,
   /** Filmed to a timetable, not accumulated. */
   spanDays: 400,
+  /** One term, and on its own evidence of a timetable. */
+  oneTerm: 200,
   /** Every lecture the same slot. */
   durationSpread: 0.35,
+  /**
+   * And none of them a different kind of thing.
+   *
+   * «Equal slots» is the claim, so the odd ones out are counted rather than
+   * averaged away: fourteen eighty-five-minute lectures with an eight-minute
+   * one among them pass every test above and are not a term in equal slots.
+   * The playlist keeps the truer word — «Разная длина» — instead.
+   */
+  oddLengths: 0.1,
 } as const;
 
+/**
+ * A term of lectures, filmed to a timetable, in equal slots.
+ *
+ * The titles saying so is one way to know and not the only one: 964 playlists
+ * — a third of the catalogue — number their lectures nowhere but in the
+ * playlist order, which is where ИТМО, МГУ and half of МФТИ put it. Filming the
+ * whole thing inside one term is the same evidence arriving by another road, so
+ * either will do, and everything else still has to hold.
+ */
 export function isFullCourse(structure: Structure): boolean {
-  return (
-    structure.ordered &&
-    structure.videoCount >= FULL_COURSE.videos &&
-    structure.spanDays !== null &&
-    structure.spanDays <= FULL_COURSE.spanDays &&
-    structure.durationSpread !== null &&
-    structure.durationSpread <= FULL_COURSE.durationSpread
-  );
+  if (structure.videoCount < FULL_COURSE.videos) return false;
+  if (structure.spanDays === null || structure.spanDays > FULL_COURSE.spanDays) return false;
+  if (structure.durationSpread === null || structure.durationSpread > FULL_COURSE.durationSpread) {
+    return false;
+  }
+  if ((structure.oddLengths ?? 0) >= FULL_COURSE.oddLengths) return false;
+  return structure.ordered || structure.spanDays <= FULL_COURSE.oneTerm;
 }
 
 /**

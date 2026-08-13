@@ -323,11 +323,10 @@ export const BuiltPlaylistSchema = PlaylistSchema.extend({
    */
   fullCourse: z.boolean().default(false),
   /**
-   * Scatter of the lecture lengths around their median — 0.09 for a term filmed
-   * to a timetable, 0.8 for a playlist that mixes ninety-minute lectures with
-   * eight-minute answers. Absent under five lectures with a length.
+   * Share of the lectures whose length is nothing like the rest — more than two
+   * and a half times the median, either way. Absent under eight lectures.
    */
-  durationSpread: z.number().optional(),
+  oddLengths: z.number().optional(),
   /** Last upload, which is what decides whether a playlist is still settling. */
   lastVideoAt: z.string().optional(),
   /** Lecture list, shipped with the shard so the modal needs no API call. */
@@ -673,26 +672,26 @@ export function lectureLengthOf(medianSeconds: number): LectureLength {
 export function playlistTypeOf(playlist: {
   collection?: boolean;
   fullCourse?: boolean;
-  durationSpread?: number;
+  oddLengths?: number;
   kind: PlaylistKind;
 }): PlaylistType {
   if (playlist.collection) return 'collection';
   if (playlist.kind === 'seminars') return 'seminars';
   if (playlist.fullCourse) return 'course';
-  if ((playlist.durationSpread ?? 0) >= UNEVEN_SPREAD) return 'uneven';
+  if ((playlist.oddLengths ?? 0) >= UNEVEN_SHARE) return 'uneven';
   return 'lectures';
 }
 
 /**
- * How unequal the lectures have to be before the row says so.
+ * How many lectures have to be the odd ones out before the row says so.
  *
- * The same line a shelf's lengths have to cross to count as a structural mark
- * (`COLLECTION.durationSpread` in `scripts/lib/score.ts`), and for the same
- * reason: below it a playlist is a term's lectures in one slot, above it the
- * lengths are a mixture. 14% of the catalogue is above it — enough to be worth
- * a word, rare enough that the word means something.
+ * One in ten. Deliberately a count and not a spread: the scatter of the lengths
+ * around their median is a robust statistic and throws away exactly the videos
+ * this is about — Станкевич's discrete maths runs fourteen lectures of about
+ * eighty-five minutes with an eight-minute one and a ten-minute one among them,
+ * and its MAD is 0.15, which reads as «even». Two lectures in fourteen are not.
  */
-export const UNEVEN_SPREAD = 0.45;
+export const UNEVEN_SHARE = 0.1;
 
 /**
  * The share of the audience still there at the end — when that is a fact.

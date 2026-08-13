@@ -187,17 +187,36 @@ describe('how the playlist was built', () => {
   });
 
   it('recognises a whole term of lectures filmed to a timetable', () => {
-    const term = { ordered: true, spanDays: 110, durationSpread: 0.08, videoCount: 26 };
+    const term = {
+      ordered: true,
+      spanDays: 110,
+      durationSpread: 0.08,
+      oddLengths: 0,
+      videoCount: 26,
+    };
     expect(isFullCourse(term)).toBe(true);
-    expect(isFullCourse({ ...term, ordered: false })).toBe(false); // no stated order
+    // Numbering is one way to know and not the only one: a third of the
+    // catalogue numbers its lectures nowhere but in the playlist order, and
+    // filming the whole thing inside one term says the same thing.
+    expect(isFullCourse({ ...term, ordered: false })).toBe(true);
+    expect(isFullCourse({ ...term, ordered: false, spanDays: 380 })).toBe(false);
     expect(isFullCourse({ ...term, videoCount: 9 })).toBe(false); // not a term
     expect(isFullCourse({ ...term, spanDays: 1800 })).toBe(false); // accumulated
     expect(isFullCourse({ ...term, durationSpread: 0.8 })).toBe(false); // uneven slots
+    // Two lectures in fourteen that are nothing like the others: the lengths
+    // average out even and the playlist is still not one thing.
+    expect(isFullCourse({ ...term, oddLengths: 0.14 })).toBe(false);
     expect(isFullCourse({ ...term, spanDays: null })).toBe(false); // unknown, so unclaimed
   });
 
   it('never calls the same playlist both a shelf and a whole course', () => {
-    const term = { ordered: true, spanDays: 110, durationSpread: 0.08, videoCount: 26 };
+    const term = {
+      ordered: true,
+      spanDays: 110,
+      durationSpread: 0.08,
+      oddLengths: 0,
+      videoCount: 26,
+    };
     expect(isFullCourse(term) && isCollection(shelfCurve, term)).toBe(false);
   });
 });

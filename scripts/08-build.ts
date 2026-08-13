@@ -34,6 +34,7 @@ import {
   durationSpreadOf,
   isCollection,
   isFullCourse,
+  oddLengthShare,
   titlesOrdered,
   uploadSpanDays,
   engagementOf,
@@ -374,6 +375,7 @@ function assemblePlaylists(sources: Sources): Assembled {
         ordered: titlesOrdered(videoRowsHere.map((v) => v.title ?? '')),
         spanDays: uploadSpanDays(videoRowsHere.map((v) => v.published_at)),
         durationSpread: durationSpreadOf(videoRowsHere.map((v) => v.duration_seconds)),
+        oddLengths: oddLengthShare(videoRowsHere.map((v) => v.duration_seconds)),
         videoCount: row.video_count ?? videoRowsHere.length,
       };
       const collection = isCollection(curve, structure);
@@ -432,7 +434,7 @@ function assemblePlaylists(sources: Sources): Assembled {
           curve: curve?.kind,
           collection,
           fullCourse,
-          durationSpread: structure.durationSpread ?? undefined,
+          oddLengths: structure.oddLengths ?? undefined,
           lastVideoAt,
           videos,
         },

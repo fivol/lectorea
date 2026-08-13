@@ -193,10 +193,20 @@ is left is unmistakable: Udacity's 1197-video «Intro to Psychology», Khan
 Academy's 421-video «Algebra I», The Organic Chemistry Tutor's subject shelves.
 Today it is **8.2%**.
 
-**«Полный курс»** (`isFullCourse`) is the mirror image: ordered titles, 20+
-lectures, filmed inside 400 days, lecture lengths within 0.35 of their median —
-**14.0%** of the catalogue: MIT 7.016, Половинкин's ТФКП, Onur Mutlu's Computer
-Architecture, UMass CS685. The two are mutually exclusive by construction.
+**«Полный курс»** (`isFullCourse`) is the mirror image: **12+** lectures, filmed
+inside 400 days, lengths within 0.35 of their median and none of them the odd
+one out, and either the titles number themselves *or* the whole thing was filmed
+inside one term (200 days). **32.6%** of the catalogue.
+
+Both of those numbers were once stricter and both were wrong. «20 lectures» is
+not a term but a year and a half of one — a Russian semester is one lecture a
+week for thirteen to sixteen weeks — and it refused the word to 1039 playlists
+for being exactly the length a course actually is. Numbering was required
+outright, and 964 playlists number their lectures nowhere but in the playlist
+order, which is where ИТМО, МГУ and half of МФТИ put it; filming the lot inside
+one term is the same evidence arriving by another road. «Полный курс» went from
+14.0% to 32.6% of the catalogue, and the sample reads as courses throughout: МФТИ
+semesters, ИТМО semesters, CS480 Waterloo, Cognitive Psychology.
 
 ### Neither of them is a status
 
@@ -214,17 +224,26 @@ already worked out rather than stored:
 |---|---|---|
 | **Подборка** | `collection` — the curve and the build agree it is a shelf | 8.2% |
 | **Семинары** | `kind` — a clear majority of the lecture titles say so | 6.0% |
-| **Полный курс** | `fullCourse` — a whole ordered term in equal slots | 14.0% |
-| **Разная длина** | `durationSpread ≥ 0.45` — the lengths are a mixture | 8.8% |
-| **Лекции** | everything else | 63.1% |
+| **Полный курс** | `fullCourse` — a whole term in equal slots | 32.6% |
+| **Разная длина** | `oddLengths ≥ 0.1` — one lecture in ten is nothing like the rest | 8.3% |
+| **Лекции** | everything else | 45.0% |
 
-«Разная длина» is the quietest of them and the one a reader is most likely to
-want anyway: a playlist that is a course by every other test, but whose lectures
-run ninety minutes, then eight, then eighty. It cannot be «Полный курс», which
-requires the lengths to sit within 0.35 of their median, and it is not a shelf,
-which needs the views to ignore the order as well. What it warns is that the
-running time is spread unevenly — the one case where the numbers on the row
-would otherwise mislead.
+«Разная длина» warns about the one case where the row's own numbers mislead: a
+playlist that is a course by every other test, whose lectures run ninety
+minutes, then eight, then eighty.
+
+It is deliberately **not** measured with `durationSpreadOf`, which is a MAD and
+therefore robust — it throws away exactly the videos this is about. Станкевич's
+discrete maths is fourteen lectures of about eighty-five minutes with an
+eight-minute one and a ten-minute one among them; its MAD is 0.15, which reads
+as «even», and a reader looking at the list says the opposite. So `oddLengthShare`
+counts instead of averaging: what share of the lectures are more than 2.5× from
+the median, either way. Robustness is right for deciding whether a playlist is a
+shelf and wrong for warning that its lectures are not one thing.
+
+The same count is a gate on «Полный курс», so the two can never both be true:
+«a term in equal slots» is not a claim you can make about a playlist where one
+lecture in seven is a different kind of thing.
 
 «Лекции» is never printed on a row: it is what most of a lecture catalogue is,
 and a badge everybody wears separates nobody. It exists so the filter can ask
