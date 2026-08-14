@@ -94,6 +94,10 @@ export default function ProfileSummary({
  * The full statement: over the map it floats as a plate in the corner; over the
  * list it is the first section of the page. Same content either way — only the
  * material under it changes.
+ *
+ * Neither flavour carries a width: a card is as wide as the place it is put,
+ * and the corner over the map is measured against the chrome above it rather
+ * than set here — see `--rail` in `MapScreen`.
  */
 function SummaryCard({
   highlights,
@@ -111,7 +115,7 @@ function SummaryCard({
 
   return (
     <div
-      className={`${floating ? 'plate w-[19.5rem] rounded-card p-3' : 'surface p-3 sm:p-4'}
+      className={`${floating ? 'plate w-full rounded-card p-3' : 'surface p-3 sm:p-4'}
                   ${className}`}
     >
       <div className="mb-2.5 flex items-center gap-2">

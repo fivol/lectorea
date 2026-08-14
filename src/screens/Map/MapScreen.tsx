@@ -5,7 +5,7 @@ import { useCatalog } from '@/lib/catalog';
 import { useSearchResults } from '@/lib/search';
 import { useCatalogParams } from '@/lib/url';
 import { useDocumentMeta } from '@/lib/meta';
-import { useIsMobile, useIsPortrait } from '@/lib/hooks';
+import { useIsMobile, useIsPortrait, useMeasuredVar } from '@/lib/hooks';
 import { useMapView, useUi } from '@/store/ui';
 import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
@@ -81,6 +81,9 @@ export default function MapScreen() {
    */
   const variant = useIsPortrait() ? 'portrait' : 'wide';
 
+  /** The right-hand column of chrome is as wide as the header's controls. */
+  const rail = useMeasuredVar<HTMLDivElement>('rail');
+
   return (
     /*
       In map mode the sea is the page, header and footer included — so the whole
@@ -136,8 +139,12 @@ export default function MapScreen() {
             The left one is not in this row on a phone — there is no room for it
             beside the wordmark, and a switch that decides what the whole screen
             is belongs under the thumb rather than in the far corner. It floats
-            at the foot of the screen instead; see below. */}
-        <div className="flex items-center gap-2">
+            at the foot of the screen instead; see below.
+
+            This row is the right-hand edge of the screen's chrome, so it is
+            also what everything floating below it is measured against — it
+            publishes its width as `--rail`; see the corner card. */}
+        <div ref={rail} className="flex items-center gap-2">
           {isMobile ? null : <ViewSwitch value={mapView} onChange={setMapView} />}
           <Plate row>
             <LangToggle />
@@ -190,9 +197,20 @@ export default function MapScreen() {
         and clear of the search column, which is why it waits for a window wide
         enough to hold all three across. Narrower windows get the same thing as
         a bar at the foot of the screen; see the stack below.
+
+        Exactly as wide as the row of controls above it, rather than a width of
+        its own: two plates stacked in the same corner are one piece of chrome
+        to look at, and a card that stops short of the switch above it reads as
+        a third edge in a corner that only has two. The width is measured rather
+        than written down — the row is as wide as its words, which change with
+        the language — and the `19.5rem` is only what to be before the first
+        measurement lands.
       */}
       {showSummary ? (
-        <div className="pointer-events-none absolute right-4 top-[4.5rem] z-30 hidden sm:right-6 xl:block">
+        <div
+          className="pointer-events-none absolute right-4 top-[4.5rem] z-30 hidden
+                     w-[var(--rail,19.5rem)] min-w-[19.5rem] sm:right-6 xl:block"
+        >
           <ProfileSummary variant="card" className="pointer-events-auto" />
         </div>
       ) : null}

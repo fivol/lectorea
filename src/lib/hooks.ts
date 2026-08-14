@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() =>
@@ -126,6 +126,56 @@ export function useIsTruncated<T extends HTMLElement>(
   }, deps);
 
   return [ref, truncated];
+}
+
+/**
+ * Chrome that measures itself, published as a length on the root element.
+ *
+ * Anything that has to line up with a piece of chrome — stand clear of it, or
+ * sit exactly under it — needs to know how big that chrome is, and it is never a
+ * number anybody can write down: the header's controls are as wide as «Карта
+ * Список Профиль» happen to be, and the same row in English is narrower. Written
+ * down as a constant it is right in one language and wrong in the other, and
+ * wrong again the day a word changes.
+ *
+ * So the chrome measures itself and publishes it as `--{name}` on `:root`, and
+ * everything placed against it reads that instead of guessing. `FloatingFoot`
+ * does the same for the band at the bottom of the window, with a measurement of
+ * its own shape — this is the plain version, for a box that is worth its own
+ * width or height.
+ */
+export function useMeasuredVar<T extends HTMLElement>(
+  name: string,
+  axis: 'width' | 'height' = 'width'
+): React.RefObject<T> {
+  const ref = useRef<T>(null);
+
+  /*
+   * Before the paint, not after: whatever is sized off this variable is on
+   * screen in the same frame, and a measurement taken afterwards would show it
+   * at its fallback for one frame and then move it.
+   */
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const property = `--${name}`;
+
+    const publish = (): void => {
+      const box = node.getBoundingClientRect();
+      const size = axis === 'width' ? box.width : box.height;
+      document.documentElement.style.setProperty(property, `${Math.round(size)}px`);
+    };
+
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty(property);
+    };
+  }, [name, axis]);
+
+  return ref;
 }
 
 export function useDebounced<T>(value: T, delay: number): T {
