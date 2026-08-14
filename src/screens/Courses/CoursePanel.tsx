@@ -1,12 +1,10 @@
 import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { formatHours, hoursFromSeconds, inkOn, withAlpha } from '@/lib/format';
 import { percent, useCourseProgress } from '@/lib/progress';
 import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
-import { courseHref } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import ProgressBar from '@/components/ProgressBar';
@@ -178,37 +176,6 @@ export default function CoursePanel({
       <LinksBlock course={course} search={search} outsideFilter={outsideFilter} />
 
       <PlaylistList course={course} />
-
-      {course.soft.length || course.related.length ? (
-        <section className="border-t border-line px-4 py-4 text-sm">
-          {course.soft.length ? (
-            <p className="mb-2 text-ink-faint">
-              {t('ui.course.recommends')}:{' '}
-              {course.soft.map((id, index) => (
-                <span key={id}>
-                  {index ? ', ' : ''}
-                  <Link to={courseHref(id, search)} className="text-ink-dim hover:text-ink">
-                    {t(`course.${id}.title`)}
-                  </Link>
-                </span>
-              ))}
-            </p>
-          ) : null}
-          {course.related.length ? (
-            <p className="text-ink-faint">
-              {t('ui.course.relatedTo')}:{' '}
-              {course.related.map((id, index) => (
-                <span key={id}>
-                  {index ? ', ' : ''}
-                  <Link to={courseHref(id, search)} className="text-ink-dim hover:text-ink">
-                    {t(`course.${id}.title`)}
-                  </Link>
-                </span>
-              ))}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
 
       <footer className="flex flex-wrap gap-3 border-t border-line px-4 py-3 text-xs text-ink-faint">
         <a

@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { pathTo, unlocksOf, useCatalog } from '@/lib/catalog';
 import { formatHours } from '@/lib/format';
 import { useIsMobile } from '@/lib/hooks';
+import { courseHref } from '@/lib/url';
 import { useProfile } from '@/store/profile';
+import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import CourseLinkCard from './CourseLinkCard';
 import PathBlock from './PathBlock';
@@ -30,9 +33,15 @@ type Props = {
  * their height and scroll instead, so a course that opens eight others cannot
  * push the playlists off the screen either.
  *
- * The two directions of one relation stay adjacent and keep their mirrored
- * headings — "what has to come first" and "what this opens up" are the same edge
- * read from both ends. The full chain follows the pair rather than splitting it.
+ * The lists are ordered by reading direction rather than by edge type: what
+ * stands before the course, then what stands after it, then the whole chain.
+ * `soft` therefore sits under the prerequisites instead of in a section of its
+ * own — it is the same question, asked with a weaker answer, and it used to
+ * live below the recordings, half a panel away from the list it belongs to.
+ *
+ * "What has to come first" and "what this opens up" keep their mirrored
+ * headings — they are the same edge read from both ends — and the full chain
+ * follows them rather than splitting the pair.
  */
 export default function LinksBlock({ course, search, outsideFilter }: Props) {
   const catalog = useCatalog();
@@ -41,6 +50,7 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
   const preference = useProfile((state) => state.profile.settings.panelLinks);
   const setSetting = useProfile((state) => state.setSetting);
   const courses = useProfile((state) => state.profile.courses);
+  const setEcho = useUi((state) => state.setEcho);
 
   const unlocks = useMemo(() => unlocksOf(catalog, course.id), [catalog, course.id]);
   const steps = useMemo(() => [...pathTo(catalog, course.id), course], [catalog, course]);
@@ -49,8 +59,12 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
   const totalHours = steps.reduce((sum, step) => sum + step.hours, 0);
 
   // A course at the root of its field with nothing standing on it yet has no
-  // structure to tell — heading, summary line and all would say only that.
-  if (!course.deps.length && !unlocks.length) return null;
+  // structure to tell — heading, summary line and all would say only that. The
+  // weak links count: a course whose only neighbours are `soft` or `related`
+  // has something to say, and this used to be the test that swallowed it.
+  if (!course.deps.length && !unlocks.length && !course.soft.length && !course.related.length) {
+    return null;
+  }
 
   const open = preference === 'open';
 
@@ -104,6 +118,22 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
         </div>
       ) : null}
 
+      {/* The same cards as the prerequisites, at the same opacity the columns
+          give a soft neighbour, so «bleached» means one thing on this screen:
+          useful, not required, not counted in the path or the hours. */}
+      {course.soft.length ? (
+        <div>
+          <h3 className="mb-2 text-sm font-medium text-ink-dim">{t('ui.course.recommends')}</h3>
+          <ul className={`grid gap-1.5 opacity-75 sm:grid-cols-2 ${capCards}`}>
+            {course.soft.map((id) => (
+              <li key={id}>
+                <CourseLinkCard courseId={id} search={search} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {unlocks.length ? (
         <div>
           <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
@@ -126,6 +156,28 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           outsideFilter={outsideFilter}
           capped={!isMobile}
         />
+      ) : null}
+
+      {/* `related` has no direction — it is not before the course or after it,
+          so a list of cards would promise an order it does not have. One line
+          of names, under everything that does. */}
+      {course.related.length ? (
+        <p className="text-xs text-ink-faint">
+          {t('ui.course.relatedTo')}:{' '}
+          {course.related.map((id, index) => (
+            <span key={id}>
+              {index ? ', ' : ''}
+              <Link
+                to={courseHref(id, search)}
+                onMouseEnter={() => setEcho(id)}
+                onMouseLeave={() => setEcho(null)}
+                className="text-ink-dim hover:text-ink"
+              >
+                {t(`course.${id}.title`)}
+              </Link>
+            </span>
+          ))}
+        </p>
       ) : null}
     </>
   );
