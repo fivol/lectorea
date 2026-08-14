@@ -36,6 +36,27 @@ everyone. No script can detect this — it is checked in review.
 Rough test: could one lecturer teach this in one term, and does a real
 university put exactly this on one line of a curriculum?
 
+### When a subject is more than one unit
+
+Some subjects run for two, three or four semesters, and universities disagree
+about where the cuts go: MIT splits calculus in two, this catalogue in three,
+СПбГУ in four. It cannot follow all of them at once, so it follows the graph.
+
+**Split a subject into numbered courses only when something depends on one part
+and not on the rest.** Microeconomics needs the first semester of calculus and
+nothing after it — that is what earns `calculus-1`, `calculus-2` and
+`calculus-3` their separate entries. Linear algebra is cut in half by
+universities just as often and stays one unit here, because all eleven courses
+that require it require the whole of it.
+
+Worth applying in reverse as well. `data-structures` is its own course and
+exactly one thing depends on it, which makes it the weakest split in the
+catalogue; it survives because English-speaking curricula do teach it alone (34
+recordings) while Russian ones almost never do (2).
+
+A recording with «Часть 2» in its title is not a reason to add a course. It is
+part of a run — see [Runs](#runs-one-course-cut-into-parts).
+
 ## Dependencies
 
 `deps` — hard prerequisites. **Direct only.**
@@ -104,7 +125,10 @@ by hand:
 2. keywords in `data/keywords/ru.json` — abbreviations, slang, transliterations
    (`теорвер`, `линал`, `диффуры`). Morphology is solved here by listing forms,
    not by a stemmer on the client
-3. `pnpm check:i18n && pnpm data:build`
+3. aliases in `data/aliases/ru.json` — the other names the course goes by. See
+   [Aliases and keywords](#aliases-and-keywords); optional, and worth more than
+   the keywords when a university calls the subject something else
+4. `pnpm check:i18n && pnpm data:build`
 
 `check:i18n` fails while the description is empty or the keyword list is bare.
 That is on purpose: a course with no description shows a placeholder, and a
@@ -174,6 +198,78 @@ It does the two halves that are easy to do only one of: writes the match into
 the match points at a row the database does not have, and the build skips it
 without a word. Without `--course` it spends one quota unit to say what the
 playlist is, which is the check worth doing before believing a link.
+
+### A recording that teaches two courses
+
+«Алгоритмы и структуры данных» is one semester of two of the courses here. Name
+both and the recording appears in both; the first is the one it is filed under.
+
+```yaml
+matches:
+  PL4_hYwCyhAv…: [algorithms, data-structures]
+```
+
+Use it when the recording really does teach both, and check the lecture titles
+rather than the playlist title to find out. Of the 130 recordings called
+«Алгоритмы и структуры данных», 41 prove both subjects in their lecture titles,
+35 teach one of them under a name that promises two — at ФПМИ the autumn and
+spring halves are named identically and read different things — and 54 have
+lecture titles that say nothing at all («Лекция 7»). A name is evidence, not
+proof.
+
+Two subjects that a title joins are not thereby one course. Geometry and
+topology travel together in titles and are different subjects at different
+levels; so are the history and the philosophy of science.
+
+## Runs: one course cut into parts
+
+Found by `scripts/lib/series.ts` and marked by the build — nothing here is
+written by hand. It is documented because it is the one place where two
+recordings that look identical mean different things, and a reviewer looking at
+a course full of «Часть 1» has to know which of them the site will believe.
+
+A run is one channel, one title with the number taken out, and at least two
+different numbers: «Часть 1» and «Часть 2», `[s1]` and `[s2]`, «Модуль 3».
+
+The hard part is the repeat. A lecturer reads the same course again every year
+or two under the same name and the same numbering, so the calendar is what
+separates a continuation from the next intake:
+
+- **semesters are the calendar.** Semester *n* of the intake that started in
+  autumn of year *Y* is filmed in *Y* + ⌊*n*/2⌋. So `[s1 | 2021]` continues into
+  `[s2 | 2022]`, and `[s1 | 2023]` is a different intake that happens to share
+  every word of its title.
+- **parts are looser.** The two halves of a course may fall either side of a new
+  year or both inside one, so the only rule there is that time moves forward, by
+  no more than a year per part.
+- **осень and весна** count as parts only inside one academic year. Further
+  apart they are re-recordings: `MIT 6.006, Fall 2011` beside `Spring 2020` is
+  one course filmed twice, and 23 of the 48 season pairs in the crawl are that.
+
+A part left alone is not a run, which is what drops an intake whose first
+semester is the only one anybody uploaded.
+
+## Aliases and keywords
+
+Two files that look alike and answer different questions. The difference is
+whether the words are ever shown.
+
+`data/keywords/{lang}.json` is bait for the matcher and the search box:
+`анализ`, `поля`, `числа`, misspellings, inflected forms. Nobody reads it, and
+nothing in it has to be a name.
+
+`data/aliases/{lang}.json` is the names a course actually goes by — `ТФКП`,
+`теормех`, `Многомерный анализ, интегралы и ряды`. These are printed under the
+course title, so only real names belong. It is there because half of the
+catalogue's recordings carry a title that is not this catalogue's name for the
+course, and somebody who took ТФКП at МФТИ has no other way to tell that
+«Комплексный анализ» is the same subject.
+
+An alias is also the strongest thing the rule matcher has, because it is a whole
+phrase. Confidence is coverage of the clause it matched: `алгоритмы` accounts
+for a third of «Алгоритмы и структуры данных» and loses to `структуры данных`,
+while the full name covers the clause and settles it. Adding the name a
+university prints on its timetable is usually worth more than ten keywords.
 
 ## What CI checks
 
