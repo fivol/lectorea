@@ -25,6 +25,7 @@ export type IconName =
   | 'fit'
   | 'download'
   | 'upload'
+  | 'copy'
   | 'sliders'
   | 'sort'
   | 'circle'
@@ -58,6 +59,9 @@ const PATHS: Record<IconName, string> = {
   fit: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
   download: 'M12 3v12m0 0l-4-4m4 4l4-4M4 19h16',
   upload: 'M12 21V9m0 0L8 13m4-4l4 4M4 5h16',
+  // Two sheets, the one behind drawn only where it shows. A full second rect
+  // under the first is a grid of four lines at sixteen pixels, not a stack.
+  copy: 'M10 8h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2zM16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2',
   sliders: 'M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6',
   sort: 'M7 4v16m0 0l-3-3m3 3l3-3M17 20V4m0 0l-3 3m3-3l3 3',
   circle: 'M12 4a8 8 0 100 16 8 8 0 000-16z',

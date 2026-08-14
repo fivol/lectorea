@@ -194,6 +194,7 @@ import { Button, Chip, Field, IconButton, Plate, Segmented, Switch } from '@/com
 | `Cap` | one control that is its own plate: «← КАРТА» | `to` \| `onClick`, `icon`, `label` |
 | `Button` / `ButtonLink` | the pressable capsule / the same, navigating | `variant: default·primary·danger·ghost`, `small`, `icon`, `tap` |
 | `IconButton` | a glyph on its own: close, clear, back | `icon`, `label` (name *and* tooltip), `tap` |
+| `CopyButton` | the same capsule, for the clipboard — it says «Скопировано» for two seconds, and says so when it failed | `text` (a string, or a function when it is expensive to build) |
 | `BottomSheet` | the panel a phone pulls up from the bottom edge, and pushes back down | `peek` (resting height, as a fraction of the window), `label`, `closeLabel`, `contentKey` |
 | `Chip` | filter, tag, count. `span` without `onClick`, `button` with, `Link` with `to` | `on` (holds a value), `filled` (is a value), `icon` |
 | `Switch` | two or three views of one thing, state sliding between them | `options` with `icon`, `label` for the group |

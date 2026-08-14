@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 import { useT } from '@/i18n';
 import { formatDate } from '@/lib/format';
-import { downloadProfile, parseProfile, type ImportPreview } from '@/lib/profile-io';
+import { downloadProfile, parseProfile, profileJson, type ImportPreview } from '@/lib/profile-io';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
-import { Button, Textarea } from '@/components/ui';
+import { Button, CopyButton, Textarea } from '@/components/ui';
 
 export default function DataTab() {
   const { t, plural, lang } = useT();
@@ -44,9 +44,16 @@ export default function DataTab() {
       <section>
         <h3 className="text-sm font-medium">{t('ui.profile.data.export')}</h3>
         <p className="mt-1 text-xs text-ink-faint">{t('ui.profile.data.exportHint')}</p>
-        <Button icon="download" className="mt-2" onClick={() => downloadProfile(profile)}>
-          {t('ui.profile.data.export')}
-        </Button>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button icon="download" onClick={() => downloadProfile(profile)}>
+            {t('ui.profile.data.export')}
+          </Button>
+          {/* The same bytes without a file: a phone with nowhere to put a download,
+              or a note the profile is being pasted into. */}
+          <CopyButton text={() => profileJson(profile)}>
+            {t('ui.profile.data.copy')}
+          </CopyButton>
+        </div>
       </section>
 
       <section className="border-t border-line pt-6">

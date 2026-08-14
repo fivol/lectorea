@@ -3,8 +3,13 @@ import { todayStamp } from './format';
 
 /** Export and import of the profile file. */
 
+/** The exact text a file and the clipboard both carry — the two must not drift. */
+export function profileJson(profile: Profile): string {
+  return JSON.stringify(profile, null, 2);
+}
+
 export function downloadProfile(profile: Profile): void {
-  const blob = new Blob([JSON.stringify(profile, null, 2)], { type: 'application/json' });
+  const blob = new Blob([profileJson(profile)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
