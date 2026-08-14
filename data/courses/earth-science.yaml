@@ -52,6 +52,7 @@
   # A climate is a statistic about weather, and the arguments about trends are
   # made in the language of estimation.
   soft: [statistics]
+  related: [ecology]
 
 - id: historical-geology
   domains: [earth-science]

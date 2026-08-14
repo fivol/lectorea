@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
-import { pathTo, unlocksOf, useCatalog } from '@/lib/catalog';
+import { pathTo, unlocksOf, useCatalog, useLinkNote } from '@/lib/catalog';
 import { formatHours } from '@/lib/format';
 import { useIsMobile } from '@/lib/hooks';
 import { courseHref } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
+import Tooltip from '@/components/Tooltip';
 import CourseLinkCard from './CourseLinkCard';
 import PathBlock from './PathBlock';
 
@@ -51,6 +52,7 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
   const setSetting = useProfile((state) => state.setSetting);
   const courses = useProfile((state) => state.profile.courses);
   const setEcho = useUi((state) => state.setEcho);
+  const linkNote = useLinkNote();
 
   const unlocks = useMemo(() => unlocksOf(catalog, course.id), [catalog, course.id]);
   const steps = useMemo(() => [...pathTo(catalog, course.id), course], [catalog, course]);
@@ -111,7 +113,7 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           <ul className={`grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
             {course.deps.map((id) => (
               <li key={id}>
-                <CourseLinkCard courseId={id} search={search} />
+                <CourseLinkCard courseId={id} search={search} from={course.id} />
               </li>
             ))}
           </ul>
@@ -123,11 +125,27 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           useful, not required, not counted in the path or the hours. */}
       {course.soft.length ? (
         <div>
-          <h3 className="mb-2 text-sm font-medium text-ink-dim">{t('ui.course.recommends')}</h3>
+          {/* The one heading on the screen naming a relation nobody has met
+              before — «what has to come first» explains itself, «also useful»
+              has to say what it is not: a gate, a step of the path, an hour in
+              the estimate. That is a sentence, so it goes behind a mark. */}
+          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-ink-dim">
+            {t('ui.course.recommends')}
+            <Tooltip content={t('ui.course.recommendsHint')}>
+              <button
+                type="button"
+                className="inline-flex cursor-help text-ink-faint transition-colors
+                           duration-fast ease-out hover:text-ink-dim"
+                aria-label={t('ui.course.recommendsHint')}
+              >
+                <Icon name="help" size={13} />
+              </button>
+            </Tooltip>
+          </h3>
           <ul className={`grid gap-1.5 opacity-75 sm:grid-cols-2 ${capCards}`}>
             {course.soft.map((id) => (
               <li key={id}>
-                <CourseLinkCard courseId={id} search={search} />
+                <CourseLinkCard courseId={id} search={search} from={course.id} />
               </li>
             ))}
           </ul>
@@ -140,7 +158,12 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           <ul className={`grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
             {unlocks.map((step) => (
               <li key={step.id}>
-                <CourseLinkCard courseId={step.id} search={search} behind={step.behind} />
+                <CourseLinkCard
+                  courseId={step.id}
+                  search={search}
+                  behind={step.behind}
+                  from={course.id}
+                />
               </li>
             ))}
           </ul>
@@ -167,14 +190,16 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           {course.related.map((id, index) => (
             <span key={id}>
               {index ? ', ' : ''}
-              <Link
-                to={courseHref(id, search)}
-                onMouseEnter={() => setEcho(id)}
-                onMouseLeave={() => setEcho(null)}
-                className="text-ink-dim hover:text-ink"
-              >
-                {t(`course.${id}.title`)}
-              </Link>
+              <Tooltip content={linkNote(course.id, id)}>
+                <Link
+                  to={courseHref(id, search)}
+                  onMouseEnter={() => setEcho(id)}
+                  onMouseLeave={() => setEcho(null)}
+                  className="text-ink-dim hover:text-ink"
+                >
+                  {t(`course.${id}.title`)}
+                </Link>
+              </Tooltip>
             </span>
           ))}
         </p>

@@ -23,6 +23,7 @@
   domains: [musicology]
   stage: bachelor-1
   deps: [music-theory]
+  related: [art-history-intro]
 
 - id: ethnomusicology
   domains: [musicology]

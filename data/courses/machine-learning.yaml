@@ -33,6 +33,7 @@
   stage: bachelor-4
   deps: [deep-learning]
   soft: [linguistics-intro]
+  related: [computational-linguistics-intro]
 
 - id: computer-vision
   domains: [machine-learning]

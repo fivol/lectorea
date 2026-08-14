@@ -83,6 +83,7 @@
   stage: bachelor-3
   deps: [number-theory, algorithms]
   soft: [probability]
+  related: [information-theory]
 
 - id: computer-graphics
   domains: [cs]

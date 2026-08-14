@@ -18,6 +18,7 @@
 - id: anthropology-intro
   domains: [anthropology]
   stage: bachelor-1
+  related: [archaeology-intro]
 
 - id: cultural-anthropology
   domains: [anthropology]

@@ -34,3 +34,4 @@
   domains: [religion]
   stage: bachelor-3
   deps: [biblical-studies]
+  related: [medieval-philosophy]

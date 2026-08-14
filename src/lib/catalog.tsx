@@ -218,6 +218,32 @@ export function bridgingAncestors(
   return bridges;
 }
 
+/**
+ * What one course has to do with another, in a sentence.
+ *
+ * A name alone answers «what», never «why this one»: «Органическая химия» under
+ * a cell biology course is a fact about the graph, not a reason to open it. The
+ * note is the reason, and it is the only place in the product where an *edge*
+ * gets to speak rather than a node.
+ *
+ * Keyed `link.<from>.<to>` in the dictionary, and looked up in both directions:
+ * an edge is one fact, and «why B helps with A» reads the same from either end
+ * — which also halves the writing for `related`, where there is no from and no
+ * to in the first place. Missing is the normal case: a link with nothing worth
+ * saying falls back to the card as it was.
+ */
+export function useLinkNote(): (from: string, to: string) => string | null {
+  const { t, has } = useT();
+  return useMemo(
+    () => (from: string, to: string) => {
+      if (has(`link.${from}.${to}`)) return t(`link.${from}.${to}`);
+      if (has(`link.${to}.${from}`)) return t(`link.${to}.${from}`);
+      return null;
+    },
+    [t, has]
+  );
+}
+
 export type Unlock = { id: string; behind: number };
 
 /**

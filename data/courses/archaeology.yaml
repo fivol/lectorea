@@ -18,7 +18,7 @@
 - id: archaeology-intro
   domains: [archaeology]
   stage: bachelor-1
-  related: [ancient-history]
+  related: [ancient-history, historical-geology]
 
 - id: field-archaeology
   domains: [archaeology]

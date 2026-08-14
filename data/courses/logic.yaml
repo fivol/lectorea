@@ -34,6 +34,7 @@
   domains: [logic, cs]
   stage: bachelor-2
   deps: [mathematical-logic]
+  related: [theory-of-computation]
 
 - id: model-theory
   domains: [logic]

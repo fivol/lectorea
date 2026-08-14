@@ -53,7 +53,6 @@
   domains: [philosophy]
   stage: bachelor-2
   deps: [epistemology]
-  related: [history-of-science-intro]
 
 - id: philosophy-of-language
   domains: [philosophy]

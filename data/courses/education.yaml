@@ -19,6 +19,7 @@
   domains: [education]
   stage: bachelor-1
   deps: [psychology-intro]
+  related: [developmental-psychology]
 
 - id: learning-sciences
   domains: [education]

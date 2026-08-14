@@ -34,6 +34,7 @@
   domains: [management]
   stage: bachelor-3
   deps: [organizational-behavior]
+  related: [labour-law]
 
 - id: strategic-management
   domains: [management]
@@ -49,3 +50,4 @@
   domains: [management]
   stage: bachelor-2
   deps: [management-intro]
+  related: [social-psychology]

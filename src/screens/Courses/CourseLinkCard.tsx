@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { useCatalog } from '@/lib/catalog';
+import { useCatalog, useLinkNote } from '@/lib/catalog';
 import { withAlpha } from '@/lib/format';
 import { useIsTruncated } from '@/lib/hooks';
 import { courseHref } from '@/lib/url';
@@ -26,13 +26,17 @@ export default function CourseLinkCard({
   search,
   /** Courses further along behind this one, shown as "+3" on the forward list. */
   behind = 0,
+  /** The course whose panel this card stands in — the other end of the edge. */
+  from,
 }: {
   courseId: string;
   search: string;
   behind?: number;
+  from?: string;
 }) {
   const catalog = useCatalog();
   const { t } = useT();
+  const linkNote = useLinkNote();
   const setEcho = useUi((state) => state.setEcho);
   const requestFocus = useUi((state) => state.requestFocus);
 
@@ -45,8 +49,16 @@ export default function CourseLinkCard({
   const domain = catalog.domainById.get(course.domains[0]);
   const colour = domain?.color ?? 'var(--c-formal)';
 
+  /**
+   * What the tooltip has to say, in order of how much it is worth saying: why
+   * this course is here, then — only if the name did not fit — the name. Both,
+   * when the name is clipped and there is a reason too.
+   */
+  const note = from ? linkNote(from, courseId) : null;
+  const hint = note ? (clipped ? `${title} — ${note}` : note) : clipped ? title : null;
+
   return (
-    <Tooltip content={clipped ? title : null}>
+    <Tooltip content={hint}>
       <Link
         to={courseHref(courseId, search)}
         onMouseEnter={() => setEcho(courseId)}
