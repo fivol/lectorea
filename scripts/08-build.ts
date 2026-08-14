@@ -49,10 +49,10 @@ import {
   loadDictionary,
   loadKeywords,
   loadSources,
-  reportSourceError,
   SourceError,
   type Sources,
 } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { detectSeries } from './lib/series.js';
 import {
   dbExists,
@@ -751,5 +751,5 @@ main().catch((error) => {
     for (const detail of error.details) console.error(`  ${detail}`);
     process.exit(1);
   }
-  reportSourceError(error);
+  reportRunError(error);
 });

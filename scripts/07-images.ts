@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parse } from 'yaml';
 import { ensureDir, parseLimit, paths, reportRemaining } from './lib/config.js';
-import { loadSources, reportSourceError } from './lib/sources.js';
+import { loadSources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { visual } from './lib/visual.config.js';
 import { courseArtSvg } from '../shared/procedural.js';
 import { hasOpenAI, MODELS, openai } from './lib/openai.js';
@@ -135,4 +136,4 @@ async function main(): Promise<void> {
   console.log('✓ domain images written — commit them, they are stable and paid for once');
 }
 
-main().catch(reportSourceError);
+main().catch(reportRunError);

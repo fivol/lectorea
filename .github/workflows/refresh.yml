@@ -79,10 +79,22 @@ jobs:
           YOUTUBE_API_KEY2: ${{ secrets.YOUTUBE_API_KEY2 }}
           YOUTUBE_API_KEY3: ${{ secrets.YOUTUBE_API_KEY3 }}
 
+      # Everything from here down is `!cancelled()`, and that is the same rule
+      # `make pipeline` follows: a step that failed must not take the rest of
+      # the night with it. What is left below is the free work — matching reads
+      # titles the crawl just fetched, oEmbed costs no quota, and the pull
+      # request is how any of it reaches a person — and all of it reads only
+      # what is already in cache.db. Skipping it because a paid step broke
+      # throws away the day and, because the deploy hangs off this run
+      # succeeding, stops the site updating on exactly the nights that crawled
+      # the most. A step that fails still turns the run red; it just does it at
+      # the end.
+
       # Single digits of quota — `channels.list` is one unit per call whatever
       # `part` asks for, and takes fifty ids at a time. Without it the rating's
       # reach signal has no denominator and the «Разошёлся» badge goes quiet.
       - name: Refresh channel subscriber counts
+        if: '!cancelled()'
         run: pnpm data:subscribers
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -90,6 +102,7 @@ jobs:
           YOUTUBE_API_KEY3: ${{ secrets.YOUTUBE_API_KEY3 }}
 
       - name: Match playlists to courses
+        if: '!cancelled()'
         run: pnpm data:match
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -99,6 +112,7 @@ jobs:
       # Data API's answer to it is wrong. After the match, since it only asks
       # about playlists a reader can reach and matching is what decides that.
       - name: Which playlists the player refuses as list=
+        if: '!cancelled()'
         run: pnpm data:embeds
 
       # An interrupted crawl is still worth keeping — the queue lives in the
@@ -147,6 +161,7 @@ jobs:
       # New high-confidence matches are a content change and go through review
       # like any other content change.
       - name: Open a pull request for new matches
+        if: '!cancelled()'
         uses: peter-evans/create-pull-request@v7
         with:
           add-paths: data/overrides.yaml

@@ -3,7 +3,8 @@ import type { MapConfig } from '../shared/mapgen.js';
 import { paths } from './lib/config.js';
 import { anchorOf, ringFrom, writeMapFile, type FileTerritory } from './lib/map-file.js';
 import { buildWorld, readOverrides } from './lib/map-world.js';
-import { loadSources, reportSourceError } from './lib/sources.js';
+import { loadSources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Draws the same world for a window taller than it is wide, and writes
@@ -130,5 +131,5 @@ function report(coasts: string[]): void {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

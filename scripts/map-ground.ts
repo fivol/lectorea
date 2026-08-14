@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { MAP_FILES, groundPlanIsCurrent, writeGroundPlan } from './lib/map-ground.js';
-import { reportSourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Writes the scenery's plan for every map file — which cell carries which
@@ -46,5 +46,5 @@ function main(): void {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

@@ -3,7 +3,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { collectStats } from './lib/stats.js';
 import { renderPage } from './lib/stats-html.js';
-import { reportSourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * The project dashboard: coverage, the shape of the graph, the material, the
@@ -64,5 +64,5 @@ function main(): void {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

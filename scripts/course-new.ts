@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ensureDir, paths } from './lib/config.js';
-import { loadCourseFiles, reportSourceError, SourceError } from './lib/sources.js';
+import { loadCourseFiles, SourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { loadYamlList } from './lib/sources.js';
 import {
   SourceDomainSchema,
@@ -178,5 +179,5 @@ function main(): void {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import { ensureDir, paths } from './lib/config.js';
 import { generateMapSvg } from './lib/mapgen.js';
-import { loadSources, reportSourceError } from './lib/sources.js';
+import { loadSources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Regenerates public/map.svg from data/domains.yaml and the course counts.
@@ -62,4 +63,4 @@ function refuseToClobberImported(): void {
   process.exit();
 }
 
-main().catch(reportSourceError);
+main().catch(reportRunError);

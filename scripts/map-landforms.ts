@@ -5,7 +5,8 @@ import {
   domainLevels,
   type LandformConfig,
 } from '../shared/domain-graph.js';
-import { loadSources, reportSourceError } from './lib/sources.js';
+import { loadSources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Prints the landform each domain is assigned and why.
@@ -84,5 +85,5 @@ function main(): void {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

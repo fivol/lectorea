@@ -4,7 +4,8 @@ import path from 'node:path';
 import { stringify } from 'yaml';
 import { paths } from './lib/config.js';
 import { openDb, type Db, type PlaylistRow } from './lib/db.js';
-import { loadSources, reportSourceError, type Sources } from './lib/sources.js';
+import { loadSources, type Sources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { normalize, scoreEntry } from '../shared/search.js';
 import type { SearchEntry } from '../shared/schema.js';
 
@@ -338,5 +339,5 @@ load();
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

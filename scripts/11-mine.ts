@@ -2,7 +2,7 @@ import { parseLimit, reportRemaining } from './lib/config.js';
 import { openDb } from './lib/db.js';
 import { PLAYLIST_ID_IN_TEXT } from './lib/playlist-id.js';
 import { queuePlaylists } from './lib/queue.js';
-import { reportSourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Mines the crawl for playlists the crawl itself paid for and never noticed.
@@ -81,5 +81,5 @@ function main(): void {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

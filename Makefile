@@ -54,37 +54,42 @@ OPEN := $(shell command -v open >/dev/null 2>&1 && echo open || echo xdg-open)
 ##@ The three sequences
 
 .PHONY: pipeline
+# One shell for the whole sequence, because a step that broke must not take the
+# rest of the day with it. The order puts the free work last on purpose — the
+# second `match` reads titles the crawl just fetched, `embeds` asks oEmbed, and
+# `build` is what carries any of it into public/data — so a paid step that fails
+# in the middle would otherwise throw away everything the day already bought.
+# That is not hypothetical: `subscribers` met the quota ceiling on 2026-08-14,
+# exited 1, and stopped the run at 6 of 9 with 9969 crawled video lists unbuilt.
+#
+# Carrying on is not the same as pretending it went well: what failed is
+# remembered, named at the end, and the run exits non-zero for it.
 pipeline: require-key ## Everything the crawl does, in quota order, until the day runs out
-	@echo "▸ 1/9  import       · playlists named by the catalogues in data/sources.yaml"
-	@$(MAKE) import || echo "·· import failed — carrying on; it is the one step that needs the open web"
-	@echo
-	@echo "▸ 2/9  discover     · channels → their playlists (skips any scanned in the last 30 days)"
-	@$(MAKE) discover
-	@echo
-	@echo "▸ 3/9  mine         · playlists linked from bodies already on disk — no quota, no network"
-	@$(MAKE) mine
-	@echo
-	@echo "▸ 4/9  match        · before the crawl on purpose: matching is free and decides"
-	@echo "                      which playlists the expensive video step walks first"
-	@$(MAKE) match
-	@echo
-	@echo "▸ 5/9  refresh      · metadata → videos → liveness, until the queue or the quota drains"
-	@$(MAKE) refresh
-	@echo
-	@echo "▸ 6/9  subscribers  · single digits of quota; without it the rating has no room size"
-	@$(MAKE) subscribers
-	@echo
-	@echo "▸ 7/9  match        · again: the refresh gave titles to playlists that had none,"
-	@echo "                      and a title is the whole of what the rule pass reads"
-	@$(MAKE) match
-	@echo
-	@echo "▸ 8/9  embeds       · which playlists the player refuses as list= (oEmbed, no quota)"
-	@$(MAKE) embeds
-	@echo
-	@echo "▸ 9/9  build        · data/ + cache.db → public/data, and the validator with it"
-	@$(MAKE) data
-	@echo
-	@echo "✓ pipeline done. What it bought: make stats. Where it goes: make publish."
+	@failed=""; \
+	step() { \
+	  echo; echo "▸ $$2"; \
+	  if [ -n "$${3:-}" ]; then echo "$$3"; fi; \
+	  $(MAKE) "$$1" || failed="$$failed $$1"; \
+	}; \
+	echo "▸ 1/9  import       · playlists named by the catalogues in data/sources.yaml"; \
+	$(MAKE) import || echo "·· import failed — carrying on; it is the one step that needs the open web"; \
+	step discover    "2/9  discover     · channels → their playlists (skips any scanned in the last 30 days)"; \
+	step mine        "3/9  mine         · playlists linked from bodies already on disk — no quota, no network"; \
+	step match       "4/9  match        · before the crawl on purpose: matching is free and decides" \
+	                 "                      which playlists the expensive video step walks first"; \
+	step refresh     "5/9  refresh      · metadata → videos → liveness, until the queue or the quota drains"; \
+	step subscribers "6/9  subscribers  · single digits of quota; without it the rating has no room size"; \
+	step match       "7/9  match        · again: the refresh gave titles to playlists that had none," \
+	                 "                      and a title is the whole of what the rule pass reads"; \
+	step embeds      "8/9  embeds       · which playlists the player refuses as list= (oEmbed, no quota)"; \
+	step data        "9/9  build        · data/ + cache.db → public/data, and the validator with it"; \
+	echo; \
+	if [ -n "$$failed" ]; then \
+	  echo "✗ pipeline reached the end, but these steps failed:$$failed"; \
+	  echo "  Everything after them still ran — what is in public/data is what the day bought."; \
+	  exit 1; \
+	fi; \
+	echo "✓ pipeline done. What it bought: make stats. Where it goes: make publish."
 
 .PHONY: publish
 publish: require-gh require-crawl ## Publish local state whole: validate → snapshot → release → deploy

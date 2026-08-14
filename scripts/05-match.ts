@@ -1,6 +1,7 @@
 import { nowIso, parseLimit, reportRemaining } from './lib/config.js';
 import { MATCH_THRESHOLD, openDb, type Db, type PlaylistRow } from './lib/db.js';
-import { loadSources, reportSourceError, type Sources } from './lib/sources.js';
+import { loadSources, type Sources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { hasOpenAI, MODELS, openai } from './lib/openai.js';
 import { buildKeywordIndex, matchByRules } from './lib/rules.js';
 
@@ -220,4 +221,4 @@ function unmatchedPlaylists(db: Db, sources: Sources, force = false): PlaylistRo
   return rows.filter((row) => !overridden.has(row.id));
 }
 
-main().catch(reportSourceError);
+main().catch(reportRunError);

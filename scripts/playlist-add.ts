@@ -4,7 +4,8 @@ import { parseDocument } from 'yaml';
 import { env, paths } from './lib/config.js';
 import { openDb } from './lib/db.js';
 import { isPlaylistId } from './lib/playlist-id.js';
-import { loadCourseFiles, reportSourceError, SourceError } from './lib/sources.js';
+import { loadCourseFiles, SourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { seedManualMatches } from './lib/tasks.js';
 import { createClient, QuotaExceededError } from './lib/youtube.js';
 
@@ -149,4 +150,4 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(reportSourceError);
+main().catch(reportRunError);

@@ -1,6 +1,7 @@
 import { parseLimit, reportRemaining } from './lib/config.js';
 import { openDb } from './lib/db.js';
-import { loadSources, reportSourceError } from './lib/sources.js';
+import { loadSources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { createClient } from './lib/youtube.js';
 import { pendingCount, reportWorker, runWorker } from './lib/queue.js';
 import { discoverChannel, queueDiscovery } from './lib/tasks.js';
@@ -43,4 +44,4 @@ async function main(): Promise<void> {
   db.close();
 }
 
-main().catch(reportSourceError);
+main().catch(reportRunError);

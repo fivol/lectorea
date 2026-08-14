@@ -63,6 +63,17 @@ morning is not a reason to leave the quota unspent.
 It ends with `data:build`, so what the day bought is visible in `pnpm dev` and
 validated before anybody thinks about publishing it.
 
+**And it always reaches that end.** A step that fails does not stop the
+sequence: it is remembered, named in the last line, and the run exits non-zero
+for it. The reason is the shape of the order above — the expensive steps are in
+the middle and the free ones that publish the day's work are at the end, so
+stopping at step 6 throws away five steps of crawling that were already paid
+for. `data:subscribers` did exactly that on 2026-08-14 by meeting the quota
+ceiling and exiting 1;
+[pipeline.md](../pipeline.md#an-exhausted-quota-ends-the-day-not-the-run) has
+the incident and the other half of the fix, which is that meeting the ceiling is
+no longer a failure at all.
+
 ### `make publish`
 
 The local state of the whole system, published:

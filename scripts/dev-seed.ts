@@ -1,5 +1,6 @@
 import { openDb } from './lib/db.js';
-import { loadSources, reportSourceError } from './lib/sources.js';
+import { loadSources } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { nowIso, parseLimit, reportRemaining } from './lib/config.js';
 
 /**
@@ -183,5 +184,5 @@ function courseTitle(i18n: Record<string, string>, courseId: string): string {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

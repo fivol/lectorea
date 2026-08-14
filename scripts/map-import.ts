@@ -8,7 +8,8 @@ import {
   writeMapFile,
   type FileTerritory,
 } from './lib/map-file.js';
-import { loadSources, reportSourceError, SourceError } from './lib/sources.js';
+import { loadSources, SourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Imports an SVG exported from the map sandbox (`pnpm map:sandbox`) into
@@ -128,5 +129,5 @@ function main(): void {
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

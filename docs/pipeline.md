@@ -153,6 +153,39 @@ The queue lives in the same SQLite file as the data, so it survives `kill -9`.
   since the previous evening, which is where that day's quota went too. A token
   already seen is therefore the end of the playlist, not its next page
 
+### An exhausted quota ends the day, not the run
+
+The bullet above is a rule about a worker, and a worker is not the only place
+the ceiling is met. Steps that drain a queue notice it and stop politely; steps
+that make one batched call — `data:subscribers` is the whole of the catalogue's
+channels in fifty-id batches — have nowhere to catch it and simply throw.
+
+That distinction is invisible until it costs a day. On 2026-08-14 `data:refresh`
+spent 66 452 units, ended the day properly, and handed over to
+`data:subscribers`, which met the same ceiling on its first call and exited 1.
+`make pipeline` stopped at step 6 of 9. The three steps it did not reach are the
+free ones — the second `match`, `embeds`, `build` — and they are what carries a
+day of crawling into `public/data`, so 9969 crawled video lists, 4620 metadata
+refreshes and three new channels' worth of playlists stayed in `cache.db` and
+reached nobody. The same crash in CI skips `match` and `embeds` and turns the
+`refresh` run red, and the deploy hangs off that run succeeding — so the site
+stops updating on exactly the nights the crawl worked hardest.
+
+Two rules came out of it, and neither belongs to the script that broke:
+
+- **`reportRunError` in `lib/exit.ts` is the one door every entry point ends
+  with**, and it knows that `QuotaExceededError` reaching the top means the
+  working day is over: it prints `<step>: квота исчерпана, продолжу завтра` and
+  exits 0. A script that spends quota gets that ending whether or not its author
+  remembered the case, which is the only version of this that survives the next
+  script being added;
+- **the free tail runs whatever happened to the paid steps.** `make pipeline`
+  runs the whole sequence in one shell, remembers what failed, names it at the
+  end and exits non-zero for it; `refresh.yml` carries the same rule as
+  `if: !cancelled()` on everything after the crawl. Carrying on is not the same
+  as pretending it went well — but a step that broke must not throw away what
+  the day already bought.
+
 **The shape of that bug is worth remembering, because the quota hides it.** A
 crawl that spends its day and stops is indistinguishable from a crawl that
 worked, and every counter this pipeline prints agreed the day had been spent —
@@ -431,9 +464,14 @@ moved ahead of the crawl as well as after it. Why the steps go in that order:
 **`deploy.yml`** — on push to `main`, *and* on a successful `refresh` run: it
 restores the same cache, then `pnpm data:build → pnpm build → deploy`. That
 second trigger is what closes the loop — without it a night's work would sit in
-the cache until somebody happened to push. A refresh that failed publishes
-nothing: there is no new material, and rebuilding on its schedule would only
-churn the site.
+the cache until somebody happened to push.
+
+A red `refresh` does not deploy, and since the free steps now run even when a
+paid one failed, that is a deliberate wait rather than an empty one: the night
+is crawled, matched and published to the release, and what is missing is a
+person's glance at why a step broke. `make publish` from a laptop, or a manual
+dispatch of the deploy, ships it in the meantime — the restore compares
+generations, so either takes the snapshot that night produced.
 
 It also takes a manual dispatch, which needs no input to do the right thing:
 the restore compares generations, so a deploy dispatched after a laptop

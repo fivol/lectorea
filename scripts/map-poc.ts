@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { templateSvg, bridgeMarkup } from '../shared/mapgen.js';
 import { buildWorld, readOverrides } from './lib/map-world.js';
-import { reportSourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Renders the generator to an SVG plus a metrics report, for looking at from a
@@ -109,5 +109,5 @@ ${labels}
 try {
   main();
 } catch (error) {
-  reportSourceError(error);
+  reportRunError(error);
 }

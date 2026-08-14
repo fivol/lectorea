@@ -6,7 +6,7 @@ import { nowIso, parseLimit, paths, reportRemaining } from './lib/config.js';
 import { openDb } from './lib/db.js';
 import { PLAYLIST_ID_IN_TEXT } from './lib/playlist-id.js';
 import { queuePlaylists } from './lib/queue.js';
-import { reportSourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 
 /**
  * Pulls YouTube playlist links out of awesome-lists and course catalogues.
@@ -176,4 +176,4 @@ function writeProposals(found: Map<string, Found>): void {
   console.log(`· ${path.relative(paths.root, file)} updated`);
 }
 
-main().catch(reportSourceError);
+main().catch(reportRunError);

@@ -25,6 +25,8 @@ import { paths } from './config.js';
  * only says "expected string" costs ten minutes of grepping in a 900-line YAML.
  */
 
+/** Thrown here, reported by `reportRunError` in `lib/exit.ts` — which is where
+ *  the whole of what it means for a script to end is decided. */
 export class SourceError extends Error {
   constructor(
     message: string,
@@ -342,16 +344,4 @@ export function loadAliases(lang: string): Record<string, string[]> {
     aliases[key] = Array.isArray(value) ? value : [value];
   }
   return aliases;
-}
-
-export function reportSourceError(error: unknown): never {
-  if (error instanceof SourceError) {
-    console.error(`\n✗ ${error.message}`);
-    for (const detail of error.details.slice(0, 40)) console.error(`  ${detail}`);
-    if (error.details.length > 40) {
-      console.error(`  …and ${error.details.length - 40} more`);
-    }
-    process.exit(1);
-  }
-  throw error;
 }

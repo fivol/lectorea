@@ -1,6 +1,6 @@
 import { parseLimit, reportRemaining } from './lib/config.js';
 import { openDb } from './lib/db.js';
-import { reportSourceError } from './lib/sources.js';
+import { reportRunError } from './lib/exit.js';
 import { createClient } from './lib/youtube.js';
 import { refreshPlaylistMetadata } from './lib/tasks.js';
 
@@ -26,4 +26,4 @@ async function main(): Promise<void> {
   db.close();
 }
 
-main().catch(reportSourceError);
+main().catch(reportRunError);
