@@ -5,8 +5,14 @@ import zlib from 'node:zlib';
 import { pipeline } from 'node:stream/promises';
 import { execFileSync } from 'node:child_process';
 import Database from 'better-sqlite3';
-import { paths } from './lib/config.js';
-import { dbExists, dbHasMaterial } from './lib/db.js';
+import { nowIso, paths } from './lib/config.js';
+import {
+  dbExists,
+  dbHasMaterial,
+  snapshotStamp,
+  workSince,
+  writeSnapshotStamp,
+} from './lib/db.js';
 
 /**
  * The crawl cache, carried between machines through a release asset.
@@ -24,15 +30,37 @@ import { dbExists, dbHasMaterial } from './lib/db.js';
  * cache stays what it was: the working copy between nightly runs.
  *
  *   pnpm cache:publish     local cache.db → the `data-cache` release
- *   pnpm cache:restore     the release → data/cache.db, when there is no crawl
+ *   pnpm cache:restore     the release → data/cache.db, when the release is ahead
  *
- * `restore` is a no-op when the cache already holds material, which is what
- * makes it safe to run on every job: the nightly Actions cache stays in charge
- * and the snapshot only fills the hole it leaves behind.
+ * **The release is the source of truth, and the newer generation wins.** That
+ * is one rule and it replaced three broken ones. `restore` used to ask "is
+ * there anything here already" and stand aside if there was, which meant every
+ * machine kept whatever it happened to hold: a snapshot published from a laptop
+ * was picked up by nobody, the nightly job crawled on top of its own Actions
+ * cache, published over the laptop's work, and the evening was gone by morning.
+ * So each copy carries the moment its lineage was published (`snapshotStamp` in
+ * `lib/db.ts`), and that is what gets compared.
+ *
+ * Which keeps `restore` safe to run unconditionally on every job — the point of
+ * the old rule — while making it mean something: a job takes the release when
+ * the release is ahead of it, and otherwise carries on with what it has.
  */
 
 const TAG = 'data-cache';
 const ASSET = 'cache.db.gz';
+
+/**
+ * The generation, as a few dozen bytes beside the 65 MB.
+ *
+ * Deciding whether to restore has to be cheaper than restoring, or every job
+ * that runs the check pays the transfer to find out it did not need it. The
+ * asset's own `updatedAt` is the wrong clock — it is when the upload finished,
+ * not the moment the snapshot was cut, so a machine would find its own publish
+ * looking newer than itself and download what it had just sent.
+ */
+const STAMP_ASSET = 'cache.db.stamp';
+
+type Stamp = { published_at: string; playlists: number; videos: number };
 
 /**
  * `raw_responses` is 3.5 of the 3.6 GB and none of the value.
@@ -69,10 +97,26 @@ async function publish(): Promise<void> {
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lectorea-cache-'));
   const snapshot = path.join(workDir, 'cache.db');
   const archive = path.join(workDir, ASSET);
+  const stampFile = path.join(workDir, STAMP_ASSET);
 
   try {
     const counts = copyInto(snapshot, withRaw);
     for (const [table, rows] of counts) console.log(`  ${table.padEnd(16)} ${rows}`);
+
+    // The generation this publish creates. It goes into the snapshot itself, so
+    // that whoever restores it knows what they are descended from, and into the
+    // sidecar, so that deciding not to restore costs one small download.
+    const rows = new Map(counts);
+    const stamp: Stamp = {
+      published_at: nowIso(),
+      playlists: rows.get('playlists') ?? 0,
+      videos: rows.get('videos') ?? 0,
+    };
+    writeSnapshotStamp(snapshot, stamp.published_at);
+    fs.writeFileSync(stampFile, `${JSON.stringify(stamp, null, 2)}\n`, 'utf8');
+
+    const previous = fetchStamp();
+    if (previous) console.log(`· replacing the snapshot of ${previous.published_at}`);
 
     console.log('· compressing');
     await pipeline(
@@ -92,8 +136,17 @@ async function publish(): Promise<void> {
 
     ensureRelease();
     console.log(`· uploading to the ${TAG} release`);
-    gh(['release', 'upload', TAG, archive, '--clobber']);
-    console.log(`✓ published — CI restores it with pnpm cache:restore`);
+    if (!gh(['release', 'upload', TAG, archive, stampFile, '--clobber'])) {
+      console.error('The upload failed — nothing was published and this cache is unchanged.');
+      process.exit(1);
+    }
+
+    // Only now, and this order is the whole of the failure handling. The stamp
+    // is a claim about what is on the release; written before the upload, a
+    // failed one would leave this machine claiming a generation that does not
+    // exist, and every other copy would defer to a snapshot nobody can fetch.
+    writeSnapshotStamp(paths.cacheDb, stamp.published_at);
+    console.log(`✓ published as ${stamp.published_at} — pnpm cache:restore takes it from here`);
   } finally {
     if (!dryRun) fs.rmSync(workDir, { recursive: true, force: true });
   }
@@ -179,14 +232,13 @@ function ensureRelease(): void {
 
 async function restore(): Promise<void> {
   const force = process.argv.includes('--force');
+  const local = snapshotStamp();
 
-  if (!force && dbHasMaterial()) {
-    console.log('· the crawl cache already holds material — leaving it alone');
-    return;
-  }
+  if (!force && !shouldRestore(local)) return;
 
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lectorea-cache-'));
   const archive = path.join(workDir, ASSET);
+  const incoming = path.join(workDir, 'incoming.db');
 
   try {
     // A fork has no snapshot of its own, and the build is written to survive a
@@ -197,24 +249,171 @@ async function restore(): Promise<void> {
     }
 
     console.log(`· ${mb(fs.statSync(archive).size)} downloaded, unpacking`);
-    // The write-ahead log belongs to the database being replaced. Left behind it
-    // would be replayed into the new file, which is a different database.
-    for (const suffix of ['', '-wal', '-shm']) fs.rmSync(paths.cacheDb + suffix, { force: true });
-    fs.mkdirSync(path.dirname(paths.cacheDb), { recursive: true });
-    await pipeline(
-      fs.createReadStream(archive),
-      zlib.createGunzip(),
-      fs.createWriteStream(paths.cacheDb)
-    );
+    await pipeline(fs.createReadStream(archive), zlib.createGunzip(), fs.createWriteStream(incoming));
 
-    if (!dbExists()) {
-      console.error('The restored file is not a crawl cache — refusing to leave it in place.');
-      fs.rmSync(paths.cacheDb, { force: true });
-      process.exit(1);
+    // Nothing here yet: take the file whole, which is the cheap path and the
+    // one every fresh machine and every CI job walks.
+    if (!dbHasMaterial()) {
+      // The write-ahead log belongs to the database being replaced. Left behind
+      // it would be replayed into the new file, which is a different database.
+      for (const suffix of ['', '-wal', '-shm']) fs.rmSync(paths.cacheDb + suffix, { force: true });
+      fs.mkdirSync(path.dirname(paths.cacheDb), { recursive: true });
+      // A rename across filesystems is an error rather than a copy, and a
+      // temporary directory is not promised to be on the same one.
+      try {
+        fs.renameSync(incoming, paths.cacheDb);
+      } catch {
+        fs.copyFileSync(incoming, paths.cacheDb);
+      }
+      if (!dbExists()) {
+        console.error('The restored file is not a crawl cache — refusing to leave it in place.');
+        fs.rmSync(paths.cacheDb, { force: true });
+        process.exit(1);
+      }
+      report();
+      return;
     }
+
+    swapInto(incoming);
     report();
   } finally {
     fs.rmSync(workDir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Whether the release is ahead of this copy — and, when it is not, why.
+ *
+ * Every branch here ends in a sentence somebody can act on, because the wrong
+ * answer is expensive in both directions: refusing costs a stale catalogue that
+ * looks fine, and accepting costs an evening of crawling that existed in one
+ * place.
+ */
+function shouldRestore(local: string | null): boolean {
+  if (!dbHasMaterial()) return true;
+
+  const remote = fetchStamp();
+  if (!remote) {
+    console.log('· the release has no snapshot to compare against — leaving the local crawl alone');
+    return false;
+  }
+
+  if (!local) {
+    // Crawled here from nothing, and never published: there is no generation to
+    // compare, and the material exists on this disk and nowhere else.
+    console.log(
+      `· this cache has never been in a snapshot, so nothing says which is newer.\n` +
+        `  pnpm cache:publish to make it the one everybody follows, or --force to replace it.`
+    );
+    return false;
+  }
+
+  if (remote.published_at <= local) {
+    console.log(`· up to date — this cache and the release are both ${local}`);
+    return false;
+  }
+
+  const ahead = workSince(local);
+  if (ahead) {
+    console.log(
+      `· the release is newer (${remote.published_at}) but this cache has crawled since\n` +
+        `  it was published — the newest local work is ${ahead}, and it is nowhere else.\n` +
+        `  pnpm cache:publish to send it up first, or --force to throw it away.`
+    );
+    return false;
+  }
+
+  console.log(`· the release is ahead: ${local} here, ${remote.published_at} there`);
+  return true;
+}
+
+/**
+ * The generation on the release, or null when there is not one to read.
+ *
+ * Its own temporary directory rather than a caller's: `publish` asks what it is
+ * about to replace while its own sidecar of the same name is already written,
+ * and downloading into that directory would overwrite it with the answer.
+ */
+function fetchStamp(): Stamp | null {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lectorea-stamp-'));
+  try {
+    if (!quiet(['release', 'download', TAG, '--pattern', STAMP_ASSET, '--dir', dir, '--clobber'])) {
+      return null;
+    }
+    return JSON.parse(fs.readFileSync(path.join(dir, STAMP_ASSET), 'utf8')) as Stamp;
+  } catch {
+    // A release published before the stamp existed, or an asset that is not the
+    // JSON it should be. Either way there is no generation here to trust.
+    return null;
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Everything the snapshot carries, over everything this cache holds — except
+ * `raw_responses`, which stays.
+ *
+ * Replacing the file would be simpler and would throw away the reason the raw
+ * bodies are kept at all. They are 3.5 GB of API answers this machine paid for,
+ * they are what makes "fix the parser and re-run" possible instead of "fix the
+ * parser and wait for tomorrow", and they are deliberately left out of the
+ * snapshot — so a plain file swap silently costs a laptop its archive every
+ * time it pulls. Swapping table by table costs a copy of the 190 MB that did
+ * travel, and keeps the rest.
+ *
+ * Columns are intersected rather than assumed: a cache last opened before a
+ * migration has fewer of them, and `SELECT *` would line the wrong ones up.
+ */
+function swapInto(incoming: string): void {
+  const db = new Database(paths.cacheDb);
+  try {
+    db.pragma('journal_mode = WAL');
+    db.prepare(`ATTACH DATABASE ? AS snap`).run(incoming);
+
+    const tables = (
+      db
+        .prepare(
+          `SELECT name, sql FROM snap.sqlite_master
+           WHERE type = 'table' AND sql IS NOT NULL AND name NOT LIKE 'sqlite_%'`
+        )
+        .all() as Array<{ name: string; sql: string }>
+    ).filter((table) => table.name !== HEAVY);
+
+    const columns = (schema: string, table: string): string[] =>
+      (db.prepare(`PRAGMA ${schema}.table_info("${table}")`).all() as Array<{ name: string }>).map(
+        (column) => column.name
+      );
+
+    db.transaction(() => {
+      for (const table of tables) {
+        const theirs = columns('snap', table.name);
+        let mine = columns('main', table.name);
+        if (!mine.length) {
+          db.exec(table.sql);
+          mine = theirs;
+        }
+        const shared = theirs.filter((column) => mine.includes(column));
+        const list = shared.map((column) => `"${column}"`).join(', ');
+        db.exec(`DELETE FROM main."${table.name}"`);
+        db.exec(`INSERT INTO main."${table.name}" (${list}) SELECT ${list} FROM snap."${table.name}"`);
+      }
+    })();
+
+    db.exec(`DETACH DATABASE snap`);
+
+    // The snapshot has no `raw_responses` table at all, so a cache restored
+    // from one has none either until `openDb` next runs. Absent is a normal
+    // state here, not a broken database.
+    const hasRaw = db
+      .prepare(`SELECT name FROM main.sqlite_master WHERE type = 'table' AND name = ?`)
+      .get(HEAVY);
+    if (hasRaw) {
+      const kept = db.prepare(`SELECT COUNT(*) AS rows FROM "${HEAVY}"`).get() as { rows: number };
+      if (kept.rows) console.log(`· ${kept.rows} raw API bodies kept — they are this machine's own`);
+    }
+  } finally {
+    db.close();
   }
 }
 

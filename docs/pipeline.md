@@ -375,9 +375,10 @@ the cache until somebody happened to push. A refresh that failed publishes
 nothing: there is no new material, and rebuilding on its schedule would only
 churn the site.
 
-It also takes a manual dispatch, with one input: `snapshot`, which skips the
-Actions cache and rebuilds from the published snapshot instead. That is how a
-laptop's crawl reaches the site — [`make publish`](#handing-a-laptops-night-over-to-the-site).
+It also takes a manual dispatch, which needs no input to do the right thing:
+the restore compares generations, so a deploy dispatched after a laptop
+published rebuilds from that snapshot rather than from the Actions cache
+— [`make publish`](#both-directions-from-a-laptop).
 
 Secrets: `YOUTUBE_API_KEY` (plus optional `YOUTUBE_API_KEY2`, `3`) and
 `OPENAI_API_KEY`; the refresh needs them, the deploy needs none. A fork that has
@@ -399,43 +400,84 @@ The **`data-cache` release** holds the snapshot that outlives all of that:
 
 ```bash
 pnpm cache:publish     # local cache.db → the release, replacing what is there
-pnpm cache:restore     # the release → data/cache.db, if there is no crawl here
+pnpm cache:restore     # the release → data/cache.db, when the release is ahead
 ```
 
-`restore` is a no-op when the database already holds material, which is what lets
-both workflows run it unconditionally: the Actions cache stays in charge, and the
-snapshot only fills the hole it leaves. A repository with no release yet — a
-fresh fork — gets a log line and a catalogue without playlists, not a red build.
-`refresh` publishes a new snapshot after every night that crawled anything, so
-the release is never more than a day behind.
+**The release is the source of truth, and the newer generation wins.** The
+Actions cache and a laptop's file are working copies of some generation of it.
+Every copy carries the moment its lineage was published, `restore` compares that
+rather than counting rows, and both workflows can therefore go on running it
+unconditionally — it takes the release when the release is ahead and carries on
+otherwise. A repository with no release yet — a fresh fork — gets a log line and
+a catalogue without playlists, not a red build. `refresh` publishes after every
+night that crawled anything, so the release is never more than a day behind.
+
+The stamp travels twice: inside the snapshot, so whoever restores it knows what
+they descend from, and as a sidecar asset of a few dozen bytes, so that deciding
+*not* to restore costs one small download instead of sixty-five megabytes. It is
+written to the publishing machine only after the upload succeeds — a stamp for a
+snapshot that is not on the release would make that machine look newer than the
+thing it failed to become, and every other copy would defer to a snapshot nobody
+can fetch.
+
+**This replaced a rule that quietly threw work away.** `restore` used to ask "is
+there anything here already" and stand aside if there was, so every machine kept
+whatever it happened to hold. A snapshot published from a laptop was restored by
+nobody: the nightly job came back with its own Actions cache, found material,
+stood aside, crawled on top of the state the laptop had already moved past, and
+published over it. The evening survived until the next cron and no log line
+anywhere said otherwise. The same blindness is why `refresh` now publishes
+*before* it saves the Actions cache — saved the other way round, the cache would
+carry last night's stamp with a night of crawling on top, which reads as
+unpublished local work, and a laptop's snapshot could never be picked up.
+
+Two things `restore` will not do without `--force`, both of them the
+irreversible direction:
+
+- replace a cache that has **crawled since its own lineage was published**. That
+  material exists on one disk. It names the newest local timestamp and suggests
+  `cache:publish`
+- replace a cache that has **never been in a snapshot at all** — crawled from
+  nothing, locally. There is no generation to compare, so there is no answer,
+  and guessing costs a week of quota
+
+And one thing it does without being asked: **keeps this machine's
+`raw_responses`.** The snapshot deliberately leaves them out, so replacing the
+file would cost a laptop its 3.5 GB archive of verbatim API bodies on every
+pull — the archive that makes "fix the parser and re-run" possible instead of
+"fix the parser and wait until tomorrow". So a cache that already holds material
+is updated table by table instead of overwritten: the 190 MB that travelled is
+swapped in, the raw bodies stay.
 
 The snapshot leaves out `raw_responses`, which is 3.5 GB of the 3.6 and read only
 by `11-mine` and `stats`, both local. What travels is 190 MB, 65 compressed.
 
-### Handing a laptop's night over to the site
+### Both directions, from a laptop
 
 ```bash
-make publish
+make publish   # this machine's state, whole: git → snapshot → release → deploy
+make pull      # the release → here, when the release is the newer generation
 ```
 
-Uploading the snapshot is only two thirds of it, and the missing third is the
-part that is silent when it goes wrong. The site is built from `main` on GitHub
-and never from a working copy, so an `overrides.yaml` still sitting unstaged —
-the committed record of everything `data:review` decided that evening — is
-simply not published, and every log line in the run stays green. `make publish`
-therefore refuses to start on uncommitted changes or unpushed commits, prints
-them, and names the fix; `FORCE=1` publishes the crawl cache alone, which is
-what that outcome should be called.
+Publishing the snapshot is only two thirds of `publish`, and the missing third
+is the part that is silent when it goes wrong. The site is built from `main` on
+GitHub and never from a working copy, so an `overrides.yaml` still sitting
+unstaged — the committed record of everything `data:review` decided that
+evening — is simply not published, and every log line in the run stays green.
+`make publish` therefore refuses to start on uncommitted changes or unpushed
+commits, prints them, and names the fix; `FORCE=1` publishes the crawl cache
+alone, which is what that outcome should be called.
 
-**And the deploy has to be pinned to the snapshot.** A plain dispatch restores
-the Actions cache first, `cache:restore` finds material and stands aside as it
-is meant to, and the site rebuilds from last night's CI crawl — ignoring the
-one just uploaded, which is the single outcome that makes "publish my local
-state" untrue. So the target dispatches `deploy.yml` with `snapshot=true`: the
-Actions cache step is skipped and `cache:restore --force` takes the release as
-the source of truth. The input is reachable only by dispatching the workflow by
-hand, so the nightly path — where deferring to the Actions cache is correct —
-is untouched.
+After it, the snapshot is the newest generation, so nothing else has to be told
+anything: the deploy it dispatches restores the release over whatever the
+Actions cache held, and so does the next nightly `refresh`, which then crawls on
+top of it and publishes further. That is what makes the local state *replace*
+CI's rather than race it.
+
+`make pull` is the same rule read backwards, and is how a machine that does not
+want to spend its own evening on the crawl gets the night the nightly job did.
+It stops rather than overwrite local crawling the release has not seen, and it
+keeps this machine's raw bodies either way.
 
 **What counts as "material" is the load-bearing part.** `openDb` writes the whole
 schema before the first request, and `seedManualMatches` fills `playlists` from

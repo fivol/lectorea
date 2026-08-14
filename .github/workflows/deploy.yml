@@ -36,11 +36,6 @@ on:
     types: [completed]
 
   workflow_dispatch:
-    inputs:
-      snapshot:
-        description: 'Build from the published cache snapshot, ignoring the Actions cache'
-        type: boolean
-        default: false
 
 concurrency:
   group: deploy
@@ -70,30 +65,20 @@ jobs:
 
       # The crawl cache is restored if a refresh run left one; without it the
       # build still succeeds and simply produces a catalogue with no playlists.
-      #
-      # Skipped when the run was dispatched with `snapshot`, which is how a
-      # laptop publishes what it crawled (`make publish`). Restoring here would
-      # quietly win: the Actions cache comes back holding last night's crawl,
-      # `cache:restore` then finds material and does nothing, and the deploy
-      # would rebuild the state that was already published — the one outcome
-      # that makes "publish my local state" a lie.
       - name: Restore crawl cache
-        if: ${{ !inputs.snapshot }}
         uses: actions/cache/restore@v4
         with:
           path: data/cache.db
           key: cache-db-
           restore-keys: cache-db-
 
-      # And when it left none — a fresh fork, an eviction, a run that died before
-      # it crawled — the published snapshot stands in. A no-op when the cache did
-      # come back with a crawl in it, so the nightly cache stays in charge.
-      #
-      # `--force` drops that deference, and is only reachable by dispatching the
-      # workflow by hand: it is what makes the snapshot the source of truth for
-      # this one run, which is the whole of what `make publish` promises.
+      # And the release on top of it whenever the release is the newer
+      # generation — a fresh fork or an eviction, where the cache came back with
+      # nothing, and equally a snapshot sent up from a laptop since the last
+      # nightly run, which is what makes `make publish` publish anything at all.
+      # Nothing to do in the ordinary case, at the cost of one small download.
       - name: Seed from the published snapshot
-        run: pnpm cache:restore ${{ inputs.snapshot && '--force' || '' }}
+        run: pnpm cache:restore
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

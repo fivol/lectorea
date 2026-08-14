@@ -82,13 +82,31 @@ uncommitted changes and on commits that have not been pushed, prints them, and
 names the fix. `FORCE=1` publishes the crawl cache alone, which is the honest
 thing to call it.
 
-**The deploy is pinned to the snapshot on purpose.** A plain deploy restores the
-Actions cache first and `cache:restore` then finds material and stands aside —
-correct every other day of the year, and wrong here: the site would rebuild from
-last night's crawl and ignore the one just uploaded. So `publish` dispatches
-`deploy.yml` with `snapshot=true`, which skips the Actions cache and forces
-`cache:restore --force`. That input exists for this and is reachable only by
-dispatching the workflow by hand; the nightly path is untouched.
+After it, nothing else has to be told anything. The `data-cache` release is the
+source of truth and the newer generation wins, so the deploy this dispatches
+takes the snapshot over whatever the Actions cache held — and so does tonight's
+`refresh`, which crawls on top of it rather than over it. That is the whole of
+what makes the local state *replace* CI's;
+[pipeline.md](../pipeline.md#moving-the-crawl-between-machines) has the
+mechanism and the failure it was written for.
+
+### `make pull`
+
+The other half, and the one to reach for when this machine should have the
+catalogue without spending an evening on it:
+
+```bash
+make pull
+```
+
+The release → `data/cache.db`, when the release is ahead of what is here. It
+refuses rather than overwrite local crawling the release has not seen — that
+material exists on one disk — and it keeps this machine's `raw_responses`, which
+the snapshot deliberately does not carry, by swapping the tables that travelled
+instead of replacing the file.
+
+`make cache-push` is `publish`'s middle step on its own: the cache to the
+release, no git guard and no deploy.
 
 ### `make stats`
 

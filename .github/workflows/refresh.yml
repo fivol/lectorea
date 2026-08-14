@@ -47,10 +47,14 @@ jobs:
           key: cache-db-${{ github.run_id }}
           restore-keys: cache-db-
 
-      # The Actions cache is the working copy between nightly runs; the snapshot
-      # in the `data-cache` release is what survives an eviction, a poisoned
-      # cache entry, or a repository that has never crawled. Restoring costs no
-      # quota, and does nothing at all when the cache came back with a crawl.
+      # The `data-cache` release is the source of truth; the Actions cache above
+      # is a working copy of some generation of it, kept because it is faster and
+      # carries the raw bodies. So this takes the release whenever the release is
+      # ahead — an eviction, a poisoned entry, a repository that has never
+      # crawled, and the case the old "skip if there is anything here" rule got
+      # wrong every time: a snapshot published from a laptop, which the nightly
+      # job used to crawl straight over. Costs no quota, and one small download
+      # to find out it has nothing to do.
       - name: Seed from the published snapshot
         run: pnpm cache:restore
         env:
@@ -115,22 +119,30 @@ jobs:
             echo 'keep=false' >> "$GITHUB_OUTPUT"
           fi
 
+      # The crawl to the release, so the night's work outlives the Actions cache
+      # — which evicts after a week idle, has a 10 GB ceiling the repository
+      # shares, and cannot be written from anywhere but CI. Sixty-odd megabytes
+      # without the raw bodies, which is cheap enough to do daily.
+      #
+      # Before the cache is saved, and that order is load-bearing. Publishing
+      # stamps the local database with the generation it just created; saved
+      # after, the Actions cache carries that stamp and tomorrow's restore reads
+      # it as "this copy is the published one". Saved before, it would carry
+      # last night's stamp with a night of crawling on top of it, and the
+      # restore would correctly refuse to replace unpublished work — with the
+      # result that a snapshot sent up from a laptop could never be picked up.
+      - name: Publish the snapshot
+        if: always() && steps.crawl.outputs.keep == 'true'
+        run: pnpm cache:publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Save crawl cache
         uses: actions/cache/save@v4
         if: always() && steps.crawl.outputs.keep == 'true'
         with:
           path: data/cache.db
           key: cache-db-${{ github.run_id }}
-
-      # And the same crawl to the release, so the night's work outlives the
-      # Actions cache — which evicts after a week idle, has a 10 GB ceiling the
-      # repository shares, and cannot be written from anywhere but CI. Sixty-odd
-      # megabytes without the raw bodies, which is cheap enough to do daily.
-      - name: Publish the snapshot
-        if: always() && steps.crawl.outputs.keep == 'true'
-        run: pnpm cache:publish
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # New high-confidence matches are a content change and go through review
       # like any other content change.

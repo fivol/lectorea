@@ -12,6 +12,11 @@
 # — plus the guards that turn "ran it in the wrong order" from a wasted day of
 # quota into an error message. Run `make` on its own for the list.
 #
+# The crawl cache moves both ways and `make pull` is the other half of
+# `publish`: the `data-cache` release is the source of truth and the newer
+# generation wins, so a laptop sends its evening up and takes the nightly job's
+# night down, and neither quietly writes over the other.
+#
 # Batching: every crawl target takes N=<count>, which caps how many items that
 # run takes on (`make refresh N=10`) and leaves the rest for the next run. Why
 # that works: docs/scripts/README.md#doing-it-in-batches.
@@ -106,11 +111,11 @@ publish: require-gh require-crawl ## Publish local state whole: validate → sna
 	@echo "▸ 3/4  cache.db → the data-cache release (raw API bodies stay at home)"
 	@$(PNPM) cache:publish
 	@echo
-	@echo "▸ 4/4  deploy, pinned to the snapshot just uploaded"
-	@gh workflow run deploy.yml --ref main -f snapshot=true
+	@echo "▸ 4/4  deploy"
+	@gh workflow run deploy.yml --ref main
 	@echo
-	@echo "✓ queued. The Actions cache is deliberately bypassed for this run — otherwise"
-	@echo "  the deploy would rebuild from last night's crawl and ignore what was just sent."
+	@echo "✓ queued. From here the snapshot is the newest generation, so every job that"
+	@echo "  restores — this deploy, tonight's refresh — takes it over whatever it held."
 	@echo "  Watch it: gh run watch \$$(gh run list --workflow=deploy.yml --limit=1 --json databaseId -q '.[0].databaseId')"
 
 .PHONY: stats
@@ -199,14 +204,21 @@ embeds: ## Which playlists the embedded player refuses as list=. oEmbed, no quot
 
 
 ##@ The crawl cache (data/cache.db — a week of quota, and never committed)
+#
+# The `data-cache` release is the source of truth and the newer generation wins,
+# so these two are a pair rather than two ways of doing the same thing: push
+# what this machine crawled, pull what the nightly job did. Neither ever
+# silently discards the other's work — `pull` stops if there is local crawling
+# the release has not seen, and keeps this machine's raw API bodies, which the
+# snapshot deliberately does not carry.
 
-.PHONY: cache-publish
-cache-publish: require-gh require-crawl ## Local cache.db → the data-cache release
-	@$(PNPM) cache:publish
-
-.PHONY: cache-restore
-cache-restore: require-gh ## The release → data/cache.db. A no-op when there is already a crawl here
+.PHONY: pull
+pull: require-gh ## The release → data/cache.db, when the release is the newer generation
 	@$(PNPM) cache:restore
+
+.PHONY: cache-push
+cache-push: require-gh require-crawl ## Local cache.db → the release, and nothing else. `publish` does this and more
+	@$(PNPM) cache:publish
 
 .PHONY: seed
 seed: ## ~500 obviously fake playlists, so the interface has something to show without a crawl
@@ -268,7 +280,7 @@ doctor: ## What this machine has: tools, keys (counted, never printed), cache, b
 	@if [ -f data/cache.db ]; then \
 		echo "cache.db    $$(du -h data/cache.db | cut -f1)"; \
 		$(MAKE) --silent require-crawl 2>/dev/null && echo "            holds a crawl" || echo "            tables but no material — nothing worth publishing"; \
-	else echo "cache.db    absent — make cache-restore, or build a graph with no playlists"; fi
+	else echo "cache.db    absent — make pull, or build a graph with no playlists"; fi
 	@if [ -d public/data ]; then echo "public/data $$(ls public/data/*.json 2>/dev/null | wc -l | tr -d ' ') files"; \
 		else echo "public/data absent — make data"; fi
 
@@ -305,7 +317,7 @@ require-gh:
 require-crawl:
 	@$(PNPM) exec tsx -e "import { dbHasMaterial } from './scripts/lib/db.ts'; process.exit(dbHasMaterial() ? 0 : 1)" >/dev/null 2>&1 || { \
 		echo "!! data/cache.db holds no crawl."; \
-		echo "   make pipeline to fill it, or make cache-restore to pull the published snapshot."; \
+		echo "   make pipeline to fill it, or make pull to take the published snapshot."; \
 		exit 1; \
 	}
 

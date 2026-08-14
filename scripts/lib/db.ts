@@ -100,6 +100,11 @@ CREATE TABLE IF NOT EXISTS quota (
   spent INTEGER DEFAULT 0,
   PRIMARY KEY (date, key)
 );
+
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
 `;
 
 export function openDb(options: { readonly?: boolean } = {}): Db {
@@ -230,6 +235,102 @@ export function dbHasMaterial(): boolean {
     // A database old enough to be missing a table the question is asked of has
     // nothing this codebase can read either.
     return false;
+  } finally {
+    db.close();
+  }
+}
+
+/* ────────────────────────────  Which generation  ───────────────────────── */
+
+/**
+ * The crawl cache exists in three places at once — a laptop, the Actions cache,
+ * the `data-cache` release — and until this stamp there was no way to ask which
+ * of them was ahead. `restore` decided by "is there anything here at all", so
+ * whatever a machine already held won, however old it was: a snapshot published
+ * from a laptop was restored by nobody, the nightly job crawled on top of the
+ * cache it happened to have, and published over it. The evening's work survived
+ * exactly until the next cron.
+ *
+ * So every copy carries the moment its lineage was published, and `restore`
+ * compares that rather than counting rows. The release is the source of truth;
+ * the Actions cache and a laptop are working copies of some generation of it.
+ *
+ * Written only by `cache:publish`, and only after the upload has succeeded — a
+ * stamp for a snapshot that is not on the release would make this machine look
+ * newer than the thing it failed to become.
+ */
+const SNAPSHOT_STAMP = 'snapshot_published_at';
+
+/** Timestamps a crawl writes. Anything later than the stamp is unpublished work. */
+const WORK_COLUMNS: Array<[table: string, column: string]> = [
+  ['playlists', 'stats_fetched_at'],
+  ['playlists', 'videos_fetched_at'],
+  ['playlists', 'checked_at'],
+  ['playlists', 'list_checked_at'],
+  ['channels', 'last_discovered_at'],
+  ['channels', 'stats_fetched_at'],
+  ['matches', 'updated_at'],
+];
+
+/** The publish this copy descends from, or null when it has never been in one. */
+export function snapshotStamp(file: string = paths.cacheDb): string | null {
+  if (!fs.existsSync(file)) return null;
+  try {
+    const db = new Database(file, { readonly: true });
+    try {
+      const row = db.prepare(`SELECT value FROM meta WHERE key = ?`).get(SNAPSHOT_STAMP) as
+        | { value: string }
+        | undefined;
+      return row?.value ?? null;
+    } finally {
+      db.close();
+    }
+  } catch {
+    // No `meta` table: a cache from before this existed, which is the same
+    // answer — nothing here says which generation it is.
+    return null;
+  }
+}
+
+export function writeSnapshotStamp(file: string, stamp: string): void {
+  const db = new Database(file);
+  try {
+    db.exec(`CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)`);
+    db.prepare(
+      `INSERT INTO meta (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+    ).run(SNAPSHOT_STAMP, stamp);
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * The newest crawling this copy has done since its lineage was published, or
+ * null when it has done none.
+ *
+ * This is the difference between "you are behind" and "you are behind *and*
+ * ahead", and only the second is a thing a person has to decide about. A
+ * machine that restored a snapshot and then crawled all evening holds material
+ * that exists nowhere else; taking a newer release over it would be the one
+ * irreversible thing this whole mechanism can do.
+ */
+export function workSince(stamp: string | null): string | null {
+  if (!stamp || !dbExists()) return null;
+  const db = new Database(paths.cacheDb, { readonly: true });
+  try {
+    let newest: string | null = null;
+    for (const [table, column] of WORK_COLUMNS) {
+      const columns = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+      if (!columns.some((existing) => existing.name === column)) continue;
+      const row = db
+        .prepare(`SELECT MAX(${column}) AS newest FROM ${table} WHERE ${column} > ?`)
+        .get(stamp) as { newest: string | null };
+      if (row.newest && (!newest || row.newest > newest)) newest = row.newest;
+    }
+    return newest;
+  } catch {
+    return null;
   } finally {
     db.close();
   }
