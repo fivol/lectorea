@@ -3,6 +3,10 @@
 [← all scripts](README.md) · how a crawled playlist finds the course it belongs
 to, and what happens to the ones that do not.
 
+Working through the ones that did not is [review.md](../review.md) — the
+diagnostics, the order to fix things in, and the mistakes that page exists to
+stop being made twice.
+
 ## `pnpm data:match`
 
 Decides which course a crawled playlist belongs to. A cascade, cheapest first —
@@ -92,10 +96,35 @@ already gone: what is left beside the keyword is usually a word that renames it.
 the same clause, or another clause names a second subject just as convincingly,
 the playlist goes to a human: «Psychology and Economics», «Graph Theory and
 Additive Combinatorics». Adjacent words are exempt, since in «multivariable
-calculus» the two keywords describe one thing rather than two. The same applies
-to a word two courses share outright: `algebra` is deliberately a keyword of both
-`school-algebra` and `abstract-algebra`, so a bare English «Algebra» is declined
-while «Algebra II» and «Алгебра» each still go where they belong.
+calculus» the two keywords describe one thing rather than two.
+
+The same rule fires when two courses own a phrase outright, and there it is a
+sharper instrument than it looks: **a tie declines both courses, so a keyword
+duplicated between them silences the pair.** That is right when the word really
+is ambiguous — `entropy` belongs to thermodynamics and to information theory,
+`einstein` to both relativities — and a plain mistake when one of the two copies
+is redundant. `algebra` was a keyword of `school-algebra` *and*
+`abstract-algebra` until 2026-08-14, and the effect was not that bare «Algebra»
+went to a human: it was that every «College Algebra», «Algebra Basics» and
+«Prealgebra» in the crawl went to nobody at all.
+
+What replaced it splits the word by language rather than declining it, because
+the two languages disagree about what the bare word means. English names its
+university course «Abstract Algebra» or «Modern Algebra» and leaves the bare word
+to schools; Russian does the reverse, where «Алгебра» on a second-year timetable
+is abstract algebra and the school course says «алгебра 7 класс». So Latin
+`algebra` now belongs to `school-algebra` alone and Cyrillic `алгебра` to
+`abstract-algebra` alone, and each specific name still wins on length:
+
+| Title | Goes to |
+|---|---|
+| «Algebra», «Algebra II», «College Algebra» | `school-algebra` |
+| «Abstract Algebra», «Modern Algebra» | `abstract-algebra` |
+| «Алгебра», «Высшая алгебра» | `abstract-algebra` |
+| «алгебра 7 класс» | `school-algebra` |
+
+Find every remaining tie — and judge each one, since some should stay — with the
+duplicate scan in [review.md](../review.md#a-tie-silences-both-courses).
 
 On top of that a title that names support material rather than a course —
 homework help, exam prep, test review, office hours, seminar series, podcasts,

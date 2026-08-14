@@ -1,7 +1,8 @@
 # Where more material comes from
 
 [← docs](README.md) · [channel-hunt.md](channel-hunt.md) is the record of the
-first hunt; this is the catalogue of seams, spent and unspent.
+hunts and [review.md](review.md) the runbook for a whole iteration; this is the
+catalogue of seams, spent and unspent.
 
 The catalogue grows in one way only: more playlists that are actually courses.
 This page is the list of places they can be dug out of, what each one costs, and

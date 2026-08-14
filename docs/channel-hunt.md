@@ -1,6 +1,8 @@
 # Where the channels came from
 
-[← docs](README.md) · [pipeline.md](pipeline.md) for what the crawl does with them
+[← docs](README.md) · [pipeline.md](pipeline.md) for what the crawl does with
+them, [review.md](review.md) for how to run a hunt and what has already gone
+wrong in one
 
 `data/channels.yaml` is the crawl's whole input. This is the record of how the
 list was filled and, just as usefully, what was looked at and refused, so the

@@ -158,6 +158,9 @@ What each one does and why in that order:
   playlists can be dug out of, with what each one costs
 - [channel-hunt.md](channel-hunt.md) — where the crawled channels came from, how
   a candidate is checked, and what was refused
+- [review.md](review.md) — **start here to run an iteration.** The four phases
+  end to end, how to work the refusals, and the data problems previous
+  iterations have already paid for
 
 **The map**
 
