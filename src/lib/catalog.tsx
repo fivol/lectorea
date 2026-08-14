@@ -175,36 +175,31 @@ export function pathTo(catalog: Catalog, courseId: string): BuiltCourse[] {
 }
 
 /**
- * The ancestors a filter hides that the selected course's chain needs — all of
- * them. They come back as guests, with the tag naming the field they came from.
+ * The prerequisites a filter hides that the selected course leans on directly —
+ * its own `deps` and no further. They come back as guests, with the tag naming
+ * the field they came from.
  *
- * The rule used to be connectivity rather than completeness: a hidden ancestor
- * was borrowed only when something already on the canvas stood *behind* it, so
- * it fired for a gap in the middle of a chain whose two ends were both visible,
- * and a branch hidden end to end stayed out. That was meant to keep a filter a
- * filter. What it actually did was fail in the ordinary case: with one field
- * chosen — which is how this screen is read — the foreign branch *is* hidden
- * end to end, so nothing was ever borrowed. Over all 206 courses, each against
- * its own field's filter, the old rule borrowed zero cards. For 110 of them the
- * chain runs outside their field, and the columns simply stopped at the border:
- * cell biology lit up over general biology alone while «Опирается на» in the
- * panel named general chemistry too, and nothing on the canvas admitted it.
+ * Two rules were tried before this one. Connectivity — borrow a hidden ancestor
+ * only when something already on the canvas stands behind it — never fired in
+ * the ordinary case: with one field chosen, which is how this screen is read,
+ * the foreign branch is hidden end to end, and over all 206 courses it borrowed
+ * exactly zero cards while «Опирается на» in the panel went on naming courses
+ * the columns refused to draw. Completeness — borrow the whole hidden closure —
+ * fixed that and overshot: one click on sequence analysis brought seventeen
+ * foreign cards in at once, scattered down every column to its left. That is a
+ * filter turned inside out; you asked for one field and were shown a second one
+ * drawn through it.
  *
- * So: completeness. The claim this screen makes is that reading left to right
- * is reading the order things must be studied in, and a chain drawn with its
- * first link missing is not a weaker version of that claim — it is a different
- * and false one. The cost is bounded by the chain (three cards on average, 17
- * at the worst — sequence analysis really does stand on seventeen courses from
- * other fields), it is spent only on an explicit click, and it is dropped the
- * moment the selection changes.
+ * One hop back is where the question actually is. «What must I do before this»
+ * is asked of the selected course; what stands before *those* is a question
+ * about them, and it is answered by clicking one — the trail of guests keeps
+ * the previous card, so a chain is still walked to its end, one card per step,
+ * each step asked for. Nothing is concealed meanwhile: «Путь» in the panel
+ * names the whole closure whether or not the columns hold it.
  */
-export function chainAncestors(
-  catalog: Catalog,
-  courseId: string,
-  onCanvas: Set<string>
-): Set<string> {
+export function hiddenDeps(catalog: Catalog, courseId: string, onCanvas: Set<string>): Set<string> {
   const borrowed = new Set<string>();
-  for (const id of upstreamOf(catalog.courseById, courseId)) {
+  for (const id of catalog.courseById.get(courseId)?.deps ?? []) {
     if (!onCanvas.has(id)) borrowed.add(id);
   }
   return borrowed;

@@ -226,15 +226,23 @@ elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead.
 
 Two kinds of card are borrowed back, and only while a course is selected: the
-selected course itself when the filter does not cover it, and any prerequisite
-the chain would visibly break without. Game theory needs probability,
-probability needs combinatorics — with probability filed under another field the
-two ends of the path lit up with nothing drawn between them, two unrelated
-groups of cards and a gap where the answer was. A borrowed card carries a tag
-naming the field it came from, and pressing it moves the columns to that field
-with the course still selected. The rule is connectivity, not completeness: a
-branch the filter hides from end to end has nothing to join up and stays out,
-counted in «Путь» in the panel like every other course off the canvas.
+selected course itself when the filter does not cover it, and the prerequisites
+it stands on directly. Game theory needs probability, probability needs
+combinatorics — with probability filed under another field the card lit up with
+nothing drawn behind it, and «Опирается на» in the panel named a course the
+columns refused to show.
+
+One hop back, not the whole chain. Borrowing the entire hidden closure was tried
+and overshot: a click on sequence analysis brought seventeen foreign cards in at
+once, scattered down every column to its left, and a filter that answers with a
+second field drawn through the first is no longer a filter. What stands before
+those prerequisites is a question about *them* — click one and it is answered,
+with the previous card kept on the canvas, so a chain is still walked to its end
+one step at a time. Combinatorics stays out until then, counted in «Путь» in the
+panel like every other course off the canvas.
+
+A borrowed card carries a tag naming the field it came from, and pressing it
+moves the columns to that field with the course still selected.
 
 ## Search
 

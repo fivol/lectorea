@@ -111,7 +111,7 @@
   "ui.legend.quality": "Playlist quality: high, average, little data",
   "ui.legend.playlistType": "What the recording is: a shelf on a subject, seminars, or a whole course. Not a verdict — the verdict is on the right",
   "ui.legend.noMaterials": "The course is in the catalogue, but no playlists have been found for it yet",
-  "ui.legend.guest": "A field tag on the artwork means a course from another field, kept in the columns while you are reading it — or while the chain of the selected course would break without it; pressing it moves you to that field along with the course",
+  "ui.legend.guest": "A field tag on the artwork means a course from another field, kept in the columns while you are reading it — or while the selected course stands on it directly; pressing it moves you to that field along with the course",
   "ui.shortcuts.title": "Keyboard shortcuts",
   "ui.shortcuts.key.slash": "/",
   "ui.shortcuts.key.t": "T",
