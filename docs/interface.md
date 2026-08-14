@@ -567,7 +567,18 @@ There is no account and no backend: it all lives in `localStorage`. The **Data**
 tab exports it as a JSON file and imports one back, either replacing what is
 there or merging it — on a conflict the more advanced status wins, and histories
 interleave by time. That is the whole sync story, and it works between browsers
-without a server.
+without a server. The same JSON also goes straight to the clipboard, for a phone
+with nowhere to put a download.
+
+And a third button copies a **prompt**: the same profile written out for a
+reader that is not this site. An assistant handed the JSON has to guess its way
+through ids, timestamps and playback positions — `calculus-1` is not a course
+name, and the minute somebody paused a video in March says nothing about what to
+study next. So the prompt drops all of it and keeps what a plan is made of: the
+courses behind you, the ones in progress and the ones you are aiming at, each
+named with its field and level, then the week and the question. It is written in
+the interface language, because that is the language the answer should come back
+in. See `src/lib/profile-prompt.ts`.
 
 ## What lives in the URL
 

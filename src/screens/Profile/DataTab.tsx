@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useT } from '@/i18n';
 import { formatDate } from '@/lib/format';
 import { downloadProfile, parseProfile, profileJson, type ImportPreview } from '@/lib/profile-io';
+import { useProfilePrompt } from '@/lib/profile-prompt';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import { Button, CopyButton, Textarea } from '@/components/ui';
@@ -11,6 +12,7 @@ export default function DataTab() {
   const profile = useProfile((state) => state.profile);
   const replaceProfile = useProfile((state) => state.replaceProfile);
   const mergeProfile = useProfile((state) => state.mergeProfile);
+  const prompt = useProfilePrompt();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
@@ -53,7 +55,9 @@ export default function DataTab() {
           <CopyButton text={() => profileJson(profile)}>
             {t('ui.profile.data.copy')}
           </CopyButton>
+          <CopyButton text={prompt}>{t('ui.profile.data.copyPrompt')}</CopyButton>
         </div>
+        <p className="mt-2 text-xs text-ink-faint">{t('ui.profile.data.promptHint')}</p>
       </section>
 
       <section className="border-t border-line pt-6">
