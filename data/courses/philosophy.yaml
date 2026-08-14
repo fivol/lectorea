@@ -18,7 +18,6 @@
 - id: philosophy-intro
   domains: [philosophy]
   stage: bachelor-1
-  related: [logic-intro]
 
 - id: ancient-philosophy
   domains: [philosophy]

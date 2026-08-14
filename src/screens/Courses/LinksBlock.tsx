@@ -1,13 +1,10 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
-import { pathTo, unlocksOf, useCatalog, useLinkNote } from '@/lib/catalog';
+import { pathTo, unlocksOf, useCatalog } from '@/lib/catalog';
 import { formatHours } from '@/lib/format';
 import { useIsMobile } from '@/lib/hooks';
-import { courseHref } from '@/lib/url';
 import { useProfile } from '@/store/profile';
-import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import Tooltip from '@/components/Tooltip';
 import CourseLinkCard from './CourseLinkCard';
@@ -51,8 +48,6 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
   const preference = useProfile((state) => state.profile.settings.panelLinks);
   const setSetting = useProfile((state) => state.setSetting);
   const courses = useProfile((state) => state.profile.courses);
-  const setEcho = useUi((state) => state.setEcho);
-  const linkNote = useLinkNote();
 
   const unlocks = useMemo(() => unlocksOf(catalog, course.id), [catalog, course.id]);
   const steps = useMemo(() => [...pathTo(catalog, course.id), course], [catalog, course]);
@@ -121,35 +116,17 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
       ) : null}
 
       {/* The same cards as the prerequisites, at the same opacity the columns
-          give a soft neighbour, so «bleached» means one thing on this screen:
-          useful, not required, not counted in the path or the hours. */}
+          give a weak tie, so «bleached» means one thing on this screen: useful,
+          not required, not counted in the path or the hours. */}
       {course.soft.length ? (
-        <div>
-          {/* The one heading on the screen naming a relation nobody has met
-              before — «what has to come first» explains itself, «also useful»
-              has to say what it is not: a gate, a step of the path, an hour in
-              the estimate. That is a sentence, so it goes behind a mark. */}
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-ink-dim">
-            {t('ui.course.recommends')}
-            <Tooltip content={t('ui.course.recommendsHint')}>
-              <button
-                type="button"
-                className="inline-flex cursor-help text-ink-faint transition-colors
-                           duration-fast ease-out hover:text-ink-dim"
-                aria-label={t('ui.course.recommendsHint')}
-              >
-                <Icon name="help" size={13} />
-              </button>
-            </Tooltip>
-          </h3>
-          <ul className={`grid gap-1.5 opacity-75 sm:grid-cols-2 ${capCards}`}>
-            {course.soft.map((id) => (
-              <li key={id}>
-                <CourseLinkCard courseId={id} search={search} from={course.id} />
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Weak
+          title={t('ui.course.recommends')}
+          hint={t('ui.course.recommendsHint')}
+          ids={course.soft}
+          search={search}
+          from={course.id}
+          cap={capCards}
+        />
       ) : null}
 
       {unlocks.length ? (
@@ -170,6 +147,22 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
         </div>
       ) : null}
 
+      {/* Last of the four, because it is the only one with no direction in it —
+          everything above answers «before» or «after», this one answers
+          «instead of asking that». A line of names was cheaper, and it read as
+          a footnote: the same courses, on cards, are worth the same glance as
+          the rest. */}
+      {course.related.length ? (
+        <Weak
+          title={t('ui.course.relatedTo')}
+          hint={t('ui.course.relatedHint')}
+          ids={course.related}
+          search={search}
+          from={course.id}
+          cap={capCards}
+        />
+      ) : null}
+
       {hasPath ? (
         <PathBlock
           course={course}
@@ -179,30 +172,6 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           outsideFilter={outsideFilter}
           capped={!isMobile}
         />
-      ) : null}
-
-      {/* `related` has no direction — it is not before the course or after it,
-          so a list of cards would promise an order it does not have. One line
-          of names, under everything that does. */}
-      {course.related.length ? (
-        <p className="text-xs text-ink-faint">
-          {t('ui.course.relatedTo')}:{' '}
-          {course.related.map((id, index) => (
-            <span key={id}>
-              {index ? ', ' : ''}
-              <Tooltip content={linkNote(course.id, id)}>
-                <Link
-                  to={courseHref(id, search)}
-                  onMouseEnter={() => setEcho(id)}
-                  onMouseLeave={() => setEcho(null)}
-                  className="text-ink-dim hover:text-ink"
-                >
-                  {t(`course.${id}.title`)}
-                </Link>
-              </Tooltip>
-            </span>
-          ))}
-        </p>
       ) : null}
     </>
   );
@@ -259,3 +228,54 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
     </section>
   );
 }
+
+/**
+ * A list of weak ties — `soft` or `related`.
+ *
+ * Both are relations a reader has not met anywhere else, and neither explains
+ * itself from its heading the way «what has to come first» does: one has to say
+ * that it is not a gate, the other that it has no direction at all. So both
+ * carry a mark that holds the sentence, and both render at the opacity the
+ * columns give them, which is what keeps «bleached» meaning one thing.
+ */
+function Weak({
+  title,
+  hint,
+  ids,
+  search,
+  from,
+  cap,
+}: {
+  title: string;
+  hint: string;
+  ids: string[];
+  search: string;
+  from: string;
+  cap: string;
+}) {
+  return (
+    <div>
+      <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-ink-dim">
+        {title}
+        <Tooltip content={hint}>
+          <button
+            type="button"
+            className="inline-flex cursor-help text-ink-faint transition-colors
+                       duration-fast ease-out hover:text-ink-dim"
+            aria-label={hint}
+          >
+            <Icon name="help" size={13} />
+          </button>
+        </Tooltip>
+      </h3>
+      <ul className={`grid gap-1.5 opacity-75 sm:grid-cols-2 ${cap}`}>
+        {ids.map((id) => (
+          <li key={id}>
+            <CourseLinkCard courseId={id} search={search} from={from} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
