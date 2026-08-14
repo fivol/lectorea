@@ -370,21 +370,30 @@ export type WatchedTotals = {
  */
 const STATS_COURSE_LIMIT = 12;
 
+/**
+ * The courses the profile has actually touched, most recently first.
+ *
+ * Every write that records a lecture stamps the course onto the playlist entry,
+ * so this is the whole set of shards worth asking for — and the cap is what
+ * keeps a headline number from costing ten megabytes.
+ */
+export function touchedCourses(profile: Profile, limit = STATS_COURSE_LIMIT): string[] {
+  const seen = new Map<string, string>();
+  for (const entry of Object.values(profile.playlists)) {
+    if (!entry.courseId) continue;
+    const at = seen.get(entry.courseId);
+    if (!at || entry.at > at) seen.set(entry.courseId, entry.at);
+  }
+  return [...seen.entries()]
+    .sort((a, b) => b[1].localeCompare(a[1]))
+    .slice(0, limit)
+    .map(([id]) => id);
+}
+
 export function useWatchedTotals(): WatchedTotals {
   const profile = useProfile((state) => state.profile);
 
-  const courseIds = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const entry of Object.values(profile.playlists)) {
-      if (!entry.courseId) continue;
-      const at = seen.get(entry.courseId);
-      if (!at || entry.at > at) seen.set(entry.courseId, entry.at);
-    }
-    return [...seen.entries()]
-      .sort((a, b) => b[1].localeCompare(a[1]))
-      .slice(0, STATS_COURSE_LIMIT)
-      .map(([id]) => id);
-  }, [profile.playlists]);
+  const courseIds = useMemo(() => touchedCourses(profile), [profile]);
 
   const shards = useCourseShards(courseIds);
 
@@ -420,7 +429,7 @@ export function useWatchedTotals(): WatchedTotals {
 }
 
 /** The shards for a set of courses, filling in as they land. */
-function useCourseShards(courseIds: string[]): Map<string, BuiltPlaylist[]> {
+export function useCourseShards(courseIds: string[]): Map<string, BuiltPlaylist[]> {
   const [shards, setShards] = useState<Map<string, BuiltPlaylist[]>>(new Map());
   const key = courseIds.join(',');
 

@@ -575,10 +575,18 @@ reader that is not this site. An assistant handed the JSON has to guess its way
 through ids, timestamps and playback positions — `calculus-1` is not a course
 name, and the minute somebody paused a video in March says nothing about what to
 study next. So the prompt drops all of it and keeps what a plan is made of: the
-courses behind you, the ones in progress and the ones you are aiming at, each
-named with its field and level, then the week and the question. It is written in
-the interface language, because that is the language the answer should come back
-in. See `src/lib/profile-prompt.ts`.
+courses behind you, the ones in progress with how far through each one is, and
+the favourites — every course named with its field, and under it the recordings
+it was actually studied by, «3 из 16 лекций» and all. Then the totals, the week,
+and the question. It is written in the interface language, because that is the
+language the answer should come back in.
+
+The per-recording detail lives in the course shards, which is why the tab asks
+for them while it is open rather than on the press: a clipboard write that waits
+on a download is a clipboard write some browsers refuse. A prompt copied a
+moment early names fewer recordings and says everything else — the same way
+every progress bar on these screens fills in as its shard lands. See
+`src/lib/profile-prompt.ts`.
 
 ## What lives in the URL
 

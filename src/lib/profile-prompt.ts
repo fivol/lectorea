@@ -1,10 +1,19 @@
 import { useMemo } from 'react';
-import type { Profile } from '@shared/schema';
+import type { BuiltPlaylist, Profile } from '@shared/schema';
 import { useT, type Translator } from '@/i18n';
 import { activityOf } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
 import type { Catalog } from '@/lib/data';
 import { formatHours } from '@/lib/format';
+import {
+  courseProgress,
+  percent,
+  playlistProgress,
+  touchedCourses,
+  useCourseShards,
+  useWatchedTotals,
+  type WatchedTotals,
+} from '@/lib/progress';
 import { localDay, useProfile } from '@/store/profile';
 
 /**
@@ -17,74 +26,152 @@ import { localDay, useProfile } from '@/store/profile';
  *
  * So this is the same profile with everything that only matters to the site
  * taken out and everything that only matters to a reader put in: titles instead
- * of ids, the field and the level of each course, and the question at the end.
- * It is written in the interface language, because that is the language the
- * answer should come back in.
+ * of ids, the field each course belongs to, how far through it somebody is, and
+ * which recordings that progress is actually in. It is written in the interface
+ * language, because that is the language the answer should come back in.
  */
 
 export type PromptInput = {
   profile: Profile;
   catalog: Catalog;
-  t: Translator['t'];
+  t: Translator;
+  /** Playlists per course, for the courses whose shards have arrived. */
+  shards: Map<string, BuiltPlaylist[]>;
+  totals: WatchedTotals;
   /** Where this profile is from — the assistant can go and look. */
   site: string;
   /** Local `YYYY-MM-DD`, for the week's arithmetic. */
   today: string;
 };
 
-type Line = { level: number; text: string };
+type Entry = {
+  id: string;
+  title: string;
+  domain: string;
+  status: 'done' | 'in_progress' | null;
+  favorite: boolean;
+};
 
-export function profilePrompt({ profile, catalog, t, site, today }: PromptInput): string {
-  const done: Line[] = [];
-  const started: Line[] = [];
-  const goals: Line[] = [];
+export function profilePrompt({
+  profile,
+  catalog,
+  t: { t, plural },
+  shards,
+  totals,
+  site,
+  today,
+}: PromptInput): string {
+  /*
+   * Courses the profile names, plus courses only its playlists know about.
+   *
+   * A status is written by hand or by finishing something, and neither has to
+   * have happened for a course to be worth mentioning: a playlist half watched
+   * is exactly the "what am I in the middle of" the reader is asking about.
+   */
+  const ids = new Set(Object.keys(profile.courses));
+  for (const entry of Object.values(profile.playlists)) {
+    if (entry.courseId) ids.add(entry.courseId);
+  }
 
-  for (const [id, entry] of Object.entries(profile.courses)) {
+  const entries: Entry[] = [];
+  for (const id of ids) {
     const course = catalog.courseById.get(id);
     // A course the catalogue no longer has cannot be named, and an id on its own
     // is exactly the noise this text exists to remove.
     if (!course) continue;
+    const mark = profile.courses[id];
+    entries.push({
+      id,
+      title: t(`course.${id}.title`),
+      domain: t(`domain.${course.domains[0]}.title`),
+      status: mark?.status ?? null,
+      favorite: mark?.favorite ?? false,
+    });
+  }
+  entries.sort((a, b) => a.title.localeCompare(b.title));
 
-    const domain = course.domains[0];
-    const line: Line = {
-      level: course.level,
-      text: t('ui.prompt.course', {
-        title: t(`course.${id}.title`),
-        domain: t(`domain.${domain}.title`),
-        level: course.level,
-      }),
-    };
+  /** The recordings a course was actually studied by, and how far each one got. */
+  const playlistLines = (courseId: string): string[] => {
+    const out: string[] = [];
+    for (const playlist of shards.get(courseId) ?? []) {
+      const progress = playlistProgress(profile, playlist);
+      if (!progress.started) continue;
+      out.push(
+        progress.complete
+          ? t('ui.prompt.playlistDone', {
+              title: playlist.title,
+              n: progress.total,
+              word: plural(progress.total, 'lecture'),
+            })
+          : t('ui.prompt.playlistPart', {
+              title: playlist.title,
+              done: progress.done,
+              total: progress.total,
+              word: plural(progress.total, 'lecture'),
+            })
+      );
+    }
+    return out;
+  };
 
-    if (entry.status === 'done') done.push(line);
-    else if (entry.status === 'in_progress') started.push(line);
-    // A favourite that is finished is not a goal any more — it is the line above.
-    if (entry.favorite && entry.status !== 'done') goals.push(line);
+  const done: string[] = [];
+  const started: string[] = [];
+  const favorites: string[] = [];
+
+  for (const entry of entries) {
+    const detail = playlistLines(entry.id);
+    const plain = t('ui.prompt.course', { title: entry.title, domain: entry.domain });
+
+    if (entry.status === 'done') {
+      done.push(plain, ...detail);
+      // A favourite that is finished is not something to aim at any more.
+      if (entry.favorite) favorites.push(plain);
+      continue;
+    }
+
+    if (entry.status === 'in_progress' || detail.length) {
+      // The share of the recording that is furthest along, measured in time —
+      // see `playlistProgress`. Absent while the shard is still on its way,
+      // and the line simply says less rather than guessing.
+      const progress = courseProgress(profile, shards.get(entry.id) ?? []);
+      started.push(
+        progress
+          ? t('ui.prompt.courseAt', {
+              title: entry.title,
+              domain: entry.domain,
+              percent: percent(progress.fraction),
+            })
+          : plain,
+        ...detail
+      );
+    }
+
+    if (entry.favorite) favorites.push(plain);
   }
 
-  const byLevel = (a: Line, b: Line): number =>
-    a.level - b.level || a.text.localeCompare(b.text);
-  // The heading is translated by the caller rather than looked up from a key
-  // passed in: `check:i18n` reads literals out of the source, and a key that
-  // only ever exists in a variable is a key it cannot see being used.
-  const section = (heading: string, lines: Line[]): string[] =>
-    lines.length ? ['', heading, ...lines.sort(byLevel).map((line) => line.text)] : [];
+  const section = (heading: string, lines: string[]): string[] =>
+    lines.length ? ['', heading, ...lines] : [];
 
-  const lectures = Object.values(profile.videos).filter((mark) => mark.done).length;
-  const sealed = Object.values(profile.playlists).filter((mark) => mark.watched).length;
   const activity = activityOf(profile.days, today, 1);
   const goalHours = profile.settings.weekGoal;
 
   const out = [
     t('ui.prompt.intro', { site }),
-    ...section(t('ui.prompt.done', { n: done.length }), done),
-    ...section(t('ui.prompt.progress', { n: started.length }), started),
-    ...section(t('ui.prompt.goals', { n: goals.length }), goals),
+    ...section(t('ui.prompt.done', { n: countCourses(done) }), done),
+    ...section(t('ui.prompt.progress', { n: countCourses(started) }), started),
+    ...section(t('ui.prompt.favorites', { n: favorites.length }), favorites),
     '',
   ];
 
-  if (!done.length && !started.length && !goals.length) out.push(t('ui.prompt.nothing'));
-  if (lectures) out.push(t('ui.prompt.lectures', { n: lectures }));
-  if (sealed) out.push(t('ui.prompt.playlists', { n: sealed }));
+  if (!done.length && !started.length && !favorites.length) out.push(t('ui.prompt.nothing'));
+  if (totals.lectures) {
+    out.push(
+      t('ui.prompt.watched', {
+        hours: formatHours(totals.seconds / 3600),
+        lectures: totals.lectures,
+      })
+    );
+  }
   if (activity.total) out.push(t('ui.prompt.days', { n: activity.total }));
   if (activity.week.seconds) {
     const hours = formatHours(activity.week.seconds / 3600);
@@ -99,21 +186,38 @@ export function profilePrompt({ profile, catalog, t, site, today }: PromptInput)
   return out.join('\n');
 }
 
-/** The prompt for the profile in hand, built only when something asks for it. */
+/** The heading counts courses, and a playlist under one is indented. */
+function countCourses(lines: string[]): number {
+  return lines.filter((line) => !line.startsWith(' ')).length;
+}
+
+/**
+ * The prompt for the profile in hand, built on the press.
+ *
+ * The shards are asked for while the tab is open rather than inside the press:
+ * a clipboard write that waits on a download is a clipboard write some browsers
+ * refuse, the files are cached for the session anyway, and a prompt built a
+ * moment early simply names fewer recordings — the same way every bar on these
+ * screens fills in as its shard lands.
+ */
 export function useProfilePrompt(): () => string {
-  const { t } = useT();
+  const translator = useT();
   const catalog = useCatalog();
   const profile = useProfile((state) => state.profile);
+  const totals = useWatchedTotals();
+  const shards = useCourseShards(useMemo(() => touchedCourses(profile), [profile]));
 
   return useMemo(
     () => () =>
       profilePrompt({
         profile,
         catalog,
-        t,
+        t: translator,
+        shards,
+        totals,
         site: window.location.origin,
         today: localDay(),
       }),
-    [profile, catalog, t]
+    [profile, catalog, translator, shards, totals]
   );
 }
