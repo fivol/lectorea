@@ -228,12 +228,15 @@
     "linalg",
     "matrices",
     "vectors",
-    "eigenvalues"
+    "eigenvalues",
+    "analytic geometry",
+    "analytical geometry"
   ],
   "course.discrete-math": [
     "discrete math",
     "discrete mathematics",
-    "discrete structures"
+    "discrete structures",
+    "discrete analysis"
   ],
   "course.combinatorics": [
     "combinatorics",
@@ -252,7 +255,8 @@
     "groups",
     "rings",
     "fields",
-    "algebra"
+    "algebra",
+    "lie algebras"
   ],
   "course.real-analysis": [
     "real analysis",
@@ -266,7 +270,8 @@
   ],
   "course.topology": [
     "topology",
-    "point set topology"
+    "point set topology",
+    "geometry and topology"
   ],
   "course.measure-theory": [
     "measure theory",
@@ -276,7 +281,9 @@
   "course.functional-analysis": [
     "functional analysis",
     "hilbert space",
-    "banach space"
+    "banach space",
+    "spectral theory",
+    "operator theory"
   ],
   "course.differential-equations": [
     "differential equations",
@@ -291,13 +298,15 @@
     "partial differential equations",
     "mathematical physics",
     "heat equation",
-    "wave equation"
+    "wave equation",
+    "methods of mathematical physics"
   ],
   "course.differential-geometry": [
     "differential geometry",
     "diff geo",
     "manifolds",
-    "curvature"
+    "curvature",
+    "riemannian geometry"
   ],
   "course.graph-theory": [
     "graph theory",
@@ -315,7 +324,8 @@
   "course.numerical-methods": [
     "numerical methods",
     "numerical analysis",
-    "scientific computing"
+    "scientific computing",
+    "computational mathematics"
   ],
   "course.category-theory": [
     "category theory",
@@ -333,7 +343,8 @@
     "godel",
     "gödel",
     "predicate logic",
-    "first order logic"
+    "first order logic",
+    "theory of algorithms"
   ],
   "course.set-theory": [
     "set theory",
@@ -408,7 +419,8 @@
     "algo",
     "complexity",
     "dynamic programming",
-    "big o"
+    "big o",
+    "algorithms and data structures"
   ],
   "course.computer-architecture": [
     "computer architecture",
@@ -440,7 +452,8 @@
     "theory of computation",
     "automata",
     "formal languages",
-    "complexity classes"
+    "complexity classes",
+    "computational complexity"
   ],
   "course.compilers": [
     "compilers",
@@ -514,7 +527,8 @@
     "thermodynamics",
     "thermo",
     "heat",
-    "entropy"
+    "entropy",
+    "molecular physics"
   ],
   "course.optics": [
     "optics",
@@ -537,7 +551,9 @@
     "quantum mechanics",
     "quantum",
     "schrodinger",
-    "schrödinger"
+    "schrödinger",
+    "quantum theory",
+    "quantum physics"
   ],
   "course.statistical-physics": [
     "statistical physics",
@@ -561,7 +577,8 @@
   "course.nuclear-physics": [
     "nuclear physics",
     "radioactivity",
-    "nuclei"
+    "nuclei",
+    "nuclear and particle physics"
   ],
   "course.astronomy-intro": [
     "astronomy",
@@ -691,7 +708,8 @@
   "course.physiology": [
     "physiology",
     "organ systems",
-    "homeostasis"
+    "homeostasis",
+    "human and animal physiology"
   ],
   "course.microbiology": [
     "microbiology",
@@ -1074,7 +1092,8 @@
     "popper",
     "kuhn",
     "falsification",
-    "paradigms"
+    "paradigms",
+    "history and philosophy of science"
   ],
   "course.philosophy-of-language": [
     "philosophy of language",
@@ -1123,7 +1142,8 @@
   "course.history-of-science-intro": [
     "history of science",
     "scientific revolution",
-    "science studies"
+    "science studies",
+    "methodology of science"
   ],
   "course.linguistics-intro": [
     "linguistics",

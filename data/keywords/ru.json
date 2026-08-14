@@ -251,13 +251,16 @@
     "calculus",
     "calculus 1",
     "calculus i",
-    "single variable calculus"
+    "single variable calculus",
+    "математический анализ"
   ],
   "course.calculus-2": [
     "матанализ 2",
     "ряды",
     "calculus 2",
-    "calculus ii"
+    "calculus ii",
+    "многомерный анализ",
+    "интегралы и ряды"
   ],
   "course.calculus-3": [
     "матанализ 3",
@@ -268,19 +271,24 @@
     "multivariable calculus",
     "vector calculus",
     "calculus 3",
-    "calculus iii"
+    "calculus iii",
+    "кратные интегралы и теория поля"
   ],
   "course.linear-algebra": [
     "линал",
     "линейная алгебра",
     "матрицы",
     "векторы",
-    "linear algebra"
+    "linear algebra",
+    "аналитическая геометрия",
+    "алгебра и геометрия",
+    "линейная алгебра и геометрия"
   ],
   "course.discrete-math": [
     "дискретка",
     "дискретная математика",
-    "discrete math"
+    "discrete math",
+    "дискретный анализ"
   ],
   "course.combinatorics": [
     "комбинаторика",
@@ -289,7 +297,8 @@
   "course.number-theory": [
     "теория чисел",
     "числа",
-    "number theory"
+    "number theory",
+    "элементы теории чисел"
   ],
   "course.abstract-algebra": [
     "общая алгебра",
@@ -300,7 +309,9 @@
     "поля",
     "abstract algebra",
     "modern algebra",
-    "algebra"
+    "algebra",
+    "представления групп и алгебр ли",
+    "дополнительные главы алгебры"
   ],
   "course.real-analysis": [
     "вещественный анализ",
@@ -310,11 +321,14 @@
   "course.complex-analysis": [
     "тфкп",
     "комплексный анализ",
-    "complex analysis"
+    "complex analysis",
+    "тфкп 1",
+    "тфкп 2"
   ],
   "course.topology": [
     "топология",
-    "topology"
+    "topology",
+    "геометрия и топология"
   ],
   "course.measure-theory": [
     "теория меры",
@@ -324,7 +338,9 @@
   "course.functional-analysis": [
     "функан",
     "функциональный анализ",
-    "functional analysis"
+    "functional analysis",
+    "спектральная теория операторов",
+    "линейный и нелинейный функциональный анализ"
   ],
   "course.differential-equations": [
     "диффуры",
@@ -338,12 +354,16 @@
     "урматы",
     "уравнения математической физики",
     "частные производные",
-    "pde"
+    "pde",
+    "методы математической физики"
   ],
   "course.differential-geometry": [
     "диффгем",
     "дифференциальная геометрия",
-    "differential geometry"
+    "differential geometry",
+    "риманова геометрия",
+    "классическая дифференциальная геометрия",
+    "дифференциальная геометрия и топология"
   ],
   "course.graph-theory": [
     "теория графов",
@@ -358,7 +378,8 @@
   "course.numerical-methods": [
     "численные методы",
     "вычматы",
-    "numerical methods"
+    "numerical methods",
+    "вычислительная математика"
   ],
   "course.category-theory": [
     "теория категорий",
@@ -367,13 +388,16 @@
   "course.logic-intro": [
     "логика",
     "введение в логику",
-    "logic"
+    "logic",
+    "классическая дедуктивная логика"
   ],
   "course.mathematical-logic": [
     "матлогика",
     "математическая логика",
     "гёдель",
-    "mathematical logic"
+    "mathematical logic",
+    "математическая логика и теория алгоритмов",
+    "теория алгоритмов"
   ],
   "course.set-theory": [
     "теория множеств",
@@ -405,7 +429,8 @@
   "course.random-processes": [
     "случайные процессы",
     "марковские цепи",
-    "stochastic processes"
+    "stochastic processes",
+    "теория случайных процессов"
   ],
   "course.bayesian-statistics": [
     "байес",
@@ -429,7 +454,8 @@
     "питон",
     "python",
     "введение в программирование",
-    "programming"
+    "programming",
+    "основы программирования и анализа данных"
   ],
   "course.data-structures": [
     "структуры данных",
@@ -438,7 +464,8 @@
   "course.algorithms": [
     "алгоритмы",
     "сложность",
-    "algorithms"
+    "algorithms",
+    "алгоритмы и структуры данных"
   ],
   "course.computer-architecture": [
     "архитектура компьютера",
@@ -467,7 +494,8 @@
     "теория вычислений",
     "автоматы",
     "формальные языки",
-    "theory of computation"
+    "theory of computation",
+    "сложность вычислений"
   ],
   "course.compilers": [
     "компиляторы",
@@ -496,7 +524,8 @@
   "course.software-engineering": [
     "программная инженерия",
     "разработка",
-    "software engineering"
+    "software engineering",
+    "технологии программирования"
   ],
   "course.computer-security": [
     "безопасность",
@@ -513,7 +542,8 @@
     "лагранж",
     "гамильтон",
     "теормех",
-    "analytical mechanics"
+    "analytical mechanics",
+    "теоретическая механика"
   ],
   "course.oscillations-waves": [
     "колебания",
@@ -524,12 +554,16 @@
     "электродинамика",
     "максвелл",
     "электричество",
-    "electrodynamics"
+    "electrodynamics",
+    "электромагнетизм",
+    "электричество и магнетизм"
   ],
   "course.thermodynamics": [
     "термодинамика",
     "термех",
-    "thermodynamics"
+    "thermodynamics",
+    "термодинамика и молекулярная физика",
+    "молекулярная физика"
   ],
   "course.optics": [
     "оптика",
@@ -543,19 +577,23 @@
   "course.general-relativity": [
     "ото",
     "общая теория относительности",
-    "general relativity"
+    "general relativity",
+    "современный курс гравитации"
   ],
   "course.quantum-mechanics": [
     "квантмех",
     "квантовая механика",
     "шрёдингер",
     "шредингер",
-    "quantum mechanics"
+    "quantum mechanics",
+    "квантовая теория",
+    "квантовая физика"
   ],
   "course.statistical-physics": [
     "статфизика",
     "статистическая физика",
-    "statistical physics"
+    "statistical physics",
+    "термодинамика и статистическая физика"
   ],
   "course.condensed-matter": [
     "физика твёрдого тела",
@@ -570,7 +608,8 @@
   ],
   "course.nuclear-physics": [
     "ядерная физика",
-    "nuclear physics"
+    "nuclear physics",
+    "физика атомного ядра"
   ],
   "course.astronomy-intro": [
     "астрономия",
@@ -666,7 +705,8 @@
   ],
   "course.physiology": [
     "физиология",
-    "physiology"
+    "physiology",
+    "физиология человека и животных"
   ],
   "course.microbiology": [
     "микробиология",
@@ -963,7 +1003,8 @@
   "course.philosophy-of-science": [
     "философия науки",
     "кун",
-    "поппер"
+    "поппер",
+    "история и философия науки"
   ],
   "course.philosophy-of-language": [
     "философия языка",
@@ -999,7 +1040,9 @@
   ],
   "course.history-of-science-intro": [
     "история науки",
-    "history of science"
+    "history of science",
+    "философия и методология естествознания",
+    "методология естествознания"
   ],
   "course.linguistics-intro": [
     "языкознание",

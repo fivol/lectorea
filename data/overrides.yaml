@@ -2294,5 +2294,67 @@ matches:
   PLq3E5oubNNoClucRERH34fq2KgKe_nOT3: null
   PL0Ks75aof3TiXMU6AVGQFTV209oVJF5uH: null
   PLuRaSnb3n4kQzlRF4u4pABiPlrsUv88Zq: null
+  # The keyword «математический анализ» added on 2026-08-13 pulls in the whole
+  # of a four-semester course, because the part number sits in a bracket the
+  # matcher reads as a separate clause: «[s3 | 2024] Математический анализ» is
+  # semester three and looks to a rule exactly like semester one. Sorted here by
+  # hand. The catalogue models three semesters and СПбГУ teaches four, so s4
+  # lands on the third — near enough to find, and worth moving if a fourth
+  # course is ever added.
+  # calculus-2 — 21 recordings
+  PLD371506BCA23A437: calculus-2
+  PLcNWqzWzYG2tsA_idtazrVigh_hG9Gjg3: calculus-2
+  PLd7QXkfmSY7Z0n_3iFl9ZLp5juDtRVcQl: calculus-2
+  PLwdnzlV3ogoUkP2M-GHJdM231wjRjJtTJ: calculus-2
+  PL-_cKNuVAYAXKd1VfOqFeL2p6UsiRMILz: calculus-2
+  PLd7QXkfmSY7YI2P5ayGz2dWKnOMbCPV0Y: calculus-2
+  PLd7QXkfmSY7ZBAuPu6ZPLE4LpVIzW4VQZ: calculus-2
+  PLd7QXkfmSY7bef1ijhbWpusxs1y7tANIA: calculus-2
+  PLq3E5oubNNoBTOdC7wTLE1BDeuZXFqYuE: calculus-2
+  PLUWSgPsx43FN7sy1fKdcRavr18rIN9qBk: calculus-2
+  PLd7QXkfmSY7ZwnNgHB7TLZVqf3EF6qJks: calculus-2
+  PLd7QXkfmSY7YppM1nXNRKzXeQN0TYfFBQ: calculus-2
+  PLd7QXkfmSY7ZsKAPwXLq7TdM20imFm5tn: calculus-2
+  PLd7QXkfmSY7b0BOZtWsddGaqjPaiUPu3m: calculus-2
+  PLd7QXkfmSY7YBHPWYFtgoH39hm-FDJ71A: calculus-2
+  PLd7QXkfmSY7avIqoacyLFhwAAfO-JQX7w: calculus-2
+  PLd7QXkfmSY7b0mhDelBSGsnBSDvdEzxbY: calculus-2
+  PLd7QXkfmSY7aJPPlh9Yju9NDLAilGbhYT: calculus-2
+  PLd7QXkfmSY7ZnFPuUeyCi9GOgmPAyeogU: calculus-2
+  PLd7QXkfmSY7a642pDvcnHmFp8cgJiptpt: calculus-2
+  PLd7QXkfmSY7a2ZIiyAaEbzAmKB-Km9pi0: calculus-2
+  # calculus-3 — 32 recordings
+  PLd7QXkfmSY7ZyU0_RKrhR5pdsjq-jpFyt: calculus-3
+  PLd7QXkfmSY7bsP0Yp0tKL4yVsWOTldEeJ: calculus-3
+  PLd7QXkfmSY7YPQder6ofimYIlxSKyLzKH: calculus-3
+  PLd7QXkfmSY7akj3hIeNTcldH1mKxemX5k: calculus-3
+  PLd7QXkfmSY7ZdWMi-bRINiKEUDXWFVxPL: calculus-3
+  PLd7QXkfmSY7YGp7n7jdWOTfo-DqecrDsr: calculus-3
+  PLd7QXkfmSY7YeJh1eqBMYzCqwsUH2hE6N: calculus-3
+  PLd7QXkfmSY7bXYxOfYqVIYj6aLIIadSRH: calculus-3
+  PLd7QXkfmSY7Y3Om5wdNXojVZVcCh_JeDh: calculus-3
+  PLd7QXkfmSY7YbFcRTIHdZIVNzzZ5O8Z70: calculus-3
+  PLd7QXkfmSY7Y6hfhfCeEKANgtgeaSOlwj: calculus-3
+  PLd7QXkfmSY7aJFjrF_65qeofbWGwyoBUz: calculus-3
+  PLcsjsqLLSfNAXNVy_7noV-pncs7kMgdwH: calculus-3
+  PLd7QXkfmSY7aPP10ABDv_6EehwcmzLU05: calculus-3
+  PLd7QXkfmSY7Yao98FSykd5gvYmoneeSSc: calculus-3
+  PLd7QXkfmSY7acKcvqBO9dAPaQj9DS8_wS: calculus-3
+  PLd7QXkfmSY7bElFpVdi8IrSQDNRESt51f: calculus-3
+  PLd7QXkfmSY7Y_yQEFhP8nL_FEP9BOVbOE: calculus-3
+  PLd7QXkfmSY7Z75Un7hV6oAWgOwvdDY2mD: calculus-3
+  PLd7QXkfmSY7aj4IqTKcV1329E_CyDCJr6: calculus-3
+  PLd7QXkfmSY7b7HLec9gJZ7FaYlgueZwLS: calculus-3
+  PLd7QXkfmSY7bxwPw0MK9S2RFzvsh9eXu5: calculus-3
+  PLd7QXkfmSY7aIQgXVTpHuxzOAS9Lri3i6: calculus-3
+  PLd7QXkfmSY7bPHOsJCXJnxB9PEGDGIBTi: calculus-3
+  PLd7QXkfmSY7YijgnbxumwpQeue3QBUT71: calculus-3
+  PLd7QXkfmSY7ZyJ00D_es8kDno9iXG0Jhk: calculus-3
+  PLd7QXkfmSY7ZDCnXT8QAA19PuErXoPg2_: calculus-3
+  PLd7QXkfmSY7aZhWzQ0nPyg4IEPiDO1VaY: calculus-3
+  PLd7QXkfmSY7b3QtmUZabpyx-vBTaIcG27: calculus-3
+  PLd7QXkfmSY7a4ccB3LEHfpKvc_ssI4A9i: calculus-3
+  PLd7QXkfmSY7bOSrF4UbVwxcshAsbBRdfx: calculus-3
+  PLd7QXkfmSY7bZxYDUfFlFKkiAHvuigHlo: calculus-3
 playlists: {}
 channels: {}
