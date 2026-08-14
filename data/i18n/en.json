@@ -997,5 +997,17 @@
   "link.economic-history.econ-intro": "The past is analysed with market models; without them it is a chronicle of prices.",
   "link.abstract-algebra.linear-algebra": "Groups and rings generalise what is already visible in matrices and vector spaces.",
   "link.category-theory.topology": "The first substantial examples are homotopies and sheaves; without topology the definitions are empty.",
-  "link.set-theory.mathematical-logic": "Axioms and independence are stated as claims about derivability."
+  "link.set-theory.mathematical-logic": "Axioms and independence are stated as claims about derivability.",
+  "link.field-archaeology.geodesy": "The excavation grid, find coordinates and site plan are surveying at an archaeological scale.",
+  "link.bioethics-intro.law-intro": "Patient consent, capacity and the limits of intervention are at once ethical questions and legal rules.",
+  "link.information-theory.signal-processing": "Entropy sets the limits of compression and transmission; signal processing shows how real data can approach them.",
+  "link.ml-intro.econometrics": "Both build models from data: machine learning puts prediction first, econometrics causal explanation and parameter estimation.",
+  "link.computer-vision.optics": "Lenses, projection and exposure explain how an image is formed before an algorithm begins to interpret it.",
+  "link.computer-vision.computer-graphics": "Vision recovers a scene from an image while graphics makes an image from a scene; they share camera geometry.",
+  "link.reinforcement-learning.control-theory": "Both choose actions over time: control starts from a model of the system, reinforcement learning learns through interaction.",
+  "link.behavioral-economics.cognitive-psychology": "Limited attention, memory and heuristics are the psychological machinery behind the departures from rational choice that behavioural economics measures.",
+  "link.international-relations.game-theory": "Deterrence, commitment and bargaining become games when the outcome depends on the other side's next move.",
+  "link.geodesy.linear-algebra": "Changing coordinate systems and adjusting a survey network are matrix transformations and systems of linear equations.",
+  "link.project-management.software-engineering": "Estimation, risk and iteration become concrete in software projects, while engineering practices depend on managing the whole project.",
+  "link.ocean-engineering.oceanography": "Oceanography describes waves, currents and the seabed; ocean engineering turns that environment into loads and design constraints."
 }

@@ -1617,3 +1617,32 @@
   title: 'Leucomustaceus: parerga otiosa'
   providerId: rggu
   lang: ru
+
+# ───────────────  Curated course publishers, 2026-08-14  ───────────────
+#
+# These three were checked against the publishers' own course catalogues rather
+# than a recommendation list. Each catalogue names several ordered courses that
+# map directly to subjects already here. Their catalogue pages are kept on the
+# providers, and Jeffrey Kaplan's playlist index is also imported as a source.
+
+# Principles of micro- and macroeconomics, econometrics, development economics,
+# international trade and finance. MRU's own teaching catalogue distinguishes
+# the courses from its interviews and topical series.
+- id: '@MarginalRevolutionUniversity'
+  title: Marginal Revolution University
+  providerId: mru
+  lang: en
+
+# More than 160 lessons arranged into subject sequences: critical thinking,
+# ethics, epistemology, political philosophy, bioethics and philosophy of mind.
+- id: '@WirelessPhilosophy'
+  title: Wireless Philosophy
+  providerId: wiphi
+  lang: en
+
+# The lecturer's own catalogue links complete courses in introductory
+# philosophy, ethics, philosophy of mind, philosophy of law and Descartes.
+- id: '@profjeffreykaplan'
+  title: Jeffrey Kaplan
+  providerId: jeffreykaplan
+  lang: en

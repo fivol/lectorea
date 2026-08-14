@@ -28,6 +28,9 @@
   domains: [political-science]
   stage: bachelor-1
   deps: [political-science-intro]
+  # Strategic models clarify deterrence and bargaining, but introductory IR is
+  # routinely taught without the probability and microeconomics behind them.
+  soft: [game-theory]
   related: [modern-history]
 
 - id: political-philosophy

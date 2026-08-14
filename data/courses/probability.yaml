@@ -46,3 +46,4 @@
   domains: [probability, cs]
   stage: bachelor-3
   deps: [probability]
+  related: [signal-processing]

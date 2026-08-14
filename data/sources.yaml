@@ -79,6 +79,16 @@
   repo: romulomourao/awesome-courses
   path: README.md
 
+# Small, subject-specific lists, but unusually dense in actual course
+# playlists: five ML courses and four compiler / programming-language courses.
+- id: awesome-machine-learning-courses
+  repo: josephmisiti/awesome-machine-learning
+  path: courses.md
+
+- id: awesome-compilers
+  repo: aalhour/awesome-compilers
+  path: README.md
+
 # ── Course catalogues on the open web ────────────────────────────────────────
 # Not GitHub, and not lists of links somebody collected: institutions and
 # editors publishing curricula, one playlist per course. Probed before being
@@ -93,3 +103,9 @@
 
 - id: openculture-languages
   url: https://www.openculture.com/freelanguagelessons
+
+# The lecturer's own index of complete philosophy courses, with direct playlist
+# links and reading lists. Unlike a general channel page, it already states the
+# unit the catalogue needs: one playlist per course.
+- id: jeffrey-kaplan-courses
+  url: https://www.jeffreykaplan.org/youtube

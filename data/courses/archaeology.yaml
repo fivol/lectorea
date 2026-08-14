@@ -24,3 +24,6 @@
   domains: [archaeology]
   stage: bachelor-1
   deps: [archaeology-intro]
+  # A field school teaches its own grid and level, but prior surveying makes
+  # total stations, coordinates and the site plan much less opaque.
+  soft: [geodesy]

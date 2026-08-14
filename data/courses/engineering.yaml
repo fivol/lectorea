@@ -72,5 +72,6 @@
   # MIT reaches it through hydrodynamics: 2.016 reads «Prereq: 2.005», the
   # thermal-fluids course that transport phenomena stands in for here.
   deps: [strength-of-materials, transport-phenomena]
+  related: [oceanography]
   refs:
     syllabus: https://catalog.mit.edu/subjects/2/

@@ -1213,3 +1213,22 @@
   title: Открытая археология
   type: platform
   country: RU
+
+# ───────────────  Curated course publishers, 2026-08-14  ───────────────
+
+- id: mru
+  title: Marginal Revolution University
+  type: platform
+  country: US
+  site: https://mru.org/
+
+- id: wiphi
+  title: Wireless Philosophy
+  type: platform
+  site: https://www.wi-phi.com/
+
+- id: jeffreykaplan
+  title: Jeffrey Kaplan
+  type: individual
+  country: US
+  site: https://www.jeffreykaplan.org/

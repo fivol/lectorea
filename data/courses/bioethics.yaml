@@ -19,3 +19,6 @@
   domains: [bioethics]
   stage: bachelor-2
   deps: [ethics, general-biology]
+  # The moral argument comes first; law is useful context for consent,
+  # capacity and regulation, not a condition for entering the course.
+  soft: [law-intro]

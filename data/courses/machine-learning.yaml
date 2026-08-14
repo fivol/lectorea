@@ -22,6 +22,7 @@
   # Probability is the gate; estimation, bias and confidence intervals are what
   # separate reading a metric from believing one.
   soft: [statistics]
+  related: [econometrics]
 
 - id: deep-learning
   domains: [machine-learning]
@@ -39,8 +40,13 @@
   domains: [machine-learning]
   stage: bachelor-4
   deps: [deep-learning, signal-processing]
+  # Vision courses model the camera, but usually introduce the imaging physics
+  # locally rather than making a full optics course a prerequisite.
+  soft: [optics]
+  related: [computer-graphics]
 
 - id: reinforcement-learning
   domains: [machine-learning]
   stage: bachelor-4
   deps: [ml-intro, random-processes]
+  related: [control-theory]

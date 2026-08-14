@@ -44,3 +44,6 @@
   domains: [economics]
   stage: bachelor-3
   deps: [microeconomics, psychology-intro]
+  # Intro psychology is enough to start; cognitive psychology supplies the
+  # detailed machinery behind attention, memory and judgement biases.
+  soft: [cognitive-psychology]

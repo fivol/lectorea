@@ -44,6 +44,9 @@
   domains: [earth-science]
   stage: bachelor-2
   deps: [statistics]
+  # Coordinate transforms and network adjustment are linear algebra in use,
+  # although introductory surveying courses often teach the pieces in place.
+  soft: [linear-algebra]
 
 - id: climatology
   domains: [earth-science]

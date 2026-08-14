@@ -5,7 +5,7 @@
   "course.cultural-anthropology": ["Social Anthropology", "Ethnology"],
 
   "course.archaeology-intro": ["Archaeology", "World Archaeology"],
-  "course.field-archaeology": ["Archaeological Field Methods", "Excavation Methods"],
+  "course.field-archaeology": ["Archaeological Field Methods", "Excavation Methods", "Archaeological Fieldwork"],
 
   "course.art-history-intro": ["History of Art", "Art History Survey"],
   "course.ancient-art": ["Classical Art and Archaeology"],
@@ -14,7 +14,7 @@
 
   "course.astronomy-intro": ["Astronomy", "Introductory Astronomy"],
   "course.astrophysics": ["Introduction to Astrophysics", "Astrophysics I"],
-  "course.celestial-mechanics": ["Orbital Mechanics", "Dynamical Astronomy"],
+  "course.celestial-mechanics": ["Orbital Mechanics", "Dynamical Astronomy", "Astrodynamics"],
   "course.cosmology": ["Introduction to Cosmology", "The Early Universe"],
 
   "course.biochemistry": ["Biological Chemistry", "Principles of Biochemistry"],
@@ -75,14 +75,14 @@
   "course.geochemistry": ["Introduction to Geochemistry", "Isotope Geochemistry"],
   "course.geophysics": ["Solid Earth Geophysics", "Exploration Geophysics"],
   "course.meteorology": ["Atmospheric Science", "Weather and Climate"],
-  "course.geodesy": ["Surveying", "Geodesy and Mapping"],
+  "course.geodesy": ["Surveying", "Geodesy and Mapping", "Geomatics"],
   "course.oceanography": ["Physical Oceanography", "Marine Science"],
-  "course.climatology": ["Climate Science"],
+  "course.climatology": ["Climate Science", "Climate Dynamics"],
 
   "course.econometrics": ["Applied Econometrics", "Econometrics I"],
   "course.time-series-econometrics": ["Econometrics II"],
 
-  "course.econ-intro": ["Principles of Economics"],
+  "course.econ-intro": ["Principles of Economics", "Economics 101"],
   "course.microeconomics": ["Intermediate Microeconomics", "Microeconomic Theory"],
   "course.macroeconomics": ["Intermediate Macroeconomics", "Macroeconomic Theory"],
   "course.behavioral-economics": ["Behavioural Finance", "Psychology and Economics"],
@@ -111,7 +111,7 @@
   "course.modern-history": ["Early Modern Europe", "Modern History"],
   "course.contemporary-history": ["Twentieth Century History", "The World Since 1945"],
   "course.historiography": ["Historical Method", "Theory of History"],
-  "course.economic-history": ["History of Economic Thought", "Global Economic History"],
+  "course.economic-history": ["Global Economic History", "Comparative Economic History"],
 
   "course.history-of-science-intro": ["History and Methodology of Science", "Science in History"],
 
@@ -136,7 +136,7 @@
   "course.typology": ["Languages of the World"],
 
   "course.literary-theory": ["Theory of Literature", "Introduction to Literary Theory"],
-  "course.poetics": ["Poetics and Versification", "Theory of Verse"],
+  "course.poetics": ["Poetics and Versification", "Theory of Verse", "Versification"],
   "course.ancient-literature": ["Greek and Roman Literature"],
   "course.russian-literature": ["History of Russian Literature"],
   "course.world-literature": ["Western Literature", "Comparative Literature"],
@@ -145,7 +145,7 @@
   "course.mathematical-logic": ["Logic and Computability", "Theory of Algorithms"],
   "course.set-theory": ["Axiomatic Set Theory", "Sets and Cardinals"],
   "course.computability": ["Recursion Theory"],
-  "course.model-theory": ["Model Theory and Algebraic Systems"],
+  "course.model-theory": ["Model Theory and Algebraic Systems", "Mathematical Model Theory"],
 
   "course.ml-intro": ["Machine Learning", "Statistical Learning"],
   "course.deep-learning": ["Neural Networks", "Deep Neural Networks"],

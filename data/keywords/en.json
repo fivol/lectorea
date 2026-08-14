@@ -359,17 +359,20 @@
     "decidability"
   ],
   "course.model-theory": [
-    "model theory"
+    "model theory",
+    "elementary model theory"
   ],
   "course.probability": [
     "probability",
     "probability theory",
+    "probability models",
     "random variables"
   ],
   "course.statistics": [
     "statistics",
     "stats",
     "mathematical statistics",
+    "statistical methods",
     "hypothesis testing"
   ],
   "course.random-processes": [
@@ -587,6 +590,7 @@
   "course.celestial-mechanics": [
     "celestial mechanics",
     "orbital mechanics",
+    "orbital dynamics",
     "orbits",
     "two body problem"
   ],
@@ -812,6 +816,7 @@
   "course.ml-intro": [
     "machine learning",
     "intro to machine learning",
+    "statistical machine learning",
     "supervised learning",
     "regression",
     "data mining"
@@ -1211,6 +1216,7 @@
   "course.poetics": [
     "poetics",
     "verse",
+    "versification",
     "metre",
     "meter",
     "prosody"
@@ -1275,6 +1281,7 @@
   ],
   "course.ethnomusicology": [
     "ethnomusicology",
+    "music cultures",
     "world music",
     "folk music",
     "traditional music"
@@ -1304,6 +1311,7 @@
   ],
   "course.field-archaeology": [
     "field archaeology",
+    "archaeological fieldwork",
     "excavation",
     "digs"
   ],
@@ -1430,12 +1438,14 @@
   "course.geodesy": [
     "geodesy",
     "surveying",
+    "photogrammetry",
     "gnss",
     "remote sensing"
   ],
   "course.climatology": [
     "climatology",
     "climate",
+    "climate dynamics",
     "climate change"
   ],
   "course.historical-geology": [

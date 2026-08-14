@@ -45,6 +45,7 @@
   domains: [management]
   stage: bachelor-3
   deps: [management-intro]
+  related: [software-engineering]
 
 - id: marketing
   domains: [management]
