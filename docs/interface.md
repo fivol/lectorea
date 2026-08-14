@@ -80,10 +80,29 @@ A front page answers "what is there"; somebody who has been here before is
 asking "where was I", and that answer used to be two presses away behind an
 avatar in the corner. So for a reader with a past here the front page carries
 it: the lecture that was playing, and the three numbers that say whether the
-habit is alive — days in a row, lectures watched, courses done. On a wide window
-it is a plate in the corner, on a narrower one a bar at the foot of the screen
-— where a thumb reaches it — and on the list view the first section of the
-page. A profile with nothing in it yet shows none of it.
+habit is alive — days in a row, hours this week, lectures this week. On a wide
+window it is a plate in the corner, on a narrower one a bar at the foot of the
+screen — where a thumb reaches it — and on the list view the first section of
+the page. A profile with nothing in it yet shows none of it.
+
+The numbers are about the week in hand rather than about everything, and the
+week starts on Monday. A lifetime total is a monument, and a monument says
+nothing about whether anybody is still studying: «312 лекций просмотрено» reads
+exactly the same on the morning somebody starts again and on the morning they
+give up. The run of days is the one figure here that reaches past the week — it
+is what the week is being kept for — and the totals are still in the profile
+panel, which is where somebody goes to look back rather than forward. A quiet
+week does not take the card away: it is the profile being empty that does that,
+not the week being.
+
+The hours are time actually spent, not time implied. The embedded player reports
+where the playhead is about every five seconds, and what counts is how far it
+travelled between two reports, capped by how long that took — a seek across an
+hour of a recording is a press of a button, not an hour of studying. Everything
+marked off by hand is credited its full length instead, because there is nothing
+to measure: a playlist sealed as watched is worth the lectures under it that had
+no tick of their own, and a lecture the player finishes on its own is worth
+nothing extra, having already been paid for as it played.
 
 The avatar stays in the header either way. The summary is a shortcut into the
 profile, not a replacement for the door to it, and two ways in cost nothing next
@@ -437,6 +456,11 @@ So it reads top to bottom as the routine it describes:
   theme is not a day of study, and a streak that could be kept alive by pressing
   the light switch would be worth nothing. A run may end yesterday rather than
   today: a day is not lost until it is over.
+
+  Each logged day also carries what it was worth — seconds studied and lectures
+  finished — which is what makes "this week" answerable at all, and what the
+  front page's card is counted from. Nothing else in the profile could answer
+  it: a tick says a lecture is behind you, never when it got there.
 - **Продолжить** — the last thing opened that is not finished, at the lecture
   and the second it was left at, one press away. The only card in the profile
   about right now; everything under it is a shelf of things decided at some

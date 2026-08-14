@@ -26,6 +26,16 @@ export const YT_ORIGIN = 'https://www.youtube-nocookie.com';
 /** How often a position is worth writing down. Four a second is not. */
 const WRITE_EVERY_MS = 5000;
 
+/**
+ * The fastest the tape can honestly move against the clock.
+ *
+ * Time watched is measured as the distance the playhead travelled between two
+ * reports, and a seek travels an hour in no time at all. So the distance is
+ * capped by how long it actually took, doubled — 2× is the quickest YouTube
+ * plays anything, and a reader who watches at double speed did watch it.
+ */
+const MAX_RATE = 2;
+
 /** Below this there is nothing to come back to — it is the start. */
 const RESUME_FLOOR_SEC = 15;
 
@@ -96,8 +106,12 @@ type Options = {
   /** Off while nothing is playing — no listener, no handshake. */
   enabled: boolean;
   iframe: React.RefObject<HTMLIFrameElement>;
-  /** Throttled, plus a final one whenever the lecture or the tab changes. */
-  onPosition: (videoId: string, sec: number) => void;
+  /**
+   * Throttled, plus a final one whenever the lecture or the tab changes.
+   * `played` is how much of the lecture actually went past since the last
+   * report — the seek-proof measure of time spent, see `MAX_RATE`.
+   */
+  onPosition: (videoId: string, sec: number, played: number) => void;
   /** Once per lecture, when enough of it is behind the reader. */
   onWatched: (videoId: string) => void;
   /**
@@ -126,6 +140,12 @@ export function useYouTubeTracking({ enabled, iframe, onPosition, onWatched, onE
   ended.current = onEnded;
 
   const current = useRef<{ id: string; sec: number } | null>(null);
+  /**
+   * Where the playhead was, and when — the two ends of the last stretch of
+   * watching. Reset whenever the lecture changes, so a jump to another one is
+   * never mistaken for an hour of it going past.
+   */
+  const from = useRef<{ id: string; sec: number; at: number } | null>(null);
   const lastWrite = useRef(0);
   const counted = useRef(new Set<string>());
   /** Lectures already walked away from, so one ending moves on exactly once. */
@@ -134,8 +154,14 @@ export function useYouTubeTracking({ enabled, iframe, onPosition, onWatched, onE
   const flush = useCallback(() => {
     const playing = current.current;
     if (!playing || !playing.sec) return;
-    position.current(playing.id, playing.sec);
-    lastWrite.current = Date.now();
+    const now = Date.now();
+    const start = from.current?.id === playing.id ? from.current : null;
+    const played = start
+      ? Math.max(0, Math.min(playing.sec - start.sec, ((now - start.at) / 1000) * MAX_RATE))
+      : 0;
+    from.current = { id: playing.id, sec: playing.sec, at: now };
+    position.current(playing.id, playing.sec, played);
+    lastWrite.current = now;
   }, []);
 
   const handshake = useCallback(() => {
@@ -170,7 +196,13 @@ export function useYouTubeTracking({ enabled, iframe, onPosition, onWatched, onE
         flush();
         current.current = null;
       }
-      if (id && !current.current) current.current = { id, sec: 0 };
+      if (id && !current.current) {
+        current.current = { id, sec: 0 };
+        // Where this one is starting from, which after a resume is the middle
+        // of it: measuring the first stretch from zero would book twenty
+        // minutes nobody watched today.
+        from.current = { id, sec: typeof sec === 'number' ? sec : 0, at: Date.now() };
+      }
       if (!current.current) return;
       if (typeof sec === 'number') current.current.sec = sec;
 
@@ -218,6 +250,7 @@ export function useYouTubeTracking({ enabled, iframe, onPosition, onWatched, onE
       document.removeEventListener('visibilitychange', flush);
       flush();
       current.current = null;
+      from.current = null;
     };
   }, [enabled, flush, handshake]);
 

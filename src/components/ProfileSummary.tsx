@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { useActivity } from '@/lib/activity';
+import { useActivity, type Week } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
+import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useResumePointer, type ResumePointer } from '@/lib/progress';
 import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
@@ -18,22 +19,30 @@ import { Button } from './ui';
  * behind an avatar in the corner. So the front page carries it: the lecture
  * that was playing, and the three numbers that say whether the habit is alive.
  *
- * Every number here is labelled with what it counts. A bare «27» over the word
+ * The numbers are about the week in hand rather than about everything. A
+ * lifetime total is a monument, and a monument says nothing about whether
+ * anybody is still studying: «312 лекций просмотрено» reads exactly the same on
+ * the morning somebody starts again and on the morning they give up. So hours
+ * and lectures are counted from Monday, and the run of days is the one figure
+ * here that reaches past the week — it is what the week is being kept for. The
+ * totals are still in the panel, which is where somebody goes to look back.
+ *
+ * Every number is labelled with what it counts. A bare «27» over the word
  * «лекций» is four different facts depending on who is reading it — watched,
  * saved, available, left — and a dashboard nobody can read is decoration.
  *
  * Nothing on it costs a download. The playlist that was open last, the lecture
- * that was playing, the ticks and the days of study are all in the profile
- * already; the one thing it cannot know without the playlist shards is how far
- * through that playlist somebody is, so it does not claim to. That number is in
- * the panel, where the files are worth fetching.
+ * that was playing, and the log of days with what each one was worth are all in
+ * the profile already; the one thing it cannot know without the playlist shards
+ * is how far through that playlist somebody is, so it does not claim to. That
+ * number is in the panel, where the files are worth fetching.
  */
 
 export type Highlights = {
   resume: ResumePointer | null;
-  lectures: number;
-  coursesDone: number;
   streak: number;
+  /** Hours and lectures since Monday. */
+  week: Week;
   /** Whether there is anything at all worth showing. */
   any: boolean;
 };
@@ -44,21 +53,25 @@ export function useHighlights(): Highlights {
   const resume = useResumePointer();
   const activity = useActivity();
 
-  const counts = useMemo(() => {
-    let coursesDone = 0;
+  /*
+   * Whether there is a past here at all — which is a different question from
+   * what this week holds. The card shows the week, but a quiet week is not an
+   * empty profile, and the card must not disappear every Monday morning from
+   * under somebody who has been coming here for a year.
+   */
+  const studied = useMemo(() => {
+    for (const mark of Object.values(profile.videos)) if (mark.done) return true;
     for (const [id, entry] of Object.entries(profile.courses)) {
-      if (entry.status === 'done' && catalog.courseById.has(id)) coursesDone += 1;
+      if (entry.status === 'done' && catalog.courseById.has(id)) return true;
     }
-    let lectures = 0;
-    for (const mark of Object.values(profile.videos)) if (mark.done) lectures += 1;
-    return { coursesDone, lectures };
+    return false;
   }, [profile.courses, profile.videos, catalog]);
 
   return {
     resume,
     streak: activity.streak,
-    ...counts,
-    any: Boolean(resume || counts.coursesDone || counts.lectures || activity.total),
+    week: activity.week,
+    any: Boolean(resume || activity.total || studied),
   };
 }
 
@@ -92,7 +105,7 @@ function SummaryCard({
   className: string;
 }) {
   const { t, plural } = useT();
-  const { resume, lectures, coursesDone, streak } = highlights;
+  const { resume, week, streak } = highlights;
   const openProfile = useUi((state) => state.openProfile);
   const floating = variant === 'card';
 
@@ -132,13 +145,10 @@ function SummaryCard({
               label={t('ui.profile.stats.streak', { noun: plural(streak, 'day') })}
             />
           ) : null}
+          <WeekTime seconds={week.seconds} />
           <Tile
-            value={lectures}
-            label={t('ui.profile.stats.lectures', { noun: plural(lectures, 'lecture') })}
-          />
-          <Tile
-            value={coursesDone}
-            label={t('ui.profile.stats.courses', { noun: plural(coursesDone, 'course') })}
+            value={week.lectures}
+            label={t('ui.profile.stats.week', { noun: plural(week.lectures, 'lecture') })}
           />
         </div>
       </div>
@@ -158,7 +168,7 @@ function SummaryCard({
 function SummaryBar({ highlights, className }: { highlights: Highlights; className: string }) {
   const { t, count, plural } = useT();
   const catalog = useCatalog();
-  const { resume, lectures, streak } = highlights;
+  const { resume, week, streak } = highlights;
   const openProfile = useUi((state) => state.openProfile);
   const openResume = useOpenResume();
 
@@ -178,7 +188,7 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
           {streak
             ? `${t('ui.home.streak', { n: streak, noun: plural(streak, 'day') })} · `
             : ''}
-          {count(lectures, 'lecture')}
+          {t('ui.profile.stats.week', { noun: count(week.lectures, 'lecture') })}
         </span>
         <Icon name="chevron-right" size={12} className="shrink-0" />
       </button>
@@ -285,7 +295,43 @@ function Thumbnail({
   );
 }
 
-function Tile({ value, label }: { value: number; label: string }) {
+/**
+ * The week's time, in whatever unit it is actually in.
+ *
+ * Under an hour the answer is minutes: «0,7 часа» is a number nobody reads as
+ * forty minutes, and the first week of a habit is spent entirely below the hour
+ * mark — which is exactly the week this card is trying to keep alive.
+ */
+function WeekTime({ seconds }: { seconds: number }) {
+  const { t, plural } = useT();
+
+  if (seconds < 3600) {
+    const minutes = formatMinutes(seconds);
+    return (
+      <Tile
+        value={minutes}
+        label={t('ui.profile.stats.week', { noun: plural(minutes, 'minute') })}
+      />
+    );
+  }
+
+  const printed = formatHours(hoursFromSeconds(seconds));
+  // A fraction takes the genitive singular in Russian — «1,5 часа» — which is
+  // the form 2–4 take, so a printed fraction is pluralised as if it were two.
+  // Read back off the printed text rather than the number: past ten hours the
+  // decimal is dropped, and «12 часа» would be the reward for not looking.
+  const shown = Number(printed);
+  return (
+    <Tile
+      value={printed}
+      label={t('ui.profile.stats.week', {
+        noun: plural(Number.isInteger(shown) ? shown : 2, 'hour'),
+      })}
+    />
+  );
+}
+
+function Tile({ value, label }: { value: number | string; label: string }) {
   return (
     <span
       className="flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5

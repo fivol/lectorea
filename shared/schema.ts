@@ -477,8 +477,31 @@ export type CourseStatus = z.infer<typeof CourseStatus>;
  */
 export const VIDEO_DONE_FRACTION = 0.9;
 
+/**
+ * A day of study, and what it was worth.
+ *
+ * The profile is a set of marks — this lecture is behind you, that course is
+ * finished — and a mark says nothing about *when*. Every `at` in it is a last
+ * time: study the same playlist for ten days running and it records one date.
+ * So the days are logged as they happen, and since a log is being kept anyway,
+ * it keeps the two numbers that make "this week" answerable at all.
+ *
+ * `sec` is time the reader actually spent: what the embedded player reported
+ * playing, plus the length of anything ticked off by hand — see `credit()` in
+ * the store, which is the only thing that writes here.
+ */
+export const DayLogSchema = z.object({
+  /** Local `YYYY-MM-DD` — the day it felt like, not the UTC one. */
+  day: z.string(),
+  /** Seconds of study credited to it. */
+  sec: z.number().default(0),
+  /** Lectures finished on it. */
+  lectures: z.number().default(0),
+});
+export type DayLog = z.infer<typeof DayLogSchema>;
+
 export const ProfileSchema = z.object({
-  version: z.literal(2),
+  version: z.literal(3),
   updatedAt: z.string(),
   courses: z
     .record(
@@ -574,18 +597,13 @@ export const ProfileSchema = z.object({
     )
     .default([]),
   /**
-   * The days something was studied, as local `YYYY-MM-DD`, oldest first.
+   * The days something was studied, oldest first — see `DayLogSchema`.
    *
-   * A log rather than a counter, because the question people ask is "how many
-   * days in a row" and a counter cannot answer it after the fact. Nothing else
-   * in the profile can either: every `at` here is a *last* time — study the
-   * same playlist for ten days running and it records one date, which would
-   * make a streak counted from it a lie.
-   *
-   * Local dates, not UTC: a lecture watched at eleven at night in Moscow
-   * belongs to the day it felt like, not to the next one.
+   * A log rather than a counter, because the questions people ask are "how many
+   * days in a row" and "how much this week", and a counter can answer neither
+   * after the fact.
    */
-  days: z.array(z.string()).default([]),
+  days: z.array(DayLogSchema).default([]),
   settings: z
     .object({
       // `catch` rather than `default`: a profile carrying a language this build
@@ -639,7 +657,7 @@ export type VideoMark = Profile['videos'][string];
 /** Long enough to cover "what was that lecture last month", short enough to stay in localStorage. */
 export const RECENT_LIMIT = 60;
 
-/** Two years of study days is four kilobytes, and nobody counts a streak longer. */
+/** Two years of study days is a few tens of kilobytes, and nobody counts a streak longer. */
 export const DAYS_LIMIT = 730;
 
 /**
@@ -650,31 +668,50 @@ export const DAYS_LIMIT = 730;
 export const PROFILE_KEY = 'catalog.profile.v1';
 
 /** The shape this build writes. Anything higher was written by a newer site. */
-export const PROFILE_VERSION = 2;
+export const PROFILE_VERSION = 3;
 
 /**
  * A stored profile brought up to the current shape.
  *
- * Version 1 knew nothing of lectures: it had a tick per course and a tick per
- * playlist, and both mean exactly what they still mean, so the migration is
- * only the version number — every field added since has a default, and zod
- * fills them in. Returned as unknown rather than parsed here, so the caller
- * keeps one parse and one place that decides what a failed parse means.
+ * Each step is a separate `if`, so a profile arriving from any version walks
+ * through all of them in order rather than needing a path of its own. Returned
+ * as unknown rather than parsed here, so the caller keeps one parse and one
+ * place that decides what a failed parse means.
+ *
+ * Nothing is ever lost in a step: a version 1 profile knew nothing of lectures
+ * but its ticks mean exactly what they still mean, and a version 2 one had days
+ * of study with nothing counted against them. What cannot be recovered is time
+ * spent before the log existed, so those days start at zero — the streak they
+ * carry is the part that was actually recorded.
  */
 export function migrateProfile(raw: unknown): unknown {
   if (!raw || typeof raw !== 'object') return raw;
   const version = (raw as { version?: unknown }).version;
-  if (version !== 1) return raw;
+  if (typeof version !== 'number' || version >= PROFILE_VERSION) return raw;
+
+  const next: Record<string, unknown> = {
+    ...(raw as Record<string, unknown>),
+    version: PROFILE_VERSION,
+  };
 
   // Every status in a version 1 profile was pressed by hand — there was no
   // other way to set one — so they all carry the flag that keeps the new
   // automation from re-deciding them.
-  const courses = (raw as { courses?: Record<string, object> }).courses ?? {};
-  const claimed = Object.fromEntries(
-    Object.entries(courses).map(([id, entry]) => [id, { ...entry, manual: true }])
-  );
+  if (version < 2) {
+    const courses = (next.courses ?? {}) as Record<string, object>;
+    next.courses = Object.fromEntries(
+      Object.entries(courses).map(([id, entry]) => [id, { ...entry, manual: true }])
+    );
+  }
 
-  return { ...(raw as object), version: PROFILE_VERSION, courses: claimed };
+  // Version 2 logged the bare day. It becomes a day worth nothing measured,
+  // which is the truth about it rather than a guess.
+  if (version < 3) {
+    const days: unknown[] = Array.isArray(next.days) ? next.days : [];
+    next.days = days.map((day) => (typeof day === 'string' ? { day, sec: 0, lectures: 0 } : day));
+  }
+
+  return next;
 }
 
 /* ────────────────────────────  Constants  ──────────────────────────── */

@@ -281,6 +281,7 @@
   "ui.profile.stats.lectures": "{noun} watched",
   "ui.profile.stats.courses": "{noun} done",
   "ui.profile.stats.streak": "{noun} in a row",
+  "ui.profile.stats.week": "{noun} this week",
   "ui.profile.stats.best": "best run {n}",
   "ui.profile.stats.daysTotal": "{days} with something marked",
   "ui.profile.stats.lastWeeks": "The last {n} weeks",

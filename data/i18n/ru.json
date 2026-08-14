@@ -281,6 +281,7 @@
   "ui.profile.stats.lectures": "{noun} просмотрено",
   "ui.profile.stats.courses": "{noun} пройдено",
   "ui.profile.stats.streak": "{noun} подряд",
+  "ui.profile.stats.week": "{noun} за неделю",
   "ui.profile.stats.best": "лучшая серия {n}",
   "ui.profile.stats.daysTotal": "всего {days} с отметками",
   "ui.profile.stats.lastWeeks": "Последние {n} недели",
