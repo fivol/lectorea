@@ -44,6 +44,13 @@ import {
  * Which keeps `restore` safe to run unconditionally on every job — the point of
  * the old rule — while making it mean something: a job takes the release when
  * the release is ahead of it, and otherwise carries on with what it has.
+ *
+ * With one asymmetry, in `shouldRestore`: **a laptop may refuse the release, a
+ * runner may not.** Every refusal there means "there is crawling on this disk
+ * and nowhere else", which is a real thing to protect on somebody's machine and
+ * cannot be true in CI — `refresh` publishes before it saves, so a runner's
+ * cache is always either the published generation or a copy of one. Letting CI
+ * refuse bought nothing and cost a site that silently stopped updating.
  */
 
 const TAG = 'data-cache';
@@ -298,6 +305,37 @@ function shouldRestore(local: string | null): boolean {
     return false;
   }
 
+  // Asked before anything else that could refuse, so that the common case —
+  // this copy is already the published generation — costs the sidecar and not
+  // the snapshot. Guarded on `local` because a copy with no generation at all
+  // cannot be up to date with anything.
+  if (local && remote.published_at <= local) {
+    console.log(`· up to date — this cache and the release are both ${local}`);
+    return false;
+  }
+
+  // Past here the release is ahead, or this copy has no generation to compare —
+  // and the two refusals below both mean "there is work on this disk and
+  // nowhere else". On a runner there is no such work. `refresh` publishes
+  // before it saves the Actions cache, so anything CI has crawled is already on
+  // the release, and everything else it holds is a copy of something. So the
+  // release is simply the truth, and CI takes it.
+  //
+  // Without this the failure is silent, which is what makes it worth a branch:
+  // an Actions cache saved before the publish that would have stamped it (as
+  // the one from 2026-08-13 was) sends every later deploy down the `!local`
+  // refusal. The deploy still succeeds, the site still serves, and the
+  // catalogue quietly stops moving — it took comparing `meta.json` against the
+  // release stamp by hand to notice 858 playlists were missing.
+  //
+  // The trade is deliberate: an unstamped runner cache that had crawled beyond
+  // the release loses that crawl. Publish-before-save is what stops that state
+  // from arising, and a runner's evening is worth less than a stale site.
+  if (process.env.CI) {
+    console.log(`· CI holds nothing of its own — taking the release (${remote.published_at})`);
+    return true;
+  }
+
   if (!local) {
     // Crawled here from nothing, and never published: there is no generation to
     // compare, and the material exists on this disk and nowhere else.
@@ -305,11 +343,6 @@ function shouldRestore(local: string | null): boolean {
       `· this cache has never been in a snapshot, so nothing says which is newer.\n` +
         `  pnpm cache:publish to make it the one everybody follows, or --force to replace it.`
     );
-    return false;
-  }
-
-  if (remote.published_at <= local) {
-    console.log(`· up to date — this cache and the release are both ${local}`);
     return false;
   }
 
