@@ -11,7 +11,7 @@ import { useResolvedTheme } from '@/store/profile';
 import { Plate, PlateDivider, IconButton } from '@/components/ui';
 import { SLAB } from '@shared/view';
 import { hexPath } from '@shared/tiles';
-import { groundOf, HEX_CLIP } from './ground';
+import { groundOf, scenerySquare, HEX_CLIP } from './ground';
 import { useMapViewport, ZOOM_STEP, type MapPlan } from './viewport';
 
 /**
@@ -312,12 +312,38 @@ function planOf(map: ParsedMap, depth: number, variant: MapVariant): MapPlan {
 }
 
 /**
+ * What the reader can see, with a margin round it, rounded outwards onto a
+ * grid.
+ *
+ * The rounding is the whole point of the thing. A box that follows the window
+ * exactly is a different box sixty times a second, and everything worked out
+ * from one — which region a filter has to be rasterised in, which pieces of the
+ * map are worth building — would then be reconsidered on every frame of a drag.
+ * On a grid it changes a handful of times across the width of the map and holds
+ * perfectly still in between, which is what lets the answers be kept.
+ */
+function coarsely(
+  seen: { x: number; y: number; w: number; h: number },
+  margin: { x: number; y: number },
+  grid: number
+): Rect {
+  const x = Math.floor((seen.x - margin.x) / grid) * grid;
+  const y = Math.floor((seen.y - margin.y) / grid) * grid;
+  const right = Math.ceil((seen.x + seen.w + margin.x) / grid) * grid;
+  const bottom = Math.ceil((seen.y + seen.h + margin.y) / grid) * grid;
+  return { x, y, w: right - x, h: bottom - y };
+}
+
+/** The whole drawing, for the moment before the window has been measured. */
+const everything = (
+  window: { x: number; y: number; w: number; h: number } | null,
+  extent: { width: number; height: number }
+): { x: number; y: number; w: number; h: number } =>
+  window ?? { x: 0, y: 0, w: extent.width, h: extent.height };
+
+/**
  * The rectangle the shallows are worked out in: what the reader can see, and a
  * blur's worth of margin so the falloff finishes rather than stopping square.
- *
- * Rounded outwards onto a coarse grid, so that dragging the map redefines the
- * region a few times rather than sixty times a second — a filter whose region
- * changes is a filter that has to be rasterised again.
  */
 const SHORE_GRID = 64;
 
@@ -325,14 +351,38 @@ function shoreRegion(
   window: { x: number; y: number; w: number; h: number } | null,
   extent: { width: number; height: number }
 ): { x: number; y: number; width: number; height: number } {
-  const seen = window ?? { x: 0, y: 0, w: extent.width, h: extent.height };
   const margin = SHORE_BLUR * 4;
-  const x = Math.floor((seen.x - margin) / SHORE_GRID) * SHORE_GRID;
-  const y = Math.floor((seen.y - margin) / SHORE_GRID) * SHORE_GRID;
-  const right = Math.ceil((seen.x + seen.w + margin) / SHORE_GRID) * SHORE_GRID;
-  const bottom = Math.ceil((seen.y + seen.h + margin) / SHORE_GRID) * SHORE_GRID;
-  return { x, y, width: right - x, height: bottom - y };
+  const box = coarsely(everything(window, extent), { x: margin, y: margin }, SHORE_GRID);
+  return { x: box.x, y: box.y, width: box.w, height: box.h };
 }
+
+/**
+ * How much more than the window the scenery is drawn for, as a share of the
+ * window on each side.
+ *
+ * The relief and the sea are six thousand of the map's eight thousand nodes and
+ * every measurable millisecond of a drag, and a phone can see about a quarter
+ * of them. So the map draws the window rather than the world: pieces outside
+ * this box are never built and never mounted, and the cost of moving the map
+ * becomes a fact about the screen instead of a fact about the catalogue.
+ *
+ * The margin is what stops that being visible, and it does not have to be much:
+ * the box is worked out afresh from the viewport on every render and rounded
+ * outwards onto the grid, so it already covers the window and up to a piece
+ * more on each side before this is added at all. What is left to insure against
+ * is the frame between a gesture moving the map and React drawing the answer,
+ * which at the speed a thumb travels is a fraction of a screen.
+ */
+const SCENERY_MARGIN = 0.08;
+
+const sceneryRegion = (
+  window: { x: number; y: number; w: number; h: number } | null,
+  extent: { width: number; height: number },
+  grid: number
+): Rect => {
+  const seen = everything(window, extent);
+  return coarsely(seen, { x: seen.w * SCENERY_MARGIN, y: seen.h * SCENERY_MARGIN }, grid);
+};
 
 type Props = {
   /** Domains matching the current search; empty means "no query typed". */
@@ -476,9 +526,28 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
    * light and the dark; the land does not, and is redrawn identically.
    */
   const ground = useMemo(
-    () => (map ? groundOf(map, scheme) : { fields: [], ocean: '' }),
+    () => (map ? groundOf(map, scheme) : { fields: [], ocean: [] }),
     [map, scheme]
   );
+
+  /**
+   * The box the scenery is drawn for, and the same box in the sea's own
+   * coordinates — the water is painted at the foot of the cliffs, a whole
+   * wall's height below the ground the territories stand on.
+   *
+   * Held by value rather than by identity. It is worked out from the viewport,
+   * which moves on every frame of a drag, and the whole drawing hangs off it —
+   * but on the grid it is rounded onto it comes out the same four numbers for
+   * most of that drag, and this is what turns "the same numbers" into "the same
+   * object" so the memo below can tell nothing has happened.
+   */
+  const region = sceneryRegion(
+    viewport.window,
+    { width: map?.width ?? 0, height: (map?.height ?? 0) + depth },
+    scenerySquare(map?.grid?.r ?? CELL_FALLBACK)
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- by value, on purpose
+  const seen = useMemo(() => region, [region.x, region.y, region.w, region.h]);
 
   /**
    * The whole lettering layout, recomputed only when the map or the language
@@ -518,6 +587,19 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
    */
   const drawing = useMemo(() => {
     if (!map) return null;
+
+    /**
+     * The scenery worth drawing, on the two layers that carry it. The sea sits
+     * a wall's height below the ground, so the box has to come down to meet it.
+     */
+    const seenSea = { ...seen, y: seen.y - depth };
+    const ocean = ground.ocean.filter((piece) => overlaps(piece.box, seenSea));
+    const relief = ground.fields
+      .map((field) => ({
+        ...field,
+        pieces: field.pieces.filter((piece) => overlaps(piece.box, seen)),
+      }))
+      .filter((field) => field.pieces.length > 0);
 
     /**
      * Dimming answers a filter, never a cursor.
@@ -580,14 +662,24 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
             At the foot of the cliffs, like the shallows below: the surface of the
             sea is where the land stands *in* it, not where the ground on top of
             the land is.
+
+            In pieces, and only the ones the reader is anywhere near: the water
+            is the heaviest layer on the map and the one least of which is ever
+            on screen. The wash over it stays on the group rather than going
+            down to the pieces — a group at less than full strength is drawn to
+            a surface of its own and then blended, so one wash over the visible
+            water is one such surface, and thirty would be thirty.
           */}
           <g
             className="pointer-events-none"
             aria-hidden="true"
             opacity={OCEAN_INK}
             transform={`translate(0 ${depth})`}
-            dangerouslySetInnerHTML={{ __html: ground.ocean }}
-          />
+          >
+            {ocean.map((piece) => (
+              <g key={piece.id} dangerouslySetInnerHTML={{ __html: piece.markup() }} />
+            ))}
+          </g>
 
           {/* The water brightening as it shallows towards every shore, all of it
               in one pass and under all of the land. It belongs to the surface of
@@ -745,13 +837,16 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
             is the territory's, and on this map that colour is the data.
           */}
           <g className="pointer-events-none" aria-hidden="true">
-            {ground.fields.map((patch) => (
+            {relief.map((field) => (
               <g
-                key={patch.domainId}
-                opacity={emphasisOf(patch.domainId) === 'dim' ? GROUND_DIM : GROUND_INK}
+                key={field.domainId}
+                opacity={emphasisOf(field.domainId) === 'dim' ? GROUND_DIM : GROUND_INK}
                 style={{ transition: reducedMotion ? 'none' : 'opacity 220ms ease-out' }}
-                dangerouslySetInnerHTML={{ __html: patch.markup }}
-              />
+              >
+                {field.pieces.map((piece) => (
+                  <g key={piece.id} dangerouslySetInnerHTML={{ __html: piece.markup() }} />
+                ))}
+              </g>
             ))}
           </g>
 
@@ -822,6 +917,8 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
   }, [
     map,
     ground,
+    seen,
+    depth,
     placements,
     continents,
     scale,
