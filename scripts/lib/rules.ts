@@ -195,6 +195,20 @@ const NOT_A_COURSE: RegExp[] = [
   /(?<![\p{L}\p{N}])(?:интервью|interviews?|конференци\p{L}*|коллоквиум|colloquium|seminar series)(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:recent videos|popular videos|все видео|новые видео|остальное)(?![\p{L}\p{N}])/u,
 
+  // A chapter of a course, published as its own playlist. «CPU Scheduling |
+  // Chapter 5 | Operating System» names its course in a clause of its own, so
+  // it binds as confidently as the course itself — and the catalogue then shows
+  // sixteen entries that are each a sixteenth of one semester. The unit here is
+  // the semester; docs/channel-hunt.md refused a whole channel for this shape
+  // and the rule is the same judgement made cheaply. 171 playlists on
+  // 2026-08-14, every one of them a fragment.
+  //
+  // A bare number is what separates this from «Матанализ. Часть 2», which is a
+  // real half of a real course and keeps its number through the NOISE pass
+  // above: «часть» is deliberately absent here, and matched 0 of the 230 titles
+  // that use it.
+  /^(?:chapter|глава)\s*\d+$/u,
+
   // Entertainment. Until the wide seams of docs/harvest.md existed, every
   // playlist came from a channel somebody had vetted, and this list had no need
   // of the category. A description saying «music I play before the lecture» and

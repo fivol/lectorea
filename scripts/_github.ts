@@ -19,6 +19,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { openDb } from './lib/db.js';
+import { PLAYLIST_ID_IN_TEXT } from './lib/playlist-id.js';
 import { queuePlaylists } from './lib/queue.js';
 
 const run = promisify(execFile);
@@ -37,7 +38,8 @@ const SUBJECTS = [
   'neuroscience', 'geology', 'astronomy', 'medicine', 'bioinformatics',
 ];
 
-const PLAYLIST_ID = /(?:list=|playlist\/)(PL[A-Za-z0-9_-]{16,32})(?![A-Za-z0-9_-])/g;
+/** Which prefixes and lengths count, and why: lib/playlist-id.ts. */
+const PLAYLIST_ID = PLAYLIST_ID_IN_TEXT;
 
 /** One argument is one subject, so a rate-limited run can be resumed by name. */
 const subjects = process.argv.slice(2).length ? process.argv.slice(2) : SUBJECTS;

@@ -1,5 +1,6 @@
 import { parseLimit, reportRemaining } from './lib/config.js';
 import { openDb } from './lib/db.js';
+import { PLAYLIST_ID_IN_TEXT } from './lib/playlist-id.js';
 import { queuePlaylists } from './lib/queue.js';
 import { reportSourceError } from './lib/sources.js';
 
@@ -17,14 +18,8 @@ import { reportSourceError } from './lib/sources.js';
  * docs/harvest.md.
  */
 
-/**
- * `PL` only, and deliberately so. `UU…` is a channel's entire uploads — the
- * most expensive bin there is and never a course; `OLAK5uy…` is an
- * auto-generated music album; `RD`, `LL` and `WL` are mixes and private lists
- * that resolve to nothing. Ids are 16 or 32 characters after the prefix, the
- * legacy hex form and the current one.
- */
-const PLAYLIST_ID = /(?:list=|playlist\/)(PL[A-Za-z0-9_-]{16,32})(?![A-Za-z0-9_-])/g;
+/** Which prefixes and lengths count, and why: lib/playlist-id.ts. */
+const PLAYLIST_ID = PLAYLIST_ID_IN_TEXT;
 
 function main(): void {
   const limit = parseLimit();
@@ -69,7 +64,7 @@ function main(): void {
   for (const [origin, count] of [...byOrigin].sort((a, b) => b[1] - a[1]))
     console.log(`· ${origin}: ${count}`);
 
-  const { added, skipped } = queuePlaylists(
+  const { added, skipped, rejected } = queuePlaylists(
     db,
     [...found.keys()].map((id) => ({ id })),
     'mined',
@@ -78,6 +73,7 @@ function main(): void {
 
   db.close();
   console.log(`✓ data:mine: ${added} new playlists queued, ${found.size} found`);
+  if (rejected) console.log(`· ${rejected} refused as malformed ids`);
   reportRemaining(skipped, limit);
   console.log('· run `pnpm data:refresh` to fetch them, then `pnpm data:match`');
 }

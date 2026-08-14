@@ -163,6 +163,33 @@ request wants a bound that does not depend on the API agreeing to end it.
 difference between "fix the parser and re-run" and "fix the parser and wait
 until tomorrow".
 
+### An id that cannot exist still costs four requests
+
+The seams in [harvest.md](harvest.md) scrape playlist ids out of prose, and
+prose supplies share links glued to the next word by a broken table. Three
+scripts each kept their own copy of the extraction pattern, written
+`PL[A-Za-z0-9_-]{16,32}` under a comment saying the id is "16 or 32 characters
+after the prefix" — but a comma in a quantifier is a *range*, not a choice, so
+every length from 18 to 34 was accepted and a mangled link produced an id that
+looked entirely plausible. 245 of them reached the database; 240 reached the
+video queue, where each one climbed the whole retry ladder earning
+`400 Invalid Value` before being written off.
+
+Two things came out of it, and the second is the one worth keeping:
+
+- the three forms an id actually takes now live in `scripts/lib/playlist-id.ts`
+  — `PL` + 32, `PL` + 16 hex, `PL` + a video id, which is every id that ever
+  resolved across 32 914 rows — and `queuePlaylists` refuses anything else. It
+  is already **the one door** every scraped playlist comes through, which is
+  what makes it the place to check that an id is an id;
+- a pattern kept in three copies gets edited in two. The comment was right and
+  all three regexes were wrong, twice over, because each copy was written from
+  the comment rather than from the other copy.
+
+A truncated id is the expensive half, not a refused one: refusing costs nothing,
+while a plausible id is indistinguishable from a real one until the API charges
+to say otherwise.
+
 ### The playlists the player will not open
 
 Alive is not the same as playable, and the API cannot tell the difference.

@@ -1075,3 +1075,141 @@
 - id: billkinney
   title: Bill Kinney
   type: individual
+
+# ───────────────────  Hunt of 2026-08-14: the thin courses  ────────────────────
+
+- id: osu
+  title: Ohio State University
+  type: university
+  country: US
+  site: https://osu.edu/
+
+- id: carleton
+  title: Carleton University
+  type: university
+  country: CA
+  site: https://carleton.ca/
+
+- id: pism
+  title: Penn Initiative for the Study of Markets
+  type: university
+  country: US
+  site: https://pism.sas.upenn.edu/
+
+- id: igu
+  title: Иркутский государственный университет
+  type: university
+  country: RU
+  site: https://isu.ru/
+
+- id: garage
+  title: Музей современного искусства «Гараж»
+  type: platform
+  country: RU
+  site: https://garagemca.org/
+
+- id: glazariy
+  title: Глазарий языка
+  type: platform
+  country: RU
+
+- id: ernestoamaral
+  title: Ernesto Amaral
+  type: individual
+
+- id: soumyas
+  title: Soumya S
+  type: individual
+
+- id: vinaylal
+  title: Vinay Lal
+  type: individual
+
+- id: stanislavfurta
+  title: Станислав Фурта
+  type: individual
+
+- id: travisleeclark
+  title: Travis Lee Clark
+  type: individual
+
+- id: timothywilson
+  title: Timothy H. Wilson
+  type: individual
+
+- id: adamwalker
+  title: Adam Walker
+  type: individual
+
+- id: masoodraja
+  title: Masood Raja
+  type: individual
+
+- id: martinschweinberger
+  title: Martin Schweinberger
+  type: individual
+
+- id: jonathannewman
+  title: Jonathan M. Newman
+  type: individual
+
+- id: shaneross
+  title: Shane Ross
+  type: individual
+
+- id: alexsimpson
+  title: Alex Simpson
+  type: individual
+
+- id: anilrao
+  title: Anil V. Rao
+  type: individual
+
+- id: matthewpeet
+  title: Matthew Peet
+  type: individual
+
+- id: fizmehmat
+  title: Математика и физика на пальцах
+  type: individual
+
+- id: awesomebiochemistry
+  title: Awesome Biochemistry
+  type: individual
+
+- id: arizona
+  title: University of Arizona
+  type: university
+  country: US
+  site: https://arizona.edu/
+
+- id: bhu
+  title: Banaras Hindu University
+  type: university
+  country: IN
+  site: https://bhu.ac.in/
+
+- id: etsu
+  title: East Tennessee State University
+  type: university
+  country: US
+  site: https://etsu.edu/
+
+- id: rggu
+  title: РГГУ
+  type: university
+  country: RU
+  site: https://rggu.ru/
+
+- id: alexanderschmid
+  title: Alexander Schmid
+  type: individual
+
+- id: victorsolkin
+  title: Виктор Солкин
+  type: individual
+
+- id: openarchaeology
+  title: Открытая археология
+  type: platform
+  country: RU

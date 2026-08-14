@@ -159,13 +159,70 @@ psychology. All humanities, all under-published by the universities the crawl is
 built from — and all well covered by individual teachers, which is why the bar
 above does not ask for a university.
 
+## Seam 7 — the material already crawled and not bound
+
+The cheapest seam of all, and the last one anybody looks at: a course can be
+empty because nothing was crawled for it, or because what was crawled never
+bound. The two look identical from `pnpm stats` and want opposite work.
+
+```bash
+pnpm tsx scripts/_refusals.ts                 # the counts, by reason
+pnpm tsx scripts/_refusals.ts no-phrase       # and the titles in one bucket
+```
+
+`matches` records the verdict and never the reason, so ten thousand refusals
+read as one problem when they are five. Sorted by the step that stopped them:
+
+| Reason | What it means | What fixes it |
+|---|---|---|
+| `no-phrase` | no course keyword occurs in the title at all | a keyword, an alias — or a course the catalogue lacks |
+| `below-threshold` | matched, under 0.75 | the review queue proper |
+| `weak-coverage` | the subject is there but is a minority of its clause | usually a clause the segmenter should split further |
+| `ambiguous` | two courses claim it equally | a human, or a tie to break |
+| `not-a-course` | `NOT_A_COURSE` caught a clause | usually right |
+
+Two lessons from working the buckets on 2026-08-14, both of which generalise:
+
+**Cluster before reading.** Sorting refusals by video count surfaces topic bins,
+because bins are enormous — «Stanford Seminars» is 1140 videos and correctly
+refused. Grouping them by their longest cleaned clause instead names the
+systematic gaps: eight playlists whose subject clause was «теория колец и полей»,
+six «гладкие многообразия», thirteen a genitive form of a course name the
+keywords only had in the nominative. One keyword each, about two hundred
+playlists bound.
+
+**A tie blocks both courses.** Two courses owning the same phrase is refused by
+design — that ambiguity is what a human is for — but it is a *bug* when one of
+the two simply has a redundant copy. `«climate»` sat under both `meteorology`
+and `climatology`, so no climate title reached either. Find them all with:
+
+```bash
+pnpm tsx scripts/_noisy.ts        # keywords that claim clauses and never win
+```
+
+which also names the opposite failure: a phrase loose enough to mean something
+else in five fields. `«survey»` under `field-archaeology` had claimed land
+surveying, geological surveys, drone surveying and four surveys *of English
+literature*. It never bound anything — the damage is invisible in the catalogue
+and real in the review queue and in the video queue's tiers, which is quota.
+Read `overrides.yaml` and not just `matches` when judging one: a hand-bound
+playlist keeps whatever stale guess a pass last wrote.
+
 ## Doing a hunt
 
 1. `pnpm data:mine` — free, always first.
 2. `pnpm tsx scripts/_holes.ts` — free, tells you which channels to add.
-3. Add sources to `data/sources.yaml`, then `pnpm data:import`.
-4. `pnpm data:refresh` to fetch what got queued, `pnpm data:match` to bind it.
-5. `pnpm stats` to see what is still empty, and go to seam 6.
+3. `pnpm tsx scripts/_refusals.ts` — free, and cheaper than any channel: bind
+   what is already on disk before paying to crawl more.
+4. Add sources to `data/sources.yaml`, then `pnpm data:import`.
+5. `pnpm data:refresh` to fetch what got queued, `pnpm data:match` to bind it.
+6. `pnpm stats` to see what is still empty, and go to seam 6.
+
+Change a keyword and `scripts/_probe.ts` says what it would do to the whole
+catalogue before `--force` writes anything — gained, lost, and which courses
+stop being empty. Nothing in this page should be committed without it: three of
+the ten keywords added on 2026-08-14 were reverted because the probe showed what
+they dragged in.
 
 Record what was refused as well as what was added — [channel-hunt.md](channel-hunt.md)
 explains why that half is the more useful one.

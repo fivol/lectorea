@@ -194,12 +194,114 @@ sites, not as video. **Typology** rests entirely on one unit of `@oer-vlc`, and
 **celestial mechanics** on one Лекториум course already crawled. Russian-language
 quantum chemistry, ТОЭ and ТАУ have single recordings but no channel.
 
+## The third hunt, 2026-08-14 — the thin courses, and the ones that were not thin at all
+
+The second hunt closed the empty courses. This one asked the next question down:
+which courses sit at **one or two playlists**, where one channel disappearing
+takes the subject with it. Twenty courses fitted, and five parallel searches
+took four each. 31 channels added, 265 → 296, and coverage went from 99.0% to
+**99.5%** — 205 of 206 courses, with only `poetics` left.
+
+What it bought, counted after the crawl — 13 of the 20 briefed courses moved:
+
+| Course | Before | After | What did it |
+|---|---:|---:|---|
+| modern-art | 2 | 7 | `@arthistorywithtravisleecla6343`, `@GARAGEMCA`, `@EastTennesseeState` |
+| demography | 1 | 6 | `@ErnestoFLAmaral` — five semesters of one course |
+| celestial-mechanics | 2 | 5 | Ross, Rao, Peet, Carleton, `@fizmehmat` |
+| archaeology-intro | 2 | 5 | `@dr.robs.archaeofilms`, Открытая археология |
+| ancient-literature | 1 | 4 | `@alexandereliotschmid`, `@theliteraturechannel9755` |
+| project-management | 2 | 4 | `@stanislavfurta7614` |
+| historiography, economic-history, morphology, historical-linguistics, computability, enzymology | 1–2 | +1 each | |
+| **field-archaeology** | **0** | **1** | `@SWAYAM-INI-BHU` — the course the last hunt said did not exist |
+
+Seven did not move, and the reason divides them cleanly. `corpus-linguistics`,
+`typology` and `time-series-econometrics` got their channel and the playlist
+that should have bound was a clause short of the threshold — a matching problem,
+fixed in the same session from `_refusals.ts` rather than by crawling anything.
+`model-theory`, `ethnomusicology`, `ancient-art` and `poetics` got nothing
+because there is nothing.
+
+**Celestial mechanics is the finding.** It read as one of the barest courses in
+the catalogue and was nothing of the kind — it was simply that nobody had looked
+at aerospace engineers' own channels. Four of them hold six full courses between
+them. A course can look empty because the material is absent, or because the
+search has only ever been pointed at universities.
+
+### Refused for size, and mined by hand instead
+
+Three channels cleared the bar on quality and were refused on arithmetic. Each
+owns material the catalogue wants, and taking the channel would have bought that
+material at a thousand times its price:
+
+| Channel | 10+ playlists | Why not |
+|---|---:|---|
+| Virtual University of Pakistan | 466 of 517 | Every "course" is a 300-clip topic dump titled `ENG509_Topic001…`; most of the channel is education and teacher training, which the catalogue has no courses for |
+| Vidya-mitra (e-PG Pathshala) | 1072 of 1455 | Behind discipline bins of 3100 and 1934 videos. Its two linguistics modules are genuinely wanted; the other thousand are not |
+| МЦМУ МИАН | 236 of 296 | «Общеинститутский семинар» 228, «Прямая трансляция» 197, four летние школы — the conference-archive shape, at the expensive end |
+
+The lesson is not "refuse big channels". It is that **the unit a channel
+publishes in decides whether the channel is the right thing to buy.** When a
+channel's unit is wrong but two of its playlists are right, `pnpm playlist:add`
+costs one unit and the channel costs thousands.
+
+### What this hunt refused, beyond the categories that held
+
+**A personal channel with a course inside it.** `@johnpfrazier`'s top playlists
+are *Alyssa's Rockin' 80's Remix* (157) and *Grand Circle Vacation 2013* (77);
+the two real art-history surveys are outnumbered. `@solubleshark` and
+`@JamesElkins` each own exactly one course — a 73-lecture modern art history and
+a graduate seminar — on channels otherwise full of photographs and soundscapes.
+Both courses are worth having; neither channel is worth crawling.
+
+**Chapters again, in a new disguise.** `@AxiomTutor` publishes *Model Theory,
+Ch. 1*, *Set Theory, Ch. 1* and *The Real Analysis Minute!* — the Carnie refusal
+with better production. This hunt also taught `lib/rules.ts` the shape directly:
+a clause that is a bare «Chapter N» is now support material, which retired 171
+playlists that had each been binding to their own course as confidently as the
+course itself.
+
+**Conference archives wearing a course's name.** `@econrsa`'s «ERSA Course:»
+playlists are real, and four fifths of the channel is webinars and workshops.
+
+### Courses that are genuinely empty, re-confirmed
+
+**poetics** is now the only course in the catalogue with nothing, and for a
+recorded reason rather than for want of looking. Two channels were added
+specifically for it and neither filled it: what they teach is *poetry* —
+«Lectures on English Poetry», «A Survey of English Poetry» — and a poetry survey
+is a literature course, not a course on verse theory. Binding them would have
+filled the number and emptied the meaning, which is the trade `lib/rules.ts` is
+written to refuse. They earn their line for world literature instead. The only
+Russian стиховедение found, `@litweb1888`'s mini-courses, runs to seven and
+eight videos.
+
+**field-archaeology, by contrast, was wrong rather than empty** — see the
+section above. The difference between the two is worth keeping in mind before
+the next hunt writes a course off: nobody had searched for field archaeology in
+Hindi-university courseware, and everybody had searched for poetics.
+
+**ethnomusicology**
+was searched again in both languages and holds: the discipline publishes field
+recordings and interviews, not syllabi. **model-theory** and Russian
+**enzymology**, **corpus-linguistics** and **demography** have no channel at all;
+they will stay where they are until somebody films one.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this
 used; they take a file of handles or ids and print the numbers above. Neither is
 wired into `pnpm` — a channel hunt happens once or twice a year, and the useful
 half of it is the judgement, not the script.
+
+A hunt now has a second half worth budgeting for. `scripts/_refusals.ts` sorts
+the playlists the rules refused by *why*, and the 2026-08-14 hunt found that the
+larger win was there rather than in the channels: adding a channel bought nine
+playlists across five courses, while the keywords the refusals named bought
+about two hundred. A course that looks thin is as likely to be a matching
+problem as a coverage one — `Appreciating linguistics: A typological approach`,
+66 lectures, had been sitting in the cache bound to `linguistics-intro` at 0.68
+the whole time.
 
 The method that worked twice now: **count the holes first, and let the empty
 courses write the brief.** A ranked list of channels answers a question nobody

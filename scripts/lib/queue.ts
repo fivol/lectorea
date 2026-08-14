@@ -1,5 +1,6 @@
 import { nowIso } from './config.js';
 import { MATCH_THRESHOLD, type Db } from './db.js';
+import { isPlaylistId } from './playlist-id.js';
 import { QuotaExceededError, NotFoundError, TransientError } from './youtube.js';
 
 /**
@@ -125,13 +126,21 @@ export function enqueue(db: Db, type: JobType, target: string): void {
  *
  * The limit applies to genuinely new rows, so running the same command again
  * continues where it stopped instead of redoing the same head of the list.
+ *
+ * Being the one door is also what makes it the right place to check the id is
+ * an id. Everything arriving here was scraped out of prose, and prose supplies
+ * share links glued to the next word, hand-typed ids and half-copied URLs — an
+ * id malformed in a way no pattern anticipated still costs four requests on the
+ * retry ladder before the API's `400` is believed. A caller may extract however
+ * it likes; nothing that is not a playlist id gets a row. See playlist-id.ts
+ * for which forms exist and what the 245 rows that taught this cost.
  */
 export function queuePlaylists(
   db: Db,
   items: Iterable<{ id: string; title?: string }>,
   origin: string,
   limit = Infinity
-): { added: number; skipped: number } {
+): { added: number; skipped: number; rejected: number } {
   const insert = db.prepare(
     `INSERT INTO playlists (id, channel_id, title, video_count, alive, checked_at, next_refresh_at)
      VALUES (?, ?, ?, 0, 1, ?, ?)
@@ -141,8 +150,13 @@ export function queuePlaylists(
 
   let added = 0;
   let skipped = 0;
+  let rejected = 0;
   db.transaction(() => {
     for (const item of items) {
+      if (!isPlaylistId(item.id)) {
+        rejected += 1;
+        continue;
+      }
       if (added >= limit) {
         if (!exists.get(item.id)) skipped += 1;
         continue;
@@ -154,7 +168,7 @@ export function queuePlaylists(
     }
   })();
 
-  return { added, skipped };
+  return { added, skipped, rejected };
 }
 
 /**

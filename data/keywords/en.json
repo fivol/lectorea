@@ -254,9 +254,8 @@
     "group theory",
     "groups",
     "rings",
-    "fields",
-    "algebra",
-    "lie algebras"
+    "lie algebras",
+    "galois theory"
   ],
   "course.real-analysis": [
     "real analysis",
@@ -365,14 +364,12 @@
   "course.probability": [
     "probability",
     "probability theory",
-    "prob",
     "random variables"
   ],
   "course.statistics": [
     "statistics",
     "stats",
     "mathematical statistics",
-    "inference",
     "hypothesis testing"
   ],
   "course.random-processes": [
@@ -425,15 +422,14 @@
   "course.computer-architecture": [
     "computer architecture",
     "computer organization",
-    "cpu",
-    "hardware"
+    "cpu"
   ],
   "course.operating-systems": [
     "operating systems",
+    "operating system",
     "os",
     "linux",
-    "kernel",
-    "processes"
+    "kernel"
   ],
   "course.networks": [
     "computer networks",
@@ -521,7 +517,8 @@
     "electrodynamics",
     "electromagnetism",
     "electricity and magnetism",
-    "maxwell"
+    "maxwell",
+    "electromagnetic theory"
   ],
   "course.thermodynamics": [
     "thermodynamics",
@@ -578,7 +575,8 @@
     "nuclear physics",
     "radioactivity",
     "nuclei",
-    "nuclear and particle physics"
+    "nuclear and particle physics",
+    "particle physics"
   ],
   "course.astronomy-intro": [
     "astronomy",
@@ -633,7 +631,6 @@
   "course.analytical-chemistry": [
     "analytical chemistry",
     "titration",
-    "spectroscopy",
     "quantitative analysis"
   ],
   "course.quantum-chemistry": [
@@ -652,8 +649,7 @@
   "course.meteorology": [
     "meteorology",
     "weather",
-    "atmospheric science",
-    "climate"
+    "atmospheric science"
   ],
   "course.oceanography": [
     "oceanography",
@@ -734,12 +730,12 @@
     "enzymology",
     "enzymes",
     "enzyme kinetics",
-    "catalysis"
+    "catalysis",
+    "enzyme"
   ],
   "course.bioinformatics-intro": [
     "bioinformatics",
     "intro to bioinformatics",
-    "sequence alignment",
     "blast"
   ],
   "course.sequence-analysis": [
@@ -810,13 +806,15 @@
     "robotics",
     "robots",
     "motion planning",
-    "slam"
+    "slam",
+    "robot operating system"
   ],
   "course.ml-intro": [
     "machine learning",
     "intro to machine learning",
     "supervised learning",
-    "regression"
+    "regression",
+    "data mining"
   ],
   "course.deep-learning": [
     "deep learning",
@@ -909,7 +907,6 @@
   "course.social-research-methods": [
     "social research methods",
     "surveys",
-    "interviews",
     "qualitative methods"
   ],
   "course.demography": [
@@ -1308,8 +1305,7 @@
   "course.field-archaeology": [
     "field archaeology",
     "excavation",
-    "digs",
-    "survey"
+    "digs"
   ],
   "course.latin": [
     "latin",
@@ -1401,7 +1397,8 @@
   "course.digital-logic": [
     "digital logic",
     "logic design",
-    "boolean algebra"
+    "boolean algebra",
+    "digital system design"
   ],
   "course.analog-electronics": [
     "analog electronics",

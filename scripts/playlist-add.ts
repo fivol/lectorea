@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parseDocument } from 'yaml';
 import { env, paths } from './lib/config.js';
 import { openDb } from './lib/db.js';
+import { isPlaylistId } from './lib/playlist-id.js';
 import { loadCourseFiles, reportSourceError, SourceError } from './lib/sources.js';
 import { seedManualMatches } from './lib/tasks.js';
 import { createClient, QuotaExceededError } from './lib/youtube.js';
@@ -28,12 +29,19 @@ import { createClient, QuotaExceededError } from './lib/youtube.js';
 
 type Args = { playlistId: string; courseId?: string };
 
-/** Both the share link and the watch-page URL carry the id in `list=`. */
+/**
+ * Both the share link and the watch-page URL carry the id in `list=`.
+ *
+ * What comes back is a *well-formed* id or nothing: a hand-pasted link is
+ * exactly where a half-copied id comes from, and lib/playlist-id.ts is the
+ * record of what an id loosely accepted here goes on to cost downstream.
+ */
 export function playlistIdFrom(input: string): string | undefined {
   const trimmed = input.trim();
-  if (/^[A-Za-z0-9_-]{12,}$/.test(trimmed) && !trimmed.includes('/')) return trimmed;
-  const match = /[?&]list=([A-Za-z0-9_-]{12,})/.exec(trimmed);
-  return match?.[1];
+  const candidate = trimmed.includes('/')
+    ? /[?&]list=([A-Za-z0-9_-]+)/.exec(trimmed)?.[1]
+    : trimmed;
+  return candidate && isPlaylistId(candidate) ? candidate : undefined;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -53,6 +61,8 @@ function parseArgs(argv: string[]): Args {
     throw new SourceError(`No playlist id in "${input}"`, [
       'A video link is not a playlist link — the id is the `list=` parameter,',
       'and a `watch?v=…` without one points at one video out of the course.',
+      'An id that looks right but is refused is usually a half-copied one:',
+      '`PL` followed by 32 characters, 16 hex digits, or a video id.',
     ]);
   }
 
