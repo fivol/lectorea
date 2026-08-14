@@ -293,7 +293,7 @@
   "ui.profile.goal.off": "Без цели",
   "ui.profile.goal.hours": "{n} ч",
   "ui.profile.goal.of": "{done} из {goal} ч",
-  "ui.profile.goal.met": "цель взята",
+  "ui.profile.goal.met": "выполнена",
   "ui.profile.stats.goalPath": "Путь к избранному",
   "ui.profile.group.in_progress": "Сейчас изучаю",
   "ui.profile.group.done": "Пройдено",

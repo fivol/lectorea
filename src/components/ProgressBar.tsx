@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 type Props = {
   done: number;
@@ -24,8 +24,14 @@ type Props = {
    * reader can say out loud.
    */
   fill?: number;
-  /** Rendered to the right of the bar; mono, so the digits do not jitter. */
-  label?: string;
+  /**
+   * Rendered to the right of the bar; mono, so the digits do not jitter.
+   *
+   * A node rather than a string, so a caller can colour its own numbers — a
+   * week's goal turns them accent the moment it is made — without this
+   * component growing a prop for every mood a number can be in.
+   */
+  label?: ReactNode;
   className?: string;
 };
 

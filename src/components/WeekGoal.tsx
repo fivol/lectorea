@@ -26,38 +26,95 @@ import { Button, Segmented } from './ui';
  * where the choosing belongs.
  */
 
-/** The bar and its caption — «4.1 из 5 часов». Nothing at all without a goal. */
+/**
+ * The front page's copy: what the bar is, then the bar.
+ *
+ * The name is not decoration here. On the panel the bar stands under a heading
+ * and beside the week it is measured against; on a plate in the corner of a map
+ * it stands under three tiles of its own, and «0.9 из 5 ч» on its own is a
+ * riddle — five of what, and whose. One line answers it, and the mark in front
+ * of the line is the same one the panel puts on the setting.
+ */
 export function WeekGoalBar({ className = '' }: { className?: string }) {
   const goal = useWeekGoal();
   if (!goal) return null;
-  return <GoalBar goal={goal} className={className} />;
+
+  return (
+    <div className={`space-y-1 ${className}`}>
+      <GoalName goal={goal} size={11} className="text-[10px] leading-none" />
+      <GoalBar goal={goal} />
+    </div>
+  );
+}
+
+/**
+ * What the bar is, and whether it is finished with.
+ *
+ * The two screens say it the same way, at two sizes. A week that has been made
+ * says so in a word — a full bar is a fact somebody has to read off a shape,
+ * and «выполнена» is the one thing worth saying out loud on the day it happens.
+ */
+function GoalName({
+  goal,
+  size,
+  className = '',
+}: {
+  goal: WeekGoal;
+  size: number;
+  className?: string;
+}) {
+  const { t } = useT();
+
+  return (
+    <span className={`flex items-center gap-1.5 ${className}`}>
+      {/* The name stays quiet even on the day it is made: the news is the word
+          after it, and two accents in one line leave the eye nowhere to land. */}
+      <span className="flex items-center gap-1.5">
+        <Icon name="target" size={size} />
+        {t('ui.profile.goal.week')}
+      </span>
+      {goal.met ? (
+        <span className="flex items-center gap-1 font-semibold text-accent">
+          <Icon name="check" size={size} />
+          {t('ui.profile.goal.met')}
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 function GoalBar({ goal, className = '' }: { goal: WeekGoal; className?: string }) {
   const { t } = useT();
 
+  /*
+   * Both numbers in hours whatever the size of either: «45 минут из 5 часов» is
+   * two units in one sentence, and the reader has to convert one of them before
+   * the comparison the line exists for can happen.
+   *
+   * The unit is abbreviated, and that is grammar rather than economy. Russian
+   * «из» takes the genitive, where every numeral above one wants «часов» — «из
+   * 3 часов» — while the plural rule the rest of the site runs on would agree it
+   * with the numeral and write «из 3 часа». «ч» does not decline, so the line is
+   * right in every language that writes its own template around it.
+   */
+  const label = t('ui.profile.goal.of', { done: formatHours(goal.done), goal: goal.hours });
+
   return (
     <ProgressBar
       // Clamped for the bar's own `aria-valuenow`, which has to sit inside its
-      // range — «4,1 из 3» is a fine thing to read and not a thing to announce.
-      // The label below still says what was really done.
+      // range — «6,6 из 5» is a fine thing to read and not a thing to announce.
       done={Math.min(goal.done, goal.hours)}
       total={goal.hours}
       fill={goal.fraction}
       className={className}
       /*
-       * Both numbers in hours whatever the size of either: «45 минут из 5
-       * часов» is two units in one sentence, and the reader has to convert one
-       * of them before the comparison the line exists for can happen.
-       *
-       * The unit is abbreviated, and that is grammar rather than economy.
-       * Russian «из» takes the genitive, where every numeral above one wants
-       * «часов» — «из 3 часов» — while the plural rule the rest of the site
-       * runs on would agree it with the numeral and write «из 3 часа». «ч»
-       * does not decline, so the line is right in every language that writes
-       * its own template around it.
+       * The label keeps counting past the goal. A week of six hours against a
+       * target of five is the best week somebody has had, and rounding it down
+       * to «5 из 5» would take that away to tidy up an arithmetic that nobody
+       * was confused by. Accented once it is made: the bar is full and green,
+       * and the number beside it should be saying the same thing.
        */
-      label={t('ui.profile.goal.of', { done: formatHours(goal.done), goal: goal.hours })}
+      label={goal.met ? <span className="text-accent">{label}</span> : label}
     />
   );
 }
@@ -84,12 +141,12 @@ export function WeekGoalRow() {
     return (
       <div className="mt-2 border-t border-line pt-2">
         {/* A ghost is a word rather than a plate and carries no layout of its
-            own, so the star in front of it needs one — otherwise the icon
+            own, so the mark in front of it needs one — otherwise the icon
             takes a line to itself. */}
         <Button
           variant="ghost"
           small
-          icon="star"
+          icon="target"
           className="inline-flex items-center gap-1.5"
           onClick={() => setEditing(true)}
         >
@@ -102,13 +159,7 @@ export function WeekGoalRow() {
   return (
     <div className="mt-2 space-y-2 border-t border-line pt-2">
       <div className="flex items-baseline gap-2 text-xs text-ink-faint">
-        <span>{t('ui.profile.goal.week')}</span>
-        {goal?.met ? (
-          <span className="flex items-center gap-1 text-accent">
-            <Icon name="check" size={12} />
-            {t('ui.profile.goal.met')}
-          </span>
-        ) : null}
+        {goal ? <GoalName goal={goal} size={12} /> : <span>{t('ui.profile.goal.week')}</span>}
         <Button
           variant="ghost"
           small

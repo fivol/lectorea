@@ -495,11 +495,24 @@ So it reads top to bottom as the routine it describes:
 
   The choosing folds away once it is done — a permanent row of seven buttons
   under a number reads as a control panel rather than as a week — and the bar
-  alone travels to the front page, where there is room to see how far along the
-  week is and none to argue about how long it should be. The unit is written
-  «ч» rather than «часов» on purpose: Russian «из» takes the genitive, where
-  «из 3 часов» is right and the plural rule the rest of the site runs on would
-  write «из 3 часа». An abbreviation does not decline.
+  travels to the front page, where there is room to see how far along the week
+  is and none to argue about how long it should be. It travels with its name:
+  «0,9 из 5 ч» alone under three tiles is a riddle about what five of what
+  belongs to whom, and one dim line answers it. The unit is written «ч» rather
+  than «часов» on purpose: Russian «из» takes the genitive, where «из 3 часов»
+  is right and the plural rule the rest of the site runs on would write «из 3
+  часа». An abbreviation does not decline.
+
+  A week that has been made says so in a word — «выполнена», accented, on both
+  screens — because a full bar is a fact somebody has to read off a shape. The
+  numbers keep counting past the goal while they are at it: six hours against a
+  target of five is the best week somebody has had, and rounding it to «5 из 5»
+  would take that away to tidy an arithmetic nobody was confused by.
+
+  The mark on all of it is a target rather than a star. The star already means a
+  favourite course — which is a goal of an entirely different kind, with its own
+  bar three lines below — and one glyph carrying both is how a reader learns to
+  trust neither.
 - **Продолжить** — the last thing opened that is not finished, at the lecture
   and the second it was left at, one press away. The only card in the profile
   about right now; everything under it is a shelf of things decided at some
