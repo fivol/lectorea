@@ -173,6 +173,29 @@ function fieldScore(haystack: string, needle: string): number {
   return 0;
 }
 
+/**
+ * The other name that put this row in the list, when its own name did not.
+ *
+ * Half the catalogue's recordings are titled with a name that is not the
+ * catalogue's, so a query is often somebody's own course name — «ТФКП»,
+ * «теормех», «сопромат» — landing on a row that says something else entirely.
+ * Without this the dropdown answers a question nobody asked and highlights
+ * nothing, which reads as a mistake rather than as a match.
+ *
+ * Null when the name itself matched: the highlight already explains that one,
+ * and repeating it would put the same word on the line twice.
+ */
+export function matchedAlias(entry: SearchEntry, raw: string): string | null {
+  if (!entry.a?.length) return null;
+  for (const variant of queryVariants(raw)) {
+    if (!variant) continue;
+    if (fieldScore(normalize(entry.n), variant) > 0) return null;
+    const hit = entry.a.find((alias) => fieldScore(normalize(alias), variant) > 0);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 export type Scored = { entry: SearchEntry; score: number };
 
 /**

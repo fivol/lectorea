@@ -654,11 +654,11 @@ matches:
   PLcKUIuDhdLl_gDfL4oQlMRBmcbdIAr-cO: geology # GEOL 351 numbers 1-32
   PLcKUIuDhdLl-iF2WU-k6z6ESC8NnQ6wWd: geology # GEOL 101 numbers 1-34
   PLcKUIuDhdLl-lflwbkzTw-aJOyW7uM8Dj: geology # GEOL 351 lectures 1-17 in order
-  PLcsjsqLLSfNAQW_Z11Vujcl9H34YDXKsF: geology # 18 numbered lectures, historical geology and stratigraphy
-  PLcsjsqLLSfNAwFiNnkG8fPxbunYcUbnUf: geology # 15 numbered lectures, stratigraphy to palaeogeography
+  PLcsjsqLLSfNAQW_Z11Vujcl9H34YDXKsF: historical-geology # 18 numbered lectures, historical geology and stratigraphy
+  PLcsjsqLLSfNAwFiNnkG8fPxbunYcUbnUf: historical-geology # 15 numbered lectures, stratigraphy to palaeogeography
   PLcsjsqLLSfNBb8gkyQ03G9gr0l2Lwi6C8: geology # 14 numbered lectures, a general geology semester for biologists
   PLcsjsqLLSfNBdjEstrjLCGXgRt209sgpD: geology # 10 numbered lectures on metallic ore deposits
-  PLcsjsqLLSfNBHVlavc-02CFU7MIKEKEbM: geology # 12 numbered seminars, the practical half of historical geology
+  PLcsjsqLLSfNBHVlavc-02CFU7MIKEKEbM: historical-geology # 12 numbered seminars, the practical half of historical geology
   PLcsjsqLLSfNBKKliBFsavm1dFMbwNscGo: geology # 11 numbered lectures, general geology part 2
   PLcsjsqLLSfNBSA2nkM2xqb3GfVNbRieRv: geology # 34 numbered MSU lectures on the geology of fossil fuels
   PLcsjsqLLSfNBwbaBbz08pO9N-PTBhtKu5: geology # 20 numbered MSU lectures on the geology of Russia

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import type { SearchEntry } from '@shared/schema';
-import { SEARCH_SECTION_ORDER } from '@shared/search';
+import { matchedAlias, SEARCH_SECTION_ORDER } from '@shared/search';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
@@ -536,6 +536,19 @@ function Results({
                 <SectionMark type={entry.t} />
                 <span className="min-w-0 flex-1 truncate">
                   <MarkedText text={entry.n} query={results.query} />
+                  {/* Why this row is here at all, when the query was somebody
+                      else's name for the same course. The alias carries the
+                      highlight, so the connection is made by the mark rather
+                      than by a sentence. */}
+                  {matchedAlias(entry, results.query) ? (
+                    <span className="text-ink-faint">
+                      {' · '}
+                      <MarkedText
+                        text={matchedAlias(entry, results.query)!}
+                        query={results.query}
+                      />
+                    </span>
+                  ) : null}
                 </span>
                 <Secondary entry={entry} catalog={catalog} />
               </button>

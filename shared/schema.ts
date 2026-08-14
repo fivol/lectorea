@@ -417,6 +417,15 @@ export const SearchEntrySchema = z.object({
   k: z.array(z.string()), // keywords, already expanded
   s: z.number().optional(), // ranking weight
   c: z.string().optional(), // owning course, for playlist entries
+  /**
+   * The course's other names, as written rather than normalised.
+   *
+   * `k` is what a query is matched against and is unreadable by design —
+   * inflected forms, single words, bait. These are the same names the card
+   * prints, kept apart so the dropdown can say *why* a row is in it: someone
+   * who typed «ТФКП» and got «Комплексный анализ» is owed the connection.
+   */
+  a: z.array(z.string()).optional(),
 });
 export type SearchEntry = z.infer<typeof SearchEntrySchema>;
 

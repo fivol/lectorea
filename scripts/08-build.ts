@@ -228,7 +228,13 @@ async function main(): Promise<void> {
       const named = aliases[`course.${course.id}`] ?? [];
       if (named.length) localised[`course.${course.id}.aliases`] = named.join(' · ');
     }
-    const catalogue = buildCatalogueEntries(dictionary, [...keywords, aliases], shown, domains);
+    const catalogue = buildCatalogueEntries(
+      dictionary,
+      [...keywords, aliases],
+      shown,
+      domains,
+      aliases
+    );
     writeJson(path.join(paths.outData, 'i18n', `${entry.id}.json`), localised);
     writeJson(path.join(paths.outData, 'i18n', `search-${entry.id}.json`), catalogue);
     console.log(
@@ -643,7 +649,8 @@ function buildCatalogueEntries(
   dictionary: Record<string, string>,
   keywords: Array<Record<string, string[]>>,
   courses: BuiltCourse[],
-  domains: BuiltDomain[]
+  domains: BuiltDomain[],
+  aliases: Record<string, string[]> = {}
 ): SearchEntry[] {
   const entries: SearchEntry[] = [];
   const t = (key: string, fallback: string): string => dictionary[key] ?? fallback;
@@ -662,12 +669,15 @@ function buildCatalogueEntries(
 
   for (const course of courses) {
     const title = t(`course.${course.id}.title`, course.id);
+    const named = aliases[`course.${course.id}`] ?? [];
     entries.push({
       t: 'c',
       id: course.id,
       n: title,
       k: keywordsFor(`course.${course.id}`, title, course.id.replace(/-/g, ' ')),
       s: course.playlistCount,
+      // Unnormalised, unlike `k`: this one is printed, not matched against.
+      ...(named.length ? { a: named } : {}),
     });
   }
 
