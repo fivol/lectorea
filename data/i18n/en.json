@@ -156,7 +156,6 @@
   "ui.path.summary": "{courses}, ≈{hours} h, {done} done",
   "ui.path.hideDone": "Hide what is done",
   "ui.path.goal": "goal",
-  "ui.path.breaksFilter": "Part of the path is outside the current filter — those courses are not in the columns",
   "ui.prereq.title": "Builds on",
   "ui.unlocks.title": "Opens the way to",
   "ui.unlocks.behind": "and {n} more behind it",

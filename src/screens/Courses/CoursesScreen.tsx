@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { bridgingAncestors, pathTo, useCatalog, useFilteredCourses } from '@/lib/catalog';
+import { chainAncestors, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
@@ -78,11 +78,6 @@ export default function CoursesScreen() {
    */
   const results = useSearchResults(query, { kinds: SUGGEST_IN_SLICE, courses: visible });
 
-  const path = useMemo(
-    () => (selected ? pathTo(catalog, selected.id) : []),
-    [catalog, selected]
-  );
-
   /**
    * Courses from outside the filter that the reader has opened, in the order
    * they were opened.
@@ -124,28 +119,27 @@ export default function CoursesScreen() {
   }, [guests, visible, selected]);
 
   /**
-   * The prerequisites the chain would otherwise be missing.
+   * The prerequisites the chain would otherwise be missing — every one of them.
    *
    * The trail above is about where the reader has been; this is about whether
-   * what is on screen can be read at all. A filter that hides one course in the
-   * middle of a path leaves the cards on either side of it lit and the curve
-   * between them undrawn — the chain arrives in two pieces, and nothing on
-   * screen says the piece on the left leads to the piece on the right.
+   * what is on screen can be read at all. A filter that hides a course the
+   * selection stands on leaves the chain drawn short: the columns stop at the
+   * edge of the field while the panel goes on naming what is not there.
    *
    * Recomputed per selection rather than accumulated: these cards are here to
-   * join up a particular chain, and the moment that chain is no longer the one
+   * carry a particular chain, and the moment that chain is no longer the one
    * being read they have no claim on the columns.
    */
-  const bridges = useMemo(() => {
+  const borrowed = useMemo(() => {
     if (!selected) return NO_BRIDGES;
     const canvas = guestIds.size ? new Set([...visible, ...guestIds]) : visible;
-    return bridgingAncestors(catalog, selected.id, canvas);
+    return chainAncestors(catalog, selected.id, canvas);
   }, [catalog, selected, visible, guestIds]);
 
   const onCanvas = useMemo(() => {
-    if (!guestIds.size && !bridges.size) return visible;
-    return new Set([...visible, ...guestIds, ...bridges]);
-  }, [visible, guestIds, bridges]);
+    if (!guestIds.size && !borrowed.size) return visible;
+    return new Set([...visible, ...guestIds, ...borrowed]);
+  }, [visible, guestIds, borrowed]);
 
   /**
    * Every card standing in a column the filter did not put it in — the trail
@@ -153,15 +147,9 @@ export default function CoursesScreen() {
    * both name the field they came from.
    */
   const outsiders = useMemo(() => {
-    if (!bridges.size) return guestIds;
-    return new Set([...guestIds, ...bridges]);
-  }, [guestIds, bridges]);
-
-  /** Courses the path needs that are nowhere on the canvas — the panel says so. */
-  const pathOutsideFilter = useMemo(
-    () => path.filter((step) => !onCanvas.has(step.id)).length,
-    [path, onCanvas]
-  );
+    if (!borrowed.size) return guestIds;
+    return new Set([...guestIds, ...borrowed]);
+  }, [guestIds, borrowed]);
 
   const onSelect = useCallback(
     (id: string) => {
@@ -319,7 +307,6 @@ export default function CoursesScreen() {
               <CoursePanel
                 course={selected}
                 search={params.search}
-                outsideFilter={pathOutsideFilter}
                 scroll={false}
               />
             </BottomSheet>
@@ -380,8 +367,7 @@ export default function CoursesScreen() {
                 <CoursePanel
                   course={selected!}
                   search={params.search}
-                  outsideFilter={pathOutsideFilter}
-                  onClose={onDeselect}
+                    onClose={onDeselect}
                 />
               </aside>
             </>
@@ -406,8 +392,7 @@ export default function CoursesScreen() {
                 <CoursePanel
                   course={selected!}
                   search={params.search}
-                  outsideFilter={pathOutsideFilter}
-                  onClose={onDeselect}
+                    onClose={onDeselect}
                 />
               </aside>
             </>

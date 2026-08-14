@@ -156,7 +156,6 @@
   "ui.path.summary": "{courses}, ≈{hours} ч, {done} пройдено",
   "ui.path.hideDone": "Скрыть пройденное",
   "ui.path.goal": "цель",
-  "ui.path.breaksFilter": "Часть пути вне текущего фильтра — этих курсов нет в колонках",
   "ui.prereq.title": "Опирается на",
   "ui.unlocks.title": "Открывает путь к",
   "ui.unlocks.behind": "и ещё {n} дальше",

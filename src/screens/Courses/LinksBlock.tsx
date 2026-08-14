@@ -13,8 +13,6 @@ import PathBlock from './PathBlock';
 type Props = {
   course: BuiltCourse;
   search: string;
-  /** Path courses that the active domain filter would otherwise hide. */
-  outsideFilter: number;
 };
 
 /**
@@ -41,7 +39,7 @@ type Props = {
  * headings — they are the same edge read from both ends — and the full chain
  * follows them rather than splitting the pair.
  */
-export default function LinksBlock({ course, search, outsideFilter }: Props) {
+export default function LinksBlock({ course, search }: Props) {
   const catalog = useCatalog();
   const { t, count } = useT();
   const isMobile = useIsMobile();
@@ -169,7 +167,6 @@ export default function LinksBlock({ course, search, outsideFilter }: Props) {
           steps={steps}
           totalHours={totalHours}
           search={search}
-          outsideFilter={outsideFilter}
           capped={!isMobile}
         />
       ) : null}

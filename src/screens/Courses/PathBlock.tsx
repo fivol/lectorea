@@ -18,8 +18,6 @@ type Props = {
   steps: BuiltCourse[];
   totalHours: number;
   search: string;
-  /** Path courses that the active domain filter would otherwise hide. */
-  outsideFilter: number;
   /** Cap the list and let it scroll — see `LinksBlock`. */
   capped: boolean;
 };
@@ -36,7 +34,6 @@ export default function PathBlock({
   steps,
   totalHours,
   search,
-  outsideFilter,
   capped,
 }: Props) {
   const scheme = useResolvedTheme();
@@ -134,10 +131,6 @@ export default function PathBlock({
                 />
                 {t('ui.path.hideDone')}
               </label>
-            ) : null}
-
-            {outsideFilter ? (
-              <p className="mb-2 text-xs text-ink-faint">{t('ui.path.breaksFilter')}</p>
             ) : null}
 
             <ol

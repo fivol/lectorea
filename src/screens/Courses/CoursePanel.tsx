@@ -15,8 +15,6 @@ import PlaylistList from './PlaylistList';
 type Props = {
   course: BuiltCourse;
   search: string;
-  /** How many path courses the active domain filter would hide. */
-  outsideFilter?: number;
   /** Clears the selection. Absent on mobile, where the sheet has its own close. */
   onClose?: () => void;
   /**
@@ -31,7 +29,6 @@ type Props = {
 export default function CoursePanel({
   course,
   search,
-  outsideFilter = 0,
   onClose,
   scroll = true,
 }: Props) {
@@ -180,7 +177,7 @@ export default function CoursePanel({
       {/* Where the course sits — what it needs, what it opens, the whole path —
           in one folded block, so that the playlists the panel is opened for are
           not three sections of neighbouring courses away. See `LinksBlock`. */}
-      <LinksBlock course={course} search={search} outsideFilter={outsideFilter} />
+      <LinksBlock course={course} search={search} />
 
       <PlaylistList course={course} />
 

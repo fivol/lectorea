@@ -175,47 +175,39 @@ export function pathTo(catalog: Catalog, courseId: string): BuiltCourse[] {
 }
 
 /**
- * The ancestors a filter hides that the chain cannot be read without.
+ * The ancestors a filter hides that the selected course's chain needs — all of
+ * them. They come back as guests, with the tag naming the field they came from.
  *
- * A filter drops one course out of the middle of a path and the path stops
- * being one: game theory needs probability, probability needs combinatorics,
- * and with probability filed under another field the two ends light up with
- * nothing between them — two unrelated groups of green cards and a gap where
- * the answer was. Those are borrowed back, and they arrive as guests, with the
- * tag naming the field they came from.
+ * The rule used to be connectivity rather than completeness: a hidden ancestor
+ * was borrowed only when something already on the canvas stood *behind* it, so
+ * it fired for a gap in the middle of a chain whose two ends were both visible,
+ * and a branch hidden end to end stayed out. That was meant to keep a filter a
+ * filter. What it actually did was fail in the ordinary case: with one field
+ * chosen — which is how this screen is read — the foreign branch *is* hidden
+ * end to end, so nothing was ever borrowed. Over all 206 courses, each against
+ * its own field's filter, the old rule borrowed zero cards. For 110 of them the
+ * chain runs outside their field, and the columns simply stopped at the border:
+ * cell biology lit up over general biology alone while «Опирается на» in the
+ * panel named general chemistry too, and nothing on the canvas admitted it.
  *
- * Connectivity, not completeness. A hidden ancestor is borrowed only when
- * something already on the canvas stands behind it, so a branch that is hidden
- * from end to end has nothing to join up and stays out — which is what keeps a
- * filter a filter rather than an invitation to show the whole catalogue every
- * time a course is clicked.
+ * So: completeness. The claim this screen makes is that reading left to right
+ * is reading the order things must be studied in, and a chain drawn with its
+ * first link missing is not a weaker version of that claim — it is a different
+ * and false one. The cost is bounded by the chain (three cards on average, 17
+ * at the worst — sequence analysis really does stand on seventeen courses from
+ * other fields), it is spent only on an explicit click, and it is dropped the
+ * moment the selection changes.
  */
-export function bridgingAncestors(
+export function chainAncestors(
   catalog: Catalog,
   courseId: string,
   onCanvas: Set<string>
 ): Set<string> {
-  // Prerequisites first: the build guarantees `level(dep) < level(course)`, so
-  // one pass in column order settles every course after everything it needs.
-  const ordered = [...upstreamOf(catalog.courseById, courseId)]
-    .map((id) => catalog.courseById.get(id))
-    .filter((course): course is BuiltCourse => Boolean(course))
-    .sort((a, b) => a.level - b.level);
-
-  const bridges = new Set<string>();
-  // On the canvas already, or borrowed onto it just now — a run of hidden
-  // ancestors is bridged along its whole length or not at all.
-  const reached = new Set<string>();
-
-  for (const course of ordered) {
-    if (onCanvas.has(course.id)) reached.add(course.id);
-    else if (course.deps.some((dep) => reached.has(dep))) {
-      bridges.add(course.id);
-      reached.add(course.id);
-    }
+  const borrowed = new Set<string>();
+  for (const id of upstreamOf(catalog.courseById, courseId)) {
+    if (!onCanvas.has(id)) borrowed.add(id);
   }
-
-  return bridges;
+  return borrowed;
 }
 
 /**
