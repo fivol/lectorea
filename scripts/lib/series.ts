@@ -115,10 +115,53 @@ export function seriesBase(title: string): string {
     .trim();
 }
 
-/** How far apart the years of a group are. Absent years do not count against it. */
-function yearSpan(years: Array<number | undefined>): number {
-  const known = years.filter((y): y is number => typeof y === 'number');
-  return known.length ? Math.max(...known) - Math.min(...known) : 0;
+/**
+ * Whether one part can follow another in the same reading of a course.
+ *
+ * The same lecturer reads the same course again every year or two, and those
+ * recordings share a channel, a title and a numbering — «[s1 | 2021]» and
+ * «[s1 | 2023]» are one semester twice, not two parts. What separates a
+ * continuation from a repeat is the calendar.
+ *
+ * Semesters are the calendar: semester n of the intake that started in autumn
+ * of year Y is read in Y + ⌊n/2⌋, so the year a part was filmed is fixed by its
+ * number, and any other year belongs to another intake. Parts numbered «Часть
+ * N» are looser — two halves of one course may fall either side of a new year
+ * or both inside one — so there the rule is only that time moves forward, and
+ * by no more than a year per part.
+ */
+function follows(from: Mark & { year?: number }, to: Mark & { year?: number }): boolean {
+  if (to.pos <= from.pos) return false;
+  // An undated recording cannot be argued with either way; the numbering is all
+  // there is, and it says these are different parts.
+  if (from.year === undefined || to.year === undefined) return true;
+  const gap = to.year - from.year;
+  if (from.kind === 'семестр' || to.kind === 'семестр') {
+    return gap === Math.floor(to.pos / 2) - Math.floor(from.pos / 2);
+  }
+  if (from.kind === 'сезон' || to.kind === 'сезон') return gap === 0 || gap === 1;
+  return gap >= 0 && gap <= to.pos - from.pos;
+}
+
+/**
+ * Cuts one channel's parts into readings: each chain is one run through the
+ * course, and a repeat of a part starts a chain of its own.
+ *
+ * Greedy from the lowest part upwards, which is what makes the first intake
+ * take the parts that belong to it before a later one can claim them.
+ */
+function chains<T extends Mark & { year?: number }>(items: T[]): T[][] {
+  const rest = [...items].sort((a, b) => a.pos - b.pos || (a.year ?? 0) - (b.year ?? 0));
+  const out: T[][] = [];
+  while (rest.length) {
+    const chain = [rest.shift()!];
+    for (let i = 0; i < rest.length; ) {
+      if (follows(chain[chain.length - 1], rest[i])) chain.push(...rest.splice(i, 1));
+      else i += 1;
+    }
+    out.push(chain);
+  }
+  return out;
 }
 
 /**
@@ -142,21 +185,19 @@ export function detectSeries(playlists: Input[]): Map<string, Series> {
 
   const marks = new Map<string, Series>();
   for (const [key, items] of groups) {
-    const positions = new Set(items.map((i) => `${i.mark.kind}${i.mark.pos}`));
-    if (positions.size < 2) continue;
-    // Autumn beside spring is a run only within one academic year. Further
-    // apart it is the same course taught again, which is not a part of anything.
-    //
-    // A numbered run is allowed to be wider, because it legitimately is: four
-    // semesters of analysis take two years to record, and a lecturer who reads
-    // the same sequence again adds a second recording of a part rather than a
-    // fifth part. Past four years apart even that stops being one run.
-    const span = yearSpan(items.map((i) => i.year));
-    if (span > (items.some((i) => i.mark.kind === 'сезон') ? 1 : 4)) continue;
-    const total = Math.max(...items.map((i) => i.mark.pos));
-    for (const item of items) {
-      marks.set(item.id, { key, pos: item.mark.pos, total, kind: item.mark.kind });
-    }
+    const readings = chains(items.map((i) => ({ ...i, ...i.mark })));
+    readings.forEach((reading, index) => {
+      // One part on its own is a recording, not a run. This is what drops the
+      // repeats: a second reading that only ever got its first semester filmed
+      // has nothing to be a part of.
+      if (reading.length < 2) return;
+      const total = Math.max(...reading.map((i) => i.pos));
+      for (const item of reading) {
+        // Each reading is its own run, so two intakes of the same course under
+        // the same title do not collapse into one list of five «parts».
+        marks.set(item.id, { key: `${key}#${index}`, pos: item.pos, total, kind: item.kind });
+      }
+    });
   }
   return marks;
 }

@@ -78,8 +78,11 @@ export function saysItsPart(series: Series, text: string): boolean {
   const n = series.pos;
   return new RegExp(
     `(?:част[ья]|part|pt\\.?|модул[ья]|раздел|сезон|season|module)\\s*[№#]?\\s*${n}(?![\\d])` +
-      `|\\[\\s*s\\s*${n}\\s*[\\]|]|${n}\\s*-?\\s*(?:й|ый|ой)?\\s*семестр`,
-    'i'
+      // `[s1]` as ИТМО writes it, and the bare `s1` the heading is left with once
+      // the brackets are stripped off it.
+      `|(?:^|[^\\p{L}\\d])s\\s*${n}(?![\\d])` +
+      `|${n}\\s*-?\\s*(?:й|ый|ой)?\\s*семестр`,
+    'iu'
   ).test(text);
 }
 
