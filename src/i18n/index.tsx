@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 
 /**
  * Localisation in thirty lines instead of i18next.
@@ -56,10 +57,17 @@ export type Translator = {
   plural: (n: number, noun: string) => string;
   /** Number and noun together: `count(3, 'course')` → «3 курса». */
   count: (n: number, noun: string) => string;
+  /**
+   * A stretch of time in whatever unit it is actually in, as the number and its
+   * noun apart — a tile prints them on two lines, a sentence in one breath.
+   */
+  span: (seconds: number) => Span;
   /** True when the key is missing — lets a caller fall back instead of showing the key. */
   has: (key: string) => boolean;
   lang: string;
 };
+
+export type Span = { value: string; noun: string; text: string };
 
 export function useT(): Translator {
   const { lang, dict } = useContext(I18nContext);
@@ -84,9 +92,41 @@ export function useT(): Translator {
     [plural, lang]
   );
 
+  /*
+   * Under an hour the answer is minutes: «0,7 часа» is a number nobody reads as
+   * forty minutes, and the first week of a habit is spent entirely below the
+   * hour mark.
+   *
+   * The noun is read back off the printed number rather than the raw one. Past
+   * ten hours the decimal is dropped, and «12 часа» would be the reward for
+   * pluralising what was measured instead of what is shown. A fraction takes
+   * the genitive singular in Russian — «1,5 часа» — which is the form 2 to 4
+   * take, so it is pluralised as if it were two.
+   */
+  const span = useCallback(
+    (seconds: number): Span => {
+      const say = (value: string, noun: string): Span => ({
+        value,
+        noun,
+        text: `${value} ${noun}`,
+      });
+      if (seconds < 3600) {
+        const minutes = formatMinutes(seconds);
+        return say(String(minutes), plural(minutes, 'minute'));
+      }
+      const printed = formatHours(hoursFromSeconds(seconds));
+      const shown = Number(printed);
+      return say(printed, plural(Number.isInteger(shown) ? shown : 2, 'hour'));
+    },
+    [plural]
+  );
+
   const has = useCallback((key: string) => key in dict, [dict]);
 
-  return useMemo(() => ({ t, plural, count, has, lang }), [t, plural, count, has, lang]);
+  return useMemo(
+    () => ({ t, plural, count, span, has, lang }),
+    [t, plural, count, span, has, lang]
+  );
 }
 
 export function formatNumber(n: number, lang = 'ru'): string {

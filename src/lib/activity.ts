@@ -20,13 +20,36 @@ export type Activity = {
   /** Days of study in total. */
   total: number;
   /** The last `window` days, oldest first — today is the last of them. */
-  recent: Array<{ day: string; studied: boolean }>;
+  recent: Day[];
   /** This week so far, counted from Monday. */
   week: Week;
 };
 
+/** One day of the strip: whether it happened, and how much of it there was. */
+export type Day = { day: string; studied: boolean; seconds: number; lectures: number };
+
 /** What has been done since Monday — the unit a week of studying is planned in. */
 export type Week = { seconds: number; lectures: number; days: number };
+
+/**
+ * How full a day looks in the strip, 0 to 4.
+ *
+ * The steps are lengths of study rather than counts of anything: a lecture is
+ * about fifty minutes here, so the first step is a start, the second is one
+ * lecture, the third is an evening and the fourth is more than that. Counting
+ * lectures instead would put a day of six ten-minute explainers above a day of
+ * two hours, which is not what either day felt like.
+ *
+ * A day logged with nothing measured still reaches the first step. Days from
+ * before the log kept seconds are exactly that, and letting them fall back to
+ * the empty square would delete somebody's history the day the site updated.
+ */
+const DAY_STEPS = [30 * 60, 60 * 60, 2 * 60 * 60];
+
+export function levelOf(day: Day): 0 | 1 | 2 | 3 | 4 {
+  if (!day.studied) return 0;
+  return (DAY_STEPS.filter((step) => day.seconds >= step).length + 1) as 1 | 2 | 3 | 4;
+}
 
 const DAY = 86_400_000;
 
@@ -68,12 +91,18 @@ function weekOf(days: DayLog[], today: string): Week {
 }
 
 export function activityOf(days: DayLog[], today: string, window: number): Activity {
-  const logged = new Set(days.map((entry) => entry.day));
-  const strip = (): Activity['recent'] => {
-    const out: Activity['recent'] = [];
+  const logged = new Map(days.map((entry) => [entry.day, entry]));
+  const strip = (): Day[] => {
+    const out: Day[] = [];
     for (let back = window - 1; back >= 0; back -= 1) {
       const day = shift(today, -back);
-      out.push({ day, studied: logged.has(day) });
+      const entry = logged.get(day);
+      out.push({
+        day,
+        studied: Boolean(entry),
+        seconds: entry?.sec ?? 0,
+        lectures: entry?.lectures ?? 0,
+      });
     }
     return out;
   };
@@ -99,7 +128,7 @@ export function activityOf(days: DayLog[], today: string, window: number): Activ
 
   // The longest run ever: walk the sorted days and break wherever the next one
   // is not the morning after.
-  const sorted = [...logged].sort();
+  const sorted = [...logged.keys()].sort();
   let best = 0;
   let run = 0;
   let previous: string | null = null;

@@ -586,6 +586,34 @@
   }
 
   /*
+   * One day in the strip of study, shaded by how much of it there was.
+   *
+   * The ramp is mixed against the empty square rather than laid over the panel
+   * at partial opacity: a day of study is a *fuller* version of a day, not a
+   * fainter one, and mixing keeps the four steps in the same family in both
+   * themes without a second palette to maintain.
+   *
+   * The base rule is also the fallback. A browser that does not know
+   * `color-mix` drops the invalid declaration and is left with the empty
+   * square — a strip that has lost its shading, rather than a row of holes.
+   */
+  .day-cell {
+    background: var(--c-surface-2);
+  }
+  .day-cell[data-level='1'] {
+    background: color-mix(in srgb, var(--c-accent) 28%, var(--c-surface-2));
+  }
+  .day-cell[data-level='2'] {
+    background: color-mix(in srgb, var(--c-accent) 52%, var(--c-surface-2));
+  }
+  .day-cell[data-level='3'] {
+    background: color-mix(in srgb, var(--c-accent) 76%, var(--c-surface-2));
+  }
+  .day-cell[data-level='4'] {
+    background: var(--c-accent);
+  }
+
+  /*
    * A row in a menu — a filter to tick, an option to pick, a list to clear.
    *
    * Dense under a mouse, because a filter menu is read as a list before

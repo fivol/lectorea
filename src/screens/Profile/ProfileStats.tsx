@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
-import { useT } from '@/i18n';
-import { ACTIVITY_WINDOW, useActivity } from '@/lib/activity';
+import { useT, type Translator } from '@/i18n';
+import { ACTIVITY_WINDOW, levelOf, useActivity, type Day } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
 import { formatDate, formatHours, hoursFromSeconds } from '@/lib/format';
 import { useGoalsProgress } from '@/lib/goals';
@@ -115,15 +115,23 @@ export default function ProfileStats() {
 }
 
 /**
- * Four weeks of days, one square each.
+ * Four weeks of days, one square each, shaded by how much of each there was.
  *
  * The only thing in the profile that shows a shape rather than a number: what a
  * reader wants to know about their own habit is whether it has holes in it, and
  * twenty-eight squares answer that at a glance in a way «12 дней» never can.
+ * Shading them turns the same strip into a second answer — a fortnight of ten
+ * minutes and a fortnight of evenings are not the same habit, and until the log
+ * kept seconds there was no way to draw the difference.
+ *
+ * The week in hand is spelled out underneath. It is the last seven squares said
+ * in numbers, which is the pair of figures the front page is counted from, and
+ * a picture is a poor place to read «2,2 часа» off.
  */
 function ActivityStrip() {
-  const { t, count, lang } = useT();
+  const { t, count, span, lang } = useT();
   const activity = useActivity();
+  const week = activity.week;
 
   return (
     <div className="surface p-3">
@@ -136,24 +144,56 @@ function ActivityStrip() {
         </span>
       </div>
       <div className="flex gap-[3px]">
-        {activity.recent.map(({ day, studied }, index) => (
+        {activity.recent.map((day, index) => (
           <span
-            key={day}
+            key={day.day}
             // Midday, so that formatting it in the reader's own zone cannot
             // walk the date back to the day before.
-            title={formatDate(`${day}T12:00`, lang)}
-            className={`h-4 flex-1 rounded-[2px] ${studied ? 'bg-accent' : 'bg-surface-2'} ${
+            title={dayTitle(day, formatDate(`${day.day}T12:00`, lang), span, count)}
+            data-level={levelOf(day)}
+            className={`day-cell h-4 flex-1 rounded-[2px] ${
               // Today is the last square, and it is the one worth finding: a run
               // is a thing you keep, and keeping it is about today.
-              index === activity.recent.length - 1 && !studied
+              index === activity.recent.length - 1 && !day.studied
                 ? 'ring-1 ring-inset ring-line-strong'
                 : ''
             }`}
           />
         ))}
       </div>
+      <div className="mt-2 flex items-center gap-3 text-xs text-ink-faint">
+        <span className="num min-w-0 flex-1 truncate">
+          {t('ui.profile.stats.thisWeek', {
+            time: span(week.seconds).text,
+            lectures: count(week.lectures, 'lecture'),
+          })}
+        </span>
+        {/* What the shading means, in the only form that fits: the ramp itself.
+            A square that is darker than its neighbour is not self-explanatory
+            the way a filled one was. */}
+        <span className="flex shrink-0 items-center gap-1">
+          {t('ui.profile.stats.less')}
+          {[1, 2, 3, 4].map((level) => (
+            <span key={level} data-level={level} className="day-cell h-2.5 w-2.5 rounded-[2px]" />
+          ))}
+          {t('ui.profile.stats.more')}
+        </span>
+      </div>
     </div>
   );
+}
+
+/** «14 августа 2026 — 2,2 часа · 3 лекции», with whatever part of it is true. */
+function dayTitle(
+  day: Day,
+  date: string,
+  span: Translator['span'],
+  count: Translator['count']
+): string {
+  const parts: string[] = [];
+  if (day.seconds) parts.push(span(day.seconds).text);
+  if (day.lectures) parts.push(count(day.lectures, 'lecture'));
+  return parts.length ? `${date} — ${parts.join(' · ')}` : date;
 }
 
 function Tile({

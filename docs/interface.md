@@ -438,11 +438,13 @@ were looking for before you could look.
 So it reads top to bottom as the routine it describes:
 
 - **The numbers.** Hours watched, lectures behind you, courses finished, days in
-  a row — then four weeks of days as a strip, and the path to everything marked
-  as a goal, as one bar with the hours still to spend beside it. Three of them
-  only ever go up, one says whether it is still happening, and only the bar has
-  somewhere to get to: a shelf of goals on its own is a list of debts, and
-  opening the panel to nothing but debts is why people stop opening it.
+  a row — then four weeks of days as a shaded strip with the week in hand under
+  it, and the path to everything marked as a goal, as one bar with the hours
+  still to spend beside it. Three of them only ever go up, one says whether it
+  is still happening, and only the bar has somewhere to get to: a shelf of goals
+  on its own is a list of debts, and opening the panel to nothing but debts is
+  why people stop opening it. The totals stay here rather than moving to the
+  front page — this is the screen somebody opens to look back.
 
   Each caption names what it counts and agrees with the number over it — «4
   курса пройдено», not «4 курсов пройдено». A bare «27» over the word «лекций»
@@ -461,6 +463,19 @@ So it reads top to bottom as the routine it describes:
   finished — which is what makes "this week" answerable at all, and what the
   front page's card is counted from. Nothing else in the profile could answer
   it: a tick says a lecture is behind you, never when it got there.
+
+  So the strip is shaded rather than filled: four steps by how long the day
+  was — a start, a lecture, an evening, more than that — because a fortnight of
+  ten minutes and a fortnight of evenings are not the same habit and a row of
+  identical squares says they are. The steps are lengths and not counts of
+  lectures, or a day of six ten-minute explainers would outrank a day of two
+  hours. A day logged before the log kept seconds reaches the first step
+  anyway — an update must not delete somebody's history — and hovering any
+  square says the date and what was done on it.
+
+  Under the strip the week in hand is spelled out: «На этой неделе — 2,2 часа,
+  3 лекции». It is the last seven squares said in numbers, and it is the pair
+  the front page carries, so the two screens cannot disagree about the week.
 - **Продолжить** — the last thing opened that is not finished, at the lecture
   and the second it was left at, one press away. The only card in the profile
   about right now; everything under it is a shelf of things decided at some

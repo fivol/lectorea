@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useActivity, type Week } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
-import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useResumePointer, type ResumePointer } from '@/lib/progress';
 import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
@@ -295,40 +294,11 @@ function Thumbnail({
   );
 }
 
-/**
- * The week's time, in whatever unit it is actually in.
- *
- * Under an hour the answer is minutes: «0,7 часа» is a number nobody reads as
- * forty minutes, and the first week of a habit is spent entirely below the hour
- * mark — which is exactly the week this card is trying to keep alive.
- */
+/** The week's time, in whatever unit it is actually in — minutes early on, hours later. */
 function WeekTime({ seconds }: { seconds: number }) {
-  const { t, plural } = useT();
-
-  if (seconds < 3600) {
-    const minutes = formatMinutes(seconds);
-    return (
-      <Tile
-        value={minutes}
-        label={t('ui.profile.stats.week', { noun: plural(minutes, 'minute') })}
-      />
-    );
-  }
-
-  const printed = formatHours(hoursFromSeconds(seconds));
-  // A fraction takes the genitive singular in Russian — «1,5 часа» — which is
-  // the form 2–4 take, so a printed fraction is pluralised as if it were two.
-  // Read back off the printed text rather than the number: past ten hours the
-  // decimal is dropped, and «12 часа» would be the reward for not looking.
-  const shown = Number(printed);
-  return (
-    <Tile
-      value={printed}
-      label={t('ui.profile.stats.week', {
-        noun: plural(Number.isInteger(shown) ? shown : 2, 'hour'),
-      })}
-    />
-  );
+  const { t, span } = useT();
+  const { value, noun } = span(seconds);
+  return <Tile value={value} label={t('ui.profile.stats.week', { noun })} />;
 }
 
 function Tile({ value, label }: { value: number | string; label: string }) {
