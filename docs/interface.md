@@ -473,6 +473,13 @@ So it reads top to bottom as the routine it describes:
   anyway — an update must not delete somebody's history — and hovering any
   square says the date and what was done on it.
 
+  Mondays carry a gap in front of them, so the run breaks into the weeks it is
+  made of: without the seams «three good days» never says *which* three, and
+  with them the last group is this week so far, standing directly over the line
+  that says what it came to. The seams fall where the calendar puts them rather
+  than every seventh square — the window ends today, so both ends are
+  part-weeks, which is the truth about four weeks that do not start on a Monday.
+
   Under the strip the week in hand is spelled out: «На этой неделе — 2,2 часа,
   3 лекции». It is the last seven squares said in numbers, and it is the pair
   the front page carries, so the two screens cannot disagree about the week.

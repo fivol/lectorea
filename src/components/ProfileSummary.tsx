@@ -220,7 +220,10 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
           <button
             type="button"
             onClick={openProfile}
-            aria-label={`${t('ui.profile.stats.streak')}: ${streak}`}
+            // The whole sentence, not the caption: the tile's «{noun} подряд»
+            // is written to stand under a number, and read out on its own it
+            // was announcing the word «{noun}».
+            aria-label={t('ui.home.streak', { n: streak, noun: plural(streak, 'day') })}
             className="plate-disc num shrink-0 gap-0.5 px-2 text-xs"
           >
             <Icon name="flame" size={12} />

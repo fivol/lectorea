@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { useT, type Translator } from '@/i18n';
-import { ACTIVITY_WINDOW, levelOf, useActivity, type Day } from '@/lib/activity';
+import { ACTIVITY_WINDOW, levelOf, startOfWeek, useActivity, type Day } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
 import { formatDate, formatHours, hoursFromSeconds } from '@/lib/format';
 import { useGoalsProgress } from '@/lib/goals';
@@ -124,9 +124,17 @@ export default function ProfileStats() {
  * minutes and a fortnight of evenings are not the same habit, and until the log
  * kept seconds there was no way to draw the difference.
  *
- * The week in hand is spelled out underneath. It is the last seven squares said
- * in numbers, which is the pair of figures the front page is counted from, and
- * a picture is a poor place to read «2,2 часа» off.
+ * Mondays are given room in front of them, so the run of days breaks into the
+ * weeks it is actually made of. Without the seams the strip is twenty-eight
+ * days in a line and "three good days" says nothing about *which* three; with
+ * them the last group is this week so far, standing directly over the line that
+ * says what it came to. The seams fall where the calendar puts them rather than
+ * every seventh square — the window ends today, so both ends are part-weeks,
+ * and that is the truth about a month that does not start on a Monday.
+ *
+ * The week in hand is spelled out underneath. It is the last group said in
+ * numbers, which is the pair of figures the front page is counted from, and a
+ * picture is a poor place to read «2,2 часа» off.
  */
 function ActivityStrip() {
   const { t, count, span, lang } = useT();
@@ -143,7 +151,11 @@ function ActivityStrip() {
           {t('ui.profile.stats.daysTotal', { days: count(activity.total, 'day') })}
         </span>
       </div>
-      <div className="flex gap-[3px]">
+      {/* One row rather than a row of groups: every square is `flex-1` of the
+          same container, so they all come out the same width whatever the
+          seams do. Grouping would have to hand each week a share of the row
+          and would land on weeks of subtly different squares. */}
+      <div className="flex gap-[4px]">
         {activity.recent.map((day, index) => (
           <span
             key={day.day}
@@ -152,6 +164,11 @@ function ActivityStrip() {
             title={dayTitle(day, formatDate(`${day.day}T12:00`, lang), span, count)}
             data-level={levelOf(day)}
             className={`day-cell h-4 flex-1 rounded-[2px] ${
+              // The seam: a Monday carries the week's gap in front of it, and
+              // the first square never does — a strip that opens with a gap
+              // reads as a missing day.
+              startOfWeek(day.day) === day.day && index > 0 ? 'ml-[7px]' : ''
+            } ${
               // Today is the last square, and it is the one worth finding: a run
               // is a thing you keep, and keeping it is about today.
               index === activity.recent.length - 1 && !day.studied
@@ -161,8 +178,11 @@ function ActivityStrip() {
           />
         ))}
       </div>
-      <div className="mt-2 flex items-center gap-3 text-xs text-ink-faint">
-        <span className="num min-w-0 flex-1 truncate">
+      {/* Wrapping rather than truncating: on a phone the two of them do not fit
+          on one line, and the half of the pair that would be cut is the one
+          worth reading. The legend goes under instead, still to the right. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-faint">
+        <span className="num">
           {t('ui.profile.stats.thisWeek', {
             time: span(week.seconds).text,
             lectures: count(week.lectures, 'lecture'),
@@ -171,7 +191,7 @@ function ActivityStrip() {
         {/* What the shading means, in the only form that fits: the ramp itself.
             A square that is darker than its neighbour is not self-explanatory
             the way a filled one was. */}
-        <span className="flex shrink-0 items-center gap-1">
+        <span className="ml-auto flex shrink-0 items-center gap-1">
           {t('ui.profile.stats.less')}
           {[1, 2, 3, 4].map((level) => (
             <span key={level} data-level={level} className="day-cell h-2.5 w-2.5 rounded-[2px]" />
