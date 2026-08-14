@@ -13,6 +13,7 @@ import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import Tooltip from '@/components/Tooltip';
 import type { LabelParts } from './playlist-label';
+import { partLabel, saysItsPart } from './series';
 
 type Props = {
   playlist: BuiltPlaylist;
@@ -134,6 +135,12 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
             lives in the tooltip and in the player. */}
         <Tooltip content={label.detail}>
           <span className="block truncate text-caption text-ink">
+            {/* Which part of the run this is, in the university's own word.
+                Ahead of the name because inside a run it is the only thing that
+                tells two otherwise identical rows apart. */}
+            {playlist.series && !saysItsPart(playlist.series, label.name ?? label.source) ? (
+              <span className="num mr-1.5 text-ink-faint">{partLabel(playlist.series, t)} ·</span>
+            ) : null}
             {label.name ? (
               <>
                 {label.name}

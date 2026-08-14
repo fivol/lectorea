@@ -222,8 +222,40 @@ export const PlaylistSchema = z.object({
    * the check existed behaves as it always did.
    */
   listPlayable: z.boolean().default(true),
+  /**
+   * Other courses this same recording also covers.
+   *
+   * A playlist belongs to one course in the ordinary case, and `courseId` is
+   * that course. But «Алгоритмы и структуры данных» is one semester teaching
+   * two of ours — 130 recordings say so, and 41 of them prove it in their
+   * lecture titles — and filing it under one leaves the other empty of material
+   * that exists. So the binding is a list, `courseId` is its first entry, and
+   * the shard of every course in it carries the same playlist.
+   */
+  alsoCourses: z.array(z.string()).default([]),
 });
 export type Playlist = z.infer<typeof PlaylistSchema>;
+
+/**
+ * Where a recording sits in a run of them: «Часть 1» of three, semester 2 of
+ * four.
+ *
+ * A university that splits a subject publishes the halves as separate
+ * playlists, and the catalogue has no way to tell them from three unrelated
+ * recordings of the same course — of which it also has plenty. `key` is what
+ * the halves share (one channel, one title with the part number taken out),
+ * `pos` is the number found in the title. Detected in the build by
+ * `scripts/lib/series.ts`, never stored in the crawl.
+ */
+export const SeriesSchema = z.object({
+  key: z.string(),
+  pos: z.number(),
+  /** Highest position in the run. Runs with holes keep the gap: 1, 2, 4 of 4. */
+  total: z.number(),
+  /** What the number was written as: «часть», «семестр», «сезон», «номер». */
+  kind: z.string(),
+});
+export type Series = z.infer<typeof SeriesSchema>;
 
 export const VideoSchema = z.object({
   id: z.string(),
@@ -331,6 +363,8 @@ export const BuiltPlaylistSchema = PlaylistSchema.extend({
   lastVideoAt: z.string().optional(),
   /** Lecture list, shipped with the shard so the modal needs no API call. */
   videos: z.array(VideoSchema).default([]),
+  /** Set only when this recording is one part of a run. See `SeriesSchema`. */
+  series: SeriesSchema.optional(),
 });
 export type BuiltPlaylist = z.infer<typeof BuiltPlaylistSchema>;
 
@@ -338,8 +372,16 @@ export type BuiltPlaylist = z.infer<typeof BuiltPlaylistSchema>;
 
 /** Hand edits applied on top of the automatic pipeline. Committed to git. */
 export const OverridesSchema = z.object({
-  /** playlistId → courseId, or `null` to say "this is not a course". */
-  matches: z.record(z.string(), z.string().nullable()).default({}),
+  /**
+   * playlistId → courseId, or `null` to say "this is not a course".
+   *
+   * A list where one recording teaches several of our courses at once. The
+   * first entry is the one it is filed under; the rest get the same recording
+   * in their shard. See `Playlist.alsoCourses`.
+   */
+  matches: z
+    .record(z.string(), z.union([z.string(), z.array(z.string()).min(1), z.null()]))
+    .default({}),
   /** playlistId → partial playlist fields that win over scraped values. */
   playlists: z
     .record(

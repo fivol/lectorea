@@ -44,6 +44,8 @@ import {
   type StatusThresholds,
 } from './lib/score.js';
 import {
+  boundCourses,
+  loadAliases,
   loadDictionary,
   loadKeywords,
   loadSources,
@@ -51,6 +53,7 @@ import {
   SourceError,
   type Sources,
 } from './lib/sources.js';
+import { detectSeries } from './lib/series.js';
 import {
   dbExists,
   isBindingConfident,
@@ -215,8 +218,18 @@ async function main(): Promise<void> {
     // interface may well type «матан» at it. Only matching is widened —
     // whatever is found is still named in the language on screen.
     const keywords = own ? [sources.keywords] : [loadKeywords(entry.id), sources.keywords];
-    const catalogue = buildCatalogueEntries(dictionary, keywords, shown, domains);
-    writeJson(path.join(paths.outData, 'i18n', `${entry.id}.json`), dictionary);
+    // Aliases are searched like keywords and shown unlike them, so they ride
+    // into the dictionary as `course.{id}.aliases` — one line under the title,
+    // already joined, for the half of the catalogue whose recordings are titled
+    // with a name that is not ours.
+    const aliases = own ? sources.aliases : loadAliases(entry.id);
+    const localised: Record<string, string> = { ...dictionary };
+    for (const course of shown) {
+      const named = aliases[`course.${course.id}`] ?? [];
+      if (named.length) localised[`course.${course.id}.aliases`] = named.join(' · ');
+    }
+    const catalogue = buildCatalogueEntries(dictionary, [...keywords, aliases], shown, domains);
+    writeJson(path.join(paths.outData, 'i18n', `${entry.id}.json`), localised);
     writeJson(path.join(paths.outData, 'i18n', `search-${entry.id}.json`), catalogue);
     console.log(
       `· i18n: ${entry.id} — ${Object.keys(dictionary).length} keys, ` +
@@ -336,14 +349,18 @@ function assemblePlaylists(sources: Sources): Assembled {
     // First pass: raw objects. Nothing can be scored until every playlist is
     // known, because every signal is measured against the rest of the catalogue.
     type Staged = Omit<BuiltPlaylist, 'rating' | 'status' | 'signals'>;
-    const staged: Array<{ courseId: string; playlist: Staged }> = [];
+    const staged: Array<{ courseIds: string[]; playlist: Staged }> = [];
 
     for (const row of playlistRows) {
       const override = sources.overrides.playlists[row.id];
       if (override?.hidden) continue;
 
-      const courseId = resolveCourse(row.id, matches, sources);
-      if (!courseId || !courseIds.has(courseId)) continue;
+      // One recording, possibly several courses: «Алгоритмы и структуры
+      // данных» is one semester teaching two of ours, and it belongs in both
+      // shards rather than in whichever we picked.
+      const bound = resolveCourses(row.id, matches, sources).filter((id) => courseIds.has(id));
+      if (!bound.length) continue;
+      const courseId = bound[0];
 
       const channel = channels.get(row.channel_id);
       const providerId = resolveProvider(row.channel_id, channel, yamlChannels, sources, providerIds);
@@ -397,10 +414,11 @@ function assemblePlaylists(sources: Sources): Assembled {
       const captions = override?.captions ?? (row.captions ? row.captions.split(',').filter(Boolean) : []);
 
       staged.push({
-        courseId,
+        courseIds: bound,
         playlist: {
           id: row.id,
           courseId,
+          alsoCourses: bound.slice(1),
           title,
           channelId: row.channel_id,
           channelTitle: channel?.title ?? yamlChannels.get(row.channel_id)?.title ?? '',
@@ -446,11 +464,29 @@ function assemblePlaylists(sources: Sources): Assembled {
       (channelId) => channels.get(channelId)?.subscribers ?? null
     );
 
-    for (const { courseId, playlist } of staged) {
-      const built = BuiltPlaylistSchema.parse({ ...playlist, ...rated.byId.get(playlist.id) });
-      const list = byCourse.get(courseId) ?? [];
-      list.push(built);
-      byCourse.set(courseId, list);
+    // Over the whole catalogue rather than one course at a time: a run is a
+    // property of what a channel published, and both halves of it have to agree
+    // on their numbering even when they end up in different courses.
+    const series = detectSeries(
+      staged.map(({ playlist }) => ({
+        id: playlist.id,
+        channelId: playlist.channelId,
+        title: playlist.title,
+        year: playlist.year,
+      }))
+    );
+
+    for (const { courseIds: bound, playlist } of staged) {
+      const built = BuiltPlaylistSchema.parse({
+        ...playlist,
+        ...rated.byId.get(playlist.id),
+        ...(series.has(playlist.id) ? { series: series.get(playlist.id) } : {}),
+      });
+      for (const courseId of bound) {
+        const list = byCourse.get(courseId) ?? [];
+        list.push(built);
+        byCourse.set(courseId, list);
+      }
     }
 
     // Default order inside a shard is the default sort in the UI.
@@ -462,20 +498,27 @@ function assemblePlaylists(sources: Sources): Assembled {
   }
 }
 
-/** `overrides.yaml` always wins over whatever the matcher decided. */
-function resolveCourse(
+/**
+ * Every course this playlist belongs to, the one it is filed under first.
+ *
+ * `overrides.yaml` always wins over whatever the matcher decided — including
+ * when it names several courses, which the passes never do: a rule reads one
+ * title and answers with one course, and only a person can say that a semester
+ * called «Алгоритмы и структуры данных» is both of ours.
+ */
+function resolveCourses(
   playlistId: string,
   matches: Map<string, MatchRow>,
   sources: Sources
-): string | null {
+): string[] {
   if (playlistId in sources.overrides.matches) {
-    return sources.overrides.matches[playlistId];
+    return boundCourses(sources.overrides.matches[playlistId]);
   }
   const match = matches.get(playlistId);
-  if (!match?.course_id) return null;
+  if (!match?.course_id) return [];
   // Unreviewed low-confidence guesses stay out of the catalogue.
-  if (!isBindingConfident(match)) return null;
-  return match.course_id;
+  if (!isBindingConfident(match)) return [];
+  return [match.course_id];
 }
 
 function resolveProvider(

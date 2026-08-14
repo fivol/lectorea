@@ -102,6 +102,13 @@ export default function CoursePanel({
 
         <h2 className="font-display text-h1">{t(`course.${course.id}.title`)}</h2>
 
+        {/* The names the same course goes by elsewhere. Half the recordings in
+            the catalogue are titled with one of these rather than with ours,
+            and someone who took ТФКП has no other way to tell that this is it. */}
+        {has(`course.${course.id}.aliases`) ? (
+          <p className="mt-1 text-sm text-ink-faint">{t(`course.${course.id}.aliases`)}</p>
+        ) : null}
+
         <div className="mt-3 flex flex-wrap gap-1.5">
           <Button
             variant={favorite ? 'primary' : 'default'}

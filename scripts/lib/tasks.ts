@@ -179,7 +179,7 @@ const PLACEHOLDER_CHANNELS_SQL = `(${PLACEHOLDER_CHANNELS.map((id) => `'${id}'`)
  * the database, and a match pointing at a row that is not there is skipped in
  * silence.
  */
-export function seedManualMatches(db: Db, matches: Record<string, string | null>): number {
+export function seedManualMatches(db: Db, matches: Record<string, string | string[] | null>): number {
   const insert = db.prepare(
     `INSERT INTO playlists (id, channel_id, video_count, alive, next_refresh_at)
      VALUES (?, '${PLACEHOLDER_CHANNEL}', 0, 1, ?)
@@ -470,7 +470,7 @@ export async function fetchPlaylistVideos(
  */
 export function videoQueueTiers(
   db: Db,
-  overrides: Record<string, string | null>
+  overrides: Record<string, string | string[] | null>
 ): { first: string[]; last: string[] } {
   const first: string[] = [];
   const last: string[] = [];

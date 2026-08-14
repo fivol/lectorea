@@ -20,17 +20,32 @@ import ProgressBar from '@/components/ProgressBar';
 import { Button, ButtonLink, IconButton } from '@/components/ui';
 import Tooltip from '@/components/Tooltip';
 import { StatusBadge } from './PlaylistRow';
+import { neighbours, partLabel } from './series';
 
 type Props = {
   playlist: BuiltPlaylist;
+  /** Whose shard this was opened from — the one course not worth naming again. */
+  courseId?: string;
+  /** The whole run this recording is a part of, in order. Empty when it is not. */
+  run?: BuiltPlaylist[];
+  onOpenPart?: (id: string) => void;
   onClose: () => void;
 };
 
 /** What the player is showing, and where it was asked to start. */
 type Playing = { id: string; start: number };
 
-export default function PlaylistModal({ playlist, onClose }: Props) {
+export default function PlaylistModal({
+  playlist,
+  courseId,
+  run = [],
+  onOpenPart,
+  onClose,
+}: Props) {
   const { t, lang } = useT();
+  const { prev, next } = neighbours(playlist, run);
+  /** Courses this recording also teaches, minus the one we are reading it in. */
+  const alsoCovers = [playlist.courseId, ...playlist.alsoCourses].filter((id) => id !== courseId);
   const catalog = useCatalog();
   const { search } = useCatalogParams();
 
@@ -47,12 +62,12 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   /** Null for a shelf entered from search, whose ratio is not about staying. */
   const retention = measuredRetention(playlist);
 
-  /** What the store needs in order to know what a tick is part of. */
+  /** What the store needs in order to know what a tick is part of, and what it is worth. */
   const context: WatchContext = useMemo(
     () => ({
       courseId: playlist.courseId,
       playlistId: playlist.id,
-      videoIds: playlist.videos.map((video) => video.id),
+      videos: playlist.videos.map((video) => ({ id: video.id, seconds: video.seconds })),
     }),
     [playlist]
   );
@@ -97,8 +112,10 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
   const { onLoad } = useYouTubeTracking({
     enabled: playing !== null,
     iframe: frame,
-    onPosition: (videoId, sec) => recordPosition(videoId, sec, context),
-    onWatched: (videoId) => setVideosDone([videoId], true, context),
+    onPosition: (videoId, sec, played) => recordPosition(videoId, sec, context, played),
+    // «player», so the day is not charged for the lecture's whole length on top
+    // of the time the frame has already reported watching it.
+    onWatched: (videoId) => setVideosDone([videoId], true, context, 'player'),
     // Without `list=` there is no rail behind the frame to walk along, so the
     // walking is done here. With one, YouTube is already doing it and a second
     // mover would fight it.
@@ -171,7 +188,7 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
 
   const setAll = (next: boolean): void => {
     if (next) toggleWatched(playlist.id, context);
-    else setVideosDone(context.videoIds, false, context);
+    else setVideosDone(context.videos.map((video) => video.id), false, context);
   };
 
   /*
@@ -312,6 +329,52 @@ export default function PlaylistModal({ playlist, onClose }: Props) {
               <p className="num mt-1 text-xs text-ink-faint">
                 {[provider?.title, playlist.year, playlist.lang].filter(Boolean).join(' · ')}
               </p>
+
+              {/* Where this sits in the run, and the way out of it in either
+                  direction. A course cut in half is the one case where the next
+                  thing to watch is not a matter of taste, and the player is
+                  where that question is asked. */}
+              {playlist.series && run.length > 1 ? (
+                <div className="mt-3 rounded-card border border-line px-3 py-2">
+                  <p className="text-xs text-ink-faint">
+                    {partLabel(playlist.series, t)} ·{' '}
+                    {t('ui.playlist.ofParts', { n: playlist.series.total })}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {prev ? (
+                      <Button
+                        variant="default"
+                        icon="chevron-left"
+                        iconSize={14}
+                        onClick={() => onOpenPart?.(prev.id)}
+                      >
+                        {prev.series ? partLabel(prev.series, t) : t('ui.playlist.prevPart')}
+                      </Button>
+                    ) : null}
+                    {next ? (
+                      <Button
+                        variant="primary"
+                        icon="chevron-right"
+                        iconSize={14}
+                        onClick={() => onOpenPart?.(next.id)}
+                      >
+                        {next.series ? partLabel(next.series, t) : t('ui.playlist.nextPart')}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* One recording, two courses — «Алгоритмы и структуры данных»
+                  is a semester of both, and saying so is how the reader knows
+                  they are not looking at a stray. */}
+              {alsoCovers.length ? (
+                <p className="mt-3 text-xs text-ink-faint">
+                  {t('ui.playlist.alsoCovers', {
+                    courses: alsoCovers.map((id) => t(`course.${id}.title`)).join(', '),
+                  })}
+                </p>
+              ) : null}
 
               {/* Above the fact sheet, because it is the one thing here that is
                   about the reader rather than about the recording. Absent until

@@ -1,0 +1,38 @@
+{
+  "_comment": "The other names a course goes by — what a student would recognise from their own timetable. Unlike keywords these are shown on the card and matched as whole phrases, so only names of the subject belong here.",
+
+  "course.calculus-1": ["Single Variable Calculus", "Calculus I"],
+  "course.calculus-2": ["Calculus II"],
+  "course.calculus-3": ["Multivariable Calculus", "Calculus III"],
+  "course.linear-algebra": ["Matrix Algebra", "Analytic Geometry"],
+  "course.abstract-algebra": ["Modern Algebra"],
+  "course.discrete-math": ["Discrete Structures"],
+  "course.numerical-methods": ["Numerical Analysis", "Scientific Computing"],
+  "course.complex-analysis": ["Complex Variables"],
+  "course.functional-analysis": ["Operator Theory"],
+  "course.pde": ["Methods of Mathematical Physics"],
+  "course.differential-geometry": ["Riemannian Geometry"],
+  "course.probability": ["Probability Theory"],
+  "course.statistics": ["Mathematical Statistics"],
+  "course.random-processes": ["Stochastic Processes"],
+  "course.theory-of-computation": ["Automata Theory", "Computational Complexity"],
+
+  "course.analytical-mechanics": ["Theoretical Mechanics", "Lagrangian Mechanics"],
+  "course.thermodynamics": ["Thermal Physics", "Molecular Physics"],
+  "course.electrodynamics": ["Electricity and Magnetism", "Electromagnetism"],
+  "course.quantum-mechanics": ["Quantum Theory", "Quantum Physics"],
+  "course.statistical-physics": ["Statistical Mechanics"],
+  "course.condensed-matter": ["Solid State Physics"],
+  "course.nuclear-physics": ["Nuclear and Particle Physics"],
+
+  "course.programming-intro": ["Introduction to Computer Science"],
+  "course.algorithms": ["Algorithms and Data Structures", "Design and Analysis of Algorithms"],
+  "course.computer-architecture": ["Computer Organization"],
+  "course.ml-intro": ["Machine Learning"],
+  "course.deep-learning": ["Neural Networks"],
+  "course.nlp": ["Natural Language Processing"],
+  "course.computer-vision": ["Image Processing"],
+
+  "course.philosophy-of-science": ["History and Philosophy of Science"],
+  "course.physiology": ["Human and Animal Physiology"]
+}

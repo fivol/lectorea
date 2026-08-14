@@ -10,6 +10,7 @@ import PlaylistFilters from './PlaylistFilters';
 import PlaylistRow from './PlaylistRow';
 import PlaylistModal from './PlaylistModal';
 import { playlistHeadings } from './playlist-label';
+import { groupRuns } from './series';
 import { ButtonLink } from '@/components/ui';
 import {
   applyFilters,
@@ -93,7 +94,43 @@ export default function PlaylistList({ course }: Props) {
     [playlists, course.id, catalog.providers, t]
   );
 
+  /** The list as it is drawn: single recordings, and runs kept together. */
+  const items = useMemo(() => groupRuns(visible), [visible]);
+
   const open = playlists?.find((playlist) => playlist.id === params.playlistId) ?? null;
+  /**
+   * The rest of the open recording's run, in order — what the player's «next
+   * part» reads. Taken from the whole shard rather than from `visible`, because
+   * a filter that hides part two does not make part two stop existing, and the
+   * player is past the point where the list's filters are the question.
+   */
+  const runOfOpen = useMemo(() => {
+    if (!open?.series || !playlists) return [];
+    const key = open.series.key;
+    return playlists
+      .filter((playlist) => playlist.series?.key === key)
+      .sort((a, b) => (a.series?.pos ?? 0) - (b.series?.pos ?? 0));
+  }, [open, playlists]);
+
+  const row = (playlist: BuiltPlaylist) => (
+    <PlaylistRow
+      key={playlist.id}
+      playlist={playlist}
+      label={
+        labels.get(playlist.id) ?? {
+          name: null,
+          source: playlist.title,
+          detail: playlist.title,
+        }
+      }
+      language={languageLabel(playlist.lang, filters.langs)}
+      showRetention={sort === 'retention'}
+      onOpen={(id) => {
+        lastFocused.current = document.activeElement as HTMLElement;
+        params.setPlaylist(id);
+      }}
+    />
+  );
 
   if (!course.playlistCount) {
     return (
@@ -144,25 +181,27 @@ export default function PlaylistList({ course }: Props) {
                 {t('ui.playlists.noneInLang', { lang: langLabel(filters.langs) })}
               </p>
             ) : null}
-            {visible.map((playlist) => (
-              <PlaylistRow
-                key={playlist.id}
-                playlist={playlist}
-                label={
-                  labels.get(playlist.id) ?? {
-                    name: null,
-                    source: playlist.title,
-                    detail: playlist.title,
-                  }
-                }
-                language={languageLabel(playlist.lang, filters.langs)}
-                showRetention={sort === 'retention'}
-                onOpen={(id) => {
-                  lastFocused.current = document.activeElement as HTMLElement;
-                  params.setPlaylist(id);
-                }}
-              />
-            ))}
+            {items.map((item) =>
+              item.kind === 'one' ? (
+                row(item.playlist)
+              ) : (
+                /* A run reads as one thing with parts, so it is drawn as one
+                   thing: a rule down the left and a line saying how many parts
+                   there are. Without it the list says nothing about why «Часть
+                   2» sits under «Часть 1» rather than being ranked against it. */
+                <div key={item.key} className="my-1 border-l-2 border-line-strong pl-2">
+                  <p className="px-1 pb-0.5 text-xs text-ink-faint">
+                    {/* How many parts the run has, not how many of them we
+                        hold: a course of four semesters is a course of four
+                        semesters whether or not the third was ever uploaded. */}
+                    {t('ui.playlists.oneCourseIn', {
+                      n: count(item.parts[0]?.series?.total ?? item.parts.length, 'part'),
+                    })}
+                  </p>
+                  {item.parts.map(row)}
+                </div>
+              )
+            )}
           </>
         ) : (
           <p className="py-4 text-center text-sm text-ink-faint">
@@ -174,6 +213,9 @@ export default function PlaylistList({ course }: Props) {
       {open ? (
         <PlaylistModal
           playlist={open}
+          courseId={course.id}
+          run={runOfOpen}
+          onOpenPart={(id) => params.setPlaylist(id)}
           onClose={() => {
             params.setPlaylist(null);
             // Focus goes back to the row the modal was opened from.

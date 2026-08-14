@@ -207,8 +207,22 @@ export type Sources = {
   overrides: Overrides;
   i18n: Record<string, string>;
   keywords: Record<string, string[]>;
+  /** The other names a course is actually called. Shown, unlike `keywords`. */
+  aliases: Record<string, string[]>;
   courseNames: Map<string, string[]>;
 };
+
+/**
+ * The courses one line of `overrides.matches` binds a playlist to.
+ *
+ * `null` is a refusal and binds to nothing; a bare string is the ordinary case;
+ * a list is a recording that teaches several of our courses at once, and its
+ * first entry is the one it is filed under.
+ */
+export function boundCourses(value: string | string[] | null | undefined): string[] {
+  if (value === null || value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
 
 export function loadSources(lang = 'ru'): Sources {
   // The colour is not in the YAML: it belongs to the domain's biome, and
@@ -226,6 +240,7 @@ export function loadSources(lang = 'ru'): Sources {
   const overrides = loadYamlObject(path.join(paths.data, 'overrides.yaml'), OverridesSchema);
   const i18n = loadDictionary(lang);
   const keywords = loadKeywords(lang);
+  const aliases = loadAliases(lang);
 
   return {
     domains,
@@ -237,6 +252,7 @@ export function loadSources(lang = 'ru'): Sources {
     overrides,
     i18n,
     keywords,
+    aliases,
     courseNames: loadCourseNames(courses),
   };
 }
@@ -258,14 +274,19 @@ function loadCourseNames(courses: Course[]): Map<string, string[]> {
   const dictionaries = UI_LANGS.map((language) => ({
     i18n: loadDictionary(language.id),
     keywords: loadKeywords(language.id),
+    aliases: loadAliases(language.id),
   }));
   const names = new Map<string, string[]>();
   for (const course of courses) {
     const collected = new Set<string>();
-    for (const { i18n, keywords } of dictionaries) {
+    for (const { i18n, keywords, aliases } of dictionaries) {
       const title = i18n[`course.${course.id}.title`];
       if (title) collected.add(title);
       for (const keyword of keywords[`course.${course.id}`] ?? []) collected.add(keyword);
+      // An alias is a whole name of the subject, so it is also the strongest
+      // thing the rule pass can match: a full phrase covers its clause and wins
+      // over the short words another course shares with it.
+      for (const alias of aliases[`course.${course.id}`] ?? []) collected.add(alias);
     }
     names.set(course.id, [...collected]);
   }
@@ -296,6 +317,31 @@ export function loadKeywords(lang: string): Record<string, string[]> {
     keywords[key] = Array.isArray(value) ? value : [value];
   }
   return keywords;
+}
+
+/**
+ * The other names a course goes by — the ones a person would recognise as the
+ * name of their own course.
+ *
+ * Kept apart from `keywords` because these are shown. Half the catalogue's
+ * recordings carry a title that is not our name for the course: someone who
+ * took ТФКП at МФТИ has no way to tell that «Комплексный анализ» is the same
+ * thing unless the page says so. `keywords` cannot do that job — it holds
+ * «анализ», «поля», «числа», bait for the matcher that reads as noise on a
+ * card. So: an alias is a name, a keyword is a crumb, and only names go out.
+ *
+ * A missing file is not an error — a language may simply have none yet.
+ */
+export function loadAliases(lang: string): Record<string, string[]> {
+  const file = path.join(paths.aliases, `${lang}.json`);
+  if (!fs.existsSync(file)) return {};
+  const raw = loadJson(file, KeywordsSchema);
+  const aliases: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (key.startsWith('_')) continue;
+    aliases[key] = Array.isArray(value) ? value : [value];
+  }
+  return aliases;
 }
 
 export function reportSourceError(error: unknown): never {

@@ -11,6 +11,7 @@ export const paths = {
   courses: path.join(ROOT, 'data/courses'),
   i18n: path.join(ROOT, 'data/i18n'),
   keywords: path.join(ROOT, 'data/keywords'),
+  aliases: path.join(ROOT, 'data/aliases'),
   cacheDb: path.join(ROOT, 'data/cache.db'),
   publicDir: path.join(ROOT, 'public'),
   outData: path.join(ROOT, 'public/data'),
