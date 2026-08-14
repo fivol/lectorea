@@ -18,6 +18,97 @@ per commit.
 | **[crawl.md](crawl.md)** | `data:discover`, `data:refresh`, `data:playlists`, `data:videos`, `data:liveness`, `data:images`, `data:import` |
 | **[matching.md](matching.md)** | `data:match`, how the rule pass decides, `data:review` |
 
+## The three sequences with a shorter name
+
+Most of what is below is one command doing one thing, and `pnpm` is the right
+way to reach it. Three jobs are not: they are a *sequence*, in an order that
+matters, and getting the order wrong costs a day of quota or publishes half a
+state. Those have a `Makefile`.
+
+```bash
+make
+```
+
+prints the list. Nothing in it reimplements anything — every target forwards to
+the same `pnpm` script CI runs. What it adds is the ordering and the guards.
+
+### `make pipeline`
+
+Everything the crawl does, in the order that buys the most for the day's quota:
+
+```
+import → discover → mine → match → refresh → subscribers → match → embeds → build
+```
+
+Two things about that order are worth stating, because they are the reason the
+sequence exists at all rather than being written out by hand each time.
+
+**Matching comes before the crawl.** Matching is free and needs only a title;
+walking a playlist's videos is the most expensive call here, and a playlist no
+course claims is never shown, so the work buys nothing. `data:refresh` ranks its
+video queue off the `matches` table ([the five tiers](../pipeline.md#quota)) —
+so whatever `match` has decided by the time it runs is what the day is spent on.
+
+**And again after it.** A playlist discovered this run has no metadata yet, and
+a title is the whole of what the rule pass reads. The second `match` is free and
+picks up everything the refresh just gave a name to.
+
+The free seams are in there too, in the places where they refill: `mine` reads
+links out of API bodies already on disk and finds more of them after every
+crawl, `import` re-reads the published curricula in `data/sources.yaml`. `import`
+is the one step allowed to fail without stopping the run — it is the only one
+that needs the open web, and a `raw.githubusercontent.com` that is having a bad
+morning is not a reason to leave the quota unspent.
+
+It ends with `data:build`, so what the day bought is visible in `pnpm dev` and
+validated before anybody thinks about publishing it.
+
+### `make publish`
+
+The local state of the whole system, published:
+
+```
+guard: is this working copy what main would build?
+  → data:build         the validator CI runs, before anything leaves the machine
+  → cache:publish      cache.db → the data-cache release
+  → deploy, pinned to that snapshot
+```
+
+The guard is the part that earns its keep. The site is built from `main` on
+GitHub and never from a working copy, so an uncommitted `overrides.yaml` — the
+committed record of everything decided in `data:review` — would simply not be
+published, and nothing anywhere would say so. `make publish` stops on
+uncommitted changes and on commits that have not been pushed, prints them, and
+names the fix. `FORCE=1` publishes the crawl cache alone, which is the honest
+thing to call it.
+
+**The deploy is pinned to the snapshot on purpose.** A plain deploy restores the
+Actions cache first and `cache:restore` then finds material and stands aside —
+correct every other day of the year, and wrong here: the site would rebuild from
+last night's crawl and ignore the one just uploaded. So `publish` dispatches
+`deploy.yml` with `snapshot=true`, which skips the Actions cache and forces
+`cache:restore --force`. That input exists for this and is reachable only by
+dispatching the workflow by hand; the nightly path is untouched.
+
+### `make stats`
+
+The [dashboard](catalogue.md#pnpm-stats), served and opened —
+`localhost:5180`, recomputed on every reload, so it can be left open while a
+crawl runs.
+
+### Everything else
+
+`make check` runs what CI runs, in CI's order. `make doctor` says what this
+machine actually has — tools, how many YouTube keys are configured (counted,
+never printed), whether `cache.db` holds a crawl rather than merely holding
+tables, whether `public/data` exists. `make clean` removes everything
+regenerable and deliberately leaves `data/cache.db` alone, that being a week of
+somebody's quota.
+
+Variables: `N=` caps a step ([below](#doing-it-in-batches)), `LLM=1` adds the
+model pass to `match`, `FORCE=1` means `--force` on `discover` and `match` and
+"publish the cache anyway" on `publish`.
+
 ## Doing it in batches
 
 Every script that processes things one by one takes a **leading positive
@@ -109,25 +200,30 @@ Or the same with fake playlists in it, so the panels have something to show:
 pnpm data:seed-dev && pnpm data:build && pnpm dev
 ```
 
-First run with real data, spread over two or three days of quota. Channels →
-playlists:
+First run with real data, spread over two or three days of quota. This is the
+whole of it, repeated daily until it stops reporting exhausted quota:
+
+```bash
+make pipeline
+```
+
+Which is `import → discover → mine → match → refresh → subscribers → match →
+embeds → build`, in that order for the reasons
+[above](#the-three-sequences-with-a-shorter-name). Spelled out, a day of it is:
 
 ```bash
 pnpm data:discover
 ```
 
-Then metadata, videos and liveness — repeat daily until it stops reporting
-exhausted quota:
+```bash
+pnpm data:match
+```
 
 ```bash
 pnpm data:refresh
 ```
 
-Bind what can be bound automatically, decide the leftovers by hand, and build:
-
-```bash
-pnpm data:match --llm
-```
+Then decide by hand the ones no pass could settle, and build:
 
 ```bash
 pnpm data:review
@@ -138,4 +234,5 @@ pnpm data:build
 ```
 
 Afterwards `data:refresh` and `data:match` run nightly on CI, and the only manual
-step is review.
+steps are review and — when a laptop has been crawling and its work should reach
+the site — `make publish`.

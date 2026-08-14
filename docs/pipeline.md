@@ -363,12 +363,21 @@ check again, which is the one failure here nothing downstream can catch —
 so it waits for a person. Everything else the crawl learns is published without
 review.
 
+The same chain runs on a laptop as `make pipeline`, with the two free seams CI
+does not run — `data:import` and `data:mine` — folded in, and `data:match`
+moved ahead of the crawl as well as after it. Why the steps go in that order:
+[scripts/README.md](scripts/README.md#make-pipeline).
+
 **`deploy.yml`** — on push to `main`, *and* on a successful `refresh` run: it
 restores the same cache, then `pnpm data:build → pnpm build → deploy`. That
 second trigger is what closes the loop — without it a night's work would sit in
 the cache until somebody happened to push. A refresh that failed publishes
 nothing: there is no new material, and rebuilding on its schedule would only
 churn the site.
+
+It also takes a manual dispatch, with one input: `snapshot`, which skips the
+Actions cache and rebuilds from the published snapshot instead. That is how a
+laptop's crawl reaches the site — [`make publish`](#handing-a-laptops-night-over-to-the-site).
 
 Secrets: `YOUTUBE_API_KEY` (plus optional `YOUTUBE_API_KEY2`, `3`) and
 `OPENAI_API_KEY`; the refresh needs them, the deploy needs none. A fork that has
@@ -402,6 +411,31 @@ the release is never more than a day behind.
 
 The snapshot leaves out `raw_responses`, which is 3.5 GB of the 3.6 and read only
 by `11-mine` and `stats`, both local. What travels is 190 MB, 65 compressed.
+
+### Handing a laptop's night over to the site
+
+```bash
+make publish
+```
+
+Uploading the snapshot is only two thirds of it, and the missing third is the
+part that is silent when it goes wrong. The site is built from `main` on GitHub
+and never from a working copy, so an `overrides.yaml` still sitting unstaged —
+the committed record of everything `data:review` decided that evening — is
+simply not published, and every log line in the run stays green. `make publish`
+therefore refuses to start on uncommitted changes or unpushed commits, prints
+them, and names the fix; `FORCE=1` publishes the crawl cache alone, which is
+what that outcome should be called.
+
+**And the deploy has to be pinned to the snapshot.** A plain dispatch restores
+the Actions cache first, `cache:restore` finds material and stands aside as it
+is meant to, and the site rebuilds from last night's CI crawl — ignoring the
+one just uploaded, which is the single outcome that makes "publish my local
+state" untrue. So the target dispatches `deploy.yml` with `snapshot=true`: the
+Actions cache step is skipped and `cache:restore --force` takes the release as
+the source of truth. The input is reachable only by dispatching the workflow by
+hand, so the nightly path — where deferring to the Actions cache is correct —
+is untouched.
 
 **What counts as "material" is the load-bearing part.** `openDb` writes the whole
 schema before the first request, and `seedManualMatches` fills `playlists` from

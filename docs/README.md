@@ -115,6 +115,27 @@ order, score, search. The catalogue-side commands (`data:build`, `course:new`,
 [scripts/catalogue.md](scripts/catalogue.md), and everything else — the crawl,
 the matching, the map generators — is under [scripts/](scripts/README.md).
 
+Three jobs are a sequence rather than a command, and getting the order wrong
+costs a day of quota or publishes half a state. Those have a `Makefile` —
+`make` on its own prints the list:
+
+```bash
+make pipeline
+```
+
+```bash
+make publish
+```
+
+```bash
+make stats
+```
+
+The whole crawl in quota order; the local state of the system published whole,
+guarded against the half of it that is easy to leave behind; and the dashboard.
+What each one does and why in that order:
+[scripts/README.md](scripts/README.md#the-three-sequences-with-a-shorter-name).
+
 ## All the documentation
 
 **The product**
