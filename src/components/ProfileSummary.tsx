@@ -8,6 +8,7 @@ import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from './Icon';
+import { WeekGoalBar } from './WeekGoal';
 import { Button } from './ui';
 
 /**
@@ -135,20 +136,27 @@ function SummaryCard({
       <div className={floating ? 'space-y-2.5' : 'flex flex-col gap-3 sm:flex-row sm:items-center'}>
         {resume ? <ResumeButton resume={resume} className={floating ? '' : 'sm:flex-1'} /> : null}
 
-        <div className={`flex items-stretch gap-2 ${floating ? '' : 'shrink-0'}`}>
-          {/* Only once there is one. A «0 дней подряд» is a scolding, and the
-              first day of a habit is not the moment to deliver one. */}
-          {streak ? (
+        <div className={`flex flex-col gap-2 ${floating ? '' : 'shrink-0'}`}>
+          <div className="flex items-stretch gap-2">
+            {/* Only once there is one. A «0 дней подряд» is a scolding, and the
+                first day of a habit is not the moment to deliver one. */}
+            {streak ? (
+              <Tile
+                value={streak}
+                label={t('ui.profile.stats.streak', { noun: plural(streak, 'day') })}
+              />
+            ) : null}
+            <WeekTime seconds={week.seconds} />
             <Tile
-              value={streak}
-              label={t('ui.profile.stats.streak', { noun: plural(streak, 'day') })}
+              value={week.lectures}
+              label={t('ui.profile.stats.week', { noun: plural(week.lectures, 'lecture') })}
             />
-          ) : null}
-          <WeekTime seconds={week.seconds} />
-          <Tile
-            value={week.lectures}
-            label={t('ui.profile.stats.week', { noun: plural(week.lectures, 'lecture') })}
-          />
+          </div>
+          {/* Nothing at all until a goal is set — see `WeekGoal`. The bar is
+              the whole of it here: the choosing lives in the panel, and a card
+              in the corner of a map is not where somebody decides how much
+              they mean to study this week. */}
+          <WeekGoalBar />
         </div>
       </div>
     </div>

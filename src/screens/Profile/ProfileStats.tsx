@@ -8,6 +8,7 @@ import { percent, useWatchedTotals } from '@/lib/progress';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
+import { WeekGoalRow } from '@/components/WeekGoal';
 
 /**
  * What the profile is for, said in numbers before any list of anything.
@@ -199,6 +200,11 @@ function ActivityStrip() {
           {t('ui.profile.stats.more')}
         </span>
       </div>
+
+      {/* The week to aim at, under the week that happened — the only number on
+          this screen that is chosen rather than earned, and it belongs beside
+          the one it is measured against. */}
+      <WeekGoalRow />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { DayLog } from '@shared/schema';
+import { hoursFromSeconds } from '@/lib/format';
 import { localDay, useProfile } from '@/store/profile';
 
 /**
@@ -150,4 +151,43 @@ export function useActivity(window = ACTIVITY_WINDOW): Activity {
   // date only matters to the day, and a value that changes on its own would
   // make this hook's result unstable for no reason.
   return useMemo(() => activityOf(days, localDay(), window), [days, window]);
+}
+
+/**
+ * What a week can be aimed at, in hours.
+ *
+ * It starts at one because the week worth aiming at is the first one: somebody
+ * who has watched nothing yet is choosing between an hour and giving up, not
+ * between five and seven. The steps widen as they go for the same reason a
+ * volume knob does — the difference between one hour and two is a decision, the
+ * difference between eight and nine is not.
+ */
+export const WEEK_GOALS = [1, 2, 3, 5, 7, 10] as const;
+
+/** A goal for the week and how far into it the reader is. */
+export type WeekGoal = {
+  /** What was aimed at, in hours. */
+  hours: number;
+  /** What has been done, in the same unit — so the two can be printed together. */
+  done: number;
+  /** 0..1, never past 1: a bar that overflows is a bar that has stopped meaning anything. */
+  fraction: number;
+  met: boolean;
+};
+
+/** The goal in force, or nothing — which is what a profile that never set one has. */
+export function useWeekGoal(): WeekGoal | null {
+  const hours = useProfile((state) => state.profile.settings.weekGoal);
+  const { week } = useActivity();
+
+  return useMemo(() => {
+    if (!hours) return null;
+    const target = hours * 3600;
+    return {
+      hours,
+      done: hoursFromSeconds(week.seconds),
+      fraction: Math.min(1, week.seconds / target),
+      met: week.seconds >= target,
+    };
+  }, [hours, week.seconds]);
 }

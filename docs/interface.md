@@ -80,10 +80,11 @@ A front page answers "what is there"; somebody who has been here before is
 asking "where was I", and that answer used to be two presses away behind an
 avatar in the corner. So for a reader with a past here the front page carries
 it: the lecture that was playing, and the three numbers that say whether the
-habit is alive — days in a row, hours this week, lectures this week. On a wide
-window it is a plate in the corner, on a narrower one a bar at the foot of the
-screen — where a thumb reaches it — and on the list view the first section of
-the page. A profile with nothing in it yet shows none of it.
+habit is alive — days in a row, hours this week, lectures this week — and, for
+anybody who has set one, how far into the week's goal that is. On a wide window
+it is a plate in the corner, on a narrower one a bar at the foot of the screen
+— where a thumb reaches it — and on the list view the first section of the
+page. A profile with nothing in it yet shows none of it.
 
 The numbers are about the week in hand rather than about everything, and the
 week starts on Monday. A lifetime total is a monument, and a monument says
@@ -483,6 +484,22 @@ So it reads top to bottom as the routine it describes:
   Under the strip the week in hand is spelled out: «На этой неделе — 2,2 часа,
   3 лекции». It is the last seven squares said in numbers, and it is the pair
   the front page carries, so the two screens cannot disagree about the week.
+
+  Under *that* is the one number on either screen that is chosen rather than
+  earned: **цель на неделю**, in hours. Everything else in the profile is a
+  report, and a report answers "how am I doing" only against something —
+  «4,1 часа» is a fact, «4,1 из 5 ч» is a position. It is off until somebody
+  sets it and one press from off again, because a goal handed to a reader who
+  came here to watch one lecture is a debt they never took on, which is the
+  same argument the path bar below is written against.
+
+  The choosing folds away once it is done — a permanent row of seven buttons
+  under a number reads as a control panel rather than as a week — and the bar
+  alone travels to the front page, where there is room to see how far along the
+  week is and none to argue about how long it should be. The unit is written
+  «ч» rather than «часов» on purpose: Russian «из» takes the genitive, where
+  «из 3 часов» is right and the plural rule the rest of the site runs on would
+  write «из 3 часа». An abbreviation does not decline.
 - **Продолжить** — the last thing opened that is not finished, at the lecture
   and the second it was left at, one press away. The only card in the profile
   about right now; everything under it is a shelf of things decided at some

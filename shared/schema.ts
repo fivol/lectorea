@@ -649,6 +649,20 @@ export const ProfileSchema = z.object({
        * progress itself, and turning that off would be turning the feature off.
        */
       resume: z.boolean().catch(true),
+      /**
+       * Hours of study to aim for in a week, or null for no goal.
+       *
+       * A setting rather than a number derived from anything: how much somebody
+       * means to study is the one fact about their week the site cannot work
+       * out for itself. Hours because that is what the week is measured in —
+       * see `days` — and a goal counted in lectures would be met by six
+       * ten-minute explainers.
+       *
+       * Null is the default and stays the default. A goal nobody asked for is a
+       * debt handed to somebody who came here to watch a lecture, and the whole
+       * point of it is that it was chosen.
+       */
+      weekGoal: z.number().min(0).nullable().catch(null),
     })
     .default({
       lang: 'ru',
@@ -657,6 +671,7 @@ export const ProfileSchema = z.object({
       maxStage: null,
       panelLinks: 'closed',
       resume: true,
+      weekGoal: null,
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
