@@ -4,10 +4,14 @@
  *
  * The screen asks one question — what does this field look like — and three
  * files answer it. `shared/tiles/biomes.ts` says which biome a domain is (and,
- * on the same line, what colour it is painted), `shared/tiles/fill.ts` works
+ * on the same line, what colour it is painted), `shared/tiles/plan.ts` works
  * out which hexes the territory owns and what goes on them, and the collection
  * itself draws the pieces. Nothing here knows how a mountain is drawn, and
  * nothing there knows what a domain is.
+ *
+ * The plan usually arrives read rather than worked out — it is the same answer
+ * every time and it is written down next to the map file. This module does not
+ * care which: it is handed cells and turns them into pieces of a drawing.
  *
  * The result is markup rather than React elements. A field of relief is a few
  * thousand paths that never change once they are drawn — there is nothing for
@@ -26,23 +30,18 @@
  * filter, and the `opacity` that dims it goes over the whole of it at once.
  */
 
-import { ringOf } from '@shared/polygon';
 import {
-  biomeFor,
-  cellsIn,
-  fillCells,
   fillMarkup,
   findTile,
-  oceanCells,
+  groundPlan,
   screenAt,
   terrain as neutral,
-  OCEAN,
   type Cell,
+  type GroundPlan,
   type HexGrid,
   type Palette,
   type RenderOptions,
 } from '@shared/tiles';
-import { GROUND } from '@shared/view';
 import type { ParsedMap } from '@/lib/map';
 
 /** The clip flat tiles reference. One per document — the map is the document. */
@@ -116,17 +115,6 @@ const SEA: Record<'light' | 'dark', Partial<Palette>> = {
 };
 
 /**
- * How far past the map's own box the water is drawn, as a share of it.
- *
- * The drawing is fitted into the window with `meet`, so on any window that is
- * not exactly the map's shape there is a band of viewport left over above and
- * below, or left and right — and an SVG clips to its viewport, not to its
- * viewBox. Water drawn out here fills those bands, which is the difference
- * between a sea and a picture of a sea on a coloured page.
- */
-const SEA_MARGIN = 0.22;
-
-/**
  * How large a piece of scenery is, in cells.
  *
  * The land is cut on the same grid as the sea, and it has to be: a territory is
@@ -177,70 +165,66 @@ function once(make: () => string): () => string {
   return () => (made ??= make());
 }
 
-export function groundOf(map: ParsedMap, scheme: 'light' | 'dark'): MapGround {
+/** What `groundPlan` needs, read off a parsed map file. */
+export const planSourceOf = (map: ParsedMap, grid: HexGrid) => ({
+  shapes: map.shapes.map((shape) => ({
+    domainId: shape.domainId,
+    continent: shape.continent,
+    plan: shape.plan,
+  })),
+  coasts: map.landmasses.map((mass) => mass.plan),
+  width: map.width,
+  height: map.height,
+  grid,
+});
+
+/**
+ * @param saved The plan read off `public/map-ground.json`, or null — missing,
+ *   unreadable, or drawn from some other map. Null means the three passes run
+ *   here instead, which is slower and never different: see `shared/tiles/plan.ts`.
+ */
+export function groundOf(
+  map: ParsedMap,
+  scheme: 'light' | 'dark',
+  saved: GroundPlan | null
+): MapGround {
   // Read when the file was read: the grid is a fact about the map, and the two
   // maps are not drawn on the same one.
   const grid = map.grid;
   if (!grid) return { fields: [], ocean: [] };
 
-  const fields = map.shapes
-    .map((shape): Field => {
-      const cells = fillCells(
-        cellsIn(ringOf(shape.plan), grid),
-        biomeFor(shape.domainId, shape.continent),
-        // Seeded on the field, not on its place: a redrawn map moves the
-        // territory without redrawing the ground it already had.
-        shape.domainId
-      );
-      return {
-        domainId: shape.domainId,
-        y: shape.y,
-        pieces: piecesOf(cells, grid, shape.domainId, { clipId: HEX_CLIP }),
-      };
-    })
+  const plan = saved ?? groundPlan(planSourceOf(map, grid));
+
+  // Where each territory begins, for the order they are painted in. Off the
+  // shapes rather than the plan: the plan is the map file's own coordinates and
+  // this is the drawing's.
+  const northOf = new Map(map.shapes.map((shape) => [shape.domainId, shape.y]));
+
+  const fields = plan.fields
+    .map(
+      (field): Field => ({
+        domainId: field.domainId,
+        y: northOf.get(field.domainId) ?? 0,
+        pieces: piecesOf(field.cells, grid, field.domainId, { clipId: HEX_CLIP }),
+      })
+    )
     .filter((field) => field.pieces.length > 0)
     // Painted north to south, for the same reason the cells within one
     // territory are: relief leans out of its cell towards the reader, and the
     // nearer piece has to go on top.
     .sort((a, b) => a.y - b.y);
 
-  return { fields, ocean: oceanPieces(map, grid, scheme) };
-}
-
-/**
- * The sea, cut into pieces on a grid.
- *
- * Shallow water first and open water after it, as one run each — that is the
- * order the two were always drawn in, and the pieces keep it. Within a piece
- * the cells are still laid north to south by `fillMarkup`; across pieces the
- * order is the grid's, which the water can afford in a way the land cannot,
- * since a cell of sea is drawn inside its own hex.
- */
-function oceanPieces(map: ParsedMap, grid: HexGrid, scheme: 'light' | 'dark'): Patch[] {
-  // The map file is a plan; its height on screen is already laid back, so the
-  // area the water covers has to be measured back up before the cells are
-  // worked out and projected again.
-  const width = map.width;
-  const height = map.height / GROUND;
-  const area = {
-    x: -width * SEA_MARGIN,
-    y: -height * SEA_MARGIN,
-    width: width * (1 + SEA_MARGIN * 2),
-    height: height * (1 + SEA_MARGIN * 2),
-  };
-
-  const coasts = map.landmasses.map((mass) => ringOf(mass.plan));
-  const cells = oceanCells(area, coasts, grid);
-  const shore = cells.filter((cell) => cell.depth < OCEAN.shore);
-  const open = cells.filter((cell) => cell.depth >= OCEAN.shore);
-
-  const palette = { ...neutral, ...SEA[scheme] };
-  const options = { palette, clipId: HEX_CLIP };
-
-  return [
-    ...piecesOf(fillCells(shore, OCEAN.near, 'shore'), grid, 'shore', options),
-    ...piecesOf(fillCells(open, OCEAN.open, 'open'), grid, 'open', options),
+  // Shallow water first and open water after it, as one run each — that is the
+  // order the two have always been drawn in. The palette is the theme's, and it
+  // is the only thing here that is: the plan says which cell carries a reef, and
+  // the theme says what colour a reef is.
+  const options = { palette: { ...neutral, ...SEA[scheme] }, clipId: HEX_CLIP };
+  const ocean = [
+    ...piecesOf(plan.sea.shore, grid, 'shore', options),
+    ...piecesOf(plan.sea.open, grid, 'open', options),
   ];
+
+  return { fields, ocean };
 }
 
 /**

@@ -257,6 +257,10 @@ map: ## Regenerate public/map.svg from data/domains.yaml
 map-portrait: ## The same world stacked → public/map-portrait.svg
 	@$(PNPM) map:portrait
 
+.PHONY: map-ground
+map-ground: ## Rewrite what the scenery is made of — after editing biomes.ts or terrain.ts
+	@$(PNPM) map:ground
+
 .PHONY: map-sandbox
 map-sandbox: ## The map generator with sliders, as one HTML file
 	@$(PNPM) map:sandbox

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { insideRing, ringOf, signedDistance, type Point } from '../../shared/polygon.js';
 import type { Continent } from '../../shared/schema.js';
 import { ensureDir, paths } from './config.js';
+import { writeGroundPlan } from './map-ground.js';
 import { SourceError } from './sources.js';
 
 /**
@@ -231,7 +232,16 @@ export function mapFileSvg({ viewBox, landmasses, territories, provenance }: Map
 `;
 }
 
-/** Writes one of the app's map files and reports what went into it. */
+/**
+ * Writes one of the app's map files and reports what went into it — and, in the
+ * same breath, the scenery's plan for it.
+ *
+ * The two are written together because they can only ever be wrong apart: a
+ * redrawn map with last week's plan is the one failure the whole design of
+ * `shared/tiles/plan.ts` is built to make loud, and the cheapest way to make it
+ * loud is for it never to happen by hand. `pnpm map:ground` exists for the other
+ * direction — a biome recipe edited without the map being redrawn.
+ */
 export function writeMapFile(target: string, file: MapFile): void {
   const svg = mapFileSvg(file);
   ensureDir(paths.publicDir);
@@ -242,4 +252,5 @@ export function writeMapFile(target: string, file: MapFile): void {
       `${file.landmasses.length} landmasses (${islands} islands) · ` +
       `${(Buffer.byteLength(svg) / 1024).toFixed(1)} KB`
   );
+  console.log(`  ${writeGroundPlan(target)}`);
 }

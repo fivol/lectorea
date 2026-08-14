@@ -38,6 +38,14 @@ jobs:
       - name: Localisation keys and course text
         run: pnpm check:i18n
 
+      # Not correctness — the map draws the same either way, because the app
+      # checks the plan's fingerprints and works it out again when they do not
+      # answer. What this catches is the silent version of that: a redrawn map
+      # or an edited biome shipping with last week's plan, and every reader on a
+      # phone paying a fifth of a second for the omission.
+      - name: The map's scenery plan is current
+        run: pnpm map:ground --check
+
       - name: Frontend build
         run: pnpm build
         env:

@@ -8,6 +8,7 @@ import type {
   SearchEntry,
 } from '@shared/schema';
 import { dependantsIndex, forwardClosureSizes } from '@shared/graph';
+import type { GroundPlan } from '@shared/tiles';
 import type { Dictionary } from '@/i18n';
 
 /**
@@ -169,4 +170,25 @@ export async function loadMapSvg(variant: MapVariant = 'wide'): Promise<string> 
   const response = await fetch(`${base}/${file}`);
   if (!response.ok) throw new Error(`Failed to load ${file}`);
   return response.text();
+}
+
+/** Where the saved scenery plan for a map file lives: `x.svg` → `x-ground.json`. */
+export const groundFileFor = (file: string): string => file.replace(/\.svg$/, '-ground.json');
+
+/**
+ * The scenery's plan — which cell of the map carries which tiles.
+ *
+ * Written by `pnpm map:ground` beside the map file it belongs to. A cache, and
+ * treated as one: anything at all going wrong returns null, and the screen works
+ * the same answer out for itself. See `shared/tiles/plan.ts` for what it is and
+ * why it is safe to keep on disk.
+ */
+export async function loadMapGround(variant: MapVariant = 'wide'): Promise<GroundPlan | null> {
+  try {
+    const response = await fetch(`${base}/${groundFileFor(MAP_FILE[variant])}`);
+    if (!response.ok) return null;
+    return (await response.json()) as GroundPlan;
+  } catch {
+    return null;
+  }
 }

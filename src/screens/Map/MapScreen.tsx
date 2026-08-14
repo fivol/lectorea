@@ -9,6 +9,7 @@ import { useIsMobile, useIsPortrait } from '@/lib/hooks';
 import { useMapView, useUi } from '@/store/ui';
 import SearchBox, { SuggestCourse } from '@/components/SearchBox';
 import ContributeBar from '@/components/ContributeBar';
+import FloatingFoot from '@/components/FloatingFoot';
 import GlobalFilters from '@/components/GlobalFilters';
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
@@ -241,48 +242,39 @@ export default function MapScreen() {
           catalogue, drawn the other way", and a control that moved between the
           two would be saying they are two screens.
 
-          `sticky` rather than `fixed`, so that in the blocks view it rides the
-          bottom of the scrolling column instead of standing over the middle of
-          a card. The zero-height row is what keeps it out of the flow: the grid
-          under it does not have to leave a gap for something that floats.
-
           Over the map the contribute line comes with it, as the last thing at
           the foot of the screen — see the footer below for why it is up here
           and not down there.
+
+          What the stack costs the window is measured rather than assumed — see
+          `FloatingFoot`. The map's controls and the map's own fitting both
+          stand clear of whatever ends up in here, which is not the same stack
+          on every screen or for every reader.
         */}
         {isMobile || showSummary ? (
-          <div
-            /* Clear of the legend written across the foot of the drawing —
-               which only exists on the windows wide enough to have room for
-               it, and is exactly what the phone gives up to keep the map
-               running to the bottom edge. */
-            className="pointer-events-none sticky bottom-0 z-30 flex h-0 items-end justify-center
-                       pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-12"
-          >
-            <div className="flex flex-col items-center gap-1.5">
-              {/* Where the corner card cannot fit. At the foot of the screen
-                  rather than the top: it is the one thing here that is pressed
-                  rather than read, and on a phone that is the band a thumb
-                  reaches without the hand moving. */}
-              {showSummary ? (
-                <ProfileSummary
-                  variant="bar"
-                  className="pointer-events-auto shadow-[var(--shadow-pop)] xl:hidden"
-                />
-              ) : null}
-              {isMobile ? (
-                <ViewSwitch
-                  large
-                  value={mapView}
-                  onChange={setMapView}
-                  className="pointer-events-auto shadow-[var(--shadow-pop)]"
-                />
-              ) : null}
-              {isMobile && showMap ? (
-                <ContributeBar floating>{t('ui.footer.contribute')}</ContributeBar>
-              ) : null}
-            </div>
-          </div>
+          <FloatingFoot>
+            {/* Where the corner card cannot fit. At the foot of the screen
+                rather than the top: it is the one thing here that is pressed
+                rather than read, and on a phone that is the band a thumb
+                reaches without the hand moving. */}
+            {showSummary ? (
+              <ProfileSummary
+                variant="bar"
+                className="pointer-events-auto shadow-[var(--shadow-pop)] xl:hidden"
+              />
+            ) : null}
+            {isMobile ? (
+              <ViewSwitch
+                large
+                value={mapView}
+                onChange={setMapView}
+                className="pointer-events-auto shadow-[var(--shadow-pop)]"
+              />
+            ) : null}
+            {isMobile && showMap ? (
+              <ContributeBar floating>{t('ui.footer.contribute')}</ContributeBar>
+            ) : null}
+          </FloatingFoot>
         ) : null}
       </main>
 

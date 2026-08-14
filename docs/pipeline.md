@@ -27,6 +27,7 @@ scripts/
   map-sandbox.ts       the same, bundled as one HTML file with sliders
   map-import.ts        a sandbox export → public/map.svg
   map-portrait.ts      the generator, stacked → public/map-portrait.svg
+  map-ground.ts        what the scenery is made of → public/*-ground.json
   lib/
     youtube.ts        API wrapper with quota accounting
     db.ts             sqlite
@@ -321,6 +322,38 @@ To try a variant: `pnpm map:portrait --seed=9`, or any other knob. To look
 before writing: `pnpm map:preview --packing=column --width=1180 --height=1560`,
 which renders to `.map-poc/` with a metrics report. The sandbox has a
 **Формат** switch that loads either preset, for art-directing by eye.
+
+### What the scenery is made of
+
+Beside each map file sits `map-ground.json` — which hex of the map carries which
+tiles, for the land and for the sea. It is the output of three passes that are
+pure functions of the map file and the tables in `shared/tiles`: which hexes a
+territory owns, which hexes are water and how deep, and what grows on each. On a
+phone those passes are about a fifth of a second, every load, for an answer that
+has not changed since the map was last redrawn — so the answer is kept. About
+50 KB each, a third of a millisecond to read, and a tenth of the markup they turn
+into.
+
+`shared/tiles/fill.ts` opens with the argument against storing cells: *"the next
+import silently puts every mountain in the wrong place."* The objection is about
+the word **silently**, and it is answered rather than ignored. Each plan carries
+two fingerprints — of the map file it was drawn from, and of the tables that
+decided what grows where — and the app checks both before trusting a cell of it.
+A plan that does not answer is dropped and the passes run in the browser as they
+always did, with a line in the console saying so. A forgotten regeneration costs
+a slow first paint; it cannot cost a mountain in the sea.
+
+Three things keep it from being forgotten anyway:
+
+| when | what |
+|---|---|
+| the map is redrawn | `writeMapFile` writes the plan in the same breath — nothing to remember |
+| a biome or the sea's recipe is edited | `pnpm map:ground`, since no map file changed |
+| either is forgotten | `pnpm map:ground --check` in CI, and `tests/map-ground.test.ts` before the push |
+
+That test also asserts the thing the whole design rests on: every piece of markup
+the map draws from the saved plan is the same string as the one it draws without
+it.
 
 ## Automation
 

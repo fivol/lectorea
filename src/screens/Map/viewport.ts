@@ -174,12 +174,17 @@ export type MapPlan = {
   extent: { width: number; height: number };
   content: Frame;
   opening: Frame;
-  /**
-   * Bands of the window, in screen pixels, that the drawing passes under but
-   * does not come to rest under — whatever floats over the map.
-   */
-  inset: { top: number; bottom: number };
 };
+
+/**
+ * Bands of the window, in screen pixels, that the drawing passes under but does
+ * not come to rest under — whatever floats over the map.
+ *
+ * Its own argument rather than part of the plan: the plan is the drawing, and
+ * this is the window in front of it. They change for different reasons and at
+ * different moments, and everything worked out from the plan is expensive.
+ */
+export type MapInset = { top: number; bottom: number };
 
 export type MapViewport = {
   ref: React.RefObject<SVGSVGElement>;
@@ -223,8 +228,9 @@ export type MapViewport = {
  * @param plan How the map wants to be placed, or null while it is still
  *   loading — the listeners cannot be attached before the element they belong
  *   to exists, and this is what tells them it now does.
+ * @param inset What the chrome over the window covers.
  */
-export function useMapViewport(plan: MapPlan | null): MapViewport {
+export function useMapViewport(plan: MapPlan | null, inset: MapInset): MapViewport {
   const ref = useRef<SVGSVGElement>(null);
   const [view, setView] = useState<Viewport>({ x: 0, y: 0, k: 1 });
   const [panning, setPanning] = useState(false);
@@ -294,11 +300,11 @@ export function useMapViewport(plan: MapPlan | null): MapViewport {
    * division rather than a change of coordinate system.
    */
   const room = useMemo(() => {
-    if (!frame || !plan) return null;
-    const top = plan.inset.top * frame.unit;
-    const bottom = plan.inset.bottom * frame.unit;
+    if (!frame) return null;
+    const top = inset.top * frame.unit;
+    const bottom = inset.bottom * frame.unit;
     return { x: frame.x, y: frame.y + top, w: frame.w, h: Math.max(frame.h - top - bottom, 1) };
-  }, [frame, plan]);
+  }, [frame, inset]);
 
   const roomRef = useRef<typeof room>(null);
   roomRef.current = room;

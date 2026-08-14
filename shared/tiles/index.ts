@@ -39,6 +39,7 @@ export * from './render.js';
 export * from './terrain.js';
 export * from './biomes.js';
 export * from './fill.js';
+export * from './plan.js';
 export { terrain, WATERS, type Palette } from './ink.js';
 export { assemblies };
 

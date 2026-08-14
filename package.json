@@ -29,6 +29,7 @@
     "data:subscribers": "tsx scripts/12-subscribers.ts",
     "data:embeds": "tsx scripts/13-embeds.ts",
     "data:map": "tsx scripts/10-map.ts",
+    "map:ground": "tsx scripts/map-ground.ts",
     "cache:publish": "tsx scripts/cache-snapshot.ts publish",
     "cache:restore": "tsx scripts/cache-snapshot.ts restore",
     "og:build": "tsx scripts/og-image.ts",

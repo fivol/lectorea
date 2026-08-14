@@ -2,15 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { loadMapSvg, type MapVariant } from '@/lib/data';
+import { loadMapGround, loadMapSvg, type MapVariant } from '@/lib/data';
 import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
 import { fieldHref, useCatalogParams } from '@/lib/url';
 import { useReducedMotion } from '@/lib/hooks';
 import { DomainGlyph } from '@/components/DomainIcon';
+import { useFoot } from '@/components/FloatingFoot';
 import { useResolvedTheme } from '@/store/profile';
 import { Plate, PlateDivider, IconButton } from '@/components/ui';
 import { SLAB } from '@shared/view';
-import { hexPath } from '@shared/tiles';
+import { hexPath, planFits, type GroundPlan } from '@shared/tiles';
 import { groundOf, scenerySquare, HEX_CLIP } from './ground';
 import { useMapViewport, ZOOM_STEP, type MapPlan } from './viewport';
 
@@ -204,7 +205,8 @@ const letteringScale = (zoom: number, world: number): number => {
 const LETTERING: Record<MapVariant, number> = { wide: 1, portrait: 1.4 };
 
 /**
- * The chrome the map is drawn under but not fitted under, in screen pixels.
+ * The chrome the map is drawn under but not fitted under, in screen pixels —
+ * everything except the floating foot, which measures itself.
  *
  * The drawing runs edge to edge — the sea has to carry on behind the header or
  * the header reads as a lid on it, and a map that slides under its own controls
@@ -212,15 +214,23 @@ const LETTERING: Record<MapVariant, number> = { wide: 1, portrait: 1.4 };
  * *fitted* to is the part of the window a reader can actually see: the wordmark
  * and the search field along the top, the legend and the plate of controls
  * along the bottom.
+ *
+ * `bottom` is the map's own furniture and nothing else. What the view switch,
+ * the resume bar and the contribute line take is neither the same on every
+ * screen nor the same for every reader, so it is added to this at the point of
+ * use from `useFoot` rather than guessed at here — which is what a hardcoded
+ * 144 was, and it was short by a row the day the resume bar arrived.
  */
 const CHROME: Record<MapVariant, { top: number; bottom: number }> = {
   wide: { top: 132, bottom: 48 },
-  // A tall window carries more of it, and all of it is inside the drawing: the
-  // search sits closer to the top of a narrow screen, and the whole of the foot
-  // — the plate of map controls, the view switch under it, the contribute line
-  // under that again — floats over the map rather than standing below it.
-  portrait: { top: 124, bottom: 144 },
+  // A tall window carries more of it above and less below: the search sits
+  // closer to the top of a narrow screen, and the plate of controls is lifted
+  // clear of the foot rather than sitting in the corner.
+  portrait: { top: 124, bottom: 52 },
 };
+
+/** The air between the plate of map controls and the floating foot under it. */
+const CONTROLS_GAP = '0.75rem';
 
 /**
  * How much air the land is given on each side when the window is fitted to it,
@@ -263,7 +273,8 @@ const PORTRAIT_OPENING = { width: 0.45, height: 0.47 };
 
 /**
  * What the map asks the viewport for: the box it covers, the box it is worth
- * showing, where it opens, and the chrome in between.
+ * showing, and where it opens. Facts about the drawing only — what the chrome
+ * over it covers is a fact about the window, and travels separately.
  *
  * `extent` and `content` differ by a third of the drawing's width. The file is a
  * rectangle with the continents in the middle of it and open water all round,
@@ -307,7 +318,6 @@ function planOf(map: ParsedMap, depth: number, variant: MapVariant): MapPlan {
             h: content.h * PORTRAIT_OPENING.height,
           }
         : content,
-    inset: CHROME[variant],
   };
 }
 
@@ -412,6 +422,8 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
   const scheme = useResolvedTheme();
 
   const [map, setMap] = useState<ParsedMap | null>(null);
+  /** The saved plan, or null where it is missing or does not fit this map. */
+  const [scenery, setScenery] = useState<GroundPlan | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
 
   /**
@@ -426,7 +438,22 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
     () => (map ? planOf(map, depth, variant) : null),
     [map, depth, variant]
   );
-  const viewport = useMapViewport(plan);
+
+  /**
+   * The bands of the window the drawing passes under but does not come to rest
+   * under: the map's own furniture, plus whatever is floating at the foot of
+   * this particular screen for this particular reader — see `FloatingFoot`.
+   *
+   * Kept out of `plan` on purpose. The foot changes when a resume bar appears
+   * or the phone is turned, and a plan that changed with it would take every
+   * name on the map through placement again for something that moves no land.
+   */
+  const foot = useFoot();
+  const inset = useMemo(
+    () => ({ top: CHROME[variant].top, bottom: CHROME[variant].bottom + foot }),
+    [variant, foot]
+  );
+  const viewport = useMapViewport(plan, inset);
 
   /**
    * One unit of lettering, in map units, at the magnification now showing.
@@ -459,13 +486,35 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
     [moved, navigate, search]
   );
 
+  /**
+   * The map file, and the scenery's plan for it.
+   *
+   * Both at once, because the plan is only worth having if it is the plan for
+   * *this* file: `planFits` checks its two fingerprints against the map that
+   * actually arrived and against the tables that are actually compiled in, and a
+   * plan that does not answer is dropped on the spot. Then the three passes run
+   * here, exactly as they did before there was a file — slower by a fifth of a
+   * second on a phone, and identical. Said out loud, because the whole point of
+   * checking is that nobody finds out from the map.
+   */
   useEffect(() => {
     let cancelled = false;
-    loadMapSvg(variant)
-      .then((text) => {
-        if (!cancelled) setMap(parseMapSvg(text));
+    Promise.all([loadMapSvg(variant), loadMapGround(variant)])
+      .then(([text, saved]) => {
+        if (cancelled) return;
+        const fits = planFits(saved, text);
+        if (saved && !fits) {
+          console.warn(
+            `The saved ground plan for the ${variant} map is out of date — working it out again. ` +
+              'Run `pnpm map:ground`.'
+          );
+        }
+        setMap(parseMapSvg(text));
+        setScenery(fits ? saved : null);
       })
-      .catch(() => setMap(null));
+      .catch(() => {
+        if (!cancelled) setMap(null);
+      });
     return () => {
       cancelled = true;
     };
@@ -526,8 +575,8 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
    * light and the dark; the land does not, and is redrawn identically.
    */
   const ground = useMemo(
-    () => (map ? groundOf(map, scheme) : { fields: [], ocean: [] }),
-    [map, scheme]
+    () => (map ? groundOf(map, scheme, scenery) : { fields: [], ocean: [] }),
+    [map, scheme, scenery]
   );
 
   /**
@@ -1029,12 +1078,17 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
         already does; they are here so that nothing is only reachable by knowing
         a gesture.
 
-        Lifted a row on a phone, where the corner below belongs to the view
-        switch and the contribute line under it: the switch is what a thumb
-        reaches for, so it gets the bottom of the screen and the map's own
-        controls stand above it.
+        Lifted clear of the floating foot, whatever is in it: the switch and the
+        resume bar are what a thumb reaches for, so they get the bottom of the
+        screen and the map's own controls stand above them. On a window with no
+        foot the sum is nothing plus the gap, which is the corner they have
+        always been in.
       */}
-      <Plate row className="absolute bottom-[6.5rem] right-4 sm:bottom-3">
+      <Plate
+        row
+        className="absolute right-4"
+        style={{ bottom: `calc(var(--foot, 0px) + ${CONTROLS_GAP})` }}
+      >
         <IconButton
           icon="minus"
           label={t('ui.map.zoomOut')}
