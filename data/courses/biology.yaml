@@ -28,6 +28,10 @@
   # Chemistry GIR — but here cell biology runs *before* biochemistry, so the
   # chemistry has to be named directly or it is nowhere in the ancestry at all.
   deps: [general-biology, general-chemistry]
+  # Functional groups make the macromolecules legible; MIT gates the whole
+  # cell block behind organic, but here it would push the branch a column
+  # right for a course that teaches what it needs as it goes.
+  soft: [organic-chemistry]
   refs:
     syllabus: https://catalog.mit.edu/subjects/7/
 
@@ -51,6 +55,7 @@
   domains: [biology]
   stage: bachelor-2
   deps: [genetics]
+  soft: [statistics]
 
 - id: ecology
   domains: [biology]
@@ -72,3 +77,5 @@
   domains: [biology]
   stage: bachelor-2
   deps: [physiology]
+  # The synapse is receptors and second messengers before it is anything else.
+  soft: [biochemistry]

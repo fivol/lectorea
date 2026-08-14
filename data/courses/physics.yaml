@@ -44,7 +44,7 @@
 - id: thermodynamics
   domains: [physics]
   stage: bachelor-3
-  deps: [mechanics, calculus-2]
+  deps: [mechanics]
 
 - id: optics
   domains: [physics]
@@ -67,7 +67,10 @@
 - id: quantum-mechanics
   domains: [physics]
   stage: bachelor-4
-  deps: [linear-algebra, oscillations-waves, analytical-mechanics]
+  # Linear algebra is the language of the course, but it arrives under
+  # analytical mechanics and naming it again is the transitive edge. It is on
+  # the path either way, which is where the reader looks for it.
+  deps: [oscillations-waves, analytical-mechanics]
 
 - id: statistical-physics
   domains: [physics]
@@ -77,7 +80,7 @@
 - id: condensed-matter
   domains: [physics]
   stage: phd
-  deps: [statistical-physics, quantum-mechanics]
+  deps: [statistical-physics]
 
 - id: quantum-field-theory
   domains: [physics]

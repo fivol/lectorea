@@ -23,12 +23,12 @@
 - id: electrical-circuits
   domains: [engineering]
   stage: bachelor-4
-  deps: [electrodynamics, differential-equations]
+  deps: [electrodynamics]
 
 - id: control-theory
   domains: [engineering]
   stage: bachelor-3
-  deps: [differential-equations, linear-algebra]
+  deps: [differential-equations]
 
 - id: signal-processing
   domains: [engineering]
@@ -39,13 +39,16 @@
 - id: robotics
   domains: [engineering]
   stage: bachelor-4
-  deps: [control-theory, linear-algebra]
+  deps: [control-theory]
   soft: [programming-intro]
 
 - id: digital-logic
   domains: [engineering]
   stage: bachelor-1
   deps: [school-algebra]
+  # Gates are Boolean algebra with a soldering iron. Not a gate on the course —
+  # it is taught from scratch — but the reader who has it sees why it works.
+  soft: [discrete-math]
 
 - id: analog-electronics
   domains: [engineering]

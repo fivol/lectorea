@@ -27,7 +27,10 @@
 - id: astrophysics
   domains: [astronomy]
   stage: bachelor-3
-  deps: [astronomy-intro, mechanics, thermodynamics]
+  deps: [astronomy-intro, thermodynamics]
+  # Spectra, fusion and degeneracy pressure are quantum arguments, but the
+  # course is read long before a quantum course in most programmes.
+  soft: [quantum-mechanics]
 
 - id: cosmology
   domains: [astronomy]

@@ -19,6 +19,9 @@
   domains: [machine-learning]
   stage: bachelor-3
   deps: [linear-algebra, probability, programming-intro]
+  # Probability is the gate; estimation, bias and confidence intervals are what
+  # separate reading a metric from believing one.
+  soft: [statistics]
 
 - id: deep-learning
   domains: [machine-learning]
@@ -29,6 +32,7 @@
   domains: [machine-learning]
   stage: bachelor-4
   deps: [deep-learning]
+  soft: [linguistics-intro]
 
 - id: computer-vision
   domains: [machine-learning]

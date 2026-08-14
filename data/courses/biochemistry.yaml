@@ -19,6 +19,8 @@
   domains: [biochemistry, biology]
   stage: bachelor-2
   deps: [organic-chemistry, cell-biology]
+  # Every «why does this reaction go» in the course is a free energy argument.
+  soft: [thermodynamics]
 
 - id: enzymology
   domains: [biochemistry]

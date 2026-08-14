@@ -19,6 +19,7 @@
   domains: [bioinformatics]
   stage: bachelor-3
   deps: [molecular-biology, algorithms]
+  soft: [statistics]
 
 - id: sequence-analysis
   domains: [bioinformatics]
@@ -28,4 +29,4 @@
 - id: structural-bioinformatics
   domains: [bioinformatics]
   stage: bachelor-3
-  deps: [bioinformatics-intro, biochemistry]
+  deps: [bioinformatics-intro]

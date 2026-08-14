@@ -53,11 +53,15 @@
   domains: [cs]
   stage: bachelor-3
   deps: [algorithms]
+  # MIT 6.5830 makes a systems course a hard prerequisite; Stanford CS145 does
+  # not. Buffer pools, paging and durability read better with it, so it goes in
+  # as a hint rather than as a gate that would move the course two columns.
+  soft: [operating-systems]
 
 - id: theory-of-computation
   domains: [cs, logic]
   stage: bachelor-2
-  deps: [discrete-math, mathematical-logic]
+  deps: [mathematical-logic]
 
 - id: compilers
   domains: [cs]
@@ -72,12 +76,13 @@
 - id: distributed-systems
   domains: [cs]
   stage: bachelor-4
-  deps: [networks, operating-systems]
+  deps: [networks]
 
 - id: cryptography
   domains: [cs]
   stage: bachelor-3
   deps: [number-theory, algorithms]
+  soft: [probability]
 
 - id: computer-graphics
   domains: [cs]

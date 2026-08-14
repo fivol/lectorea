@@ -38,6 +38,7 @@
   domains: [chemistry]
   stage: bachelor-3
   deps: [general-chemistry, thermodynamics]
+  soft: [quantum-mechanics]
 
 - id: analytical-chemistry
   domains: [chemistry]

@@ -54,4 +54,4 @@
 - id: typology
   domains: [linguistics]
   stage: bachelor-3
-  deps: [syntax, morphology]
+  deps: [syntax]

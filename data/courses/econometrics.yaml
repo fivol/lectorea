@@ -19,6 +19,9 @@
   domains: [econometrics, economics]
   stage: bachelor-4
   deps: [statistics, microeconomics]
+  # Regression is taught twice over: once with sums, once in matrix form. The
+  # second telling is the one that generalises.
+  soft: [linear-algebra]
 
 - id: time-series-econometrics
   domains: [econometrics]

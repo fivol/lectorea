@@ -49,13 +49,18 @@
   domains: [earth-science]
   stage: bachelor-3
   deps: [meteorology]
+  # A climate is a statistic about weather, and the arguments about trends are
+  # made in the language of estimation.
+  soft: [statistics]
 
 - id: historical-geology
   domains: [earth-science]
   stage: bachelor-2
   deps: [geology, general-biology]
+  soft: [evolution]
 
 - id: geochemistry
   domains: [earth-science]
   stage: bachelor-3
   deps: [geology]
+  soft: [thermodynamics]

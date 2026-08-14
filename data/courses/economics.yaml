@@ -38,6 +38,7 @@
   domains: [economics]
   stage: bachelor-3
   deps: [microeconomics, probability]
+  soft: [random-processes]
 
 - id: behavioral-economics
   domains: [economics]

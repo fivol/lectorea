@@ -19,6 +19,7 @@
   domains: [computational-linguistics]
   stage: bachelor-3
   deps: [syntax, programming-intro]
+  soft: [statistics]
 
 - id: corpus-linguistics
   domains: [computational-linguistics]

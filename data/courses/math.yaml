@@ -119,7 +119,10 @@
   domains: [math, cs]
   stage: bachelor-2
   deps: [calculus-2, linear-algebra]
-  soft: [programming-intro]
+  # MIT 18.330 makes differential equations a hard prerequisite because half of
+  # it is numerical ODEs. Here the course sits a year earlier and runs beside
+  # them, so it is a hint rather than a gate that would cost two columns.
+  soft: [programming-intro, differential-equations]
 
 - id: category-theory
   domains: [math]
