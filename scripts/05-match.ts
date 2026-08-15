@@ -130,8 +130,9 @@ async function main(): Promise<void> {
     // reads them off the rules and goes on seeing refused rows.
     //
     // So it is recorded, and the review queue keeps only what a person can
-    // decide: 24 808 of the 33 376 waiting on 2026-08-15 named nothing, and the
-    // 8568 that did were invisible inside them. Reversible in the two ways it
+    // decide: of the 33 376 still waiting after the crawl of 2026-08-15 had
+    // recorded its support-material refusals, 24 808 named nothing at all, and
+    // the 8568 that did were invisible inside them. Reversible in the two ways it
     // needs to be — `--force` after a keyword or a course is added, and
     // `01-discover.ts` when a channel is vetted.
     if (verdict.kind === 'unclaimed') {

@@ -77,9 +77,9 @@ So `matches.refused` records the difference between the ways of saying no:
 **Why `unclaimed` is recorded rather than queued.** `data:review` works by
 offering the courses a title might mean, and for a title that names none of them
 it has nothing to offer: the reviewer would be searching 206 courses by hand for
-a playlist called «Juice WRLD Freestyles». 24 808 of the 33 376 waiting on
-2026-08-15 were that, and the 8568 that were real questions could not be seen
-inside them.
+a playlist called «Juice WRLD Freestyles». Of the 33 376 still waiting once the
+crawl of 2026-08-15 had recorded its support-material refusals, 24 808 were
+that — and the 8568 that were real questions could not be seen inside them.
 
 What such a title actually needs is a keyword or a new course, and those are
 found by reading titles **in clusters** rather than one at a time —
