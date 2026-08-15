@@ -10,7 +10,7 @@ import PlaylistFilters from './PlaylistFilters';
 import PlaylistRow from './PlaylistRow';
 import PlaylistModal from './PlaylistModal';
 import { playlistHeadings } from './playlist-label';
-import { groupRuns } from './series';
+import { groupRuns, type ListItem } from './series';
 import { ButtonLink } from '@/components/ui';
 import {
   applyFilters,
@@ -33,6 +33,13 @@ export default function PlaylistList({ course }: Props) {
   const [playlists, setPlaylists] = useState<BuiltPlaylist[] | null>(null);
   const [filters, setFilters] = useState<PlaylistFilterState>(() => defaultFilters(lang));
   const [sort, setSort] = useState<SortKey>('rating');
+  /**
+   * Whether a course cut into parts is drawn as one thing. On by default and
+   * kept across courses like the sort is: it is a way of reading the list, not
+   * an answer about this course, and having to tick it again on every panel
+   * would make it useless.
+   */
+  const [grouped, setGrouped] = useState(true);
   const lastFocused = useRef<HTMLElement | null>(null);
 
   // The interface language is the starting point, not a leash: opening another
@@ -94,8 +101,30 @@ export default function PlaylistList({ course }: Props) {
     [playlists, course.id, catalog.providers, t]
   );
 
-  /** The list as it is drawn: single recordings, and runs kept together. */
-  const items = useMemo(() => groupRuns(visible), [visible]);
+  /**
+   * The list as it is drawn: single recordings, and runs kept together.
+   *
+   * Runs are worked out over the whole shard rather than over what survives the
+   * filters — see `groupRuns`. Ungrouped, the parts are ordinary rows and rank
+   * against everything else, which is the honest view for anyone looking for
+   * one recording rather than for a course to sit down with.
+   */
+  const items = useMemo<ListItem[]>(
+    () =>
+      grouped
+        ? groupRuns(visible, playlists ?? visible)
+        : visible.map((playlist) => ({ kind: 'one', playlist })),
+    [visible, playlists, grouped]
+  );
+
+  /**
+   * How many rows are on screen — which is not `visible.length`, because a run
+   * arrives whole and brings parts the filters did not pass.
+   */
+  const shown = useMemo(
+    () => items.reduce((n, item) => n + (item.kind === 'one' ? 1 : item.parts.length), 0),
+    [items]
+  );
 
   const open = playlists?.find((playlist) => playlist.id === params.playlistId) ?? null;
   /**
@@ -149,9 +178,9 @@ export default function PlaylistList({ course }: Props) {
       <h3 className="mb-2 flex items-baseline gap-2 text-sm font-medium">
         {t('ui.playlists.title')}
         <span className="num text-xs text-ink-faint">
-          {visible.length === (playlists?.length ?? 0)
+          {shown === (playlists?.length ?? 0)
             ? count(course.playlistCount, 'playlist')
-            : `${visible.length} / ${playlists?.length ?? 0}`}
+            : `${shown} / ${playlists?.length ?? 0}`}
         </span>
       </h3>
 
@@ -162,6 +191,8 @@ export default function PlaylistList({ course }: Props) {
           onChange={setFilters}
           sort={sort}
           onSortChange={setSort}
+          grouped={grouped}
+          onGroupedChange={setGrouped}
           onReset={() => setFilters(defaultFilters(lang))}
         />
       ) : null}
@@ -172,7 +203,7 @@ export default function PlaylistList({ course }: Props) {
              height, so the list occupies its final size from the first frame
              and nothing under it jumps when the shard lands. */
           <RowSkeletons n={Math.min(course.playlistCount, 5)} />
-        ) : visible.length ? (
+        ) : items.length ? (
           <>
             {/* Above the rows, not instead of them: the sentence and the list
                 it explains have to be read in that order. */}
@@ -186,19 +217,27 @@ export default function PlaylistList({ course }: Props) {
                 row(item.playlist)
               ) : (
                 /* A run reads as one thing with parts, so it is drawn as one
-                   thing: a rule down the left and a line saying how many parts
-                   there are. Without it the list says nothing about why «Часть
-                   2» sits under «Часть 1» rather than being ranked against it. */
-                <div key={item.key} className="my-1 border-l-2 border-line-strong pl-2">
-                  <p className="px-1 pb-0.5 text-xs text-ink-faint">
-                    {/* How many parts the run has, not how many of them we
-                        hold: a course of four semesters is a course of four
-                        semesters whether or not the third was ever uploaded. */}
-                    {t('ui.playlists.oneCourseIn', {
-                      n: count(item.parts[0]?.series?.total ?? item.parts.length, 'part'),
-                    })}
+                   thing: a rule down the left and a line saying that the rows
+                   beside it are one course. Without it the list says nothing
+                   about why «Часть 2» sits under «Часть 1» rather than being
+                   ranked against it.
+
+                   The heading stands outside the rule, and the padding is the
+                   group's own rather than a margin the list's `space-y` can
+                   override. Two runs an inch apart used to draw one unbroken
+                   line down the page — which is the rule saying the opposite of
+                   what it is there to say. Starting at the first part and
+                   ending at the last is what makes it a bracket. */
+                <div key={item.key} className="py-2">
+                  <p className="pb-0.5 pl-3 text-xs text-ink-faint">
+                    {/* No count. The parts are right there to be counted, and
+                        ours was a guess: it came off the highest number found
+                        in the titles, so a run of «s3, s4» announced itself as
+                        four parts and a course whose numbering we never
+                        understood could say anything at all. */}
+                    {t('ui.playlists.oneCourse')}
                   </p>
-                  {item.parts.map(row)}
+                  <div className="border-l-2 border-line-strong pl-2">{item.parts.map(row)}</div>
                 </div>
               )
             )}

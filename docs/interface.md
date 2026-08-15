@@ -325,6 +325,18 @@ two, and the × or the dimmed list behind it to close.
   numbers came out, and nothing about what the thing is. A finished playlist
   wears a «Просмотрен» plate, the same one a finished course wears.
 
+  A course a university cut into parts — «Часть 2», a second semester, `[s3]` —
+  is drawn as one entry: the parts in order, a rule down their left and **Один
+  курс** over them. The heading says that and no more. It used to count the
+  parts, and the count came off the highest number we could parse out of the
+  titles, so a run of `s3, s4` announced four parts above two rows; the parts
+  are on the screen and nobody needs us to add them up. **Части вместе**, next
+  to the sort, turns the grouping off for anyone hunting one recording rather
+  than a course to sit down with, and appears only where there is a run to
+  group. With it on, a run is admitted or rejected whole: one part passing the
+  filters brings the rest with it, because a group drawn with the middle missing
+  renumbers somebody's course.
+
   Filter by language, provider, lecturer, type, lecture
   length, captions, year, completeness; hide what you have watched. The language
   filter starts on the language of the interface and stays there even for a

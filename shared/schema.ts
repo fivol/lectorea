@@ -237,8 +237,7 @@ export const PlaylistSchema = z.object({
 export type Playlist = z.infer<typeof PlaylistSchema>;
 
 /**
- * Where a recording sits in a run of them: «Часть 1» of three, semester 2 of
- * four.
+ * Where a recording sits in a run of them: «Часть 1», semester 2.
  *
  * A university that splits a subject publishes the halves as separate
  * playlists, and the catalogue has no way to tell them from three unrelated
@@ -246,12 +245,17 @@ export type Playlist = z.infer<typeof PlaylistSchema>;
  * the halves share (one channel, one title with the part number taken out),
  * `pos` is the number found in the title. Detected in the build by
  * `scripts/lib/series.ts`, never stored in the crawl.
+ *
+ * There is deliberately no length. `total` used to hold the highest position in
+ * the run and the list printed it — «Один курс, 4 части» — which is a claim
+ * about how long somebody else's course is, made from the largest number we
+ * managed to parse out of their titles. A run of «s3, s4» announced four parts
+ * and showed two, and no arrangement of that number is honest: what the
+ * catalogue has is these parts, and the reader can see them.
  */
 export const SeriesSchema = z.object({
   key: z.string(),
   pos: z.number(),
-  /** Highest position in the run. Runs with holes keep the gap: 1, 2, 4 of 4. */
-  total: z.number(),
   /** What the number was written as: «часть», «семестр», «сезон», «номер». */
   kind: z.string(),
 });

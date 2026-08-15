@@ -336,10 +336,12 @@ export default function PlaylistModal({
                   where that question is asked. */}
               {playlist.series && run.length > 1 ? (
                 <div className="mt-3 rounded-card border border-line px-3 py-2">
-                  <p className="text-xs text-ink-faint">
-                    {partLabel(playlist.series, t)} ·{' '}
-                    {t('ui.playlist.ofParts', { n: playlist.series.total })}
-                  </p>
+                  {/* Which part this is, and nothing about how many there are:
+                      that number was the highest one we could find in the
+                      titles, which is a claim about a university's numbering
+                      and not something the catalogue can know. The buttons
+                      below say what actually exists. */}
+                  <p className="text-xs text-ink-faint">{partLabel(playlist.series, t)}</p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {prev ? (
                       <Button

@@ -18,12 +18,16 @@ export type ListItem =
  * longer eleven rows below «Часть 1» with unrelated recordings in between,
  * which is a list telling you the second half is a worse choice than the first.
  *
- * A run whose other parts are filtered out is not a run: one row under a
- * heading that says «курс из двух частей» is a promise the list is not keeping.
+ * `rows` decide what is shown and in what order; `all` decides what a run is
+ * made of. A course is never cut to fit a filter: one part matching brings the
+ * whole run with it. A run drawn with parts missing out of the middle of it is
+ * a list quietly renumbering somebody's course — «Часть 1, Часть 3» under one
+ * heading reads as a course whose second part does not exist, when all that
+ * happened is that it was filmed in a year the year filter excludes.
  */
-export function groupRuns(rows: BuiltPlaylist[]): ListItem[] {
+export function groupRuns(rows: BuiltPlaylist[], all: BuiltPlaylist[] = rows): ListItem[] {
   const byKey = new Map<string, BuiltPlaylist[]>();
-  for (const playlist of rows) {
+  for (const playlist of all) {
     if (!playlist.series) continue;
     const list = byKey.get(playlist.series.key) ?? [];
     list.push(playlist);

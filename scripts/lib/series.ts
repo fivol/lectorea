@@ -191,11 +191,10 @@ export function detectSeries(playlists: Input[]): Map<string, Series> {
       // repeats: a second reading that only ever got its first semester filmed
       // has nothing to be a part of.
       if (reading.length < 2) return;
-      const total = Math.max(...reading.map((i) => i.pos));
       for (const item of reading) {
         // Each reading is its own run, so two intakes of the same course under
         // the same title do not collapse into one list of five «parts».
-        marks.set(item.id, { key: `${key}#${index}`, pos: item.pos, total, kind: item.kind });
+        marks.set(item.id, { key: `${key}#${index}`, pos: item.pos, kind: item.kind });
       }
     });
   }

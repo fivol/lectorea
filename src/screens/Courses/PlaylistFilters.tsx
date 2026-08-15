@@ -21,6 +21,9 @@ type Props = {
   onChange: (next: PlaylistFilterState) => void;
   sort: SortKey;
   onSortChange: (next: SortKey) => void;
+  /** Whether a course cut into parts is drawn as one group — see `groupRuns`. */
+  grouped: boolean;
+  onGroupedChange: (next: boolean) => void;
   onReset: () => void;
 };
 
@@ -39,12 +42,19 @@ export default function PlaylistFilters({
   onChange,
   sort,
   onSortChange,
+  grouped,
+  onGroupedChange,
   onReset,
 }: Props) {
   const { t } = useT();
   const catalog = useCatalog();
   const facets = facetsOf(playlists);
   const activeCount = activeFilterCount(state);
+
+  // Offered only where there is something to group, like the year and count
+  // ranges: most courses are a list of unrelated recordings, and a switch that
+  // cannot change anything is one more thing to read past.
+  const hasRuns = useMemo(() => playlists.some((playlist) => playlist.series), [playlists]);
 
   /** Unfolds the strip into a wrapped block — scrolling is the default, not the only way. */
   const [expanded, setExpanded] = useState(false);
@@ -325,46 +335,64 @@ export default function PlaylistFilters({
           </>
         ) : null}
 
-        <Dropdown
-          label={
-            <span className="flex items-center gap-1">
-              <Icon name="sort" size={12} />
-              {t(`ui.sort.${sort}`)}
-            </span>
-          }
-          align="right"
-          className="ml-auto"
-        >
-          {SORT_KEYS.map((key) => (
-            <RadioRow key={key} checked={sort === key} onChange={() => onSortChange(key)}>
-              {t(`ui.sort.${key}`)}
-            </RadioRow>
-          ))}
-          {/* «Оценка» is the default order, so the question of what that order
-              is belongs here as much as it does on the badge in each row.
-
-              A question opened by a press rather than by hover: this was the one
-              place in the product that said what the rating is made of, and it
-              said it in a tooltip — which is to say it said nothing at all to
-              anyone reading on a phone. */}
-          <div className="mt-1 border-t border-line px-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setStatusHow((value) => !value)}
-              aria-expanded={statusHow}
-              className="flex w-full items-center gap-1.5 text-left text-[11px] text-ink-faint
-                         transition-colors duration-fast ease-out hover:text-ink-dim"
+        {/* Not a filter and not sorting: it says what a row *is*. Grouped, a
+            course cut into parts is one entry and the filters admit or reject
+            it whole; ungrouped, every part is a recording like any other and
+            ranks on its own. Both are true readings of the same shard, and only
+            the reader knows which question they are asking. */}
+        <div className="ml-auto flex items-center gap-1.5">
+          {hasRuns ? (
+            <Chip
+              on={grouped}
+              icon={grouped ? 'check' : undefined}
+              onClick={() => onGroupedChange(!grouped)}
+              hint={t('ui.filters.groupPartsHint')}
             >
-              <Icon name="help" size={12} />
-              {t('ui.playlist.statusHow')}
-            </button>
-            {statusHow ? (
-              <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
-                {t('ui.playlist.ratingTooltip')}
-              </p>
-            ) : null}
-          </div>
-        </Dropdown>
+              {t('ui.filters.groupParts')}
+            </Chip>
+          ) : null}
+
+          <Dropdown
+            label={
+              <span className="flex items-center gap-1">
+                <Icon name="sort" size={12} />
+                {t(`ui.sort.${sort}`)}
+              </span>
+            }
+            align="right"
+          >
+            {SORT_KEYS.map((key) => (
+              <RadioRow key={key} checked={sort === key} onChange={() => onSortChange(key)}>
+                {t(`ui.sort.${key}`)}
+              </RadioRow>
+            ))}
+            {/* «Оценка» is the default order, so the question of what that
+                order is belongs here as much as it does on the badge in each
+                row.
+
+                A question opened by a press rather than by hover: this was the
+                one place in the product that said what the rating is made of,
+                and it said it in a tooltip — which is to say it said nothing at
+                all to anyone reading on a phone. */}
+            <div className="mt-1 border-t border-line px-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setStatusHow((value) => !value)}
+                aria-expanded={statusHow}
+                className="flex w-full items-center gap-1.5 text-left text-[11px] text-ink-faint
+                           transition-colors duration-fast ease-out hover:text-ink-dim"
+              >
+                <Icon name="help" size={12} />
+                {t('ui.playlist.statusHow')}
+              </button>
+              {statusHow ? (
+                <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
+                  {t('ui.playlist.ratingTooltip')}
+                </p>
+              ) : null}
+            </div>
+          </Dropdown>
+        </div>
       </div>
     </div>
   );
