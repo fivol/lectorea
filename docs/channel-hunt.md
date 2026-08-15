@@ -289,12 +289,93 @@ recordings and interviews, not syllabi. **model-theory** and Russian
 **enzymology**, **corpus-linguistics** and **demography** have no channel at all;
 they will stay where they are until somebody films one.
 
+## The fourth hunt, 2026-08-15 — asking YouTube, and reading who owns the videos
+
+The first hunt that did not read a list. By this point the day's own pipeline
+had drained the video queue, `data:mine` had stopped returning anything and
+`discover` reported `0 of 299 due` — four keys untouched and some 38 000 units
+that would expire at midnight regardless. That is the only situation in which
+`search.list` at 100 units a query is the right call, and the reasoning is in
+[harvest.md](harvest.md#seam-8--asking-youtube-itself).
+
+106 queries, 10 600 units: the 23 courses under four playlists and the 30 under
+seven, each asked for under its Russian and its English name. 4079 playlists
+came back, 597 of which the crawl already had.
+
+**The finding is the ownership test.** Of the 2058 that named a course of this
+catalogue and were long enough to be one, **611 were somebody's bookmarks** —
+«Linguistics» with fifty videos in it, collected from forty other channels, by a
+channel called *A random human*. Nothing in `playlists.list` separates those
+from a course; `playlistItems.list` does, for one unit, because it carries the
+owner of each video. A further 282 were mirrors of a single outside channel.
+That is 43% of everything that passed every free filter, and before this pass
+all of it would have been crawled and most of it published.
+
+### What was added
+
+20 channels, taking the file from 299 to 319. Two thirds arrived as *mirrors* —
+found because somebody else had collected their lectures, never because a search
+returned them directly.
+
+| Channel | Why | How found |
+|---|---|---|
+| Virtual University of Pakistan | 466 playlists carrying course codes — a distance university publishing whole courses | own |
+| University of Scholars | semester courses with codes and terms, Bangladesh | own |
+| Свободный юридический факультет | ТГП, гражданское, административное — law is the thinnest domain here | own |
+| TVSEMINARY Distance-Education | coded theology courses, the same one in Russian, English and Turkish | own |
+| Dr. Najeeb Lectures | neuroanatomy, pharmacology, physiology, in order and at length | own |
+| Liberty Home Bible Institute | systematic theology, Old and New Testament surveys, 80 lectures each | own |
+| Living Anthropologically | *Introduction to Anthropology* filmed again every year — the anthropology hole, closed by one channel | own |
+| Victor Gijsbers | Kant's first Critique, a course in epistemology — Leiden | mirror |
+| Milan Barac | Irwin Weil on Dostoevsky, Tolstoy and Pushkin | mirror |
+| Elena Clark | Russian grammar in two ordered courses, a seminar in Russian literature | own |
+| Алексей Гончаров и КУЛЬТ-УРАЛ | История России, Древнего мира, Средних веков, Нового времени | own |
+| Language & Linguistics Online | syntax, stylistics, sociolinguistics | own |
+| Патан амебного уровня | общая и частная патологическая анатомия | own |
+| Дмитрий Смыслов | история психологии, психология личности | own |
+| moscoweducation, Сетевой Лекторий, Колледж КПСУ | Russian college lecture courses, one subject per playlist | own |
+| CD Duka Law, L.A.W (Law And Wisdom) | Philippine and Pakistani LL.B lecture series | own |
+| не economist [Dmitro] | макро- и микроэкономика ВШЭ, теория игр — three playlists, three courses | own |
+
+### What this hunt refused
+
+44 candidates were vetted at a unit each and 24 refused. The refusals cluster
+into four shapes, and every one of them looked like a hit in the ranked list:
+
+**Topic bins wearing an institution's name**, again — the category that has
+survived four hunts. *Образование для всех* (10 mirrors pointed at it) files a
+decade of educational television under «Мировая история» and «Человек и
+общество», 400–700 videos apiece. *ПостНаука* has «Лекции по химии» meaning
+every chemistry video it has ever made. *Vidya-mitra*, 1455 playlists, tops out
+at «Social Sciences: WOS» with 3100.
+
+**Conference archives.** *TALE: The Archaeology Lecture E-library* is 438
+playlists and, at 85 of them over ten videos, looked like the answer to the
+archaeology hole. They are *CAAUK 2018 Edinburgh*, *TAG@25 2003*, *Scotland's
+Community Heritage Conference* — different people, different days.
+
+**Chapters published as playlists.** *Jacob Stewart* has 42 playlists of ten or
+more and they are «General Chemistry 1 Chapter 7», «Chapter 8», «Chapter 9». The
+unit here is the semester.
+
+**Re-uploads and exam coaching.** *mehranshargh* is The Great Courses, lifted
+whole. *The Law Academy* is SQE preparation, *PMC Lounge* is PMP certification,
+*Last Minute Lecture* is textbook chapter summaries read aloud. And the shape
+that had never been seen before this hunt because no vetted channel produces it:
+the civil-service and accountancy coaching industry — «Anthropology for UPSC»,
+«CA Inter Strategic Management», «Strategic Management - CS Professional». Those
+were 49 of the 63 answers to one query, and `lib/rules.ts` now refuses them by
+name, which cost the catalogue exactly two existing bindings, both correct.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this
 used; they take a file of handles or ids and print the numbers above. Neither is
 wired into `pnpm` — a channel hunt happens once or twice a year, and the useful
-half of it is the judgement, not the script.
+half of it is the judgement, not the script. `scripts/_hunt.ts` joined them on
+2026-08-15 and is the one that produces the candidate list rather than checking
+it; `--from` re-reads a finished report, so a rule written after the search still
+reaches everything the search paid for.
 
 A hunt now has a second half worth budgeting for. `scripts/_refusals.ts` sorts
 the playlists the rules refused by *why*, and the 2026-08-14 hunt found that the

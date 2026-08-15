@@ -58,7 +58,8 @@ shared/            imported by both the build and the browser
 ## Quota
 
 10 000 units a day per Google Cloud project. The rule that shapes everything:
-**never call `search.list`** — it costs 100 units.
+**the crawl is built out of the 1-unit endpoints and never reaches for
+`search.list`**, which costs 100.
 
 | Call | Cost | What it gives |
 |---|---|---|
@@ -66,6 +67,15 @@ shared/            imported by both the build and the browser
 | `playlists.list` (up to 50 ids) | 1 | playlist metadata, in a batch |
 | `playlistItems.list` (up to 50) | 1 | one page of a playlist's videos |
 | `videos.list` (up to 50 ids) | 1 | durations and statistics, in a batch |
+| `search.list` | 100 | off by default — `createClient(db, { allowSearch: true })` |
+
+That last line used to be a comment saying "never", and a comment cannot stop
+anything. `lib/youtube.ts` now throws unless the caller asked for search at
+construction, so a pipeline step that reaches for it fails on its first call
+rather than in tomorrow's ledger. The one caller that does ask is
+`scripts/_hunt.ts`, which is not part of any sequence and runs only against
+quota that would otherwise expire — [harvest.md](harvest.md#seam-8--asking-youtube-itself)
+has the arithmetic and why it inverts exactly once a day.
 
 Which steps go through the job queue is a quota decision. Anything the API
 answers 50 at a time — playlist metadata, liveness — runs in direct batches,

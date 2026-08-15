@@ -1232,3 +1232,109 @@
   type: individual
   country: US
   site: https://www.jeffreykaplan.org/
+
+# ─────────────  Found by search, 2026-08-15 — docs/channel-hunt.md  ─────────────
+#
+# The first hunt that asked YouTube itself rather than a list. What it is for is
+# the fields no awesome-list covers: law, theology, anthropology, pathology,
+# epistemology and the Russian literature courses that live on one lecturer's
+# channel and nowhere else.
+
+- id: moscoweducation
+  title: Московское образование
+  type: platform
+  country: RU
+
+- id: vupakistan
+  title: Virtual University of Pakistan
+  type: university
+  country: PK
+  site: https://www.vu.edu.pk/
+
+- id: uscholars
+  title: University of Scholars
+  type: university
+  country: BD
+
+- id: kpsu
+  title: Колледж КПСУ
+  type: university
+  country: RU
+
+- id: libertyhbi
+  title: Liberty Home Bible Institute
+  type: university
+  country: US
+
+- id: tvseminary
+  title: TVSeminary
+  type: platform
+
+- id: mexam
+  title: Сетевой Лекторий
+  type: platform
+  country: RU
+
+- id: goncharov
+  title: Алексей Гончаров
+  type: individual
+  country: RU
+
+- id: freelawfaculty
+  title: Свободный юридический факультет
+  type: individual
+  country: RU
+
+- id: smyslov
+  title: Дмитрий Смыслов
+  type: individual
+  country: RU
+
+- id: patan
+  title: Патан амебного уровня
+  type: individual
+  country: RU
+
+- id: neeconomist
+  title: не economist
+  type: individual
+  country: RU
+
+- id: livinganthro
+  title: Living Anthropologically
+  type: individual
+  country: US
+  site: https://www.livinganthropologically.com/
+
+- id: gijsbers
+  title: Victor Gijsbers
+  type: individual
+  country: NL
+
+- id: elenaclark
+  title: Elena Clark
+  type: individual
+  country: US
+
+- id: milanbarac
+  title: Milan Barac
+  type: individual
+
+- id: najeeb
+  title: Dr. Najeeb
+  type: individual
+
+- id: khurramshahzad
+  title: Khurram Shahzad
+  type: individual
+  country: PK
+
+- id: cdduka
+  title: CD Duka
+  type: individual
+  country: PH
+
+- id: lawandwisdom
+  title: Law And Wisdom
+  type: individual
+  country: PK

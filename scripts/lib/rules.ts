@@ -272,6 +272,25 @@ const NOT_A_COURSE: RegExp[] = [
   // fortieth of one.
   /(?<![\p{L}\p{N}])ap\s+\p{L}{4,}(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:gcse|igcse|a-?levels?|mcat|neet|sat prep|act prep)(?![\p{L}\p{N}])/u,
+
+  // The same exam shape once more, under the flags a *professional body* flies
+  // rather than a school: the civil-service and accountancy coaching industry.
+  // It was invisible while every playlist came from a vetted teaching channel
+  // and is unmissable the moment anything asks YouTube a question — «Anthropology
+  // for UPSC», «CA Inter Strategic Management», «Strategic Management - CS
+  // Professional - New Syllabus» were 49 of the 63 answers to one query on
+  // 2026-08-15, and each is a syllabus read out against an exam paper rather
+  // than a course taught in order.
+  //
+  // Written as whole brands and never as bare initials, because the initials
+  // are words elsewhere: `CSE` is computer science and engineering, `GATE` is a
+  // gate, `CPA` and `CMA` are costs per action and per mille in half the
+  // marketing playlists on the service. `upsc`, `ncert` and `ugc net` have no
+  // second meaning; `ca`/`cs` are only read next to the paper they name.
+  /(?<![\p{L}\p{N}])(?:upsc|ncert|ugc\s*net|css\s+exam)(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:ca|cma)\s+(?:inter|final|foundation)(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])cs\s+(?:executive|professional)(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:cima|acca|cfa\s+level)(?![\p{L}\p{N}])/u,
 ];
 
 export function isNotACourse(cleaned: string): boolean {

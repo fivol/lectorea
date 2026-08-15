@@ -1646,3 +1646,145 @@
   title: Jeffrey Kaplan
   providerId: jeffreykaplan
   lang: en
+
+# ─────────────────  Found by search, 2026-08-15  ─────────────────
+#
+# The first hunt run through `scripts/_hunt.ts` — YouTube's own search, aimed at
+# the courses with the fewest playlists and paid for out of quota that would
+# have expired unspent. Every line below was vetted with `_vet.ts` and read by
+# hand; docs/channel-hunt.md lists the ones this same pass refused, which is the
+# more useful half.
+#
+# Two thirds of these arrived as *mirrors*: somebody else's playlist collecting
+# this channel's lectures. That is a recommendation with a person behind it, and
+# the channel that made the videos is what gets the line — never the collector.
+
+# 466 playlists carrying course codes — a distance university publishing whole
+# courses, econometrics and management among them.
+- id: UCAQfQqunzE8frH3ukEbgOhA
+  title: Virtual University of Pakistan
+  providerId: vupakistan
+  lang: en
+
+# Semester courses with codes and terms: digital logic, linear algebra,
+# phonetics and phonology.
+- id: UC4FD6INgSafKNcpYEayt31A
+  title: University of Scholars
+  providerId: uscholars
+  lang: en
+
+# Twelve playlists, every one of them a subject: criminal procedure, sociology
+# of advertising, OOP in C++.
+- id: UCquv77eRYC-5wExJWLnI6UQ
+  title: moscoweducation
+  providerId: moscoweducation
+  lang: ru
+
+# Общая теория государства и права, гражданское и административное право,
+# read term by term. Law is among the thinnest fields the catalogue has.
+- id: UC03I10F79Rn3Zws9PzHFp5Q
+  title: Свободный юридический факультет
+  providerId: freelawfaculty
+  lang: ru
+
+# Уголовное право, общая психология, ТГП — a college lectorium.
+- id: UC3stjtjIK9o3zA4jY-n_nIQ
+  title: Сетевой Лекторий
+  providerId: mexam
+  lang: ru
+
+# Экономика организаций, трудовое и договорное право.
+- id: UC9GVRT7Sk32TecUxz8LTy0A
+  title: Колледж КПСУ Екатеринбург
+  providerId: kpsu
+  lang: ru
+
+# История России, Древнего мира, Средних веков and Нового времени, each filmed
+# as an ordered course by one lecturer.
+- id: UCQPSzY_lLQ6m8oSjPlOynQw
+  title: Алексей Гончаров и КУЛЬТ-УРАЛ
+  providerId: goncharov
+  lang: ru
+
+# История психологии, психология личности, общая психология.
+- id: UCi8eZx6IXJeRw5X4DRLnZ7g
+  title: Дмитрий Смыслов
+  providerId: smyslov
+  lang: ru
+
+# Общая и частная патологическая анатомия — the pathology course this
+# catalogue had three playlists for.
+- id: UC0hFl4sma_-OCLmBzMJAH0g
+  title: Патан амебного уровня
+  providerId: patan
+  lang: ru
+
+# Макро- и микроэкономика ВШЭ, теория игр. Three playlists and three courses.
+- id: UCN_NuszZBEYtXJwnSk-GoXw
+  title: не economist
+  providerId: neeconomist
+  lang: ru
+
+# Introduction to Anthropology, filmed again every year, plus the history of
+# anthropological thought. The anthropology hole, closed by one channel.
+- id: UCLw0ITdZe8JLMhOhVvQZqAA
+  title: Living Anthropologically
+  providerId: livinganthro
+  lang: en
+
+# Kant's first Critique and a course in epistemology — Leiden.
+- id: UCxdW451Xfl5oPDpKcsgbATg
+  title: Victor Gijsbers
+  providerId: gijsbers
+  lang: en
+
+# Irwin Weil on Dostoevsky, Tolstoy and Pushkin. Four playlists, three courses,
+# and reached only because two other people had mirrored them.
+- id: UC368TjbTijyekroV2kmvEBg
+  title: Milan Barac
+  providerId: milanbarac
+  lang: en
+
+# Russian grammar in two ordered courses, and a seminar in Russian literature.
+- id: UCzbjj5C9nx_lzuTNmXEDAWg
+  title: Elena Clark
+  providerId: elenaclark
+  lang: en
+
+# Syntax, stylistics, sociolinguistics, discourse analysis — the linguistics
+# courses that had two playlists each.
+- id: UCSLWmRYmj0_09RUJxWjzrJA
+  title: Language & Linguistics Online
+  providerId: khurramshahzad
+  lang: en
+
+# Neuroanatomy, pharmacology, physiology, read in order at length.
+- id: UCPHpx55tgrbm8FrYYCflAHw
+  title: Dr. Najeeb Lectures
+  providerId: najeeb
+  lang: en
+
+# Systematic theology, Old and New Testament surveys, 80 lectures each.
+- id: UC3lAtt3yYxxYVdefuSAPuUQ
+  title: Liberty Home Bible Institute
+  providerId: libertyhbi
+  lang: en
+
+# Coded courses in religious studies and biblical theology, the same course
+# published in Russian, English and Turkish.
+- id: UC7BYAAd1zQqupovkjaz6p1w
+  title: TVSEMINARY Distance-Education
+  providerId: tvseminary
+  lang: ru
+
+# Labor law, political law, criminal law — Philippine LL.B lectures.
+- id: UCFDcc23zdHGP724v959HD7A
+  title: CD Duka Law
+  providerId: cdduka
+  lang: en
+
+# Constitutional law, legal system, environmental and labour law.
+- id: UCeD7VeZP4MUrFkHgHcqJJtw
+  title: L.A.W (Law And Wisdom)
+  providerId: lawandwisdom
+  lang: en

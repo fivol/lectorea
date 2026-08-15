@@ -131,10 +131,12 @@ choosing the lists by hand:
   `.edu`, `.ac.uk`, `.ac.in`. That is universities publishing themselves, at a
   volume no curated list reaches, for nothing.
 
-## Seam 5 — YouTube's own graph, without `search.list`
+## Seam 5 — YouTube's own graph, for one unit
 
-`search.list` costs 100 units and is banned here ([pipeline.md](pipeline.md)).
-Two 1-unit endpoints reach sideways instead:
+`search.list` costs 100 units and is never what a crawl should reach for
+([pipeline.md](pipeline.md)); [seam 8](#seam-8--asking-youtube-itself) is the
+one case where it is worth it, and it is a case about the clock rather than
+about the search. Two 1-unit endpoints reach sideways for nothing:
 
 - **`channelSections.list`** returns a channel's shelves, including the channels
   its owner chose to feature. A university department featuring another
@@ -209,6 +211,77 @@ and real in the review queue and in the video queue's tiers, which is quota.
 Read `overrides.yaml` and not just `matches` when judging one: a hand-bound
 playlist keeps whatever stale guess a pass last wrote.
 
+## Seam 8 — asking YouTube itself
+
+Every seam above is cheaper than this one, and this one is the only one that
+finds a course nobody has ever written down.
+
+`search.list` costs **100 units** — a hundred playlists resolved, or forty
+walked. Against a full video queue that arithmetic is never close, which is why
+`lib/youtube.ts` refuses the call unless a caller says `allowSearch` and why the
+crawl never does. But the arithmetic inverts once a day, and predictably:
+
+> A key resets at midnight Pacific whether or not the day used it.
+
+At the end of an iteration — the video queue drained, `data:mine` returning
+nothing, `discover` reporting `0 of N due` — the choice is not "search or
+crawl". It is "search or lose it". On 2026-08-15 that was four untouched keys
+and 38 000 units with nothing queued to spend them on.
+
+```bash
+pnpm tsx scripts/_hunt.ts out.json --min=4 --budget=6000     # look
+pnpm tsx scripts/_hunt.ts out.json --from=out.json --apply   # queue what survived
+```
+
+**The brief writes itself.** The targets are the courses with the fewest
+playlists in the *built* catalogue, asked for under every name they have in
+every language — which is the whole point for this catalogue, since the fields
+it is thinnest in are the ones no English list covers. One page per query and no
+paging: page two of a query costs the same 100 units as page one of the next
+question and is worth much less.
+
+**Then four filters, in rising order of cost.** Search answers a *subject*, not
+the question, so most of what comes back is not a course:
+
+| Filter | Cost | What it removes |
+|---|---|---|
+| already in `cache.db` | free | ~15% — search happily returns what the crawl owns |
+| fewer than 8 videos, or `NOT_A_COURSE` | free | fragments and support material |
+| names no course of this catalogue | free | 45% — the rule pass reads only the title, so no later run decides differently |
+| **who owns the videos** | 1 unit | 36% of what was left |
+
+That last one is the one to know about, and it is [its own
+section](#a-playlist-is-not-a-course-because-it-is-called-one) below.
+
+**And channels are the better half of the yield.** 20 of the 319 lines in
+`channels.yaml` came from this one hunt, two thirds of them via mirrors rather
+than by being found directly — see [channel-hunt.md](channel-hunt.md).
+
+### A playlist is not a course because it is called one
+
+«Linguistics», 50 videos, by a channel called *A random human*. The title names
+a subject, the size is right, the rule pass binds it at 0.95 — and it is
+somebody's bookmarks, collected from forty other channels. Nothing in
+`playlists.list` can tell it from a course, and it arrives by the hundred the
+moment anything asks YouTube a question rather than reading a curated list.
+
+`playlistItems.list` carries the owner of each video beside the owner of the
+playlist, so **one page of fifty settles it for one unit**. Three answers:
+
+- **own material** — the channel made what it listed. A course.
+- **a collection** — many owners, no author. Dropped. 611 of them on
+  2026-08-15, which at ~2.3 units a walk is some 1400 units of quota and, worse,
+  a catalogue full of watch lists.
+- **a mirror** — one *outside* channel made almost all of it. The playlist is
+  the wrong door, because the crawl would file the course under whoever
+  collected it — but somebody went to the trouble of collecting a course, which
+  is a recommendation with a person behind it, and **the channel that made the
+  videos is the best candidate the hunt produces.** Irwin Weil's Northwestern
+  lectures on Dostoevsky reached this catalogue exactly this way.
+
+The same signal is worth having outside a hunt: any playlist bound to a course
+by a channel that did not make its videos is attributed to the wrong provider.
+
 ## Doing a hunt
 
 1. `pnpm data:mine` — free, always first.
@@ -218,6 +291,9 @@ playlist keeps whatever stale guess a pass last wrote.
 4. Add sources to `data/sources.yaml`, then `pnpm data:import`.
 5. `pnpm data:refresh` to fetch what got queued, `pnpm data:match` to bind it.
 6. `pnpm stats` to see what is still empty, and go to seam 6.
+7. Only when the queue is empty and the day's keys are not: `scripts/_hunt.ts`,
+   seam 8. It is last because it is a hundred times the price of everything
+   above it, and it is worth running because by then the alternative is nothing.
 
 Change a keyword and `scripts/_probe.ts` says what it would do to the whole
 catalogue before `--force` writes anything — gained, lost, and which courses

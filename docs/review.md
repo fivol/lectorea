@@ -85,6 +85,28 @@ Adding a channel is three files, not one:
    missing id, it substitutes;
 3. then `make discover && make refresh && make match && make data`.
 
+### 3b. And when the queue empties before the day does
+
+The end of phase 1 is usually "the video queue is empty and quota is no longer
+the constraint". Check whether that is true of the *keys* as well:
+
+```bash
+pnpm tsx scripts/_hunt.ts out.json --min=4 --budget=6000
+```
+
+An untouched key is 9500 units that expire at midnight whether or not anything
+used them, and that — and only that — is when YouTube's own search at 100 units
+a query is the right call. It produces two things: playlists for the thinnest
+courses, and a ranked list of channels for step 3 above, most of them found
+because somebody had mirrored their lectures.
+[harvest.md](harvest.md#seam-8--asking-youtube-itself) has the filters, of which
+the one worth knowing is that **a third of what survives every free filter is
+somebody's bookmarks**, and one unit of `playlistItems.list` says which.
+
+Nothing is written without `--apply`, and `--from` re-reads a finished report —
+so a rule the hunt teaches `lib/rules.ts` reaches the candidates the search
+already paid for, without asking the same questions again.
+
 ### 4. Verify, then publish
 
 ```bash
@@ -452,6 +474,7 @@ Smarthistory, ICTS and TutorialsPoint again.
 | `_probe.ts [gained\|lost\|changed]` | free | what would a rule change do to the whole catalogue |
 | `_holes.ts [min]` | free | which channels does the catalogue keep choosing but never crawl |
 | `_vet.ts in.txt out.json` | 1 unit/channel | does this candidate own courses |
+| `_hunt.ts out.json [--min\|--courses] [--apply]` | 100 units/query | what does YouTube itself have for the thinnest courses — and whose channel is it really |
 | `_owners.ts mined.json out.json` | 1 unit/50 ids | which channels are behind a set of playlist ids |
 | `_sweep.ts [--write]` | free | rows no rule can ever reach: impossible ids, playlists deferred with no title |
 | `_winners.ts` | free | which keyword won each confident binding, and what it dragged in |
