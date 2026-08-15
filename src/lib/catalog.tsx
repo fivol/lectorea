@@ -175,31 +175,38 @@ export function pathTo(catalog: Catalog, courseId: string): BuiltCourse[] {
 }
 
 /**
- * The prerequisites a filter hides that the selected course leans on directly —
- * its own `deps` and no further. They come back as guests, with the tag naming
- * the field they came from.
+ * The ancestors a filter hides that the selected course stands on — all of
+ * them, however far back the chain runs. They come back as guests, with the tag
+ * naming the field they came from.
  *
- * Two rules were tried before this one. Connectivity — borrow a hidden ancestor
- * only when something already on the canvas stands behind it — never fired in
- * the ordinary case: with one field chosen, which is how this screen is read,
- * the foreign branch is hidden end to end, and over all 206 courses it borrowed
- * exactly zero cards while «Опирается на» in the panel went on naming courses
- * the columns refused to draw. Completeness — borrow the whole hidden closure —
- * fixed that and overshot: one click on sequence analysis brought seventeen
- * foreign cards in at once, scattered down every column to its left. That is a
- * filter turned inside out; you asked for one field and were shown a second one
- * drawn through it.
+ * Two narrower rules were tried and neither held. Connectivity — borrow a
+ * hidden ancestor only when something already on the canvas stands behind it —
+ * never fired in the ordinary case: with one field chosen, which is how this
+ * screen is read, the foreign branch is hidden end to end, and over all 206
+ * courses it borrowed exactly zero cards while «Опирается на» in the panel went
+ * on naming courses the columns refused to draw. One hop back — the selection's
+ * own `deps` and no further — drew the first link and stopped there, which is
+ * the same broken promise moved one column to the left: cell biology over
+ * general chemistry, and nothing behind general chemistry, on a screen that
+ * says reading left to right is reading the order things must be studied in.
  *
- * One hop back is where the question actually is. «What must I do before this»
- * is asked of the selected course; what stands before *those* is a question
- * about them, and it is answered by clicking one — the trail of guests keeps
- * the previous card, so a chain is still walked to its end, one card per step,
- * each step asked for. Nothing is concealed meanwhile: «Путь» in the panel
- * names the whole closure whether or not the columns hold it.
+ * So: the whole upstream closure. A chain missing its first link is not a
+ * weaker version of that promise but a different and false one, and «walk it
+ * yourself, one click per step» asks the reader to rebuild by hand the one
+ * thing the picture exists to show. The cost is bounded by the chain itself —
+ * three cards on average, 17 at the worst, since sequence analysis really does
+ * stand on seventeen courses from other fields — it is spent only on an
+ * explicit click, and it is dropped the moment the selection changes. A filter
+ * with a selection in it is answering a question about that course; the field
+ * still decides what the columns hold when nothing is selected.
  */
-export function hiddenDeps(catalog: Catalog, courseId: string, onCanvas: Set<string>): Set<string> {
+export function chainAncestors(
+  catalog: Catalog,
+  courseId: string,
+  onCanvas: Set<string>
+): Set<string> {
   const borrowed = new Set<string>();
-  for (const id of catalog.courseById.get(courseId)?.deps ?? []) {
+  for (const id of upstreamOf(catalog.courseById, courseId)) {
     if (!onCanvas.has(id)) borrowed.add(id);
   }
   return borrowed;

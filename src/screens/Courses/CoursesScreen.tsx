@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { hiddenDeps, useCatalog, useFilteredCourses } from '@/lib/catalog';
+import { chainAncestors, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
@@ -119,16 +119,16 @@ export default function CoursesScreen() {
   }, [guests, visible, selected]);
 
   /**
-   * What the selection stands on directly and the filter is not showing.
+   * Everything the selection stands on that the filter is not showing — the
+   * whole chain back, not just the first step.
    *
    * The trail above is about where the reader has been; this is about whether
-   * the card in hand can be read at all. A filter that hides a course the
-   * selection sits immediately on top of leaves the chain drawn with its first
-   * link missing: the columns stop at the edge of the field while the panel
-   * goes on naming what is not there.
+   * what is on screen can be read at all. A filter that hides a course the
+   * selection stands on leaves the chain drawn short: the columns stop at the
+   * edge of the field while the panel goes on naming what is not there.
    *
-   * One hop, not the closure — see `hiddenDeps`. Walking further back is the
-   * reader's move, and the trail keeps what they walked past.
+   * The closure, not one hop — see `chainAncestors`. Stopping at the direct
+   * `deps` only moves the broken end one column left.
    *
    * Recomputed per selection rather than accumulated: these cards are here to
    * carry a particular chain, and the moment that chain is no longer the one
@@ -137,7 +137,7 @@ export default function CoursesScreen() {
   const borrowed = useMemo(() => {
     if (!selected) return NO_BRIDGES;
     const canvas = guestIds.size ? new Set([...visible, ...guestIds]) : visible;
-    return hiddenDeps(catalog, selected.id, canvas);
+    return chainAncestors(catalog, selected.id, canvas);
   }, [catalog, selected, visible, guestIds]);
 
   const onCanvas = useMemo(() => {

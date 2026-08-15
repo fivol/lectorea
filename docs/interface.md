@@ -226,20 +226,20 @@ elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead.
 
 Two kinds of card are borrowed back, and only while a course is selected: the
-selected course itself when the filter does not cover it, and the prerequisites
-it stands on directly. Game theory needs probability, probability needs
-combinatorics — with probability filed under another field the card lit up with
-nothing drawn behind it, and «Опирается на» in the panel named a course the
-columns refused to show.
+selected course itself when the filter does not cover it, and every prerequisite
+its chain runs through, however far back. Game theory needs probability,
+probability needs combinatorics — with probability filed under another field the
+card lit up with nothing drawn behind it, and «Опирается на» in the panel named
+a course the columns refused to show.
 
-One hop back, not the whole chain. Borrowing the entire hidden closure was tried
-and overshot: a click on sequence analysis brought seventeen foreign cards in at
-once, scattered down every column to its left, and a filter that answers with a
-second field drawn through the first is no longer a filter. What stands before
-those prerequisites is a question about *them* — click one and it is answered,
-with the previous card kept on the canvas, so a chain is still walked to its end
-one step at a time. Combinatorics stays out until then, counted in «Путь» in the
-panel like every other course off the canvas.
+The whole chain, not one hop. Stopping at the direct prerequisites was tried and
+only moves the broken end one column to the left: combinatorics goes missing
+instead of probability, on a screen whose whole claim is that reading left to
+right is reading the order things must be studied in. The cost is bounded by the
+chain — three cards on average, seventeen at the worst, which is what sequence
+analysis genuinely stands on — it is spent on an explicit click, and it is
+dropped the moment the selection changes. With nothing selected the field still
+decides what the columns hold.
 
 A borrowed card carries a tag naming the field it came from, and pressing it
 moves the columns to that field with the course still selected.
