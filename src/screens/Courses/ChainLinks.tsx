@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { COLUMN_GAP } from '@/lib/layout';
 
-/**
- * `depth` is the source's distance from the selected course — the cascade order.
- * `spine` marks the main line through the target: see `ColumnsView`.
- */
-export type Link = { from: string; to: string; depth: number; spine: boolean };
+/** `depth` is the source's distance from the selected course — the cascade order. */
+export type Link = { from: string; to: string; depth: number };
 
 type Props = {
   /** The scroll container the cards live in; also the SVG's coordinate space. */
@@ -16,24 +12,7 @@ type Props = {
   animate: boolean;
 };
 
-type Curve = { key: string; d: string; length: number; depth: number; spine: boolean };
-
-/** Corner radius where a horizontal stub turns into the vertical run. */
-const RADIUS = 10;
-/** Below this the two cards are level with each other and a straight line does. */
-const FLAT = 6;
-/** The most two neighbouring lanes are ever pushed apart. */
-const LANE_SPACING = 12;
-
-type Raw = {
-  link: Link;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  /** Drops further than it reaches — the case a single cubic cannot draw. */
-  steep: boolean;
-};
+type Curve = { key: string; d: string; length: number; depth: number };
 
 /**
  * The arrows, drawn only for the chain in hand.
@@ -44,25 +23,6 @@ type Raw = {
  * the curves appear on selection and only along the selected chain: drawn for
  * the whole catalogue they were two hundred crossing lines, which is why they
  * were taken out in the first place.
- *
- * Even along one chain they read as noise until they are routed. A single
- * cubic from card to card takes its bow from the horizontal distance, and
- * between adjacent columns that distance *is* the gap — so a card four rows
- * down was reached by a line that spent its whole descent inside the gap,
- * hugging the edges of the cards on both sides. Eight of those look like
- * borders, not like connections, and any two sharing a gap are one line.
- *
- * So a steep link is routed rather than drawn: out of the source's right edge,
- * along to a lane in the gap, down the lane, and into the target's left edge,
- * with the corners rounded. Shallow links keep the curve — a gentle diagonal
- * over a long horizontal run is exactly what a cubic is good at, and 16 % of
- * the edges in this catalogue span more than one column.
- *
- * Lanes are assigned per *target*, not per link. Everything feeding one course
- * comes down the same lane and merges at its edge, which is the fork a chain
- * actually has; separate targets sharing a gap get lanes of their own and stop
- * overlapping. That is where the tree-like reading comes from, and it costs no
- * edges: nothing is dropped to get it.
  *
  * Geometry comes from the DOM rather than from the layout code, because the
  * layout is the browser's: cards are flex children, and their real positions
@@ -89,7 +49,7 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
       return node ? (node as HTMLElement).getBoundingClientRect() : null;
     };
 
-    const raws: Raw[] = [];
+    const next: Curve[] = [];
     for (const link of links) {
       const from = boxOf(link.from);
       const to = boxOf(link.to);
@@ -99,92 +59,15 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
       const y1 = from.top + from.height / 2 + dy;
       const x2 = to.left + dx;
       const y2 = to.top + to.height / 2 + dy;
-      const gap = x2 - x1;
-
-      raws.push({
-        link,
-        x1,
-        y1,
-        x2,
-        y2,
-        steep: gap > 0 && Math.abs(y2 - y1) > Math.max(gap, FLAT),
-      });
-    }
-
-    const steep = raws.filter((raw) => raw.steep);
-
-    /**
-     * Lane per target, spread across the corridor its gap offers.
-     *
-     * Targets are grouped by the column they stand in — everything arriving at
-     * one column shares one gap — and ordered top to bottom, so lanes do not
-     * cross each other on their way in.
-     */
-    const laneOf = new Map<string, number>();
-    const byColumn = new Map<number, Raw[]>();
-    for (const raw of steep) {
-      if (laneOf.has(raw.link.to)) continue;
-      const column = Math.round(raw.x2);
-      byColumn.set(column, [...(byColumn.get(column) ?? []), raw]);
-      laneOf.set(raw.link.to, 0); // reserved; the value is filled in below
-    }
-
-    for (const [, arrivals] of byColumn) {
-      const ordered = arrivals.sort((a, b) => a.y2 - b.y2);
-      for (const [index, raw] of ordered.entries()) {
-        const low = Math.max(raw.x1, raw.x2 - COLUMN_GAP) + RADIUS;
-        const high = raw.x2 - RADIUS;
-        if (low >= high) {
-          laneOf.set(raw.link.to, (raw.x1 + raw.x2) / 2);
-          continue;
-        }
-        const centre = (low + high) / 2;
-        const count = ordered.length;
-        const spacing = count > 1 ? Math.min(LANE_SPACING, (high - low) / (count - 1)) : 0;
-        const offset = (index - (count - 1) / 2) * spacing;
-        laneOf.set(raw.link.to, Math.min(high, Math.max(low, centre + offset)));
-      }
-    }
-
-    const next: Curve[] = [];
-    for (const raw of raws) {
-      const { link, x1, y1, x2, y2 } = raw;
-      const drop = y2 - y1;
-      const gap = x2 - x1;
-      const lane = raw.steep ? laneOf.get(link.to) : undefined;
-
-      let d: string;
-      let length: number;
-
-      if (lane === undefined) {
-        // A horizontal pull proportional to the gap: short hops stay gentle,
-        // long ones bow out far enough not to run along the cards in between.
-        const pull = Math.max(24, gap * 0.5);
-        d =
-          `M${x1.toFixed(1)} ${y1.toFixed(1)} ` +
-          `C${(x1 + pull).toFixed(1)} ${y1.toFixed(1)}, ` +
-          `${(x2 - pull).toFixed(1)} ${y2.toFixed(1)}, ` +
-          `${x2.toFixed(1)} ${y2.toFixed(1)}`;
-        length = Math.hypot(gap, drop) + pull;
-      } else {
-        const sign = Math.sign(drop);
-        const radius = Math.min(RADIUS, lane - x1, x2 - lane, Math.abs(drop) / 2);
-        d =
-          `M${x1.toFixed(1)} ${y1.toFixed(1)} ` +
-          `H${(lane - radius).toFixed(1)} ` +
-          `Q${lane.toFixed(1)} ${y1.toFixed(1)}, ${lane.toFixed(1)} ${(y1 + sign * radius).toFixed(1)} ` +
-          `V${(y2 - sign * radius).toFixed(1)} ` +
-          `Q${lane.toFixed(1)} ${y2.toFixed(1)}, ${(lane + radius).toFixed(1)} ${y2.toFixed(1)} ` +
-          `H${x2.toFixed(1)}`;
-        length = lane - x1 + Math.abs(drop) + (x2 - lane);
-      }
-
+      // A horizontal pull proportional to the gap: short hops stay gentle, long
+      // ones bow out far enough not to run along the cards in between.
+      const pull = Math.max(24, (x2 - x1) * 0.5);
+      const d = `M${x1.toFixed(1)} ${y1.toFixed(1)} C${(x1 + pull).toFixed(1)} ${y1.toFixed(1)}, ${(x2 - pull).toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`;
       next.push({
         key: `${link.from}->${link.to}`,
         d,
-        length,
+        length: Math.hypot(x2 - x1, y2 - y1) + pull,
         depth: link.depth,
-        spine: link.spine,
       });
     }
 
@@ -241,16 +124,9 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
           d={curve.d}
           fill="none"
           stroke="var(--c-accent)"
-          // Two weights, so the chain reads as a line with things joining it
-          // rather than as a mesh. The main line through each course is drawn
-          // in full; a second prerequisite feeding the same course is thinner
-          // and quieter. Both are there — the quiet one is the fact that two
-          // branches meet here, which is the most informative thing on the
-          // screen and the first casualty of any attempt to prune to a tree.
-          strokeWidth={curve.spine ? 2 : 1.5}
+          strokeWidth={2}
           strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity={curve.spine ? 0.7 : 0.38}
+          opacity={0.7}
           style={
             animate
               ? {

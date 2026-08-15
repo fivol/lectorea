@@ -67,6 +67,8 @@ export default function ColumnsView({
   const focusRequest = useUi((state) => state.focusRequest);
 
   const profile = useProfile((state) => state.profile);
+  /** Every edge of the chain, or the tree it cuts back to — see `links`. */
+  const fullGraph = profile.settings.fullGraph;
   const highlight = useHighlight(selectedId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -108,18 +110,23 @@ export default function ColumnsView({
    * selected — and those are both the longest sweeps on screen and the ones
    * that answer a question nobody asked.
    *
-   * Each edge also says whether it is the main line into its target. Pruning
-   * the picture to an actual tree was the other way to quieten it, and the
-   * arithmetic is against it: `deps` is already a transitive reduction — the
-   * build warns on any edge the graph implies, so of the 1085 edges drawn
-   * across every chain in the catalogue exactly none are redundant — and a
-   * spanning tree removes 177 of them, 16 %. Those 177 are precisely the
-   * second prerequisites of the 70 courses that have more than one, which is
-   * to say the points where two branches meet: biochemistry needs organic
-   * chemistry *and* cell biology. That is the most informative thing on the
-   * screen, and it would be the whole price of a sixth fewer lines. So the
-   * tree is drawn as weight rather than as truth — full strength along the
-   * deepest way in to each course, quieter for whatever else feeds it.
+   * How many of them are drawn is the reader's, and `fullGraph` is the switch.
+   * Off, the chain is cut back to a tree rooted at the selected course: every
+   * other card keeps one of the edges leading out of it — towards the course
+   * that needs it — and drops the rest, so following a line from any card still
+   * arrives at the selection and no card is left with nothing drawn to it. That
+   * is a real loss and not a tidying: `deps` is already a transitive reduction,
+   * the build warns on any edge the graph implies, so of the 1085 edges drawn
+   * across every chain in the catalogue exactly none are redundant. The 177 a
+   * tree drops, a sixth of them, are the second prerequisites of the 70 courses
+   * that have more than one — biochemistry needs organic chemistry *and* cell
+   * biology, and with the switch off only one of those is drawn. Which is why
+   * it is a switch and not a decision made here: «Опирается на» in the panel
+   * goes on naming every one of them either way.
+   *
+   * The parent kept is the nearest course that needs this one — fewest columns
+   * to the right, then nearest row — because a tree drawn with short edges is
+   * the whole reason for asking for a tree.
    */
   const links = useMemo<Link[]>(() => {
     const focus = highlight.focusId;
@@ -141,58 +148,43 @@ export default function ColumnsView({
     const depsOn = (id: string): string[] =>
       (catalog.courseById.get(id)?.deps ?? []).filter((dep) => upstream.has(dep));
 
-    /**
-     * The longest run of prerequisites standing behind each course, counted
-     * inside the chain being drawn. `level` is the same measure taken over the
-     * whole catalogue, so sorting by it settles every course after everything
-     * it needs — one pass, no topological sort.
-     */
-    const behind = new Map<string, number>();
-    const ordered = [...upstream]
-      .map((id) => catalog.courseById.get(id))
-      .filter((course): course is BuiltCourse => Boolean(course))
-      .sort((a, b) => a.level - b.level);
-    for (const course of ordered) {
-      let deepest = 0;
-      for (const dep of depsOn(course.id)) deepest = Math.max(deepest, (behind.get(dep) ?? 0) + 1);
-      behind.set(course.id, deepest);
-    }
-
-    /** The one edge into a course that carries its longest chain. */
-    const spineInto = new Map<string, string>();
-    for (const course of ordered) {
-      let best: BuiltCourse | null = null;
-      for (const id of depsOn(course.id)) {
-        const dep = catalog.courseById.get(id);
-        if (!dep) continue;
-        const better =
-          !best ||
-          (behind.get(dep.id) ?? 0) > (behind.get(best.id) ?? 0) ||
-          ((behind.get(dep.id) ?? 0) === (behind.get(best.id) ?? 0) &&
-            (dep.level > best.level || (dep.level === best.level && dep.row < best.row)));
-        if (better) best = dep;
+    /** The one course each card is hung under when the graph is cut to a tree. */
+    const parentOf = new Map<string, string>();
+    if (!fullGraph) {
+      const needs = new Map<string, BuiltCourse[]>();
+      for (const id of upstream) {
+        const course = catalog.courseById.get(id);
+        if (!course) continue;
+        for (const dep of depsOn(id)) needs.set(dep, [...(needs.get(dep) ?? []), course]);
       }
-      if (best) spineInto.set(course.id, best.id);
+      for (const [dep, dependants] of needs) {
+        const here = catalog.courseById.get(dep);
+        const nearest = dependants.reduce((best, course) => {
+          if (course.level !== best.level) return course.level < best.level ? course : best;
+          const reach = Math.abs(course.row - (here?.row ?? 0));
+          const bestReach = Math.abs(best.row - (here?.row ?? 0));
+          return reach < bestReach ? course : best;
+        });
+        parentOf.set(dep, nearest.id);
+      }
     }
 
     const out: Link[] = [];
     for (const id of upstream) {
       for (const dep of depsOn(id)) {
-        out.push({
-          from: dep,
-          to: id,
-          depth: highlight.depthOf(dep),
-          spine: spineInto.get(id) === dep,
-        });
+        // A card whose every dependant is off the canvas has no parent to be
+        // hung under, so it keeps what it has rather than being cut adrift.
+        if (!fullGraph && parentOf.has(dep) && parentOf.get(dep) !== id) continue;
+        out.push({ from: dep, to: id, depth: highlight.depthOf(dep) });
       }
     }
     // Downstream is a fan, not a graph: the selection is a prerequisite of each
-    // of these by definition, and nothing further is drawn. Each is the only
-    // line into its card here, so each is that card's main line.
-    for (const id of opened) out.push({ from: focus, to: id, depth: 0, spine: true });
+    // of these by definition, and nothing further is drawn. A fan is already a
+    // tree, so the switch has nothing to say about it.
+    for (const id of opened) out.push({ from: focus, to: id, depth: 0 });
 
     return out.sort((a, b) => a.depth - b.depth);
-  }, [highlight, columns, catalog]);
+  }, [highlight, columns, catalog, fullGraph]);
 
   /**
    * Bring a course into view when the path list or the search box asks for it,

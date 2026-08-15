@@ -632,6 +632,21 @@ export const ProfileSchema = z.object({
        */
       maxStage: Stage.nullable().default(null),
       /**
+       * Draw every edge of the selected course's chain, rather than cutting it
+       * back to a tree rooted at that course.
+       *
+       * Off by default, and the default is the lossy one on purpose. `deps` is
+       * already a transitive reduction — the build warns on any edge the graph
+       * implies — so nothing here is redundant, and the sixth of the edges a
+       * tree drops are the second prerequisites of the courses that have more
+       * than one. What buys that back is the panel: «Опирается на» names every
+       * direct prerequisite whatever the columns are drawing, so the fact is
+       * never actually hidden, only the line is. A tree of three or four
+       * unbroken curves is what most people come to this screen to read; the
+       * whole graph is a question asked on top of it, and asking is a click.
+       */
+      fullGraph: z.boolean().catch(false),
+      /**
        * Whether the phone sheet opens with the course's links and path
        * unfolded. Closed to start with: the sheet is opened to find something
        * to watch, and three sections of neighbouring courses used to stand

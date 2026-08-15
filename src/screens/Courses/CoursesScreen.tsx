@@ -18,7 +18,7 @@ import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/D
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ProfileButton from '@/components/ProfileButton';
-import { BottomSheet, Cap, Plate, PlateDivider } from '@/components/ui';
+import { BottomSheet, Cap, Chip, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -45,6 +45,8 @@ export default function CoursesScreen() {
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
+  /** Whether the columns draw the whole chain or the tree it cuts back to. */
+  const fullGraph = useProfile((state) => state.profile.settings.fullGraph);
   const visible = useFilteredCourses(params.domains, params.providers, params.lecturers, maxStage);
 
   /**
@@ -336,6 +338,20 @@ export default function CoursesScreen() {
                     ? t('ui.column.legendSelected', { course: t(`course.${selected.id}.title`) })
                     : t('ui.column.legend')}
                 </span>
+                {/* Only with a course selected: the curves it governs exist only
+                    then, and a switch for something not on screen is a puzzle.
+                    It sits here rather than in the panel because it is about the
+                    columns — the panel is about the one course in them. */}
+                {selected ? (
+                  <Chip
+                    on={fullGraph}
+                    icon={fullGraph ? 'check' : undefined}
+                    onClick={() => setSetting('fullGraph', !fullGraph)}
+                    hint={t('ui.column.fullGraphHint')}
+                  >
+                    {t('ui.column.fullGraph')}
+                  </Chip>
+                ) : null}
                 <LegendPopover />
               </div>
               <div className="min-h-0 flex-1">
