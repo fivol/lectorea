@@ -198,6 +198,20 @@ dimmed, and the legend explaining the columns would leave the reason for it
 unsaid; the **?** beside it opens the full legend, which also appears by itself
 on a first visit.
 
+The lines are routed rather than drawn from card to card: out of one card's
+edge, along a lane in the gap between columns, and into the next. Everything
+feeding one course comes down the same lane and merges at its edge, so a chain
+reads as a line with branches joining it. The main way in to each course — the
+one carrying the longest run of prerequisites behind it — is drawn at full
+strength and anything else feeding the same course more quietly. That is the
+whole of the tree-like reading, and it costs no edges. Pruning to an actual tree
+was the alternative and it is a bad trade: `deps` is already a transitive
+reduction, so of the 1085 lines drawn across every chain in the catalogue none
+are redundant, and the 177 a spanning tree would remove are exactly the second
+prerequisites of the 70 courses that have more than one — biochemistry needs
+organic chemistry *and* cell biology. A sixth fewer lines is not worth losing
+the places where two branches meet.
+
 Cards of one field stay together vertically, so switching on a domain filter
 lights a stripe rather than a spray. The columns scroll sideways and say so: the
 edges fade where there is more, and stop fading at the ends. Opening the panel

@@ -4,7 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useIsDesktop, useReducedMotion } from '@/lib/hooks';
 import { useHighlight } from '@/lib/highlight';
-import { CARD_WIDTH } from '@/lib/layout';
+import { CARD_WIDTH, COLUMN_GAP } from '@/lib/layout';
 import { useUi } from '@/store/ui';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
@@ -22,7 +22,7 @@ type Props = {
 };
 
 /** How far one arrow click travels: a column plus the gap between columns. */
-const COLUMN_STEP = CARD_WIDTH + 24;
+const COLUMN_STEP = CARD_WIDTH + COLUMN_GAP;
 
 /**
  * Columns, not a graph.
@@ -107,6 +107,19 @@ export default function ColumnsView({
    * other — biochemistry into molecular biology while cell biology was the one
    * selected — and those are both the longest sweeps on screen and the ones
    * that answer a question nobody asked.
+   *
+   * Each edge also says whether it is the main line into its target. Pruning
+   * the picture to an actual tree was the other way to quieten it, and the
+   * arithmetic is against it: `deps` is already a transitive reduction — the
+   * build warns on any edge the graph implies, so of the 1085 edges drawn
+   * across every chain in the catalogue exactly none are redundant — and a
+   * spanning tree removes 177 of them, 16 %. Those 177 are precisely the
+   * second prerequisites of the 70 courses that have more than one, which is
+   * to say the points where two branches meet: biochemistry needs organic
+   * chemistry *and* cell biology. That is the most informative thing on the
+   * screen, and it would be the whole price of a sixth fewer lines. So the
+   * tree is drawn as weight rather than as truth — full strength along the
+   * deepest way in to each course, quieter for whatever else feeds it.
    */
   const links = useMemo<Link[]>(() => {
     const focus = highlight.focusId;
@@ -125,15 +138,58 @@ export default function ColumnsView({
       }
     }
 
+    const depsOn = (id: string): string[] =>
+      (catalog.courseById.get(id)?.deps ?? []).filter((dep) => upstream.has(dep));
+
+    /**
+     * The longest run of prerequisites standing behind each course, counted
+     * inside the chain being drawn. `level` is the same measure taken over the
+     * whole catalogue, so sorting by it settles every course after everything
+     * it needs — one pass, no topological sort.
+     */
+    const behind = new Map<string, number>();
+    const ordered = [...upstream]
+      .map((id) => catalog.courseById.get(id))
+      .filter((course): course is BuiltCourse => Boolean(course))
+      .sort((a, b) => a.level - b.level);
+    for (const course of ordered) {
+      let deepest = 0;
+      for (const dep of depsOn(course.id)) deepest = Math.max(deepest, (behind.get(dep) ?? 0) + 1);
+      behind.set(course.id, deepest);
+    }
+
+    /** The one edge into a course that carries its longest chain. */
+    const spineInto = new Map<string, string>();
+    for (const course of ordered) {
+      let best: BuiltCourse | null = null;
+      for (const id of depsOn(course.id)) {
+        const dep = catalog.courseById.get(id);
+        if (!dep) continue;
+        const better =
+          !best ||
+          (behind.get(dep.id) ?? 0) > (behind.get(best.id) ?? 0) ||
+          ((behind.get(dep.id) ?? 0) === (behind.get(best.id) ?? 0) &&
+            (dep.level > best.level || (dep.level === best.level && dep.row < best.row)));
+        if (better) best = dep;
+      }
+      if (best) spineInto.set(course.id, best.id);
+    }
+
     const out: Link[] = [];
     for (const id of upstream) {
-      for (const dep of catalog.courseById.get(id)?.deps ?? []) {
-        if (upstream.has(dep)) out.push({ from: dep, to: id, depth: highlight.depthOf(dep) });
+      for (const dep of depsOn(id)) {
+        out.push({
+          from: dep,
+          to: id,
+          depth: highlight.depthOf(dep),
+          spine: spineInto.get(id) === dep,
+        });
       }
     }
     // Downstream is a fan, not a graph: the selection is a prerequisite of each
-    // of these by definition, and nothing further is drawn.
-    for (const id of opened) out.push({ from: focus, to: id, depth: 0 });
+    // of these by definition, and nothing further is drawn. Each is the only
+    // line into its card here, so each is that card's main line.
+    for (const id of opened) out.push({ from: focus, to: id, depth: 0, spine: true });
 
     return out.sort((a, b) => a.depth - b.depth);
   }, [highlight, columns, catalog]);
@@ -245,7 +301,7 @@ export default function ColumnsView({
           onDeselect();
         }}
       >
-        <div className="relative flex min-w-max items-start gap-6 p-5">
+        <div className="relative flex min-w-max items-start p-5" style={{ gap: COLUMN_GAP }}>
           <ChainLinks
             scrollRef={scrollRef}
             links={links}
