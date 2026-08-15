@@ -204,6 +204,8 @@
   "ui.playlist.part.semester": "{n} семестр",
   "ui.playlist.part.season": "Сезон {n}",
   "ui.playlist.part.module": "Модуль {n}",
+  "ui.playlist.filterBy": "Показать записи «{name}»",
+  "ui.playlist.filterClear": "Снять фильтр «{name}»",
   "ui.playlist.prevPart": "Предыдущая часть",
   "ui.playlist.nextPart": "Следующая часть",
   "ui.playlist.alsoCovers": "Покрывает также: {courses}",

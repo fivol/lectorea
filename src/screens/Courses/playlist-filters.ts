@@ -81,6 +81,43 @@ export function languageLabel(lang: string, selected: string[]): string | null {
   return LANG_LABELS[lang] ?? lang;
 }
 
+/**
+ * What a name in a row does when it is pressed.
+ *
+ * A university and a lecturer are printed on every row, and until now they were
+ * text about the recording rather than a way to ask for more of it — the reader
+ * had to carry the name up to the strip and find it in a menu of two dozen. The
+ * press is a shortcut to the tick, not a second kind of filter: it writes the
+ * same state the dropdown writes, shows the same chip, and is cleared the same
+ * way. Pressing an active name again takes it off, so a name is a switch rather
+ * than a one-way door — the alternative is a press that appears to do nothing.
+ */
+export type FilterFacet = 'provider' | 'lecturer';
+
+export function toggleFacet(
+  state: PlaylistFilterState,
+  facet: FilterFacet,
+  value: string
+): PlaylistFilterState {
+  if (facet === 'lecturer') {
+    return { ...state, lecturer: state.lecturer === value ? '' : value };
+  }
+  return {
+    ...state,
+    providers: state.providers.includes(value)
+      ? state.providers.filter((item) => item !== value)
+      : [...state.providers, value],
+  };
+}
+
+export function facetActive(
+  state: PlaylistFilterState,
+  facet: FilterFacet,
+  value: string
+): boolean {
+  return facet === 'lecturer' ? state.lecturer === value : state.providers.includes(value);
+}
+
 export function activeFilterCount(state: PlaylistFilterState): number {
   let n = 0;
   if (state.langs.length) n += 1;

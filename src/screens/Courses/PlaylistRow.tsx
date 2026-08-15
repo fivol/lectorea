@@ -13,6 +13,7 @@ import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import Tooltip from '@/components/Tooltip';
 import type { LabelParts } from './playlist-label';
+import type { FilterFacet } from './playlist-filters';
 import { partLabel, saysItsPart } from './series';
 
 type Props = {
@@ -21,6 +22,17 @@ type Props = {
   label: LabelParts;
   /** «Русский», or null when the filter makes the language a foregone conclusion. */
   language: string | null;
+  /**
+   * Whether this row's university and lecturer are the filter currently on.
+   *
+   * Two booleans rather than the filter state itself: the row is memoised, and a
+   * state object would re-render every row in the list each time any unrelated
+   * filter moved.
+   */
+  providerFiltered: boolean;
+  lecturerFiltered: boolean;
+  /** Pressing a name asks the list for more of it — see `toggleFacet`. */
+  onFilter: (facet: FilterFacet, value: string) => void;
   /**
    * True while the list is ordered by retention — see the subtitle below.
    *
@@ -36,7 +48,16 @@ type Props = {
  * One row of the list. Only marks, never raw views and likes: those numbers turn
  * the list into a spreadsheet and make it harder, not easier, to compare.
  */
-function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: Props) {
+function PlaylistRowInner({
+  playlist,
+  label,
+  language,
+  providerFiltered,
+  lecturerFiltered,
+  showRetention,
+  onFilter,
+  onOpen,
+}: Props) {
   const { t, count } = useT();
   const profile = useProfile((state) => state.profile);
   const favorite = useProfile((state) => state.profile.playlists[playlist.id]?.favorite ?? false);
@@ -99,14 +120,67 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
     .filter(Boolean)
     .join(' · ');
 
+  /*
+   * Who recorded this — and both halves of it are a question the reader can ask
+   * again. The university and the lecturer were printed on every row and were
+   * text about the recording rather than a way to get more of it: to see the
+   * rest of what this lecturer read you had to carry the name up to the strip
+   * and find it in a menu of two dozen. Pressing it is the same act as ticking
+   * it there, and the chip that appears is the same chip.
+   *
+   * The university is only pressable where it *is* a university. A third of the
+   * catalogue was found on a course page rather than on a channel and sits
+   * under «Прочие каналы»; those rows print a channel title, and a filter built
+   * from it would fetch a hundred unrelated channels — see `LabelParts`.
+   */
+  const providerId = label.providerId;
+  const lecturer = label.lecturer;
+  const credit = (
+    <>
+      {providerId ? (
+        <FilterName
+          on={providerFiltered}
+          name={label.source}
+          onClick={() => onFilter('provider', providerId)}
+        />
+      ) : (
+        label.source
+      )}
+      {lecturer ? (
+        <>
+          {label.source ? ' · ' : null}
+          <FilterName
+            on={lecturerFiltered}
+            name={lecturer}
+            onClick={() => onFilter('lecturer', lecturer)}
+          />
+        </>
+      ) : null}
+    </>
+  );
+
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(playlist.id)}
-      className={`flex w-full items-center gap-3 rounded-card border border-transparent px-2 py-2
-                  text-left transition-colors duration-fast ease-out
+    <div
+      className={`relative flex w-full items-center gap-3 rounded-card border border-transparent
+                  px-2 py-2 transition-colors duration-fast ease-out
                   hover:border-line-strong hover:bg-surface-2 ${watched ? 'opacity-80' : ''}`}
     >
+      {/* The row opens the recording, and the button that does it is laid over
+          the row rather than wrapped around it: a button cannot hold another
+          button, and the two names on the first line are now buttons. Being
+          positioned, it covers the static content beside it — so anything that
+          has to stay reachable says `relative` and rises back through it. That
+          is the names, and the badges whose whole purpose is to explain
+          themselves when pointed at. */}
+      <Tooltip content={label.detail}>
+        <button
+          type="button"
+          onClick={() => onOpen(playlist.id)}
+          aria-label={label.detail}
+          className="absolute inset-0 rounded-card"
+        />
+      </Tooltip>
+
       {/* Fixed size, so a thumbnail that never arrives costs no layout shift.
           Sized to the two lines and the bar beside it rather than to the two
           lines alone: a row this tall with a stamp-sized frame in it reads as a
@@ -133,24 +207,22 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
             «which of these am I looking at» — and the tail is the half of it
             that repeats down the list. The whole title, course name and all,
             lives in the tooltip and in the player. */}
-        <Tooltip content={label.detail}>
-          <span className="block truncate text-caption text-ink">
-            {/* Which part of the run this is, in the university's own word.
-                Ahead of the name because inside a run it is the only thing that
-                tells two otherwise identical rows apart. */}
-            {playlist.series && !saysItsPart(playlist.series, label.name ?? label.source) ? (
-              <span className="num mr-1.5 text-ink-faint">{partLabel(playlist.series, t)} ·</span>
-            ) : null}
-            {label.name ? (
-              <>
-                {label.name}
-                {label.source ? <span className="text-ink-faint"> · {label.source}</span> : null}
-              </>
-            ) : (
-              label.source
-            )}
-          </span>
-        </Tooltip>
+        <span className="block truncate text-caption text-ink">
+          {/* Which part of the run this is, in the university's own word.
+              Ahead of the name because inside a run it is the only thing that
+              tells two otherwise identical rows apart. */}
+          {playlist.series && !saysItsPart(playlist.series, label.name ?? label.source) ? (
+            <span className="num mr-1.5 text-ink-faint">{partLabel(playlist.series, t)} ·</span>
+          ) : null}
+          {label.name ? (
+            <>
+              {label.name}
+              <span className="text-ink-faint"> · {credit}</span>
+            </>
+          ) : (
+            credit
+          )}
+        </span>
         <span className="num mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-ink-faint">
           {/* Filled, and first on the line, because it is the one label here
               that is about the reader. It used to be a tick in the right-hand
@@ -169,7 +241,11 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
               {t('ui.playlist.watchedBadge')}
             </span>
           ) : null}
-          <TypeBadge playlist={playlist} />
+          {/* Lifted over the button covering the row, so that pointing at it
+              still says what «Подборка» means. */}
+          <span className="relative z-10 inline-flex shrink-0">
+            <TypeBadge playlist={playlist} />
+          </span>
           <span className="truncate">{subtitle}</span>
         </span>
 
@@ -196,7 +272,7 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
         ) : null}
       </span>
 
-      <span className="flex shrink-0 items-center gap-1.5">
+      <span className="relative z-10 flex shrink-0 items-center gap-1.5">
         {favorite ? (
           <Tooltip content={t('ui.course.favoriteOn')}>
             <span className="inline-flex text-warning">
@@ -206,7 +282,54 @@ function PlaylistRowInner({ playlist, label, language, showRetention, onOpen }: 
         ) : null}
         <StatusBadge playlist={playlist} />
       </span>
-    </button>
+    </div>
+  );
+}
+
+/**
+ * A name that is also a filter — a university, a lecturer.
+ *
+ * A `span` carrying the button role rather than a `button`, because the line it
+ * sits on truncates: a form control is an atomic inline box whatever its
+ * `display`, so one that does not fit is dropped whole and the row reads
+ * «Основы дискретной математики · …» where it used to read «· Лектори…». Text
+ * in a span breaks where the ellipsis goes, like the rest of the line. The role
+ * and the key handler are what a real button would have given for free.
+ *
+ * `relative` is what lifts it over the button covering the row. Underlined only
+ * under the pointer, except while it is the filter that is on — a list where
+ * every row wears a mark is a list that has stopped marking anything, and with
+ * the filter running every row carries the same name.
+ */
+export function FilterName({
+  on,
+  name,
+  onClick,
+}: {
+  on: boolean;
+  name: string;
+  onClick: () => void;
+}) {
+  const { t } = useT();
+  return (
+    <Tooltip
+      content={on ? t('ui.playlist.filterClear', { name }) : t('ui.playlist.filterBy', { name })}
+    >
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          onClick();
+        }}
+        className={`relative z-10 cursor-pointer underline-offset-2 transition-colors
+                    duration-fast ease-out hover:text-ink hover:underline ${on ? 'underline' : ''}`}
+      >
+        {name}
+      </span>
+    </Tooltip>
   );
 }
 

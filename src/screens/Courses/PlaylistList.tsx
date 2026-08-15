@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BuiltCourse, BuiltPlaylist } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
@@ -15,9 +15,12 @@ import { ButtonLink } from '@/components/ui';
 import {
   applyFilters,
   defaultFilters,
+  facetActive,
   langLabel,
   languageLabel,
   sortPlaylists,
+  toggleFacet,
+  type FilterFacet,
   type PlaylistFilterState,
   type SortKey,
 } from './playlist-filters';
@@ -141,25 +144,45 @@ export default function PlaylistList({ course }: Props) {
       .sort((a, b) => (a.series?.pos ?? 0) - (b.series?.pos ?? 0));
   }, [open, playlists]);
 
-  const row = (playlist: BuiltPlaylist) => (
-    <PlaylistRow
-      key={playlist.id}
-      playlist={playlist}
-      label={
-        labels.get(playlist.id) ?? {
-          name: null,
-          source: playlist.title,
-          detail: playlist.title,
-        }
-      }
-      language={languageLabel(playlist.lang, filters.langs)}
-      showRetention={sort === 'retention'}
-      onOpen={(id) => {
-        lastFocused.current = document.activeElement as HTMLElement;
-        params.setPlaylist(id);
-      }}
-    />
-  );
+  /**
+   * A name pressed on a row is the same act as the tick in the strip above it,
+   * so it writes the same state — see `toggleFacet`. Stable, because the rows
+   * are memoised and a handler rebuilt on every filter change would re-render
+   * every one of them.
+   */
+  const filterBy = useCallback((facet: FilterFacet, value: string) => {
+    setFilters((state) => toggleFacet(state, facet, value));
+  }, []);
+
+  const row = (playlist: BuiltPlaylist) => {
+    const label = labels.get(playlist.id) ?? {
+      name: null,
+      source: playlist.title,
+      providerId: null,
+      lecturer: null,
+      detail: playlist.title,
+    };
+    return (
+      <PlaylistRow
+        key={playlist.id}
+        playlist={playlist}
+        label={label}
+        language={languageLabel(playlist.lang, filters.langs)}
+        providerFiltered={Boolean(
+          label.providerId && facetActive(filters, 'provider', label.providerId)
+        )}
+        lecturerFiltered={Boolean(
+          label.lecturer && facetActive(filters, 'lecturer', label.lecturer)
+        )}
+        showRetention={sort === 'retention'}
+        onFilter={filterBy}
+        onOpen={(id) => {
+          lastFocused.current = document.activeElement as HTMLElement;
+          params.setPlaylist(id);
+        }}
+      />
+    );
+  };
 
   if (!course.playlistCount) {
     return (
@@ -255,6 +278,10 @@ export default function PlaylistList({ course }: Props) {
           courseId={course.id}
           run={runOfOpen}
           onOpenPart={(id) => params.setPlaylist(id)}
+          filter={{
+            active: (facet, value) => facetActive(filters, facet, value),
+            toggle: filterBy,
+          }}
           onClose={() => {
             params.setPlaylist(null);
             // Focus goes back to the row the modal was opened from.

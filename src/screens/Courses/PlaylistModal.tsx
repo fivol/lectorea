@@ -19,7 +19,8 @@ import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import { Button, ButtonLink, IconButton } from '@/components/ui';
 import Tooltip from '@/components/Tooltip';
-import { StatusBadge } from './PlaylistRow';
+import { FilterName, StatusBadge } from './PlaylistRow';
+import type { FilterFacet } from './playlist-filters';
 import { neighbours, partLabel } from './series';
 
 type Props = {
@@ -29,6 +30,16 @@ type Props = {
   /** The whole run this recording is a part of, in order. Empty when it is not. */
   run?: BuiltPlaylist[];
   onOpenPart?: (id: string) => void;
+  /**
+   * The university and the lecturer as questions rather than captions, the same
+   * as on the rows. Pressing one closes the player: the answer is the list
+   * behind it, and leaving the player open over the list hides what was asked
+   * for. Absent where the player has no list under it.
+   */
+  filter?: {
+    active: (facet: FilterFacet, value: string) => boolean;
+    toggle: (facet: FilterFacet, value: string) => void;
+  };
   onClose: () => void;
 };
 
@@ -40,6 +51,7 @@ export default function PlaylistModal({
   courseId,
   run = [],
   onOpenPart,
+  filter,
   onClose,
 }: Props) {
   const { t, lang } = useT();
@@ -150,6 +162,35 @@ export default function PlaylistModal({
 
   const provider = catalog.providers[playlist.providerId];
   const course = catalog.courseById.get(playlist.courseId);
+
+  /*
+   * The two names in the corner of the player that the list can be asked about.
+   *
+   * The university only counts as one where it is a university: «Прочие каналы»
+   * is the provider of last resort and stands in for a hundred channels, so a
+   * filter built from it answers a question nobody asked — the same rule the
+   * rows follow, and for the same reason. The lecturer is whoever the build
+   * worked out; where it worked out nobody, the line falls back to the channel
+   * and stays a caption.
+   */
+  const named = (facet: FilterFacet, value: string | null | undefined, label = value) =>
+    filter && value && label
+      ? {
+          name: label,
+          on: filter.active(facet, value),
+          press: () => {
+            filter.toggle(facet, value);
+            onClose();
+          },
+        }
+      : null;
+  const lecturerFilter = named('lecturer', playlist.lecturer);
+  const providerFilter = named(
+    'provider',
+    provider && playlist.providerId !== 'unknown' ? playlist.providerId : null,
+    provider?.title
+  );
+  const rest = [playlist.year, playlist.lang].filter(Boolean).join(' · ');
   // The view behind the dialog, with the dialog itself taken out of it.
   const courseSearch = useMemo(() => {
     const query = new URLSearchParams(search);
@@ -324,10 +365,28 @@ export default function PlaylistModal({
           >
             <div className="min-w-0 p-4">
               <p className="text-sm font-medium text-ink">
-                {playlist.lecturer ?? playlist.channelTitle}
+                {lecturerFilter ? (
+                  <FilterName
+                    on={lecturerFilter.on}
+                    name={lecturerFilter.name}
+                    onClick={lecturerFilter.press}
+                  />
+                ) : (
+                  (playlist.lecturer ?? playlist.channelTitle)
+                )}
               </p>
               <p className="num mt-1 text-xs text-ink-faint">
-                {[provider?.title, playlist.year, playlist.lang].filter(Boolean).join(' · ')}
+                {providerFilter ? (
+                  <FilterName
+                    on={providerFilter.on}
+                    name={providerFilter.name}
+                    onClick={providerFilter.press}
+                  />
+                ) : (
+                  provider?.title
+                )}
+                {(providerFilter || provider?.title) && rest ? ' · ' : null}
+                {rest}
               </p>
 
               {/* Where this sits in the run, and the way out of it in either

@@ -22,8 +22,21 @@ export type LabelParts = {
    * source, which is the case for about half the catalogue.
    */
   name: string | null;
-  /** «МГУ · Кобельков Г.М.» — never empty; falls back to the channel. */
+  /** «МГУ» — never empty; falls back to the channel. */
   source: string;
+  /**
+   * The provider behind `source`, when `source` *is* a provider.
+   *
+   * Null where the row is printing a channel title instead, which is what
+   * happens for the third of the catalogue found on a course page rather than
+   * on a channel: those all sit under «Прочие каналы», so the id names a
+   * hundred unrelated channels and not the one whose name is on the row. It is
+   * the difference between a name that can be turned into a filter and one that
+   * only reads like it can.
+   */
+  providerId: string | null;
+  /** «Кобельков Г.М.» — who read it, where the build worked it out. */
+  lecturer: string | null;
   /** The whole title, course name and all. What the tooltip is for. */
   detail: string;
 };
@@ -318,7 +331,9 @@ export function playlistHeadings(
     const named = [provider, playlist.channelTitle].filter((name): name is string => Boolean(name));
     out.set(playlist.id, {
       name: ownName(playlist, courseTitle, named),
-      source: [source, playlist.lecturer].filter(Boolean).join(' · '),
+      source,
+      providerId: known ? playlist.providerId : null,
+      lecturer: playlist.lecturer ?? null,
       detail: stripCoursePrefix(playlist.title, courseTitle),
     });
   }

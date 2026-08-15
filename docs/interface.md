@@ -339,6 +339,18 @@ two, and the × or the dimmed list behind it to close.
   numbers came out, and nothing about what the thing is. A finished playlist
   wears a «Просмотрен» plate, the same one a finished course wears.
 
+  The university and the lecturer are pressable, on the row and in the player:
+  they were captions about the recording, and getting the rest of what that
+  lecturer read meant carrying the name up to the strip and finding it in a menu
+  of two dozen. A press writes the same filter the menu writes and puts up the
+  same chip, so it is a shortcut to the tick rather than a second kind of
+  filter; pressing the name again takes it off. In the player it also closes the
+  player, because the answer is the list behind it. The university is only
+  pressable where the row is naming one: a third of the catalogue was found on a
+  course page rather than on a channel and sits under «Прочие каналы», where the
+  name on the row is a channel and a filter made from it would fetch a hundred
+  unrelated ones.
+
   A course a university cut into parts — «Часть 2», a second semester, `[s3]` —
   is drawn as one entry: the parts in order, a rule down their left and **Один
   курс** over them. The heading says that and no more. It used to count the

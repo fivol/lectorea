@@ -204,6 +204,8 @@
   "ui.playlist.part.semester": "Semester {n}",
   "ui.playlist.part.season": "Season {n}",
   "ui.playlist.part.module": "Module {n}",
+  "ui.playlist.filterBy": "Show the recordings of {name}",
+  "ui.playlist.filterClear": "Clear the {name} filter",
   "ui.playlist.prevPart": "Previous part",
   "ui.playlist.nextPart": "Next part",
   "ui.playlist.alsoCovers": "Also covers: {courses}",
