@@ -38,14 +38,68 @@ to the model as a hint rather than kept to itself; the model's answer is only
 taken when it beats what the rules already had. Results go into the `matches`
 table, not into YAML.
 
-`--force` re-reads the playlists earlier passes already bound confidently, which
-is otherwise the one thing this step leaves alone — so a change to
-`lib/rules.ts` or to `keywords/{lang}.json` reaches nothing already in the
-catalogue, which is exactly what such a change is usually written to correct. It
-can take a binding back as well as add one. Hand decisions are never touched:
-`reviewed` rows and `overrides.yaml` outrank every pass.
+What the model is shown, per playlist: the title, the channel **by name**, the
+video count, 400 characters of description, the first five lecture titles, and
+the rule's own guess where there is one. What it is shown once, per request: the
+courses as `id · name · field`, since `topology` reads the same whether the
+catalogue files it under mathematics or geography. Twenty playlists a request,
+six requests in flight — thirty thousand playlists is fifteen hundred requests,
+and one at a time is a working day of waiting on round trips. The run prints the
+tokens it spent, so the number is in the log rather than in a bill.
+
+`--force` re-reads the playlists earlier passes already bound confidently — and
+the ones they refused — which is otherwise the one thing this step leaves alone.
+A change to `lib/rules.ts` or to `keywords/{lang}.json` otherwise reaches nothing
+already decided, which is exactly what such a change is usually written to
+correct. It can take a binding back as well as add one. Hand decisions are never
+touched: `reviewed` rows and `overrides.yaml` outrank every pass.
 
 Model choice is `OPENAI_CLASSIFY_MODEL` (default `gpt-5-mini`).
+
+## A refusal is an answer, and is written down
+
+A pass that can only ever say *yes* leaves a queue that only grows. On
+2026-08-15 that queue held **35 148 playlists** — every playlist the crawl had
+ever met and not bound — and the overwhelming majority were music videos and
+tutorials mined out of a description. Nobody was ever going to read it, so the
+few hundred real questions inside it were lost, and every model run paid again
+to re-read the same karaoke.
+
+So `matches.refused` records the difference between the ways of saying no:
+
+| verdict | means | where it goes |
+|---|---|---|
+| `undecided` | a course is named, weakly or ambiguously | the review queue |
+| `not-a-course` | the title says homework, music video, open day | recorded: out of the queue, last in the video queue |
+| `unclaimed` | no course of this catalogue is named in the title at all | recorded, for a different reason — below |
+| `no-title` | metadata has not arrived | nothing is written; there is nothing to judge |
+
+**Why `unclaimed` is recorded rather than queued.** `data:review` works by
+offering the courses a title might mean, and for a title that names none of them
+it has nothing to offer: the reviewer would be searching 206 courses by hand for
+a playlist called «Juice WRLD Freestyles». 24 808 of the 33 376 waiting on
+2026-08-15 were that, and the 8568 that were real questions could not be seen
+inside them.
+
+What such a title actually needs is a keyword or a new course, and those are
+found by reading titles **in clusters** rather than one at a time —
+`pnpm tsx scripts/_refusals.ts no-phrase`, which reads the rules over the titles
+and goes on seeing refused rows. So nothing is lost from the workflow that grows
+the catalogue; what is lost is a queue nobody could read.
+
+Both are lifted the moment the ground changes: `--force` re-reads every refusal
+after a keyword or a course is added, and `01-discover.ts` clears `unclaimed`
+for a channel the moment somebody vets it in `channels.yaml`.
+
+The model writes a refusal too, when it has read the title, the description and
+the first five lecture names and answers that this is none of the catalogue's
+courses.
+
+It is not a hand decision and does not pretend to be one: **`--force` re-reads
+refusals**, which is what a new course or a new keyword needs, and `reviewed`
+rows and `overrides.yaml` are untouched by any of it. The tiers in
+[pipeline.md](../pipeline.md#quota) read the column too, so a refusal defends
+the quota as well as the queue — the bins are the long playlists.
 
 ## How the rule pass decides
 
@@ -62,6 +116,24 @@ short tail allowed for Russian inflection — «алгебра» still finds «�
 finds «The American R**evolution**». Both were real bindings before this. The
 tail is letters only: an ending is inflection, a digit is another course, so
 `algebra 1` does not find «ALGEBRA 16».
+
+**A word can be search-only.** `data/keywords/{lang}.json` is read by search and
+by this pass, and they want opposite things from the same word: «genre»,
+«micro», «stars», «crime», «classical music» are all reasonable things to type
+into a search box and all ruinous as rules. Writing the value as `?genre` keeps
+it for search and hides it from the index here. That replaced deleting the word,
+which answered the matcher by making the catalogue unsearchable for half of what
+it holds — and until 2026-08-15 those five had bound 1241 tracks of house music
+to literary theory, seven micro:bit playlists to microeconomics, «Dancing With
+The Stars» to astrophysics and «British Pathé. Crimea» to criminal law.
+
+**And a name that collapses to one word is not a name.** Course names and
+aliases go through the same noise pass as titles, so «Introduction to Language»
+— a fair alias for linguistics — arrives in the index as `language`, which then
+owns «GO Language» and «C Language tutorials» outright. A name of three or more
+words that comes out as one is dropped: whatever it meant lived in the words the
+noise pass removed, and a catalogue that wants the bare word can always write it
+into `keywords` on purpose.
 
 **Noise is stripped first.** `MIT 18.06SC Linear Algebra, Fall 2011` is measured
 as `linear algebra`. Course codes, terms and years go, and so do the words that
@@ -128,7 +200,20 @@ duplicate scan in [review.md](../review.md#a-tie-silences-both-courses).
 
 On top of that a title that names support material rather than a course —
 homework help, exam prep, test review, office hours, seminar series, podcasts,
-shorts, open days — is refused outright.
+shorts, open days — is refused outright. Exam tracks count in every language:
+ЕГЭ, ОГЭ and олимпиады were there from the start, and `AP`, `GCSE`, `MCAT` and
+`NEET` say the same thing in English. That one line also settled a hundred and
+forty Khan Academy playlists, which arrive as «Supply, demand, and market
+equilibrium | AP Microeconomics» — a fortieth of a course, sold as one.
+
+**The refusal list reads the title as written.** `NOISE` is stripped for
+measuring coverage, and it removes `playlist`, `videos`, `full` and `course` —
+which are exactly the words by which a title announces that it is not a course.
+«Dance & Electronic Music Playlist | Genre» reached the matcher as «dance
+electronic music» and a clause that is a keyword; «Crime Patrol 2.0 | Full
+Episodes» lost the phrase that would have refused it. So the two questions are
+asked of two texts: *is this a course at all* of the title as written, and
+*which course* of the title with the noise gone.
 
 Against the crawl in `cache.db` at the time of writing (7940 playlists) the rule
 pass binds about a thousand automatically. The clause reading replaced some 380

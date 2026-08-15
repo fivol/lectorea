@@ -233,8 +233,18 @@ export async function refreshPlaylistMetadata(
         // views alone put it last — its view count is still null — and with
         // more playlists than the scan window, a hand-added one would fall
         // outside it every night and never be fetched at all.
+        //
+        // The title leads that ordering rather than `published_at`, because the
+        // video pass fills `published_at` in from the earliest video it walked.
+        // A mined playlist crawled before its metadata was bought therefore
+        // stopped looking new, sorted by views among forty thousand rows, and
+        // fell out of the scan window with no title at all — which is the one
+        // thing matching reads, so it could never be classified and sat in the
+        // review queue for ever. 3252 rows on 2026-08-15.
         `SELECT id, views, video_count, videos_fetched_at, next_refresh_at FROM playlists
-         WHERE alive = 1 ORDER BY (published_at IS NULL) DESC, views DESC LIMIT ?`
+         WHERE alive = 1
+         ORDER BY (title IS NULL OR title = '') DESC, (published_at IS NULL) DESC, views DESC
+         LIMIT ?`
       )
       .all(SCAN_LIMIT) as Array<{
       id: string;
@@ -428,13 +438,23 @@ export async function fetchPlaylistVideos(
     }
 
     const total = durations.reduce((sum, value) => sum + value, 0);
+    // A playlist with no title stays due, however much this pass just learned
+    // about it. `next_refresh_at` is the metadata pass's own clock, and this is
+    // the video pass: pushing it a month out defers a call that was never made,
+    // and the title is the whole of what matching reads. A seam queues videos
+    // and metadata together, so whichever ran first used to decide whether the
+    // playlist could ever be classified — 3252 of them had their lectures
+    // walked, at two units per fifty, and were then unclassifiable until
+    // September. Fifty titles cost one unit; nothing here is worth deferring
+    // them for.
     db.prepare(
       `UPDATE playlists SET video_count = ?, total_seconds = ?, median_seconds = ?,
                             views = ?, likes = ?, comments = ?, captions = ?,
                             published_at = COALESCE(?, published_at),
                             last_video_at = COALESCE(?, last_video_at),
                             stats_fetched_at = ?, videos_fetched_at = ?, checked_at = ?,
-                            next_refresh_at = ?
+                            next_refresh_at = CASE WHEN title IS NULL OR title = ''
+                                                   THEN ? ELSE ? END
        WHERE id = ?`
     ).run(
       videos.length,
@@ -449,6 +469,7 @@ export async function fetchPlaylistVideos(
       nowIso(),
       nowIso(),
       nowIso(),
+      nowIso(), // no title yet: still due, so the next metadata run buys one
       inDays(REFRESH_DAYS.statsRegular),
       playlistId
     );
@@ -480,16 +501,28 @@ export function videoQueueTiers(
 
   const queued = db
     .prepare(
-      `SELECT p.id, p.title, p.video_count FROM playlists p
+      // `matches.refused` is the same judgement made earlier and written down —
+      // by the rules over a title, or by the model over a title, a description
+      // and five lecture names. Reading it here is what makes a refusal defend
+      // the quota as well as the review queue: the bins are the long playlists,
+      // and «Stanford Seminars» is 1150 videos for something never shown.
+      `SELECT p.id, p.title, p.video_count, COALESCE(m.refused, 0) AS refused FROM playlists p
        JOIN jobs j ON j.type = 'videos' AND j.target = p.id AND j.status = 'pending'
+       LEFT JOIN matches m ON m.playlist_id = p.id
        WHERE p.alive = 1`
     )
-    .all() as Array<{ id: string; title: string; video_count: number | null }>;
+    .all() as Array<{
+    id: string;
+    title: string;
+    video_count: number | null;
+    refused: number;
+  }>;
   for (const row of queued) {
     // A playlist queued by a seam has no title until the metadata pass reaches
     // it, and nothing can be judged about it yet — neither refused nor promoted.
     // It stays in the middle of the queue, which is where an unknown belongs.
-    const refused = row.title !== null && cleanSegments(row.title).some(isNotACourse);
+    const refused =
+      row.refused === 1 || (row.title !== null && cleanSegments(row.title).some(isNotACourse));
     if (refused || (row.video_count ?? 0) > HUGE_PLAYLIST) last.push(row.id);
   }
 

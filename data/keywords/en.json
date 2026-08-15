@@ -1,5 +1,5 @@
 {
-  "_comment": "Search keywords. Morphology is solved here, by hand, not by a stemmer on the client. Titles are indexed automatically — this file only adds what a title does not contain: abbreviations, slang, spelling variants, alternative names. Keys are `{type}.{id}`. Read by the rule matcher in scripts/lib/rules.ts as well as by search, in every language at once: a phrase here can bind a playlist to this course on its own. Slang that is a different subject's ordinary word — «inheritance», «feedback» — costs a wrong binding, so add loose synonyms knowing they are load-bearing.",
+  "_comment": "Search keywords. Morphology is solved here, by hand, not by a stemmer on the client. Titles are indexed automatically — this file only adds what a title does not contain: abbreviations, slang, spelling variants, alternative names. Keys are `{type}.{id}`. Read by the rule matcher in scripts/lib/rules.ts as well as by search, in every language at once: a phrase here can bind a playlist to this course on its own. Slang that is a different subject's ordinary word — «inheritance», «feedback» — costs a wrong binding, so add loose synonyms knowing they are load-bearing. A value written with a leading `?` is search-only: search finds the course by it, the matcher never binds a playlist on it. That is for words that are a good guess in a search box and a wrong answer as a rule — «genre» is not a course, but «Ambient Music Playlist | Genre» covers that clause exactly.",
   "domain.math": [
     "mathematics",
     "maths",
@@ -197,7 +197,8 @@
     "elementary algebra",
     "intermediate algebra",
     "algebra",
-    "trigonometry"
+    "trigonometry",
+    "college algebra"
   ],
   "course.calculus-1": [
     "calculus",
@@ -373,7 +374,9 @@
     "stats",
     "mathematical statistics",
     "statistical methods",
-    "hypothesis testing"
+    "hypothesis testing",
+    "inferential statistics",
+    "descriptive statistics"
   ],
   "course.random-processes": [
     "stochastic processes",
@@ -387,7 +390,8 @@
     "bayesian statistics",
     "bayes",
     "mcmc",
-    "priors"
+    "priors",
+    "statistical rethinking"
   ],
   "course.time-series": [
     "time series",
@@ -439,7 +443,8 @@
     "networking",
     "tcp",
     "tcp ip",
-    "internet"
+    "internet",
+    "data communications"
   ],
   "course.databases": [
     "databases",
@@ -596,7 +601,7 @@
   ],
   "course.astrophysics": [
     "astrophysics",
-    "stars",
+    "?stars",
     "stellar evolution",
     "galaxies"
   ],
@@ -832,7 +837,9 @@
     "natural language processing",
     "language models",
     "llm",
-    "embeddings"
+    "embeddings",
+    "advanced nlp",
+    "neural nets for nlp"
   ],
   "course.computer-vision": [
     "computer vision",
@@ -854,13 +861,13 @@
   ],
   "course.microeconomics": [
     "microeconomics",
-    "micro",
+    "?micro",
     "consumer theory",
     "market failure"
   ],
   "course.macroeconomics": [
     "macroeconomics",
-    "macro",
+    "?macro",
     "gdp",
     "inflation",
     "monetary policy"
@@ -1024,7 +1031,7 @@
     "organizational behaviour",
     "organizational behavior",
     "leadership",
-    "motivation"
+    "?motivation"
   ],
   "course.human-geography-intro": [
     "human geography",
@@ -1211,7 +1218,7 @@
     "literary theory",
     "criticism",
     "narratology",
-    "genre"
+    "?genre"
   ],
   "course.poetics": [
     "poetics",
@@ -1275,7 +1282,7 @@
   ],
   "course.music-history": [
     "music history",
-    "classical music",
+    "?classical music",
     "baroque",
     "gregorian chant"
   ],
@@ -1360,7 +1367,7 @@
   ],
   "course.criminal-law": [
     "criminal law",
-    "crime",
+    "?crime",
     "criminal liability"
   ],
   "course.administrative-law": [

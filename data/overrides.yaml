@@ -7,6 +7,42 @@
 # channels  : channelId → providerId, when the channel title is not enough.
 
 matches:
+
+  # 2026-08-15 — decided by hand off the top of the review queue.
+  PLDcUM9US4XdNUolPcpdclIg4Ijt4dqxVc: null  # the music from the course, not the course
+  PL4gvlOxpKKIiRPFOOH85x46aNYyRB7SA6: null  # a conversation series, not a course
+  PLKCo4y0JbV2aYcoTCxR8XeUjZqKJy9MVX: null  # a collection of world music, not the course on it
+  PLAwxTw4SYaPl4bx7Pck4JWjy1WVbrDx0U: theory-of-computation  # Udacity, Intro to Theoretical Computer Science
+  PLAwxTw4SYaPnFKojVQrmyOGFCqHTxfdv2: programming-intro  # Udacity, Intro to Parallel Programming
+  PLAwxTw4SYaPlT4WYwf_SzNA9FV0qpGE5A: differential-equations  # Udacity, Differential Equations in Action
+  PLAwxTw4SYaPnbYmh191-xYp3Y3-cpyAV3: programming-intro  # Udacity, Introduction to Java Programming
+  PLAwxTw4SYaPnliQD_WPvjTZcE9fOJER9W: school-algebra  # Udacity, Intro Algebra Review
+  PLoEMreTa9CNmuxQeIKWaz7AVFd_ZeAcy4: deep-learning  # Applied Deep Learning
+  PLBlnK6fEyqRhX6r2uhhlubuF5QextdCSM: data-structures  # Neso Academy, C Programming & Data Structures
+  PLdTniHoWI25z_jX-eTTga3q9GRzxJ9tny: school-algebra  # Алгебра 7-11 классы — school, not abstract algebra
+  PLvv0ScY6vfd8j-tlhYVPYgiIyXduu6m-L: programming-intro  # The C++ Programming Language
+  PLxYDMSdfTAgSE1Db2hBO_NNiXSS9uZL5B: philosophy-intro  # Western Philosophy, Kurukshetra
+  PL6lxxT7IdTxFKo9DguLxGM2dhgb8-u976: programming-intro  # Python Programming
+  PLbGui_ZYuhigZkqrHbI_ZkPBrIr5Rsd5L: programming-intro  # Core Python (Hindi)
+  PLqleLpAMfxGAdqZeY_4uVQOPCnAjhH-eT: programming-intro  # Java Programming
+  PLCTMeyjMKRkqy3NUHnMeY-PGgsZ963F58: differential-geometry  # Synthetic Differential Geometry
+  PLIhaX7myPw6mlEAOgf5ufMRbPRDd9lNNo: null  # Latin Love — latin music, not the language
+  PLmWNlIYWlhPGB_1vtdOaoSpq8MV4_7571: null  # Latin Flow — latin music
+  PLZ0hz9KHThgnFWgWswXFz9WGALfrLuXht: null  # LATIN MUSIC
+  PLpIiNPo_GaXfOxFMchTGkUmsE_wKEYXJo: null  # MIX LATINO
+  PLBrRS7gNcFL6WckEzD5XfZVCc2nSE_p7M: null  # Игрушки Трансформеры — the toys, not the architecture
+  PLujxSBD-JXglGL3ERdDOhthD3jTlfudC2: null  # Two Minute Papers — a news series about research
+  PL_Y3qbepMRoYWpUpbg-X0bgRRHnHA1X8I: null  # Happy Learning — clips for children
+  PLLF_mZmNqOn25pLFQkhJBl6gxHeKyB0Mo: null  # Happy Learning — clips for children
+  PL_Y3qbepMRoabcVwSZiPEbUlkBlxHi4cF: null  # Happy Learning — clips for children
+  PLGxiyRm2uEmrva7ZDuOD1IGNrDB9suuHj: null  # 492 music-production clips, not a course
+  PL-c9Rq56P4KmLkA3fasRTp3M3GIw8UN4e: null  # a channel’s recent uploads
+  PLEiEAq2VkUUKnB4Yzmn-B6O_hhcP-DanA: null  # Simplilearn topic bin
+  PLEiEAq2VkUULa5aOQmO_al2VVmhC-eqeI: null  # Simplilearn topic bin
+  PLEiEAq2VkUUJfPOj5nRounXvf3n17PCft: null  # Simplilearn topic bin
+  PLWKjhJtqVAbknyJ7hSrf1WKh_Xnv9RL1r: null  # live coding sessions
+  PLASbPFnG7PlLFBKrrxy4tsy98VF_u9dxO: null  # “algebra related videos” — a bin
+  PLB3FCEEAC84884760: null  # 878 pop-science clips titled Biology
   PLUl4u3cNGP601Q2jo-J_3raNCMMs6Jves: finance
   PL221E2BBF13BECF6C: linear-algebra
   PL21D8ADED13B2D74C: quantum-mechanics

@@ -47,7 +47,16 @@ export function buildKeywordIndex(sources: Sources): KeywordIndex {
     // survive the pass that takes «of» out of every title, or it stops matching
     // anything at all.
     for (const name of sources.courseNames.get(course.id) ?? []) {
-      phrases.add(cleanTitle(name));
+      // …but a name whose meaning was in the words the noise pass removes must
+      // not survive as the word that is left. «Introduction to Language» is a
+      // fair alias for linguistics and comes out of `cleanTitle` as «language»,
+      // which then binds «GO Language», «C Language tutorials» and «Al Nakba -
+      // Languages» at 0.95 apiece. A name that collapses to a single word says
+      // nothing a one-word keyword would not say better, and the catalogue can
+      // always write that word out in `keywords/{lang}.json` on purpose.
+      const cleaned = cleanTitle(name);
+      if (!cleaned.includes(' ') && name.trim().split(/\s+/).length >= 3) continue;
+      phrases.add(cleaned);
     }
     for (const phrase of phrases) {
       if (phrase.length >= MIN_PHRASE) index.push({ courseId: course.id, phrase });
@@ -132,6 +141,30 @@ export function cleanSegments(raw: string): string[] {
     .map((segment) => normalize(segment ?? ''))
     .filter(Boolean)
     .filter((segment) => !DEPARTMENT.has(segment));
+}
+
+/**
+ * The clauses as they were written, with only the punctuation read — the same
+ * split, none of the noise stripped.
+ *
+ * The refusal list needs this, and only the refusal list. `NOISE` exists so
+ * that coverage measures a subject against a subject, and it takes out
+ * `playlist`, `videos`, `full`, `course` — the very words by which a title
+ * announces that it is not a course. «Dance & Electronic Music Playlist |
+ * Genre» arrived at the matcher as «dance electronic music» and «genre», the
+ * second of which is an exact keyword of literary theory, and 1241 tracks of
+ * house music became a course on it at confidence 0.95.
+ *
+ * So the two questions are asked of two texts: *is this a course at all* of the
+ * title as written, and *which course* of the title with the noise gone.
+ */
+export function rawSegments(raw: string): string[] {
+  return raw
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .split(SEGMENT)
+    .map((segment) => normalize(segment ?? ''))
+    .filter(Boolean);
 }
 
 /**
@@ -221,6 +254,24 @@ const NOT_A_COURSE: RegExp[] = [
   /(?<![\p{L}\p{N}])(?:nursery rhymes?|kids songs?|детские песенки|мультик\p{L}*|cartoons? for (?:kids|children))(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:full episodes?|season \d+|greatest hits|soundtracks?|top \d+ songs)(?![\p{L}\p{N}])/u,
   /(?<![\p{L}\p{N}])(?:gameplay|let's play|unboxing|reaction video|prank|memes?)(?![\p{L}\p{N}])/u,
+
+  // A playlist that calls itself a playlist of music. Read on the title as
+  // written — `NOISE` takes `playlist` out, and without it «Ambient Music
+  // Playlist | Genre» is «ambient music» plus a keyword of literary theory.
+  /(?<![\p{L}\p{N}])(?:music|songs?|hits|mix|beats|karaoke|музыка|песни)\s+playlist(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])playlist\s+(?:mix|music|songs?|hits)(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:full album|альбом целиком|lo-?fi|instrumental beats)(?![\p{L}\p{N}])/u,
+
+  // Exam tracks, in the languages that were missing. ЕГЭ, ОГЭ and олимпиады
+  // are refused above and these are the same thing under another flag: AP and
+  // GCSE are school syllabuses sat as an exam, and MCAT, NEET and JEE are
+  // entrance tests. They also arrive in the one shape this catalogue cannot
+  // store — «Supply, demand, and market equilibrium | AP Microeconomics» is a
+  // topic of a course, published as a playlist, one of forty. 142 Khan Academy
+  // playlists were bound as whole courses on 2026-08-15, most of them a
+  // fortieth of one.
+  /(?<![\p{L}\p{N}])ap\s+\p{L}{4,}(?![\p{L}\p{N}])/u,
+  /(?<![\p{L}\p{N}])(?:gcse|igcse|a-?levels?|mcat|neet|sat prep|act prep)(?![\p{L}\p{N}])/u,
 ];
 
 export function isNotACourse(cleaned: string): boolean {
@@ -320,14 +371,23 @@ function hasRivalTopic(
   });
 }
 
-/** The best a single clause of a title can say, or nothing. */
-function matchSegment(segment: string, index: KeywordIndex): RuleCandidate | null {
+/**
+ * The best a single clause of a title can say, and whether it named anything.
+ *
+ * `named` is true whenever a course keyword occurred, including when the clause
+ * is then declined for naming two courses at once. The caller needs that apart
+ * from the verdict: a declined clause is a question, an empty one is not.
+ */
+function matchSegment(
+  segment: string,
+  index: KeywordIndex
+): { candidate: RuleCandidate | null; named: boolean } {
   const hits: Array<{ courseId: string; phrase: string; at: number }> = [];
   for (const entry of index) {
     const at = findPhrase(segment, entry.phrase);
     if (at !== -1) hits.push({ courseId: entry.courseId, phrase: entry.phrase, at });
   }
-  if (!hits.length) return null;
+  if (!hits.length) return { candidate: null, named: false };
 
   // The index is sorted longest-first, so the first hit is the most specific:
   // «quantum mechanics» beats «mechanics» on a title that contains both.
@@ -338,28 +398,86 @@ function matchSegment(segment: string, index: KeywordIndex): RuleCandidate | nul
   const equallySpecific = new Set(
     hits.filter((hit) => hit.phrase.length === best.phrase.length).map((hit) => hit.courseId)
   );
-  if (equallySpecific.size > 1) return null;
-  if (hasRivalTopic(best, hits)) return null;
+  if (equallySpecific.size > 1) return { candidate: null, named: true };
+  if (hasRivalTopic(best, hits)) return { candidate: null, named: true };
 
-  return { courseId: best.courseId, confidence: confidenceFor(segment, best.phrase, best.at) };
+  return {
+    candidate: { courseId: best.courseId, confidence: confidenceFor(segment, best.phrase, best.at) },
+    named: true,
+  };
 }
 
-export function matchByRules(playlist: PlaylistRow, index: KeywordIndex): RuleCandidate | null {
+/**
+ * What the rules concluded — and the four different things "no" can mean, each
+ * of which wants something different done about it.
+ *
+ * | verdict | means | what it is worth |
+ * |---|---|---|
+ * | `match` | one course, this confident | bind it |
+ * | `not-a-course` | the title says homework, music video, open day | a decision: record it |
+ * | `unclaimed` | no course of this catalogue is named in the title at all | a keyword may be missing — or there is simply no such course here |
+ * | `undecided` | a course is named, but weakly or ambiguously | the review queue proper: what a person is for |
+ * | `no-title` | the metadata pass has not reached it | nothing to judge yet |
+ *
+ * `matchByRules` collapses all four into `null`, which is all a caller binding
+ * a playlist needs. `05-match.ts` needs them apart: it can record a decision
+ * and stop paying for it every run, and it must not record an absence.
+ */
+export type RuleVerdict =
+  | ({ kind: 'match' } & RuleCandidate)
+  | { kind: 'not-a-course' }
+  | { kind: 'unclaimed' }
+  | { kind: 'undecided' }
+  | { kind: 'no-title' };
+
+export function judgeByRules(playlist: PlaylistRow, index: KeywordIndex): RuleVerdict {
   // A seam queues a playlist before the metadata pass has reached it, so the
   // title can still be missing — and a pass that binds by the title alone has
   // nothing to say about a playlist that has none. The same null that stopped
   // `videoQueueTiers` on 2026-08-12, one step further down the pipeline.
-  if (!playlist.title) return null;
+  if (!playlist.title) return { kind: 'no-title' };
   const segments = cleanSegments(playlist.title);
-  if (!segments.length) return null;
+  if (!segments.length) return { kind: 'unclaimed' };
   // Support material is refused on the whole title: «homework» can sit in a
   // clause of its own, and the clause naming the subject would not see it.
-  if (segments.some(isNotACourse)) return null;
+  // Asked of both readings of the title — see `rawSegments` for the house
+  // music that reached the catalogue through the gap between them.
+  if (segments.some(isNotACourse) || rawSegments(playlist.title).some(isNotACourse)) {
+    return { kind: 'not-a-course' };
+  }
 
+  const { best, named } = bestSegmentMatch(segments, index);
+  if (best) return { kind: 'match', ...best };
+  return named ? { kind: 'undecided' } : { kind: 'unclaimed' };
+}
+
+export function matchByRules(playlist: PlaylistRow, index: KeywordIndex): RuleCandidate | null {
+  const verdict = judgeByRules(playlist, index);
+  return verdict.kind === 'match'
+    ? { courseId: verdict.courseId, confidence: verdict.confidence }
+    : null;
+}
+
+/**
+ * The best any clause of a title can say, once support material is out — and
+ * whether any course was named at all.
+ *
+ * The second answer is not the first one's absence. «Graph Theory and Additive
+ * Combinatorics» names two courses and settles neither; «Juice WRLD Freestyles»
+ * names none. Both come back without a binding and they are not the same
+ * problem: one is a question for a person, the other is a playlist this
+ * catalogue has no course for.
+ */
+function bestSegmentMatch(
+  segments: string[],
+  index: KeywordIndex
+): { best: RuleCandidate | null; named: boolean } {
   let best: RuleCandidate | null = null;
   let runnerUp: RuleCandidate | null = null;
+  let named = false;
   for (const segment of segments) {
-    const candidate = matchSegment(segment, index);
+    const { candidate, named: hit } = matchSegment(segment, index);
+    named ||= hit;
     if (!candidate) continue;
     if (!best || candidate.confidence > best.confidence) {
       if (best && best.courseId !== candidate.courseId) runnerUp = best;
@@ -368,12 +486,12 @@ export function matchByRules(playlist: PlaylistRow, index: KeywordIndex): RuleCa
       if (!runnerUp || candidate.confidence > runnerUp.confidence) runnerUp = candidate;
     }
   }
-  if (!best) return null;
+  if (!best) return { best: null, named };
 
   // Two clauses naming two different subjects, each convincingly — «Линейная
   // алгебра | Дифференциальные уравнения» — is the same ambiguity as two
   // courses claiming one clause, and gets the same answer: a human.
-  if (runnerUp && runnerUp.confidence >= best.confidence - 0.05) return null;
+  if (runnerUp && runnerUp.confidence >= best.confidence - 0.05) return { best: null, named };
 
-  return best;
+  return { best, named };
 }

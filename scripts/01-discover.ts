@@ -1,5 +1,5 @@
 import { parseLimit, reportRemaining } from './lib/config.js';
-import { openDb } from './lib/db.js';
+import { openDb, type Db } from './lib/db.js';
 import { loadSources } from './lib/sources.js';
 import { reportRunError } from './lib/exit.js';
 import { createClient } from './lib/youtube.js';
@@ -33,7 +33,14 @@ async function main(): Promise<void> {
       const seed = seeds.get(job.target);
       if (!seed) return;
       const found = await discoverChannel(db, api, seed);
-      console.log(`  ${seed.title}: ${found} playlists`);
+      // A channel being vetted is new information about every playlist already
+      // mined off it. `05-match.ts` records `unclaimed` for a title that names
+      // no course of this catalogue, and the usual reason such a title is worth
+      // a second look is that somebody has now vouched for where it came from.
+      // Lifting here means adding a line to channels.yaml reaches that
+      // material, and not only the playlists discovery is about to find.
+      const lifted = liftUnvettedRefusals(db, seed.id);
+      console.log(`  ${seed.title}: ${found} playlists${lifted ? `, ${lifted} refusals lifted` : ''}`);
     },
     limit
   );
@@ -42,6 +49,24 @@ async function main(): Promise<void> {
   reportRemaining(pendingCount(db, ['discover']), limit);
   console.log(`· quota spent today: ${api.spent()}`);
   db.close();
+}
+
+/**
+ * Playlists of this channel that no course of the catalogue claimed, put back
+ * in front of the next `data:match`. A hand decision is never touched.
+ */
+function liftUnvettedRefusals(db: Db, channelSeedId: string): number {
+  return db
+    .prepare(
+      `UPDATE matches SET refused = 0
+       WHERE reviewed = 0 AND refused = 1 AND method = 'unclaimed'
+         AND playlist_id IN (
+           SELECT p.id FROM playlists p
+           JOIN channels c ON c.id = p.channel_id
+           WHERE lower(c.id) = lower(?) OR lower(c.handle) = lower(?)
+         )`
+    )
+    .run(channelSeedId, channelSeedId).changes;
 }
 
 main().catch(reportRunError);

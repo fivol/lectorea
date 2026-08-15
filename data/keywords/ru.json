@@ -1,5 +1,5 @@
 {
-  "_comment": "Search keywords. Morphology is solved here, by hand, not by a stemmer on the client. Titles are indexed automatically — this file only adds what a title does not contain: abbreviations, slang, transliterations, alternative names. Keys are `{type}.{id}`. Read by the rule matcher in scripts/lib/rules.ts as well as by search, in every language at once: a phrase here can bind a playlist to this course on its own. Slang that is a different subject's ordinary word — «inheritance», «feedback» — costs a wrong binding, so add loose synonyms knowing they are load-bearing.",
+  "_comment": "Search keywords. Morphology is solved here, by hand, not by a stemmer on the client. Titles are indexed automatically — this file only adds what a title does not contain: abbreviations, slang, transliterations, alternative names. Keys are `{type}.{id}`. Read by the rule matcher in scripts/lib/rules.ts as well as by search, in every language at once: a phrase here can bind a playlist to this course on its own. Slang that is a different subject's ordinary word — «inheritance», «feedback» — costs a wrong binding, so add loose synonyms knowing they are load-bearing. A value written with a leading `?` is search-only: search finds the course by it, the matcher never binds a playlist on it. That is for words that are a good guess in a search box and a wrong answer as a rule — «genre» is not a course, but «Ambient Music Playlist | Genre» covers that clause exactly.",
   "domain.math": [
     "математика",
     "математический",
@@ -481,7 +481,8 @@
     "алгоритмы",
     "сложность",
     "algorithms",
-    "алгоритмы и структуры данных"
+    "алгоритмы и структуры данных",
+    "алгоритмов"
   ],
   "course.computer-architecture": [
     "архитектура компьютера",
@@ -604,7 +605,8 @@
     "quantum mechanics",
     "квантовая теория",
     "квантовая физика",
-    "квантовой механики"
+    "квантовой механики",
+    "квантовой механике"
   ],
   "course.statistical-physics": [
     "статфизика",
@@ -818,7 +820,7 @@
   "course.deep-learning": [
     "глубокое обучение",
     "нейросети",
-    "трансформеры",
+    "?трансформеры",
     "deep learning"
   ],
   "course.nlp": [

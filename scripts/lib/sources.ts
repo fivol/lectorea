@@ -275,7 +275,9 @@ export function loadSources(lang = 'ru'): Sources {
 function loadCourseNames(courses: Course[]): Map<string, string[]> {
   const dictionaries = UI_LANGS.map((language) => ({
     i18n: loadDictionary(language.id),
-    keywords: loadKeywords(language.id),
+    // Bindable only: a word marked `?` finds the course in the search box and
+    // is not allowed to file a playlist under it. See `loadBindableKeywords`.
+    keywords: loadBindableKeywords(language.id),
     aliases: loadAliases(language.id),
   }));
   const names = new Map<string, string[]>();
@@ -308,10 +310,49 @@ export function loadDictionary(lang: string): Record<string, string> {
 }
 
 /**
+ * A keyword one file serves two masters with: search, and binding a playlist
+ * to a course. They want opposite things from the same word.
+ *
+ * «genre» is a good thing to type into a search box looking for literary
+ * theory, and a catastrophe as a binding rule: «Dance & Electronic Music
+ * Playlist | Genre» covers that clause exactly, scores 0.95, and 1310 tracks of
+ * house music become a course on literary theory. «classical music» filed a
+ * playlist *of* classical music under the history of it; «leadership» filed a
+ * podcast under organisational behaviour.
+ *
+ * The old answer was to delete such words, which is why the catalogue could no
+ * longer be searched for half of what it holds. A `?` in front says the word
+ * finds the course but never binds it — search keeps it, `loadCourseNames`
+ * does not pass it to the rule index.
+ */
+const SEARCH_ONLY = '?';
+
+/**
  * Search keywords of one language: what a title does not contain but people
  * type anyway — abbreviations, slang, spelling variants, alternative names.
+ * The `?` marker is stripped: search is the master that gets every word.
  */
 export function loadKeywords(lang: string): Record<string, string[]> {
+  const keywords: Record<string, string[]> = {};
+  for (const [key, values] of Object.entries(readKeywordFile(lang))) {
+    keywords[key] = values.map((value) => bareKeyword(value));
+  }
+  return keywords;
+}
+
+/**
+ * The same file read as the rule pass reads it: without the words marked as
+ * search-only. `data/keywords/*.json` says at the top which is which.
+ */
+export function loadBindableKeywords(lang: string): Record<string, string[]> {
+  const keywords: Record<string, string[]> = {};
+  for (const [key, values] of Object.entries(readKeywordFile(lang))) {
+    keywords[key] = values.filter((value) => !value.startsWith(SEARCH_ONLY));
+  }
+  return keywords;
+}
+
+function readKeywordFile(lang: string): Record<string, string[]> {
   const raw = loadJson(path.join(paths.keywords, `${lang}.json`), KeywordsSchema);
   const keywords: Record<string, string[]> = {};
   for (const [key, value] of Object.entries(raw)) {
@@ -320,6 +361,9 @@ export function loadKeywords(lang: string): Record<string, string[]> {
   }
   return keywords;
 }
+
+const bareKeyword = (value: string): string =>
+  value.startsWith(SEARCH_ONLY) ? value.slice(SEARCH_ONLY.length).trim() : value;
 
 /**
  * The other names a course goes by — the ones a person would recognise as the

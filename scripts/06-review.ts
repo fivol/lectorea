@@ -88,6 +88,15 @@ function courseEntries(sources: Sources): SearchEntry[] {
   }));
 }
 
+/**
+ * What is genuinely undecided — which is not the same as what is unbound.
+ *
+ * A playlist a pass refused as not a course carries `refused` and is left out:
+ * showing «Best Pop Songs Playlist» to a person costs a minute and answers
+ * nothing, and there were tens of thousands of them. `05-match.ts --force`
+ * re-reads refusals when the rules or the catalogue change, which is the only
+ * thing that should bring one back.
+ */
 function pendingQuery(sources: Sources): { sql: string; params: unknown[] } {
   const overridden = Object.keys(sources.overrides.matches);
   const holes = overridden.map(() => '?').join(',');
@@ -98,7 +107,9 @@ function pendingQuery(sources: Sources): { sql: string; params: unknown[] } {
           LEFT JOIN matches m ON m.playlist_id = p.id
           LEFT JOIN channels c ON c.id = p.channel_id
           WHERE p.alive = 1
-            AND (m.playlist_id IS NULL OR (m.reviewed = 0 AND m.confidence < ${CONFIDENCE_THRESHOLD}))
+            AND (m.playlist_id IS NULL
+                 OR (m.reviewed = 0 AND m.confidence < ${CONFIDENCE_THRESHOLD}
+                     AND COALESCE(m.refused, 0) = 0))
             ${overridden.length ? `AND p.id NOT IN (${holes})` : ''}
           ORDER BY p.views DESC`,
     params: overridden,

@@ -110,6 +110,16 @@ different fix:
 | `ambiguous` | two courses claim it equally | a human, or a tie to break |
 | `not-a-course` | `NOT_A_COURSE` caught a clause | usually right; check it is |
 
+Two of those five are **recorded decisions** rather than open questions, and
+`data:review` no longer shows them: `not-a-course`, and the half of `no-phrase`
+where no course keyword occurs at all
+([matching.md](scripts/matching.md#a-refusal-is-an-answer-and-is-written-down)).
+That is what makes the queue readable — 35 148 waiting on 2026-08-15, of which
+24 808 named no course of this catalogue in any language. `_refusals.ts` still
+sees all of it, which is why the cluster work below is unaffected; and
+`make match FORCE=1` re-reads every refusal, which is why a keyword you add
+still reaches them.
+
 ### Cluster before you read
 
 **Do not sort refusals by video count.** That ranks topic bins to the top,
@@ -213,6 +223,64 @@ The four that were resolved had a specific course that should simply win:
 
 The test is not "is this word ambiguous in English" but **"does one of these two
 courses own it, with the other holding a redundant copy"**.
+
+### A blank row in the queue is not a hard case, it is a missing title
+
+The review queue is sorted by views and read from the top, so a playlist with no
+title at all reads as one nobody has got to yet. 3252 of them were something
+else: playlists whose lectures had been crawled — paid for, at two units per
+fifty — before the metadata call that buys the title, after which the video pass
+pushed `next_refresh_at` a month out and the title could not be bought at all.
+Nothing can classify a playlist by its id, so they were permanent.
+
+Two things make it visible rather than fixed-once:
+
+```bash
+pnpm tsx scripts/_sweep.ts          # counts them, writes nothing
+pnpm tsx scripts/_sweep.ts --write  # makes them due, and drops ids that cannot be ids
+```
+
+and the count is worth glancing at whenever the queue looks larger than the work
+in it. The pass that caused it no longer does
+([pipeline.md](pipeline.md#a-pass-may-only-defer-the-call-it-makes-itself)), but
+the shape recurs: any step that writes a column another step reads for due-ness
+can starve it silently.
+
+### The other loose keyword: the one that wins, wrongly
+
+`_noisy.ts` finds keywords that never win. The mirror image is worse and was
+invisible until `_winners.ts` was written to ask for it: a keyword that wins
+confidently on titles that have nothing to do with the course. It costs no
+review time at all — it publishes.
+
+```bash
+pnpm tsx scripts/_winners.ts
+```
+
+Read as a list, the bad ones give themselves away: under a good keyword the
+sample titles all name one subject, under a bad one they have nothing in common.
+2026-08-15 turned up `genre` holding 1241 tracks of house music under literary
+theory, `classical music` holding two record collections under its history,
+`stars` holding «Dancing With The Stars», `crime` holding «British Pathé.
+Crimea», `motivation` holding a talk on Gaussian multiplicative chaos, and
+`micro` holding seven micro:bit playlists under microeconomics.
+
+None of them wanted deleting — all six are things a person might reasonably type
+into the search box. They wanted `?` in front, which keeps the word for search
+and hides it from the rules
+([matching.md](scripts/matching.md#how-the-rule-pass-decides)).
+
+Before adding a refusal instead, price it:
+
+```bash
+pnpm tsx scripts/_markers.ts             # clears / costs, per candidate word
+pnpm tsx scripts/_markers.ts tutorial    # and the titles on both sides
+```
+
+The second column is what the word would take out of the catalogue as it
+stands. `tutorial` would have cleared 345 from the queue and cost 25 published
+bindings, which is why it is not a refusal: most of those 25 are programming
+courses this catalogue does carry.
 
 ### A loose keyword costs nothing visible and plenty invisible
 
@@ -385,6 +453,9 @@ Smarthistory, ICTS and TutorialsPoint again.
 | `_holes.ts [min]` | free | which channels does the catalogue keep choosing but never crawl |
 | `_vet.ts in.txt out.json` | 1 unit/channel | does this candidate own courses |
 | `_owners.ts mined.json out.json` | 1 unit/50 ids | which channels are behind a set of playlist ids |
+| `_sweep.ts [--write]` | free | rows no rule can ever reach: impossible ids, playlists deferred with no title |
+| `_winners.ts` | free | which keyword won each confident binding, and what it dragged in |
+| `_markers.ts [word]` | free | how much of the queue a refusal word would clear, and how much of the catalogue it would cost |
 
 None are wired into `pnpm`: they are read once or twice a year and the useful
 half of the work is the judgement, not the script.

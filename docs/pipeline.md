@@ -274,6 +274,30 @@ than derived from a local clock. From a zone ahead of UTC the two disagree for
 the first hours after the reset, which is exactly when the nightly job runs: the
 crawler would read yesterday's spend and stop before it started.
 
+### A pass may only defer the call it makes itself
+
+`next_refresh_at` is one column and the metadata pass's own clock, and the video
+pass used to write it too — a month out, unconditionally, having just walked a
+playlist's lectures. For a playlist that already had a title that is merely
+generous. For one that never had a title it is the whole difference between a
+catalogue entry and a dead row: a seam queues metadata and videos together,
+whichever ran first won, and when it was the video pass the title could not be
+bought for thirty days. **A title is the entire input of the rule pass**, so
+those playlists could not be classified, could not be shown, and sat in the
+review queue as blank rows.
+
+3252 of them on 2026-08-15 — eight per cent of the live catalogue, every one
+with its lectures already walked at two units per fifty, waiting until September
+for a call that costs one unit per fifty titles. The video pass now leaves an
+untitled playlist due, and the metadata scan orders by *title* missing rather
+than `published_at` missing, because the video pass fills `published_at` in from
+the earliest lecture it saw — so a crawled-but-untitled playlist stopped looking
+new, sorted by views among forty thousand rows, and fell out of the 5000-row
+scan window for good. `scripts/_sweep.ts` unsticks the ones already deferred.
+
+The shape to remember: **a step that writes another step's clock can starve it,
+and nothing downstream can tell that from "there was nothing to fetch".**
+
 ## Matching
 
 The most laborious step, and the one that does not fully automate. A cascade,
@@ -306,8 +330,34 @@ is allowed to be loose in a way matching is not.** «ocean», «feedback»,
 search box and all bad things to bind a course by, because an exact hit on a
 whole clause scores like a title. Two shapes were worth a rule — a department
 label filed in front of the real subject («Electronics - Linux Programming», 66
-playlists) and the English half of the interview-and-colloquium refusal. The
-rest is word sense, which a substring cannot hold, and is pinned by hand.
+playlists) and the English half of the interview-and-colloquium refusal.
+
+The rest is word sense, which a substring cannot hold — and deleting such a word
+answers the matcher by lying to the search box, which then cannot find the
+course by the name half its readers know it under. So the file says which master
+a word serves: **a value written `?word` is search-only.** Search keeps it; the
+rule index never sees it. `genre` under literary theory, `classical music` under
+the history of music and `motivation` under organisational behaviour are the
+three that had already bound something — 1241 tracks of house music, two
+collections of classical recordings, and a talk on Gaussian multiplicative
+chaos.
+
+**A refusal is an answer too, and is recorded as one.** `matches.refused` marks
+a playlist a pass judged to be no course at all, which takes it out of the
+review queue, out of the next model batch and into the last tier of the video
+queue. Without it the queue could only grow: 35 148 playlists were waiting for a
+person on 2026-08-15, nearly all of them mined music.
+[matching.md](scripts/matching.md#a-refusal-is-an-answer-and-is-written-down)
+has the table and the reversal rule — `--force` re-reads refusals, so a new
+course still gets its material.
+
+**And the refusal list reads the title as written.** `NOISE` takes `playlist`,
+`videos`, `full` and `course` out before coverage is measured, which is right
+for measuring and fatal for refusing: «Dance & Electronic Music Playlist |
+Genre» reached the matcher as «dance electronic music» plus a clause that is
+exactly a keyword. Support material is therefore matched against both readings
+of a title, and «Crime Patrol 2.0 | Full Episodes» stopped being a course in
+criminal law.
 
 The review server shows one playlist at a time: the playlist on the left, course
 search and buttons on the right. Keyboard: `1`–`9` for the top suggestions, `n`

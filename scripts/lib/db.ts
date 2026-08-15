@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS matches (
   confidence REAL,
   method TEXT,
   reviewed INTEGER DEFAULT 0,
+  refused INTEGER DEFAULT 0,
   updated_at TEXT
 );
 
@@ -141,6 +142,7 @@ const ADDED_COLUMNS: Array<{ table: string; column: string; type: string }> = [
   { table: 'playlists', column: 'last_video_at', type: 'TEXT' },
   { table: 'playlists', column: 'list_playable', type: 'INTEGER' },
   { table: 'playlists', column: 'list_checked_at', type: 'TEXT' },
+  { table: 'matches', column: 'refused', type: 'INTEGER DEFAULT 0' },
 ];
 
 function addColumns(db: Db): void {
