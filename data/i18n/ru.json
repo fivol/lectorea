@@ -189,7 +189,7 @@
   "ui.playlists.empty": "Плейлистов пока нет",
   "ui.playlists.emptyFiltered": "Под фильтрами ничего не осталось",
   "ui.playlists.noneInLang": "На языке «{lang}» здесь ничего нет — ниже записи на других языках",
-  "ui.playlists.oneCourse": "Один курс",
+  "ui.playlists.oneCourse": "Части одного курса",
   "ui.playlist.length.lesson": "урок",
   "ui.playlist.length.pair": "пара",
   "ui.playlist.length.double": "две пары",

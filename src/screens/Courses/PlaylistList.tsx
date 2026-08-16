@@ -267,7 +267,18 @@ export default function PlaylistList({ course }: Props) {
                         parts at «19.9 ч» each is a mental sum before you know
                         whether this is a term or two years — and it is what
                         makes a run comparable with the single recordings it is
-                        ranked against. */}
+                        ranked against.
+
+                        Which is why the heading says «части одного курса»
+                        rather than «один курс». A quarter of the runs in the
+                        catalogue visibly start at part three, skip a part, or
+                        carry one marked «фрагмент» — and the other three
+                        quarters are not proved whole either, they are only runs
+                        with no hole *we* can see. A fifth semester nobody
+                        filmed leaves no trace at all. So the line claims what
+                        it can carry — these rows belong to one course, and
+                        together they run this long — and never that the course
+                        ends where our rows do. */}
                     {t('ui.playlists.oneCourse')} ·{' '}
                     {t('ui.playlist.hours', { n: formatHours(hoursFromSeconds(runSeconds(item))) })}
                   </p>

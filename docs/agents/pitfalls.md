@@ -178,3 +178,32 @@ in my commit (and mine in theirs).
 changed, and check `git status --short` before committing. The `git status` from
 the start of a session is a snapshot, not live state: files that were there may
 belong to somebody else's commit by the time you reach yours.
+
+### …and so is `public/data`, which no `git add` discipline protects
+
+**Assumed:** the sharing problem is about *committing*, so naming files at
+`git add` covers it.
+**It was:** `pnpm data:build` runs whatever `scripts/08-build.ts` says right
+now, and another session had it half-way through an LLM-verdict gate that keeps
+out any playlist with no verdict row yet. The build succeeded, said
+`✓ built in 36396 ms`, and wrote a catalogue of 1356 playlists over the 6825 that
+were there. `public/data/` is in `.gitignore`, so there was nothing to check
+out: it had to be built again.
+
+**How not to repeat it:** before running anything that *writes* — `data:build`,
+the `make` sequences, a script that touches `cache.db` — check
+`git status --short` for edits to the scripts it will run, not only for the
+files you are about to commit. Uncommitted work in `scripts/` is somebody's
+half-finished idea, and running it publishes that idea over the shared state.
+
+The way out, when it is needed, keeps the shared tree untouched:
+
+```bash
+git worktree add --detach "$SCRATCH/build-head" HEAD
+```
+
+then symlink `data/cache.db` (and `-shm`, `-wal` — it is 18 GB, never copy it)
+and `node_modules` into the worktree, copy across any `data/` files you have
+edited yourself, build there, and copy `public/data` back. `git stash` on their
+files would have been the faster fix and the wrong one: it edits the tree they
+are working in.

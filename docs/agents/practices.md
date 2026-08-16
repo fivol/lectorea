@@ -142,24 +142,39 @@ run it backwards over what is already live — and put the free filters first
 (settled by hand, on a vetted channel) so the paid one runs on the remainder:
 682 probes rather than 1308.
 
-## Sum the rows; do not infer the whole
+## Sum the rows; do not infer the whole — and the label is part of the sum
 
-The heading over a run of parts prints **Один курс · 78 ч** and does not print
-how many parts the course has. Both numbers were once wanted for the same
-reason, and only one of them can be had honestly: the hours are the sum of the
-rows drawn under the line, while the count of parts came off the largest number
-parsed out of somebody else's titles, so a run of `s3, s4` announced four parts
-above two rows.
+The heading over a run of parts prints **Части одного курса · 78 ч**. Every word
+of it was arrived at by asking one question of each piece: *what is this a fact
+about?*
 
-The test is not "is this number useful" — both were — but **what the number is
-measured over**. A figure summed from what is on screen stays true when the
-crawl finds one more part; a figure inferred about the thing the rows came from
-is a guess that grows more confident as it grows more wrong.
+The hours are a fact about the rows drawn under the line, so they are printed.
+The count of parts is a fact about somebody else's course, taken off the largest
+number parsed out of their titles, so a run of `s3, s4` announced four parts
+above two rows — it is not printed. A figure summed from what is on screen stays
+true when the crawl finds one more part; a figure inferred about the thing the
+rows came from is a guess that grows more confident as it grows more wrong.
 
-**Generally:** before printing a derived number, say out loud what it is a fact
-about. If the answer is the catalogue's own rows, print it. If the answer is the
-world outside the catalogue, the rows are evidence and not a measurement, and
-the reader is better served by being able to count them.
+**The trap is that the label gets audited last, and it carries a claim too.**
+The heading first read «Один курс · 78 ч», with an honest number, and was still
+wrong: 24% of the 149 runs visibly start at part three, skip a part, or hold one
+marked «фрагмент», and the remaining 76% are not *proved* whole either — they
+are runs with no hole anybody can see, and a semester that was read and never
+filmed leaves nothing to find. The number was measured over the rows; the two
+words in front of it were measured over the course, and the reader adds them
+together before noticing.
+
+The fix that was **rejected** was two headings, one for the complete-looking
+runs and one for the rest. It moves the false claim rather than removing it: the
+76% would then be asserting completeness on the strength of us not having
+spotted a gap. One modest wording covering every run is what survives — these
+rows belong to one course, and together they run this long.
+
+**Generally:** before printing a derived number, say what it is a fact about —
+and then ask the same of the words beside it. A caption that outruns its number
+is the easier mistake, because it costs nothing to write and reads as
+description rather than as a claim. When a distinction cannot be *proved* from
+the data, do not encode it in wording either; say the weaker thing once.
 
 Rejected alongside it: putting the lecture count on the same line. Every row
 already carries its own «14 лекций», so the group total is a second running sum

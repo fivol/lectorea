@@ -372,20 +372,36 @@ two, and the × or the dimmed list behind it to close.
   unrelated ones.
 
   A course a university cut into parts — «Часть 2», a second semester, `[s3]` —
-  is drawn as one entry: the parts in order, a rule down their left and **Один
-  курс · 78 ч** over them. The hours are the sum of the rows underneath and
-  nothing more, which is what makes them printable: four semesters at «19.9 ч»
-  each is a sum the reader would otherwise do in their head, and it is the
-  figure that decides whether this is a term's work or two years'. It is also
-  what makes a run comparable with the single recordings it is ranked against —
-  ИТМО's four-semester «Дискретная математика» reads 78 ч where MIT 6.042J is
-  33 ч, and until the run said so the list put a two-year programme next to a
-  one-term course with no way to tell them apart. The count of parts is the
-  number deliberately missing: it came off the highest number we could parse out
-  of the titles, so a run of `s3, s4` announced four parts above two rows. The
-  rule the two cases make between them: **a number summed from the rows on
-  screen may be printed; a number inferred about the course they came from may
-  not.** **Части вместе**, next
+  is drawn as one entry: the parts in order, a rule down their left and **Части
+  одного курса · 78 ч** over them.
+
+  The hours are the sum of the rows underneath and nothing more, which is what
+  makes them printable: four semesters at «19.9 ч» each is a sum the reader
+  would otherwise do in their head, and it is the figure that decides whether
+  this is a term's work or two years'. It is also what makes a run comparable
+  with the single recordings it is ranked against — ИТМО's four-semester
+  «Дискретная математика» reads 78 ч where MIT 6.042J is 33 ч, and until the run
+  said so the list put a two-year programme next to a one-term course with no
+  way to tell them apart.
+
+  The wording carries the rest of the truth. The heading used to read «Один
+  курс», and with a number beside it that is a claim the catalogue cannot
+  support: 24% of the 149 runs visibly start at part three, skip a part, or
+  carry one marked «фрагмент», and the other 76% are not *proved* whole — they
+  are runs with no hole anybody can see. A fifth semester that was read and
+  never filmed leaves no trace to find. Two headings, one for the complete runs
+  and one for the rest, would only move the false claim onto the 76%. So there
+  is one line and it is the modest one: these rows belong to one course, and
+  together they run this long. Where the course ends is not ours to say.
+
+  The count of parts is the number that stays missing entirely: it came off the
+  highest number we could parse out of the titles, so a run of `s3, s4`
+  announced four parts above two rows. **The rule the three cases make between
+  them: a number summed from the rows on screen may be printed; a number
+  inferred about the course they came from may not — and the words around the
+  number are part of the claim.**
+
+  **Части вместе**, next
   to the sort, turns the grouping off for anyone hunting one recording rather
   than a course to sit down with, and appears only where there is a run to
   group. With it on, a run is admitted or rejected whole: one part passing the
