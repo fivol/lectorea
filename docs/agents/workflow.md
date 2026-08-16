@@ -1,86 +1,95 @@
-# Среда и порядок работ
+# The environment
 
-[← agents](README.md)
+[← agents](README.md) · what is slow here, what must not be run blind, and how
+this repository differs from an ordinary one with a frontend
 
-Что здесь долго, что нельзя запускать вслепую и чем этот проект отличается от
-обычного репозитория с фронтендом. Общая доля: [scripts/README.md](../scripts/README.md) описывает
-команды, [pipeline.md](../pipeline.md) — что делает краул. Тут только то, что нужно агенту,
-чтобы не встать на ровном месте.
+The shared half: [scripts/README.md](../scripts/README.md) documents the
+commands, [pipeline.md](../pipeline.md) what the crawl does. Only what an agent
+needs in order not to stall is here.
 
-## Квота — главный дефицитный ресурс
+## Quota is the scarce resource
 
-10 000 единиц в сутки **на проект Google Cloud**, потолок в конфиге — 9500 на ключ.
-В `.env` восемь ключей из восьми проектов, то есть примерно **76 000 единиц в день**.
-Сброс — в полночь по тихоокеанскому времени, независимо от того, потратили их или нет.
+10 000 units a day **per Google Cloud project**; the configured ceiling is 9500
+per key. `.env` holds eight keys from eight projects — roughly **76 000 units a
+day**. It resets at Pacific midnight whether or not anything used it.
 
-Прежде чем что-либо планировать, посмотреть, сколько осталось:
+Before planning anything, look at what is left:
 
 ```bash
 pnpm exec tsx -e "import {openDb, quotaDateKey} from './scripts/lib/db.ts'; const db=openDb({readonly:true}); console.log(quotaDateKey(), db.prepare('SELECT * FROM quota WHERE date = ?').all(quotaDateKey()))"
 ```
 
-**День здесь тихоокеанский, а не UTC и не локальный** — `quotaDateKey()`, и это
-единственный правильный ключ. `date()` в SQL даст UTC-дату и часть суток будет
-показывать не тот день; локальная дата ошибётся ещё сильнее. Причина в комментарии
-`lib/db.ts`: сброс квоты происходит в полночь по Тихому океану, и из зоны впереди UTC
-наивный пересчёт заставил бы краул читать вчерашний расход ровно в час ночного прогона.
+**The day here is the Pacific one** — `quotaDateKey()`, and nothing else. SQL
+`date()` gives the UTC day and points at the wrong one for part of every day; the
+local date is wrong more often. The reason is in the comment on `lib/db.ts`: the
+quota resets at Pacific midnight, and from a zone ahead of UTC a naive conversion
+would have the crawler reading yesterday's spend at exactly the hour the nightly
+job runs.
 
-Ключ без строки за сегодня — нетронутый ключ. Четыре таких — это 38 000 единиц,
-которые сгорят к утру, и единственная ситуация, в которой уместен `_hunt.ts`
-([harvest.md](../harvest.md#seam-8--asking-youtube-itself), шов 8).
+A key with no row for today is an untouched key. Four of them are 38 000 units
+that will expire by morning, and the only situation in which `_hunt.ts` is the
+right call ([harvest.md](../harvest.md#seam-8--asking-youtube-itself), seam 8).
 
-**Цены, из которых складывается всё остальное:** обход видео плейлиста ~2.3 единицы,
-метаданные 50 плейлистов — 1, `search.list` — 100. Отсюда правило порядка:
-матчить до обхода, потому что матчинг бесплатен и решает, на что тратится день.
+**The prices everything else follows from:** walking a playlist's videos ~2.3
+units, metadata for 50 playlists 1, `search.list` 100. Hence the ordering rule:
+match before crawling, because matching is free and decides what the day buys.
 
-## Что запускать в фоне
+## What to run in the background
 
-Краул легко идёт дольше таймаута `Bash` (600 с). `data:refresh` на полной очереди —
-это часы.
+The crawl comfortably outlives the `Bash` timeout of 600 s; `data:refresh` on a
+full queue runs for hours.
 
-- Долгий шаг — `run_in_background: true`, дальше заниматься доками и кодом.
-- Ждать условия — `until`-цикл в фоне; `sleep` на переднем плане запрещён.
-- Прогресс смотреть запросом к `cache.db` (очередь и квота), а не только по логу:
-  лог буферизуется, база — нет.
+- A long step gets `run_in_background: true`; carry on with docs and code.
+- To wait for a condition, use an `until` loop in the background — a foreground
+  `sleep` is blocked.
+- Watch progress by querying `cache.db`, not only the log: the log buffers, the
+  database does not.
 
 ```bash
 pnpm exec tsx -e "import {openDb} from './scripts/lib/db.ts'; const db=openDb({readonly:true}); console.log(db.prepare(\"SELECT count(*) c FROM jobs WHERE status='pending' AND type='videos'\").get())"
 ```
 
-## Порядок, который нельзя переставлять
+## The order that must not be rearranged
 
 `import → discover → mine → match → refresh → subscribers → match → embeds → build`.
-Причины в [scripts/README.md](../scripts/README.md#make-pipeline); для агента важны две:
+The reasons are in [scripts/README.md](../scripts/README.md#make-pipeline); two
+of them matter to an agent:
 
-- **матчинг до обхода** — иначе день уходит на плейлисты, которых никто не покажет;
-- **матчинг ещё раз после** — обход дал названия тем, у кого их не было, а правило
-  читает только название.
+- **match before the crawl** — otherwise the day goes on playlists nothing will
+  show;
+- **match again after it** — the crawl gave titles to playlists that had none,
+  and the rule pass reads nothing but the title.
 
-Когда нужно потратить квоту прицельно, а не «сколько уйдёт»: `data:refresh` тратит всё,
-что есть; `data:playlists` берёт только метаданные (1 единица на 50) и оставляет обход
-видео на потом. Это способ подготовить очередь, не спустив на неё остаток дня.
+When the spend has to be aimed rather than "however much it takes": `data:refresh`
+spends everything there is, while `data:playlists` buys metadata only (1 unit per
+50) and leaves the video walk for later. That is how to prepare a queue without
+emptying the day into it.
 
-## Сборка и проверки
+## Building and checking
 
-- `make check` — в порядке CI: `typecheck`, `test`, `data:build`, `check:i18n`, `build`.
-- `data:build` читает `cache.db`. Пока идёт краул, лучше не запускать: смысла в
-  промежуточном снимке нет.
-- Линтеры и сборку без просьбы не гонять; `make check` перед коммитом — исключение,
-  это функциональная проверка, а не форматирование.
+- `make check` runs CI's own order: `typecheck`, `test`, `data:build`,
+  `check:i18n`, `build`.
+- `data:build` reads `cache.db`. Do not run it during a crawl — a half-way
+  snapshot answers nothing.
+- Do not run linters or builds unasked; `make check` before a commit is the
+  exception, being a functional check rather than formatting.
 
-## Данные, которые нельзя коммитить
+## What must not be committed
 
-- `data/cache.db` — неделя квоты, в `.gitignore`, публикуется релизом `data-cache`.
-- `.env` — восемь ключей. Никогда не печатать значения; считать — можно (`make doctor`).
-- `public/data/` — генерируется сборкой.
+- `data/cache.db` — a week of quota, in `.gitignore`, published through the
+  `data-cache` release.
+- `.env` — eight keys. Never print the values; counting them is fine
+  (`make doctor`).
+- `public/data/` — generated by the build.
 
-Коммитить: `data/*.yaml`, `data/courses/`, `data/i18n|keywords|aliases`, `scripts/`,
-`shared/`, `src/`, `docs/`.
+Committed: `data/*.yaml`, `data/courses/`, `data/i18n|keywords|aliases`,
+`scripts/`, `shared/`, `src/`, `docs/`.
 
-## Разведывательные скрипты
+## The scratch scripts
 
-`scripts/_*.ts` не подключены к `pnpm` намеренно: их запускают несколько раз в год,
-и полезная половина работы — суждение, а не скрипт. Полный список с ценами —
-[review.md](../review.md#the-tools-in-one-place). Порядок, в котором к ним обращаться,
-задан ценой: сперва бесплатные (`_refusals`, `_noisy`, `_probe`, `_holes`),
-потом единичные (`_vet`), и только на нетронутых ключах — `_hunt`.
+`scripts/_*.ts` are deliberately not wired into `pnpm`: they are run a few times
+a year, and the useful half of the work is the judgement rather than the script.
+The full list with prices is in
+[iteration.md](iteration.md#the-tools-in-one-place). The order to reach for them
+in is set by price: the free ones first (`_refusals`, `_noisy`, `_probe`,
+`_holes`), then the per-unit ones (`_vet`), and `_hunt` only on untouched keys.

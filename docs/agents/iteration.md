@@ -1,0 +1,265 @@
+# Running an iteration
+
+[← agents](README.md) · the four phases end to end, and how to work the refusals
+
+[pipeline.md](../pipeline.md) says what the crawl does and
+[harvest.md](../harvest.md) says where more material comes from. This page is the
+third thing: **how to spend a day on the catalogue.** It lives here rather than
+in `docs/` because nobody reads it to understand the service — it is read to do
+the next piece of work. What the work keeps turning up is
+[data-traps.md](data-traps.md).
+
+---
+
+## The iteration
+
+Four phases. Each is worth finishing before starting the next, because each one
+changes what the next should do.
+
+### 1. Run the pipeline
+
+```bash
+make pipeline
+```
+
+`import → discover → mine → match → refresh → subscribers → match → embeds → build`,
+in that order for the reasons in
+[scripts/README.md](../scripts/README.md#make-pipeline). It takes hours and spends
+quota; start it early and do phase 2 while it runs. It outlives the 600-second
+tool timeout — run it in the background and watch the queue, not the log
+([workflow.md](workflow.md#what-to-run-in-the-background)).
+
+Watch for two things while it goes:
+
+- **`! … pagination repeats after N pages — stopping`** is fine. That is the
+  guard working; see [pipeline.md](../pipeline.md#fault-tolerance).
+- **A step that ends far too fast.** `discover` reporting `0 of N channels due`
+  means the 30-day window is closed and the run will find nothing new — which is
+  correct, and also means the crawl has no new input until phase 3 adds
+  channels.
+
+When it finishes, the video queue is usually empty. **That is the normal end,
+and quota is then no longer the constraint** — there is simply nothing left to
+walk. To spend more, give it more input: `make mine` refills the queue for free
+from descriptions the crawl just brought in, and the seam keeps refilling for
+several rounds (2315 → 1853 → 1098 → 473 on 2026-08-14).
+
+```bash
+make mine && make refresh && make match
+```
+
+Repeat until `mine` returns little. Then `make embeds && make data`.
+
+### 2. Bind what is already on disk, before crawling more
+
+This is the cheapest phase and the one most often skipped. A course can be thin
+because nothing was crawled for it, or because what was crawled never bound —
+`pnpm stats` cannot tell the two apart, and they want opposite work.
+
+```bash
+pnpm tsx scripts/_refusals.ts
+```
+
+Sorts every refused playlist by the *step* that refused it. Then work the
+buckets — the method is [below](#the-review). On 2026-08-14 this bought about
+200 bindings against nine from the whole channel hunt, so **do it first.**
+
+### 3. Hunt channels for what is still thin
+
+Count the holes and let the empty courses write the brief —
+[channel-hunt.md](../channel-hunt.md) is the record of four hunts and
+[harvest.md](../harvest.md) the catalogue of seams. **Read the refusals in
+channel-hunt.md before proposing anything**: every one of them looked like a hit
+in a ranked list, and re-checking one costs a unit and a judgement call.
+
+```bash
+pnpm tsx scripts/_vet.ts candidates.txt out.json
+```
+
+Never add a channel on a description alone. `_vet.ts` costs one unit and answers
+the only question that matters: how many playlists of ten or more does it own,
+and do their titles name subjects. Its `✓` means "there is something to look at",
+not "this qualifies" — **read the titles yourself**
+([data-traps.md](data-traps.md#refuse-a-channel-for-its-unit-not-for-its-size)).
+
+Adding a channel is three files, not one:
+
+1. `data/channels.yaml` — the entry, with a comment saying what it is *for*;
+2. `data/providers.yaml` — **a matching provider, or the channel silently falls
+   back to `unknown` in the build.** `resolveProvider` does not fail on a
+   missing id, it substitutes;
+3. then `make discover && make refresh && make match && make data`.
+
+The check that catches step 2 when it is forgotten is one line, and it is not
+optional — [practices.md](practices.md#a-channel-takes-three-files-not-one).
+
+### 3b. And when the queue empties before the day does
+
+The end of phase 1 is usually "the video queue is empty and quota is no longer
+the constraint". Check whether that is true of the *keys* as well
+([workflow.md](workflow.md#quota-is-the-scarce-resource)):
+
+```bash
+pnpm tsx scripts/_hunt.ts out.json --min=4 --budget=6000
+```
+
+An untouched key is 9500 units that expire at midnight whether or not anything
+used them, and that — and only that — is when YouTube's own search at 100 units
+a query is the right call. It produces two things: playlists for the thinnest
+courses, and a ranked list of channels for step 3 above, most of them found
+because somebody had mirrored their lectures.
+[harvest.md](../harvest.md#seam-8--asking-youtube-itself) has the filters, of
+which the one worth knowing is that **a third of what survives every free filter
+is somebody's bookmarks**, and one unit of `playlistItems.list` says which.
+
+Nothing is written without `--apply`, and `--from` re-reads a finished report —
+so a rule the hunt teaches `lib/rules.ts` reaches the candidates the search
+already paid for, without asking the same questions again. A second pass over
+the same courses wants `--variant=1`: search has one first page per question, and
+the way to get more out of it is a different question.
+
+### 4. Verify, then publish
+
+```bash
+make check
+```
+
+Typecheck, tests, `data:build`, i18n, build — CI's own order. Then commit —
+**explicitly listed files**, because the working tree is shared with concurrent
+sessions ([pitfalls.md](pitfalls.md#the-git-index-is-shared-with-other-sessions))
+— and [`make publish`](../scripts/README.md) when the working copy is what `main`
+would build.
+
+Before calling the iteration done, run the end-of-iteration ritual in
+[README.md](README.md#the-end-of-iteration-ritual). It is part of the work.
+
+---
+
+## The review
+
+`_refusals.ts` puts every refusal into one of five buckets, and each wants a
+different fix:
+
+| Bucket | Means | Fix |
+|---|---|---|
+| `no-phrase` | no course keyword occurs at all | a keyword or alias — or a course the catalogue lacks |
+| `below-threshold` | matched, under 0.75 | `data:review`, or a longer keyword |
+| `weak-coverage` | subject present but a minority of its clause | usually a clause the segmenter should split |
+| `ambiguous` | two courses claim it equally | a human, or a tie to break |
+| `not-a-course` | `NOT_A_COURSE` caught a clause | usually right; check it is |
+
+Two of those five are **recorded decisions** rather than open questions, and
+`data:review` no longer shows them: `not-a-course`, and the half of `no-phrase`
+where no course keyword occurs at all
+([matching.md](../scripts/matching.md#a-refusal-is-an-answer-and-is-written-down)).
+That is what makes the queue readable — 35 148 waiting on 2026-08-15, of which
+24 808 named no course of this catalogue in any language. `_refusals.ts` still
+sees all of it, which is why the cluster work below is unaffected; and
+`make match FORCE=1` re-reads every refusal, which is why a keyword you add
+still reaches them.
+
+### Cluster before you read
+
+**Do not sort refusals by video count.** That ranks topic bins to the top,
+because bins are enormous — «Stanford Seminars» is 1140 videos and correctly
+refused, and the first two screens will be nothing but bins. Real courses are
+10–90 videos and sit in the middle.
+
+Group by the longest cleaned clause instead. Repeated clauses are the systematic
+gaps and each one is a single keyword:
+
+```bash
+pnpm tsx scripts/_refusals.ts no-phrase out.json
+```
+
+then count the longest segment of each entry. Eight playlists whose subject
+clause was «теория колец и полей», six «гладкие многообразия», thirteen a
+genitive of a name the keywords only had in the nominative — one keyword each,
+about two hundred playlists.
+
+### Always probe before you commit
+
+```bash
+pnpm tsx scripts/_probe.ts          # gained / lost / changed, over the whole catalogue
+pnpm tsx scripts/_probe.ts gained   # and the titles
+pnpm tsx scripts/_probe.ts lost
+```
+
+A keyword is a guess about thirty thousand titles, and reading the `gained` list
+is how you find out what it really dragged in. Three of the keywords added on
+2026-08-14 were reverted this way. **Read `lost` too** — a change can take a
+binding away, which is sometimes the point and sometimes the bug.
+
+The same applies to a `NOT_A_COURSE` addition: the exam-coaching brands added on
+2026-08-15 cost exactly two existing bindings, and knowing that was the whole
+reason it was safe to commit them.
+
+Take a baseline if the working tree already has edits in it, or the probe
+reports your change plus everything else:
+
+```bash
+git stash push -- data/keywords && pnpm tsx scripts/_probe.ts; git stash pop
+```
+
+### Then make it reach the catalogue
+
+```bash
+make match FORCE=1 && make data
+```
+
+Without `--force`, `data:match` never revisits a playlist it already bound
+confidently — so **a keyword change reaches nothing already in the catalogue**,
+which is usually the half the change was written to correct.
+
+### What a hand decision is for
+
+`data:review` (or `pnpm playlist:add <id> --course=<id>`) writes
+`data/overrides.yaml`, which is committed and outranks every pass. Use it when
+the answer is right but unreachable by rule — one playlist whose title happens
+to be ambiguous — and *not* to paper over a keyword gap that would fix thirty
+playlists at once.
+
+---
+
+## Working with subagents
+
+Parallel searches are worth it — five topic hunts covered twenty courses in one
+pass. Two rules, both learned on 2026-08-14:
+
+**Verify every claim against the database.** One agent reported a candidate
+channel as a duplicate of an already-crawled one; it was not, and taking its word
+would have cost 75 course playlists. One query settles it:
+
+```bash
+pnpm exec tsx -e "
+import { openDb } from './scripts/lib/db.ts';
+console.log(openDb({ readonly: true })
+  .prepare('SELECT count(*) c FROM playlists WHERE channel_id = ?').get('UC…'));
+"
+```
+
+**Give them the refusals, not just the brief.**
+[channel-hunt.md](../channel-hunt.md) records what was refused and why precisely
+so the next hunt does not spend a day rediscovering Gresham College. An agent
+that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
+
+---
+
+## The tools, in one place
+
+| Command | Cost | What it answers |
+|---|---|---|
+| `_refusals.ts [bucket] [out.json]` | free | why were these playlists refused |
+| `_noisy.ts [min]` | free | which keywords claim and never win |
+| `_probe.ts [gained\|lost\|changed]` | free | what would a rule change do to the whole catalogue |
+| `_holes.ts [min]` | free | which channels does the catalogue keep choosing but never crawl |
+| `_vet.ts in.txt out.json` | 1 unit/channel | does this candidate own courses |
+| `_hunt.ts out.json [--min\|--courses] [--apply]` | 100 units/query | what does YouTube itself have for the thinnest courses — and whose channel is it really |
+| `_owners.ts mined.json out.json` | 1 unit/50 ids | which channels are behind a set of playlist ids |
+| `_sweep.ts [--write]` | free | rows no rule can ever reach: impossible ids, playlists deferred with no title |
+| `_winners.ts` | free | which keyword won each confident binding, and what it dragged in |
+| `_markers.ts [word]` | free | how much of the queue a refusal word would clear, and how much of the catalogue it would cost |
+
+None are wired into `pnpm`: they are read once or twice a year and the useful
+half of the work is the judgement, not the script. Reach for them in price
+order — the free ones first, and `_hunt.ts` only on untouched keys.

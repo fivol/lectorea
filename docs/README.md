@@ -158,9 +158,6 @@ What each one does and why in that order:
   playlists can be dug out of, with what each one costs
 - [channel-hunt.md](channel-hunt.md) — where the crawled channels came from, how
   a candidate is checked, and what was refused
-- [review.md](review.md) — **start here to run an iteration.** The four phases
-  end to end, how to work the refusals, and the data problems previous
-  iterations have already paid for
 
 **The map**
 
@@ -178,6 +175,14 @@ What each one does and why in that order:
   [catalogue](scripts/catalogue.md), [map](scripts/map.md),
   [crawl](scripts/crawl.md), [matching](scripts/matching.md)
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — the rules external edits must follow
+
+**Not documentation**
+
+- [agents/](agents/README.md) — the notebook of the agent that builds this. A
+  runbook for an iteration, the traps the data keeps setting, the mistakes
+  already made. Nothing in it explains what Lectorea is, which is why it is
+  filed apart: these pages are read to do the next piece of work, not to
+  understand the service.
 
 ## Contributing
 

@@ -3,7 +3,8 @@
 [← all scripts](README.md) · how a crawled playlist finds the course it belongs
 to, and what happens to the ones that do not.
 
-Working through the ones that did not is [review.md](../review.md) — the
+Working through the ones that did not is
+[agents/iteration.md](../agents/iteration.md) — the
 diagnostics, the order to fix things in, and the mistakes that page exists to
 stop being made twice.
 
@@ -196,7 +197,7 @@ is abstract algebra and the school course says «алгебра 7 класс». 
 | «алгебра 7 класс» | `school-algebra` |
 
 Find every remaining tie — and judge each one, since some should stay — with the
-duplicate scan in [review.md](../review.md#a-tie-silences-both-courses).
+duplicate scan in [agents/data-traps.md](../agents/data-traps.md#a-tie-silences-both-courses).
 
 On top of that a title that names support material rather than a course —
 homework help, exam prep, test review, office hours, seminar series, podcasts,

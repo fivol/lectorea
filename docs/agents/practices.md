@@ -1,100 +1,110 @@
-# Принятые практики
+# Adopted practices
 
 [← agents](README.md)
 
-Не стиль кода — способы решать **классы** проблем, уже опробованные здесь. Каждая
-внедрена из конкретного случая; случай назван, чтобы было видно, на что практика
-рассчитана и когда она не нужна.
+Not code style — ways of solving **classes** of problem that have been tried
+here. Each one is named together with the case it came from, so it is visible
+what it is for and when it does not apply.
 
 ---
 
-## Запрет, который должен работать, становится кодом
+## A rule that has to hold becomes code
 
-Правило «никогда не вызывать `search.list`» жило комментарием в `lib/youtube.ts`,
-и комментарий не может ничего остановить. Теперь метода нет, пока вызывающий не
-скажет `createClient(db, { allowSearch: true })`: шаг пайплайна, потянувшийся к нему
-по невнимательности, падает на первом вызове, а не обнаруживается в завтрашнем реестре.
+«Never call `search.list`» lived as a comment in `lib/youtube.ts`, and a comment
+cannot stop anything. Now the method does not exist until the caller says
+`createClient(db, { allowSearch: true })`: a pipeline step that reaches for it by
+inattention fails on the first call instead of turning up in tomorrow's ledger.
 
-**Обобщение:** если нарушение правила дорого и незаметно, правило должно быть недоступно
-по умолчанию, а не описано. Хороший признак — правило, написанное словом «никогда».
+**Generally:** when breaking a rule is expensive and invisible, the rule should
+be unavailable by default rather than described. A good sign is a rule written
+with the word "never".
 
-## Дорогое открытие обязано быть возобновляемым
+## Expensive discovery has to be resumable
 
-Поиск — единственная дорогая половина охоты; суждение о найденном — бесплатная.
-`_hunt.ts --from=отчёт.json` перечитывает готовый отчёт и **пересуживает** его по текущим
-правилам, ничего не переспрашивая. Это важно, потому что правила пишутся *после* того,
-как охота показала, что притаскивает шов: правило, написанное через полчаса после поиска,
-обязано достать до кандидатов, за которых поиск уже заплатил.
+Search is the only expensive half of a hunt; judging what it found is free.
+`_hunt.ts --from=report.json` re-reads a finished report and **re-judges** it
+against the current rules, asking nothing again. That matters because the rules
+get written *after* the hunt shows what a seam drags in: a rule written half an
+hour after the search has to reach the candidates the search already paid for.
 
-**Обобщение:** разделять «что стоило денег» и «что мы об этом думаем», и уметь
-переигрывать второе поверх сохранённого первого. Переспрашивать одно и то же — единственное,
-на что квоту тратить нельзя.
+**Generally:** separate "what cost money" from "what we think about it", and be
+able to replay the second over a saved first. Asking the same question twice is
+the one thing quota must never buy.
 
-## Ничего не пишется без `--apply`
+## Nothing is written without `--apply`
 
-Разведывательные скрипты (`_hunt`, `_vet`, `_probe`, `_refusals`) по умолчанию только
-смотрят и печатают. Запись — отдельный явный флаг. Это то, что позволяет прогнать
-дорогой шаг, спокойно прочитать результат и решить, а не обнаружить решение принятым.
+The scratch scripts (`_hunt`, `_vet`, `_probe`, `_refusals`) look and print by
+default. Writing is a separate explicit flag. That is what makes it possible to
+run an expensive step, read the result unhurriedly and decide — rather than
+discover the decision already taken.
 
-## Изменение правила пробуется по всему каталогу
+## A rule change is probed against the whole catalogue
 
-`_probe.ts` показывает, что сделает правка правил со всеми ~38 000 живых плейлистов:
-что привяжется впервые, что потеряет привязку, какие курсы перестанут быть пустыми.
-Ключевое слово — догадка о тридцати тысячах названий, и её нельзя коммитить непроверенной.
+`_probe.ts` shows what an edit to the rules would do to all ~38 000 live
+playlists: what binds for the first time, what loses its binding, which courses
+stop being empty. A keyword is a guess about thirty thousand titles and cannot be
+committed unverified.
 
-Практика проверена на добавлении экзаменационных брендов в `NOT_A_COURSE`: пробой показал
-потерю ровно двух привязок, обе — верные отказы. Без пробоя это было бы предположение.
+Proven on the exam-coaching brands added to `NOT_A_COURSE`: the probe showed a
+loss of exactly two bindings, both correct refusals. Without it that would have
+been an assumption.
 
-## Фильтры выстраиваются по возрастанию цены
+## Filters go in rising order of price
 
-В охоте: уже в кеше (бесплатно) → короткий или не-курс (бесплатно) → не называет ни одного
-курса каталога (бесплатно) → **кто владелец видео** (1 единица). Платный фильтр стоит
-последним и работает по остатку, а не по всему потоку — 1 единица × 2611 вместо × 4079.
+In the hunt: already in the cache (free) → too short or not-a-course (free) →
+names no course of this catalogue (free) → **who owns the videos** (1 unit). The
+paid filter runs last and only on what is left — 1 unit × 2611 rather than
+× 4079.
 
-**Обобщение:** порядок фильтров — это бюджет, а не стиль. Дорогой фильтр, поставленный
-первым, оплачивает то, что бесплатный отсеял бы даром.
+**Generally:** the order of filters is a budget, not a matter of taste. An
+expensive filter placed first pays for what a free one would have removed for
+nothing.
 
-## Отказ — это тоже находка, и он записывается
+## A refusal is a finding, and gets written down
 
-[channel-hunt.md](../channel-hunt.md) ведёт список **отвергнутых** каналов с причинами, и по опыту
-четырёх охот эта половина полезнее списка добавленных: каждый из них выглядит попаданием
-в ранжированном списке, и перепроверка стоит единицы и решения. То же в коде: `matches`
-хранит вердикт «не курс» как решение, чтобы за него не платили каждый прогон.
+[channel-hunt.md](../channel-hunt.md) keeps the list of **refused** channels with
+reasons, and across four hunts that half has been the more useful one: each of
+them looks like a hit in a ranked list, and re-checking one costs a unit and a
+judgement call. The same in code: `matches` stores the verdict "not a course" as
+a decision, so nothing pays for it again on the next run.
 
-## Побочный эффект дорогого шага стоит собрать
+## Collect what an expensive step refills for free
 
-Проверка кандидатов через `playlists.list` попутно положила на диск описания 3500
-плейлистов, из которых бесплатный `data:mine` вытащил 2796 новых ссылок. Дорогой шаг
-часто оплачивает бесплатный — стоит посмотреть, не появился ли новый материал для
-даровых швов, прежде чем считать шаг завершённым.
+Resolving candidates through `playlists.list` also put 3500 playlist descriptions
+on disk, out of which the free `data:mine` read 2796 new links — and 4278 more
+once their videos had been walked. An expensive step often pays for a free one;
+check whether new material has appeared for the cheap seams before calling the
+step finished.
 
-## Провал шага не отменяет остаток дня
+## A failed step does not cancel the rest of the day
 
-`make pipeline` не останавливается на упавшем шаге: он его запоминает, называет в конце
-и выходит ненулевым кодом. Причина — форма порядка: дорогое в середине, бесплатное,
-публикующее результат, в конце. Остановка на шестом шаге выбрасывает пять оплаченных.
+`make pipeline` does not stop on a failed step: it remembers it, names it at the
+end and exits non-zero. The reason is the shape of the order — the expensive
+steps in the middle, and the free ones that publish the day's work at the end. To
+stop at step six is to throw away five that were already paid for.
 
-**Обобщение для агента:** в длинной последовательности сначала доделать всё, что не
-зависит от упавшего, и только потом отчитаться — но обязательно **отчитаться о провале
-явно**, а не тихо продолжить.
+**For an agent:** in a long sequence, first finish everything that does not
+depend on what failed, and only then report — but **report the failure
+explicitly** rather than continuing quietly.
 
-## Канал добавляется тремя файлами, а не одним
+## A channel takes three files, not one
 
-1. `data/channels.yaml` — запись с комментарием, **зачем** канал;
-2. `data/providers.yaml` — парный провайдер, иначе `resolveProvider` молча подставит
-   `unknown` и атрибуция потеряется без единого сообщения;
+1. `data/channels.yaml` — the entry, with a comment saying **what it is for**;
+2. `data/providers.yaml` — the matching provider, or `resolveProvider` silently
+   substitutes `unknown` and the attribution is lost without a single message;
 3. `make discover && make refresh && make match && make data`.
 
-Проверка после правки — одна строка, и она обязательна:
+The check after editing is one line, and it is not optional:
 
 ```bash
 pnpm exec tsx -e "import {loadSources} from './scripts/lib/sources.ts'; const s=loadSources(); const ids=new Set(s.providers.map(p=>p.id)); console.log(s.channels.filter(c=>!ids.has(c.providerId)).map(c=>c.id))"
 ```
 
-**Обобщение:** там, где код подставляет значение по умолчанию вместо ошибки, ошибка
-не всплывёт сама — проверку пишет тот, кто правит данные.
+**Generally:** where code substitutes a default instead of failing, the failure
+will not surface on its own — whoever edits the data writes the check.
 
-## Коммит — явным списком файлов
+## Commit an explicit list of files
 
-Рабочий каталог делят параллельные сессии. `git add` перечисляет файлы поимённо,
-`git status --short` сверяется до коммита. См. [pitfalls.md](pitfalls.md#индекс-git-общий-с-другими-сессиями).
+The working tree is shared with concurrent sessions. `git add` names files one by
+one, and `git status --short` is checked before committing. See
+[pitfalls.md](pitfalls.md#the-git-index-is-shared-with-other-sessions).

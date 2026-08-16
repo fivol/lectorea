@@ -1,45 +1,55 @@
-# Память агента
+# The agent's notebook
 
-Проект пишет агент. Это его записная книжка, а не документация проекта: тут лежит то,
-что нужно знать **до** того, как что-то делать, и то, что уже однажды стоило времени
-или квоты. Юзеру это читать не нужно — для него `docs/README.md` и всё, что из него
-линкуется.
+This project is built by an agent. These pages are its memory, not the project's
+documentation: what to know **before** doing anything, and what has already cost
+time or quota once. A reader who wants to understand the service wants
+[docs/README.md](../README.md) instead — nothing here explains what Lectorea is.
 
-Читается первым делом, потому что дешевле всего: пробежать эти страницы — минута,
-повторить ошибку из них — от часа до дня квоты.
+Read first, because it is the cheapest thing to read: a pass over these pages is
+a minute, and repeating one mistake from them is an hour to a day of quota.
 
-| Страница | Что в ней |
+| Page | What is in it |
 |---|---|
-| **[pitfalls.md](pitfalls.md)** | ошибки, которые уже совершены, и что именно их вызвало |
-| **[practices.md](practices.md)** | принятые практики: как здесь принято решать целые классы проблем |
-| **[workflow.md](workflow.md)** | среда и порядок работ: что долго, что параллельно, что нельзя запускать вслепую |
+| **[iteration.md](iteration.md)** | how to spend a day on the catalogue — the four phases, and how to work the refusals |
+| **[data-traps.md](data-traps.md)** | what the data keeps doing that no amount of reading the code would predict |
+| **[pitfalls.md](pitfalls.md)** | mistakes already made, and the assumption behind each one |
+| **[practices.md](practices.md)** | the approaches adopted here, each with the case it came from |
+| **[workflow.md](workflow.md)** | the environment: quota, what runs for hours, what must not be committed |
 
-## Что сюда писать, а что в `docs/`
+## What belongs here, and what belongs in `docs/`
 
-Граница простая — **кому это нужно знать**.
+The line is **who needs to know it**.
 
-| В `docs/*.md` | В `docs/agents/*.md` |
+| `docs/*.md` | `docs/agents/*.md` |
 |---|---|
-| что система делает и как ей пользоваться | какую ошибку агент уже совершил и на чём именно |
-| откуда берётся материал, сколько стоит шов | какой инструмент вести себя не так, как выглядит |
-| почему принято решение о данных или интерфейсе | какую проверку выполнять перед коммитом |
-| инцидент, объясняющий *правило в коде* | инцидент, объясняющий *поведение агента* |
+| what the system does and how to use it | what the agent got wrong, and on what exactly |
+| where material comes from, what a seam costs | which tool behaves unlike it looks |
+| why a decision about data or interface was made | which check to run before committing |
+| an incident that explains **a rule in the code** | an incident that explains **how to work** |
 
-Если запись объясняет систему — она пользовательская, даже если её нашёл агент.
-Инцидент с зацикленной пагинацией живёт в `pipeline.md`, потому что он объясняет
-код; «сначала прочитай форму JSON, потом пиши `.map`» живёт здесь.
+If an entry explains the system, it is documentation, even when an agent found
+it. The pagination loop that spent 54 000 units lives in `pipeline.md`, because
+it explains why the crawl stops on a repeated token. "Read the shape of the JSON
+before writing `.map`" lives here.
 
-## Ритуал конца итерации
+When a page is mostly a runbook, it belongs here whole — that is why
+[iteration.md](iteration.md) and [data-traps.md](data-traps.md) moved out of
+`docs/review.md` rather than being split.
 
-Обязательный, не «по возможности». Перед коммитом пройти четыре вопроса:
+## The end-of-iteration ritual
 
-1. **Я ошибся?** Ошибка, стоившая больше пяти минут, идёт в [pitfalls.md](pitfalls.md)
-   вместе с тем, что её вызвало. Не «был баг» — а какое допущение оказалось неверным.
-2. **Я нашёл общий способ?** Решение, закрывающее класс проблем, идёт в
-   [practices.md](practices.md). Разовая заплатка — не идёт.
-3. **Я узнал что-то о системе?** Это в пользовательскую доку: дополнить существующий
-   файл, а не заводить второй про то же.
-4. **Я что-то отверг?** Записать вариант и причину отказа. Отвергнутое ценнее принятого:
-   оно не даёт следующей итерации потратить день на то же самое.
+Required, not "if there is time". Before committing, answer four questions:
 
-Пустой ответ на все четыре — законный итог, но он должен быть ответом, а не пропуском.
+1. **Did I get something wrong?** A mistake that cost more than five minutes goes
+   into [pitfalls.md](pitfalls.md) with the assumption behind it. Not "there was
+   a bug" — which belief turned out to be false.
+2. **Did I find a general approach?** Something that closes a class of problems
+   goes into [practices.md](practices.md). A one-off patch does not.
+3. **Did I learn something about the system?** That goes into the user-facing
+   docs: extend the page that already covers it rather than starting a second one.
+4. **Did I reject something?** Write down the option and the reason. A rejection
+   is worth more than an acceptance — it stops the next iteration spending a day
+   on the same thing.
+
+Four empty answers is a legitimate outcome, but it has to be an answer rather
+than a step that was skipped.

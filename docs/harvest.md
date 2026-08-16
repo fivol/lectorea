@@ -1,8 +1,8 @@
 # Where more material comes from
 
 [← docs](README.md) · [channel-hunt.md](channel-hunt.md) is the record of the
-hunts and [review.md](review.md) the runbook for a whole iteration; this is the
-catalogue of seams, spent and unspent.
+hunts and [agents/iteration.md](agents/iteration.md) the runbook for a whole
+iteration; this is the catalogue of seams, spent and unspent.
 
 The catalogue grows in one way only: more playlists that are actually courses.
 This page is the list of places they can be dug out of, what each one costs, and
@@ -295,24 +295,27 @@ playlist, so **one page of fifty settles it for one unit**. Three answers:
 The same signal is worth having outside a hunt: any playlist bound to a course
 by a channel that did not make its videos is attributed to the wrong provider.
 
-## Doing a hunt
+## The order the seams come in
 
-1. `pnpm data:mine` — free, always first.
-2. `pnpm tsx scripts/_holes.ts` — free, tells you which channels to add.
-3. `pnpm tsx scripts/_refusals.ts` — free, and cheaper than any channel: bind
-   what is already on disk before paying to crawl more.
-4. Add sources to `data/sources.yaml`, then `pnpm data:import`.
-5. `pnpm data:refresh` to fetch what got queued, `pnpm data:match` to bind it.
-6. `pnpm stats` to see what is still empty, and go to seam 6.
-7. Only when the queue is empty and the day's keys are not: `scripts/_hunt.ts`,
-   seam 8. It is last because it is a hundred times the price of everything
-   above it, and it is worth running because by then the alternative is nothing.
+They are not alternatives — they are a sequence, and the sequence is the price
+list above read from the cheap end.
 
-Change a keyword and `scripts/_probe.ts` says what it would do to the whole
-catalogue before `--force` writes anything — gained, lost, and which courses
-stop being empty. Nothing in this page should be committed without it: three of
-the ten keywords added on 2026-08-14 were reverted because the probe showed what
-they dragged in.
+**Seam 1** first, always: `data:mine` costs nothing and refills itself after
+every crawl. Then the other free ones — **seam 2** names the channels the
+catalogue keeps choosing and never crawls, and **seam 7** binds material already
+on disk, which on 2026-08-14 bought about 200 bindings against nine from a whole
+channel hunt. Only then the ones that cost: **seams 3 and 4** are a web page and
+a fiftieth of a unit per id, **seam 6** is one unit per candidate channel, and
+**seam 8** is a hundred units a query and belongs last — it is worth running
+only once the queue is empty and the day's keys are not, because by then the
+alternative to spending them is losing them.
 
-Record what was refused as well as what was added — [channel-hunt.md](channel-hunt.md)
-explains why that half is the more useful one.
+Two things hold for every seam. **A new seam is not finished until the rubbish it
+brings has a rule that refuses it** — and a rule change is a guess about thirty
+thousand titles, so `scripts/_probe.ts` prices it against the whole catalogue
+before anything is committed. And **what was refused is recorded alongside what
+was added**: [channel-hunt.md](channel-hunt.md) explains why that half is the
+more useful one.
+
+The runbook that walks these in order, with the commands and what to watch for,
+is [agents/iteration.md](agents/iteration.md).

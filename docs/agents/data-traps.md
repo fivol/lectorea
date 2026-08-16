@@ -1,0 +1,271 @@
+# Data problems, and what they turn out to be
+
+[← agents](README.md) · what the catalogue keeps doing that no amount of reading
+the code would predict
+
+Everything below was found the hard way. **None of it is a code bug you can find
+by reading code** — they are all properties of the data, or of the fit between
+the data and rules that are individually correct. Each entry cost somebody an
+hour to find, and most of them look like nothing until you know the shape.
+
+This is the half of an iteration that is worth reading before starting one;
+[iteration.md](iteration.md) is the half that says what to run.
+
+---
+
+## A tie silences both courses
+
+Two courses owning the same phrase makes `matchSegment` decline **both**, by
+design: an equally specific claim from two courses is exactly the ambiguity a
+human should see. It stops being right the moment one of the two copies is
+redundant.
+
+`«climate»` sat under both `meteorology` and `climatology`. The visible symptom
+was not "climate titles go to review" — it was that no climate title reached
+either course, and both looked thinner than they were.
+
+Find them all:
+
+```bash
+pnpm exec tsx -e "
+import { buildKeywordIndex } from './scripts/lib/rules.ts';
+import { loadSources } from './scripts/lib/sources.ts';
+const byPhrase = new Map();
+for (const e of buildKeywordIndex(loadSources())) {
+  const s = byPhrase.get(e.phrase) ?? new Set(); s.add(e.courseId); byPhrase.set(e.phrase, s);
+}
+for (const [p, s] of byPhrase) if (s.size > 1) console.log('«' + p + '» → ' + [...s].join(', '));
+"
+```
+
+Fifteen on 2026-08-14, of which eleven remain and **should** — judge each one
+rather than clearing the list. `entropy` (thermodynamics / information-theory),
+`einstein` (special / general relativity), `parsing` (compilers / computational
+linguistics), `prosody` (phonetics / poetics) are genuinely ambiguous, and a
+title carrying only that word really is a question for a person.
+
+The four that were resolved had a specific course that should simply win:
+`climate` → `climatology`, `spectroscopy` → `molecular-spectroscopy`,
+`sequence alignment` → `sequence-analysis`, and `algebra` split by language
+([matching.md](../scripts/matching.md#how-the-rule-pass-decides)).
+
+The test is not "is this word ambiguous in English" but **"does one of these two
+courses own it, with the other holding a redundant copy"**.
+
+## A blank row in the queue is not a hard case, it is a missing title
+
+The review queue is sorted by views and read from the top, so a playlist with no
+title at all reads as one nobody has got to yet. 3252 of them were something
+else: playlists whose lectures had been crawled — paid for, at two units per
+fifty — before the metadata call that buys the title, after which the video pass
+pushed `next_refresh_at` a month out and the title could not be bought at all.
+Nothing can classify a playlist by its id, so they were permanent.
+
+Two things make it visible rather than fixed-once:
+
+```bash
+pnpm tsx scripts/_sweep.ts          # counts them, writes nothing
+pnpm tsx scripts/_sweep.ts --write  # makes them due, and drops ids that cannot be ids
+```
+
+and the count is worth glancing at whenever the queue looks larger than the work
+in it. The pass that caused it no longer does
+([pipeline.md](../pipeline.md#a-pass-may-only-defer-the-call-it-makes-itself)),
+but the shape recurs: **any step that writes a column another step reads for
+due-ness can starve it silently.**
+
+## The other loose keyword: the one that wins, wrongly
+
+`_noisy.ts` finds keywords that never win. The mirror image is worse and was
+invisible until `_winners.ts` was written to ask for it: a keyword that wins
+confidently on titles that have nothing to do with the course. It costs no
+review time at all — it publishes.
+
+```bash
+pnpm tsx scripts/_winners.ts
+```
+
+Read as a list, the bad ones give themselves away: under a good keyword the
+sample titles all name one subject, under a bad one they have nothing in common.
+2026-08-15 turned up `genre` holding 1241 tracks of house music under literary
+theory, `classical music` holding two record collections under its history,
+`stars` holding «Dancing With The Stars», `crime` holding «British Pathé.
+Crimea», `motivation` holding a talk on Gaussian multiplicative chaos, and
+`micro` holding seven micro:bit playlists under microeconomics.
+
+None of them wanted deleting — all six are things a person might reasonably type
+into the search box. They wanted `?` in front, which keeps the word for search
+and hides it from the rules
+([matching.md](../scripts/matching.md#how-the-rule-pass-decides)).
+
+Before adding a refusal instead, price it:
+
+```bash
+pnpm tsx scripts/_markers.ts             # clears / costs, per candidate word
+pnpm tsx scripts/_markers.ts tutorial    # and the titles on both sides
+```
+
+The second column is what the word would take out of the catalogue as it
+stands. `tutorial` would have cleared 345 from the queue and cost 25 published
+bindings, which is why it is not a refusal: most of those 25 are programming
+courses this catalogue does carry.
+
+## A loose keyword costs nothing visible and plenty invisible
+
+```bash
+pnpm tsx scripts/_noisy.ts 6
+```
+
+Keywords that claim clauses and never once win confidently. `«survey»` under
+`field-archaeology` had claimed land surveying, drone surveying, the Washington
+Geological Survey and four surveys *of English literature*. It never bound
+anything, so the catalogue looked fine — and the damage was real in two places
+the catalogue does not show: the review queue, and the video queue's tiers,
+which is quota.
+
+Removing eight such keywords cost **zero** bindings and gained two. If a keyword
+has never won, it is not load-bearing.
+
+Two shapes to watch for:
+
+- **A word that is also a refusal.** `«interviews»` was a keyword of
+  `social-research-methods` *and* a `NOT_A_COURSE` trigger, so it could never
+  match anything by construction.
+- **A short English abbreviation.** `«prob»` matched «**Prob**lem Sets» and
+  «**Prob**e Microscopy», because `findPhrase` tolerates three trailing letters
+  for Russian inflection and that tolerance does not know which language it is
+  in. Under about six characters, English keywords are dangerous.
+
+## Russian inflection: the tolerance only covers the last word
+
+`findPhrase` allows a short tail on the **end of the whole phrase**, so
+«алгебра» finds «алгебры». It does nothing for a multi-word phrase whose *first*
+word inflects: the stored «дискретная математика» does not find «Основы
+**дискретной математики**», and «квантовая механика» does not find
+«Математические основы **квантовой механики**».
+
+Measured ceiling for the whole class: **194 playlists, about 4% of the
+`no-phrase` bucket** — and a stem-tolerant match also produced visible false
+positives («Летняя школа по биоинформатике» → bioinformatics, a summer school).
+So the decision stands: **no stemmer; add the oblique form by hand**, exactly as
+`data/keywords/*.json` says at the top of the file.
+
+Add the genitive when a course keeps appearing in one:
+«дискретной математики», «квантовой механики», «теории чисел», «мировой
+литературы», «робототехники».
+
+## The Russian faculty title pattern
+
+Every philology faculty titles its courses «X современного русского языка», and
+the qualifier is two thirds of the clause — so coverage puts a correct match at
+0.6 and it never publishes. «Морфология современного русского языка» is
+morphology and had been refused for months.
+
+Add the whole phrase, not the head word. The same applies to any pattern where a
+standing qualifier outweighs the subject.
+
+## A thin course is as likely to be a matching problem as a coverage one
+
+`Appreciating linguistics: A typological approach` — 66 lectures, already
+crawled, already paid for — sat bound to `linguistics-intro` at 0.68 while
+`typology` showed two playlists and got a channel hunt aimed at it.
+
+**Check the cache before hunting.** For any course that looks empty, search its
+subject in *both* languages — the material is titled in the language its author
+speaks, not the one the course is filed under:
+
+```bash
+pnpm exec tsx -e "
+import { openDb } from './scripts/lib/db.ts';
+const db = openDb({ readonly: true });
+for (const term of ['%typolog%', '%типолог%'])
+  console.log(db.prepare(\`SELECT p.title, p.video_count, m.course_id, m.confidence
+    FROM playlists p LEFT JOIN matches m ON m.playlist_id = p.id
+    WHERE p.alive = 1 AND lower(p.title) LIKE ? AND p.video_count >= 8\`).all(term));
+"
+```
+
+Both of `typology`'s near misses sit at 0.68 — one clause short of publishing,
+and invisible to anything that only counts what the course already has.
+
+## `matches` is not the record — `overrides.yaml` is
+
+A hand-bound playlist keeps whatever stale guess a pass last wrote, **for ever**:
+`unmatchedPlaylists` filters overridden rows out, so nothing ever revisits them.
+«Теоретическая механика» still reads `mechanics @ 0.6` in the table while the
+committed answer is `analytical-mechanics`, and both are correct — the table is
+simply not where the answer lives.
+
+Any tool that judges bindings must read both. `_noisy.ts` was wrong for exactly
+one iteration for want of this, and reported the best keywords in the file as
+the worst.
+
+## A course can be empty because nobody looked, not because nothing exists
+
+`field-archaeology` was recorded on 2026-08-13 as having no channel that clears
+the bar in either language. It has a forty-lecture ordered course, on an Indian
+university's SWAYAM channel, which no search had been pointed at.
+
+Before recording a course as impossible, say **where** you looked. «No Western
+field-school channel publishes a method course» is a finding; «field archaeology
+does not exist on YouTube» was not.
+
+## …and a course can be genuinely empty, and must be left that way
+
+`poetics` had two channels added for it and stayed at zero. What they teach is
+poetry — «Lectures on English Poetry», «A Survey of English Poetry» — and a
+poetry survey is a literature course, not a course on verse theory. Binding them
+would have closed the number and emptied the meaning.
+
+**Do not fill a course by widening what it means.** `lib/rules.ts` is biased
+towards refusing because a wrong binding sits in the catalogue and misleads,
+while a refusal costs one person one minute. Hand decisions inherit that bias.
+
+(It was finally filled on 2026-08-15, by a search that found four playlists
+actually about poetics — which is the shape the rule predicts: the course waits
+until the right material exists, rather than being fed the nearest thing.)
+
+## Refuse a channel for its unit, not for its size
+
+Channels clear the bar on quality and are refused on arithmetic. Vidya-mitra
+(1072 playlists of 10+, behind discipline bins of 3100 videos) and МИАН (236,
+mostly общеинститутский семинар and летние школы) were refused twice, on
+2026-08-14 and again on 2026-08-15.
+
+All of them own material the catalogue wants. The question is not "is this
+channel good" but **"is the thing this channel publishes the thing the catalogue
+stores"** — one semester, in order. When the answer is no but two playlists are
+right, `pnpm playlist:add` costs one unit and the channel costs thousands.
+
+The 2026-08-15 hunt reversed one of these: Virtual University of Pakistan was
+refused in August for topic dumps and added after its 466 course-coded playlists
+were read again. **A refusal is a judgement about what was seen, not a permanent
+verdict** — but reversing one means reading the titles again, not remembering
+differently.
+
+## The unit is the semester, in both directions
+
+A channel publishing one playlist per *chapter* binds every fragment as
+confidently as the course itself, because each fragment names its course in a
+clause of its own: «CPU Scheduling | Chapter 5 | Operating System». The course
+then shows sixteen entries that are each a sixteenth of itself. 171 of these
+were live before `NOT_A_COURSE` learned the shape.
+
+The mirror image is a channel publishing one playlist per *lecturer* or per
+*year* — «Lectures 2019», everything this professor ever gave. Both fail the
+same test.
+
+## A playlist's owner is not its author
+
+Search and mined links both bring in playlists that name a subject, run to fifty
+videos, and were assembled by somebody who made none of them. The rule pass
+cannot see this — it reads the title — and the crawl would file the course under
+whoever collected it.
+
+`playlistItems.list` carries the owner of each video for one unit, and 43% of
+what passed every free filter on 2026-08-15 failed here: 611 collections and 282
+mirrors. The mirrors are worth more than the playlists were:
+[harvest.md](../harvest.md#a-playlist-is-not-a-course-because-it-is-called-one).
+
+**Any playlist bound to a course by a channel that did not make its videos is
+attributed to the wrong provider** — the signal is worth having outside a hunt.
