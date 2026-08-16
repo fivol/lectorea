@@ -1016,5 +1016,7 @@
   "link.international-relations.game-theory": "Deterrence, commitment and bargaining become games when the outcome depends on the other side's next move.",
   "link.geodesy.linear-algebra": "Changing coordinate systems and adjusting a survey network are matrix transformations and systems of linear equations.",
   "link.project-management.software-engineering": "Estimation, risk and iteration become concrete in software projects, while engineering practices depend on managing the whole project.",
-  "link.ocean-engineering.oceanography": "Oceanography describes waves, currents and the seabed; ocean engineering turns that environment into loads and design constraints."
+  "link.ocean-engineering.oceanography": "Oceanography describes waves, currents and the seabed; ocean engineering turns that environment into loads and design constraints.",
+  "course.artificial-intelligence.title": "Artificial intelligence",
+  "course.artificial-intelligence.desc": "Search, heuristics, knowledge representation, planning, reasoning under uncertainty"
 }

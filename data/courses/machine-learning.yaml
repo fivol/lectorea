@@ -50,3 +50,9 @@
   stage: bachelor-4
   deps: [ml-intro, random-processes]
   related: [control-theory]
+
+- id: artificial-intelligence
+  domains: [machine-learning, cs]
+  stage: bachelor-3
+  deps: [data-structures, probability]
+  soft: [logic-intro]

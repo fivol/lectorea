@@ -256,6 +256,7 @@ that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
 | `_vet.ts in.txt out.json` | 1 unit/channel | does this candidate own courses |
 | `_hunt.ts out.json [--min\|--courses] [--apply]` | 100 units/query | what does YouTube itself have for the thinnest courses — and whose channel is it really |
 | `_owners.ts mined.json out.json` | 1 unit/50 ids | which channels are behind a set of playlist ids |
+| `_authors.ts [out.json] [--min] [--apply]` | 1 unit/playlist | which *published* bindings are somebody's collection rather than a course |
 | `_sweep.ts [--write]` | free | rows no rule can ever reach: impossible ids, playlists deferred with no title |
 | `_winners.ts` | free | which keyword won each confident binding, and what it dragged in |
 | `_markers.ts [word]` | free | how much of the queue a refusal word would clear, and how much of the catalogue it would cost |

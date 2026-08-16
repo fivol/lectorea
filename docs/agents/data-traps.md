@@ -269,3 +269,54 @@ mirrors. The mirrors are worth more than the playlists were:
 
 **Any playlist bound to a course by a channel that did not make its videos is
 attributed to the wrong provider** — the signal is worth having outside a hunt.
+
+That last line was acted on on 2026-08-16 by `_authors.ts`, which asks the same
+one-unit question of what is **already published** rather than of candidates.
+The catalogue answered far better than search does: of 682 probes, 631 own their
+material, 34 are mirrors and 17 were collections. **92% against the hunt's 5%** —
+the crawl seams are clean and the search seam is not, which is the argument for
+running them in that order and not the other way round.
+
+## English plurals: store the singular, and only when the phrase has two words
+
+`findPhrase` tolerates three letters on the right edge for Russian inflection,
+which means a stored **singular finds the plural for free** and a stored plural
+can never find the singular. «electrical circuits» could not see any of the
+23 «Electrical Circuit I» playlists a Bangladeshi university publishes every
+semester.
+
+The fix is one-directional and the trap is that it looks general. **It is safe
+only for multi-word phrases**, where the qualifier pins the head noun down. On a
+one-word keyword the same three letters walk straight into another word:
+
+| stored | singular | what it then reaches |
+|---|---|---|
+| `graphs` | `graph` | «Computer **Graph**ics» |
+| `genes` | `gene` | «**Gene**ral Biochemistry» |
+| `mechanics` | `mechanic` | «**Mechanic**al Vibrations» |
+| `statistics` | `statistic` | «**Statistic**al Mechanics» |
+| `rocks` | `rock` | «**Rock**et Propulsion» |
+| `ethics` | `ethic` | «**Ethic**al Hacking» |
+| `flows` | `flow` | «Compressible **Flow**» under graph theory |
+
+Thirteen multi-word singulars added on 2026-08-16 (`data structure`, `computer
+network`, `control system`, `complex variable`, `differential equation`,
+`neural network`, …) bought about 70 bindings and lost nothing. This is the same
+rule [above](#a-loose-keyword-costs-nothing-visible-and-plenty-invisible)
+already states from the other side — under about six characters, English
+keywords are dangerous — and the reason is the same tolerance.
+
+## A course cannot be told from a topic bin by its size
+
+The obvious fix for «Biology» with 878 videos is a ceiling: a semester is at
+most ninety lectures, so refuse above some number. It was measured on
+2026-08-16 and **the distributions are the same on both sides**:
+
+| | median | p90 | p95 | p99 | over 100 | max |
+|---|---|---|---|---|---|---|
+| on a vetted channel | 16 | 59 | 91 | 250 | 4.5% | 2466 |
+| off any vetted channel | 23 | 79 | 111 | 215 | 6.0% | 1432 |
+
+A ceiling would cost as much real material as it removed rubbish, and the
+vetted side has the larger maximum. **Size is not the signal; authorship is** —
+which is why the answer is `_authors.ts` and a unit, not a constant.

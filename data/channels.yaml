@@ -1788,3 +1788,25 @@
   title: L.A.W (Law And Wisdom)
   providerId: lawandwisdom
   lang: en
+
+# Berkeley's Robotic AI & Learning lab: CS 285 Deep RL filmed four years running,
+# and CS 182 deep learning. Found as a hole — ten of its playlists were already
+# bound from links elsewhere while the channel itself was never crawled.
+- id: UC4e_-TvgALrwE1dUPvF_UTQ
+  title: RAIL
+  providerId: berkeley
+  lang: en
+
+# Georgia Tech ECE, one coded course per playlist: signals and systems,
+# introduction to signal processing, analog electronics.
+- id: UCqXnuiMcl_Y1-lsPWjm4WdA
+  title: Lantertronics
+  providerId: gatech
+  lang: en
+
+# Formal languages and automata, compiler design, information theory — the thin
+# half of the CS column, taught in order.
+- id: UCwiI0W7UcfDFqFygifItFng
+  title: Lalit Vashishtha
+  providerId: lalitvashishtha
+  lang: en

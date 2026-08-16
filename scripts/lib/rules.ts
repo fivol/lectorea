@@ -136,11 +136,27 @@ export function cleanTitle(raw: string): string {
 export function cleanSegments(raw: string): string[] {
   let text = raw.toLowerCase().replace(/ё/g, 'е');
   for (const pattern of NOISE) text = text.replace(pattern, ' ');
+  // A label is a label by where it sits and by how the title wrote it — two
+  // conditions, both learned from what dropping it on the word alone costs.
+  //
+  // *Written*: «Introduction to Computer Science» comes out of the noise pass
+  // as «computer science» and is indistinguishable from the label by then, so
+  // the question is put to the title as written — the same two-texts split
+  // `rawSegments` exists for.
+  //
+  // *Leading*: a mirror files in front of the title and never behind it, so
+  // «Computer Science - Riemann Hypothesis» is a filing prefix while «Princeton
+  // COS 126: Computer Science — An Interdisciplinary Approach» and «Crash
+  // Course: Computer Science» are courses that happen to say their subject.
+  // Only the first clause is a category; a bare «Physics» is its own first
+  // clause, which is what still refuses a topic bin.
+  const written = rawSegments(raw);
+  const filed = DEPARTMENT.has(written[0] ?? '') ? written[0] : null;
   return text
     .split(SEGMENT)
     .map((segment) => normalize(segment ?? ''))
     .filter(Boolean)
-    .filter((segment) => !DEPARTMENT.has(segment));
+    .filter((segment) => segment !== filed);
 }
 
 /**
@@ -203,7 +219,16 @@ const DEPARTMENT = new Set([
   'mathematics',
   'computer',
   'computer sc',
+  // Spelt out as well as abbreviated. Without it the label covers its own
+  // clause at 0.95 and answers for the whole title, which filed «Computer
+  // Science - Riemann Hypothesis and its Applications» under programming-intro
+  // — nine published bindings, each of them a different subject.
+  'computer science',
   'computer science and engineering',
+  'chemical',
+  // NPTEL's own bucket above a department, and never a subject: «Core -
+  // Probability and Statistics», «Core - Leadership», «Core - Quantum Physics».
+  'core',
   'atmospheric science',
   'engineering design',
 ]);

@@ -103,6 +103,45 @@ pnpm exec tsx -e "import {loadSources} from './scripts/lib/sources.ts'; const s=
 **Generally:** where code substitutes a default instead of failing, the failure
 will not surface on its own — whoever edits the data writes the check.
 
+## Two questions about a title need two texts
+
+`NOT_A_COURSE` reads the title as written while the keyword pass reads it with
+the noise stripped, because `NOISE` removes the very words by which a title
+announces it is not a course. On 2026-08-16 the same split answered a second
+question.
+
+`DEPARTMENT` drops a clause that is a faculty label — «Computer Science -
+Riemann Hypothesis» is a filing prefix, and nine subjects were published under
+`programming-intro` because of it. But adding `computer science` to that set on
+the cleaned text also deletes CS50 and Princeton COS 126: `NOISE` takes
+«Introduction to» out first, and the flagship course's own title *collapses into
+the label*. Asked of `rawSegments` instead, the two are distinguishable — and
+one more condition, that the label be the **first** clause, keeps «Crash Course:
+Computer Science» as well, because a mirror files in front and never behind.
+
+**Generally:** when a normalisation exists to answer one question, any second
+question asked of its output has inherited an answer it did not ask for. Check
+whether the raw text still distinguishes the cases — and if the rule is about
+where a thing sits, say so, rather than about the word alone.
+
+## Ask the expensive question of what is already published, not only of what is new
+
+The ownership probe — `playlistItems.list`, 1 unit, who made the videos — was
+written for `_hunt.ts` to filter candidates. Everything bound before it existed
+was decided on a title, which is precisely what cannot see a bag of bookmarks.
+`_authors.ts` points the same unit at the live catalogue and found 17 published
+collections, among them «Filme» (the films, under film studies) and 752 videos
+under one CMU course code.
+
+It also produced the number that justifies the crawl's ordering: **92% of
+published bindings own their material, against 5% of search candidates.**
+
+**Generally:** a test written to filter an intake is a test the existing stock
+has never been through. When it is cheap and the stock is older than the test,
+run it backwards over what is already live — and put the free filters first
+(settled by hand, on a vetted channel) so the paid one runs on the remainder:
+682 probes rather than 1308.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

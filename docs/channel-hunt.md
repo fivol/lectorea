@@ -368,6 +368,50 @@ the civil-service and accountancy coaching industry — «Anthropology for UPSC�
 were 49 of the 63 answers to one query, and `lib/rules.ts` now refuses them by
 name, which cost the catalogue exactly two existing bindings, both correct.
 
+## The fifth hunt, 2026-08-16 — the thin courses again, and reading the catalogue back
+
+36 queries, 3600 units, aimed at the 18 courses under seven playlists. The
+ownership pass is the number worth carrying forward: **316 probed, 17 own their
+material, 68 mirrors, 231 collections.** Five per cent. The 2026-08-15 hunt put
+the failure rate at 43%; asked of thinner courses, whose names are ordinary
+words in a search box, it is nineteen in twenty.
+
+**The thin courses stayed thin, and that is the finding.** Not one of `poetics`,
+`field-archaeology`, `ancient-art` or `typology` gained anything. What the
+search returned instead was material for courses that are already healthy —
+Jim Hefferon and Gabriel Robins (UVA CS3102) on `theory-of-computation`, ВШЭ's
+«Теория литературы» on `literary-theory`. A search for a course this catalogue
+is empty in mostly proves the course is empty on YouTube too, which is what
+[data-traps.md](agents/data-traps.md#and-a-course-can-be-genuinely-empty-and-must-be-left-that-way)
+says to expect and to leave alone.
+
+### What was added, and what was refused
+
+Three channels, all found by `_holes.ts` — channels the catalogue keeps binding
+playlists from and has never crawled — rather than by the search:
+
+| Channel | Why |
+|---|---|
+| RAIL | Berkeley CS 285 Deep RL, filmed four years running, and CS 182 |
+| Lantertronics | Georgia Tech ECE, one coded course per playlist |
+| Lalit Vashishtha | formal languages and automata, compiler design, information theory |
+
+Refused, each after reading the titles:
+
+- **Stanford** `UC-EnprmCZ3OXyAoG7vjVNCA` — 235 playlists, and they are «Stanford
+  News 2010», «Reunion Homecoming», «Commencement», conference archives. The
+  institutional channel, not the teaching one; `stanfordonline` is already here.
+  The topic-bin-wearing-an-institution's-name shape, for the fifth hunt running.
+- **CosmoLearning** — 213 playlists, and it is an aggregator: «Ohio State: Jim
+  Fowler's Calculus One Lectures», «The Joy of Painting», «Laura in the Kitchen».
+  Somebody else's lectures, filed under the collector.
+- **Coding Ninjas** — «Success Stories», «YouTube Live Webinars»: a bootcamp's
+  marketing. **Google DeepMind** — «The Podcast», «Gemini», «Veo»: product
+  launches.
+- **Lindsey Kuper** — two real playlists (UCSC CSE138 Distributed Systems) and
+  nothing else, so not a channel. Both turned out to be **already bound at
+  0.95**, mined from a link: the check before adding is a query, not a memory.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this

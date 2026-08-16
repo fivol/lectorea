@@ -1338,3 +1338,14 @@
   title: Law And Wisdom
   type: individual
   country: PK
+
+- id: gatech
+  title: Georgia Tech
+  type: university
+  country: US
+  site: https://www.gatech.edu/
+
+- id: lalitvashishtha
+  title: Lalit Vashishtha
+  type: individual
+  country: IN

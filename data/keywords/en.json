@@ -237,7 +237,8 @@
     "discrete math",
     "discrete mathematics",
     "discrete structures",
-    "discrete analysis"
+    "discrete analysis",
+    "discrete mathematic"
   ],
   "course.combinatorics": [
     "combinatorics",
@@ -266,7 +267,8 @@
   "course.complex-analysis": [
     "complex analysis",
     "complex variables",
-    "residues"
+    "residues",
+    "complex variable"
   ],
   "course.topology": [
     "topology",
@@ -290,7 +292,8 @@
     "ode",
     "odes",
     "diff eq",
-    "diffeq"
+    "diffeq",
+    "differential equation"
   ],
   "course.pde": [
     "pde",
@@ -299,7 +302,8 @@
     "mathematical physics",
     "heat equation",
     "wave equation",
-    "methods of mathematical physics"
+    "methods of mathematical physics",
+    "partial differential equation"
   ],
   "course.differential-geometry": [
     "differential geometry",
@@ -416,7 +420,8 @@
     "data structures",
     "hash tables",
     "trees",
-    "heaps"
+    "heaps",
+    "data structure"
   ],
   "course.algorithms": [
     "algorithms",
@@ -444,7 +449,9 @@
     "tcp",
     "tcp ip",
     "internet",
-    "data communications"
+    "data communications",
+    "computer network",
+    "data communication"
   ],
   "course.databases": [
     "databases",
@@ -622,7 +629,8 @@
     "inorganic chemistry",
     "inorganic",
     "main group",
-    "transition metals"
+    "transition metals",
+    "transition metal"
   ],
   "course.organic-chemistry": [
     "organic chemistry",
@@ -796,13 +804,15 @@
     "circuits",
     "circuit theory",
     "electrical circuits",
-    "electronics"
+    "electronics",
+    "electrical circuit"
   ],
   "course.control-theory": [
     "control theory",
     "control systems",
     "feedback",
-    "pid"
+    "pid",
+    "control system"
   ],
   "course.signal-processing": [
     "signal processing",
@@ -830,7 +840,8 @@
     "deep learning",
     "neural networks",
     "transformers",
-    "backpropagation"
+    "backpropagation",
+    "neural network"
   ],
   "course.nlp": [
     "nlp",
@@ -839,7 +850,8 @@
     "llm",
     "embeddings",
     "advanced nlp",
-    "neural nets for nlp"
+    "neural nets for nlp",
+    "language model"
   ],
   "course.computer-vision": [
     "computer vision",
@@ -941,7 +953,8 @@
   "course.international-relations": [
     "international relations",
     "geopolitics",
-    "foreign policy"
+    "foreign policy",
+    "international relation"
   ],
   "course.political-philosophy": [
     "political philosophy",
@@ -1418,7 +1431,8 @@
   "course.analog-electronics": [
     "analog electronics",
     "transistors",
-    "operational amplifier"
+    "operational amplifier",
+    "analog electronic"
   ],
   "course.metrology": [
     "metrology",
@@ -1464,5 +1478,15 @@
     "geochemistry",
     "isotopes",
     "biogeochemistry"
+  ],
+  "course.artificial-intelligence": [
+    "artificial intelligence",
+    "?ai",
+    "knowledge representation",
+    "heuristic search",
+    "constraint satisfaction",
+    "automated planning",
+    "expert systems",
+    "expert system"
   ]
 }

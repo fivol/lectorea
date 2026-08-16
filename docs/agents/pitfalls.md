@@ -84,6 +84,38 @@ When the decision costs quota, ask the source rather than the text:
 a course from a collection and from a mirror. Generally — before paying for
 material, find out whose it is.
 
+### A tolerance written for one language was assumed to be neutral
+
+**Assumed:** `findPhrase` allows three letters on a phrase's right edge, so the
+singular of any plural keyword is strictly better — it matches both forms.
+**It was:** the tolerance exists for Russian inflection and has no idea which
+language it is in. On multi-word phrases the singular really is strictly
+better; on one-word English keywords those three letters are a different word.
+`graph` reaches «Graphics», `gene` reaches «General», `rock` reaches «Rocket».
+The measurement that looked like a 208-playlist win for `graphs` → `graph` was
+208 wrong bindings.
+
+**How not to repeat it:** when a rule carries a comment naming the language or
+the case it was written for, that comment is a scope, not a description. Before
+generalising it, list what it would do to the *other* case and read the titles —
+[data-traps.md](data-traps.md#english-plurals-store-the-singular-and-only-when-the-phrase-has-two-words)
+has the table this produced.
+
+### A gain was counted without checking the gain was not already there
+
+**Assumed:** counting titles where a keyword's singular matches and its plural
+does not measures what adding the singular would buy.
+**It was:** it measures nothing of the sort unless the singular is absent from
+the index and the playlist is currently unbound. `operating system` was already
+a keyword and the script proudly reported 26 new bindings for adding it again;
+the population it counted was every live playlist, most of them already bound.
+
+**How not to repeat it:** a hand-rolled estimate of a rule change answers a
+question of its own devising. `_probe.ts` exists, it runs the real pass over the
+real corpus and diffs against the stored verdict — **take a baseline, make the
+edit, probe again, subtract.** The baseline is not optional: a crawl running in
+another window moved it by 50 bindings while this was being measured.
+
 ### Vetting a channel by its numbers passes things that are not courses
 
 **Assumed:** `_vet.ts` printed «✓ 85 playlists of 10+», so the channel qualifies.

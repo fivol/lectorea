@@ -8,6 +8,28 @@
 
 matches:
 
+  # 2026-08-16 — refused by scripts/_authors.ts: playlistItems says the videos
+  # under these have many owners and no author, so there is no course to point
+  # at. Each was published at 0.75+ on its title alone. The one judged and kept
+  # is «Анатомия» (MedUniver, 54% own) — a course with borrowed clips in it, not
+  # a bag of them.
+  PL4DwY1suLMkcu-wytRDbvBNmx57CdQ2pJ: null  # 752 videos under one course code — a channel dump
+  PLWIcRrPLCdUdMbCuYNLrL8_wCnVnEYof1: null  # «Astronomy» — collected, not taught
+  PLWIcRrPLCdUdM5w5thzXQdyVi_MPcktVC: null  # «Computer networking» — same collector
+  PLS2b5v1ZHxl98iZEZsRRHdocprn3zf6vy: null  # «learning» — a watch list, not learning sciences
+  PLKBVyTG4T0ASJPy-A5YIiM5HOnBxvHsuI: null  # «АНТИЧНОСТЬ» — documentaries from many channels
+  PLibX1c_-9kBYLT8ggLYMInj-S0jLx5kVH: null  # «Filme» — the films themselves, not a course on film
+  PLeWaQ1yYAD913KoAwOQ9u3ld-3oTbidWc: null  # Computerphile clips, not a software engineering course
+  PLzERW_Obpmv-_TkPEmCyzaJUGHtl7S01i: null  # graphical models, and not real analysis either way
+  PLgfyCCmwycpJdqDUybk-8Yi6693q5tHew: null  # «Neuroscience Lectures» — talks by different people
+  PLA3769071B1361BEC: null  # «Neuroscience - Lectures.» — the same shape again
+  PLaA8NIuqRmKH9maYY2gcrmh_Kv4IOVlIK: null  # «[Math] Linear Algebra» — collected from many channels
+  PLpMEPQKnI3smcgHPMyqEd6J71TMBU0QOG: null  # «Machine Learning» — MSR talks, not a course
+  PLqga_3Hz_NPNfBDKsEYdrUXQXxe0v2EdN: null  # a church service list, not biblical studies
+  PLViF3fAf2KEHKZxU3EjbWqxdyOiW3j1uf: null  # CrashCourse clips collected by a third party
+  PL5nBAYUyJTrM48dViibyi68urttMlUv7e: null  # «Reinforcement Learning - Examples» — robot demo clips
+  PLTnoloBvEJ0sDUd5aK42oXnDgZ7e63Dor: null  # a seminar series on causal inference, not econometrics
+
   # 2026-08-15 — decided by hand off the top of the review queue.
   PLDcUM9US4XdNUolPcpdclIg4Ijt4dqxVc: null  # the music from the course, not the course
   PL4gvlOxpKKIiRPFOOH85x46aNYyRB7SA6: null  # a conversation series, not a course
