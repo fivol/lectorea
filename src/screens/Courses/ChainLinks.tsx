@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { routeCurves, routeSteps, type Path, type Rect } from '@/lib/route';
 
 /** `depth` is the source's distance from the selected course — the cascade order. */
 export type Link = { from: string; to: string; depth: number };
@@ -12,29 +13,8 @@ type Props = {
   animate: boolean;
   /** Cards are sliding to new rows right now — see `useShuffle`. */
   settling: boolean;
-  /** Right angles down a lane in the gap, rather than one curve card to card. */
+  /** Right angles down the gaps, rather than one curve from card to card. */
   stepped: boolean;
-  /** The gap between columns, which is the corridor a stepped line runs down. */
-  gap: number;
-};
-
-type Curve = { key: string; d: string; length: number; depth: number };
-
-/** Corner radius where a horizontal stub turns into the vertical run. */
-const RADIUS = 10;
-/** Below this the two cards are level with each other and a straight line does. */
-const FLAT = 6;
-/** The most two neighbouring lanes are ever pushed apart. */
-const LANE_SPACING = 12;
-
-type Raw = {
-  link: Link;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  /** Drops further than it reaches — the case a single cubic cannot draw. */
-  steep: boolean;
 };
 
 /**
@@ -47,23 +27,17 @@ type Raw = {
  * the whole catalogue they were two hundred crossing lines, which is why they
  * were taken out in the first place.
  *
- * Two ways of drawing one line, and the reader picks. A curve takes its bow from
- * the horizontal distance, which between adjacent columns is the gap — so a card
- * four rows down is reached by a line that spends its whole descent inside that
- * gap. Stepped instead routes it: out of the source's right edge, along to a
- * lane in the gap, down the lane, and into the target's left edge, corners
- * rounded. Everything feeding one course shares its lane and merges at its edge,
- * which is the fork a chain actually has; separate targets in one gap get lanes
- * of their own. Columns stand further apart in that mode because a lane needs a
- * corridor to run down, and 24px is not one.
- *
- * Shallow links keep the curve either way — a gentle diagonal over a long
- * horizontal run is exactly what a cubic is good at, and it covers the 16 % of
- * edges that span more than one column.
+ * How a line is drawn is the reader's — see `routeSteps` and `routeCurves` for
+ * the two answers and what each is good at. This measures and paints; the
+ * shape of a route is decided there, where it can be reasoned about without a
+ * browser in the way.
  *
  * Geometry comes from the DOM rather than from the layout code, because the
  * layout is the browser's: cards are flex children, and their real positions
- * are the only ones that are true after a filter, a resize or a scroll.
+ * are the only ones that are true after a filter, a resize or a scroll. Every
+ * card is measured, not only the ones being joined — a stepped route runs down
+ * the gaps between columns and along the gaps between rows, and where those are
+ * is a fact about the whole board.
  */
 export default function ChainLinks({
   scrollRef,
@@ -72,9 +46,8 @@ export default function ChainLinks({
   animate,
   settling,
   stepped,
-  gap,
 }: Props) {
-  const [curves, setCurves] = useState<Curve[]>([]);
+  const [curves, setCurves] = useState<Path[]>([]);
 
   const measure = useCallback(() => {
     const container = scrollRef.current;
@@ -89,104 +62,24 @@ export default function ChainLinks({
     const dx = container.scrollLeft - origin.left;
     const dy = container.scrollTop - origin.top;
 
-    const boxOf = (id: string): DOMRect | null => {
-      const node = container.querySelector(`[data-course="${CSS.escape(id)}"]`);
-      return node ? (node as HTMLElement).getBoundingClientRect() : null;
-    };
-
-    const raws: Raw[] = [];
-    for (const link of links) {
-      const from = boxOf(link.from);
-      const to = boxOf(link.to);
-      if (!from || !to) continue;
-
-      const x1 = from.right + dx;
-      const y1 = from.top + from.height / 2 + dy;
-      const x2 = to.left + dx;
-      const y2 = to.top + to.height / 2 + dy;
-      const reach = x2 - x1;
-
-      raws.push({
-        link,
-        x1,
-        y1,
-        x2,
-        y2,
-        steep: stepped && reach > 0 && Math.abs(y2 - y1) > Math.max(reach, FLAT),
-      });
+    const boxes = new Map<string, Rect>();
+    const cards: Rect[] = [];
+    for (const node of container.querySelectorAll<HTMLElement>('[data-course]')) {
+      const id = node.dataset.course;
+      if (!id) continue;
+      const box = node.getBoundingClientRect();
+      const rect: Rect = {
+        left: box.left + dx,
+        right: box.right + dx,
+        top: box.top + dy,
+        bottom: box.bottom + dy,
+      };
+      boxes.set(id, rect);
+      cards.push(rect);
     }
 
-    /**
-     * Lane per target, spread across the corridor its gap offers.
-     *
-     * Targets are grouped by the column they stand in — everything arriving at
-     * one column shares one gap — and ordered top to bottom, so lanes do not
-     * cross each other on their way in.
-     */
-    const laneOf = new Map<string, number>();
-    const byColumn = new Map<number, Raw[]>();
-    for (const raw of raws) {
-      if (!raw.steep || laneOf.has(raw.link.to)) continue;
-      const column = Math.round(raw.x2);
-      byColumn.set(column, [...(byColumn.get(column) ?? []), raw]);
-      laneOf.set(raw.link.to, 0); // reserved; the value is filled in below
-    }
-
-    for (const [, arrivals] of byColumn) {
-      const ordered = arrivals.sort((a, b) => a.y2 - b.y2);
-      for (const [index, raw] of ordered.entries()) {
-        const low = Math.max(raw.x1, raw.x2 - gap) + RADIUS;
-        const high = raw.x2 - RADIUS;
-        if (low >= high) {
-          laneOf.set(raw.link.to, (raw.x1 + raw.x2) / 2);
-          continue;
-        }
-        const centre = (low + high) / 2;
-        const count = ordered.length;
-        const spacing = count > 1 ? Math.min(LANE_SPACING, (high - low) / (count - 1)) : 0;
-        const offset = (index - (count - 1) / 2) * spacing;
-        laneOf.set(raw.link.to, Math.min(high, Math.max(low, centre + offset)));
-      }
-    }
-
-    const next: Curve[] = [];
-    for (const raw of raws) {
-      const { link, x1, y1, x2, y2 } = raw;
-      const drop = y2 - y1;
-      const reach = x2 - x1;
-      const lane = raw.steep ? laneOf.get(link.to) : undefined;
-
-      let d: string;
-      let length: number;
-
-      if (lane === undefined) {
-        // A horizontal pull proportional to the gap: short hops stay gentle,
-        // long ones bow out far enough not to run along the cards in between.
-        const pull = Math.max(24, reach * 0.5);
-        d =
-          `M${x1.toFixed(1)} ${y1.toFixed(1)} ` +
-          `C${(x1 + pull).toFixed(1)} ${y1.toFixed(1)}, ` +
-          `${(x2 - pull).toFixed(1)} ${y2.toFixed(1)}, ` +
-          `${x2.toFixed(1)} ${y2.toFixed(1)}`;
-        length = Math.hypot(reach, drop) + pull;
-      } else {
-        const sign = Math.sign(drop);
-        const radius = Math.min(RADIUS, lane - x1, x2 - lane, Math.abs(drop) / 2);
-        d =
-          `M${x1.toFixed(1)} ${y1.toFixed(1)} ` +
-          `H${(lane - radius).toFixed(1)} ` +
-          `Q${lane.toFixed(1)} ${y1.toFixed(1)}, ${lane.toFixed(1)} ${(y1 + sign * radius).toFixed(1)} ` +
-          `V${(y2 - sign * radius).toFixed(1)} ` +
-          `Q${lane.toFixed(1)} ${y2.toFixed(1)}, ${(lane + radius).toFixed(1)} ${y2.toFixed(1)} ` +
-          `H${x2.toFixed(1)}`;
-        length = lane - x1 + Math.abs(drop) + (x2 - lane);
-      }
-
-      next.push({ key: `${link.from}->${link.to}`, d, length, depth: link.depth });
-    }
-
-    setCurves(next);
-  }, [scrollRef, links, stepped, gap]);
+    setCurves(stepped ? routeSteps(links, boxes, cards) : routeCurves(links, boxes));
+  }, [scrollRef, links, stepped]);
 
   useEffect(() => {
     const container = scrollRef.current;

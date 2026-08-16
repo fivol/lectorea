@@ -365,7 +365,6 @@ export default function ColumnsView({
             animate={!reducedMotion}
             settling={settling}
             stepped={stepped}
-            gap={gap}
           />
 
           {columns.map((column) => (
