@@ -20,8 +20,15 @@ export type Path = { key: string; d: string; length: number; depth: number };
 const RADIUS = 10;
 /** Below this the two cards are level with each other. */
 const FLAT = 6;
-/** The most two neighbouring lanes are ever pushed apart. */
-const LANE_SPACING = 12;
+/**
+ * The most two neighbouring lanes are ever pushed apart.
+ *
+ * At 12px two lanes descending past each other read as one thick line that has
+ * gone wrong rather than as two lines — near enough to look like a mistake, far
+ * enough not to be the deliberate overlap of a shared trunk. The gap is wide
+ * enough to put real distance between them, so it does.
+ */
+const LANE_SPACING = 24;
 /** Two runs sharing a row channel keep at least this much clear of each other. */
 const CLEARANCE = 24;
 
