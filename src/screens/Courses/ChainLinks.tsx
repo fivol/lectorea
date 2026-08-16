@@ -11,8 +11,6 @@ type Props = {
   /** Bumped by the caller when the layout may have changed under the curves. */
   revision: unknown;
   animate: boolean;
-  /** Cards are sliding to new rows right now — see `useShuffle`. */
-  settling: boolean;
   /** Right angles down the gaps, rather than one curve from card to card. */
   stepped: boolean;
 };
@@ -39,14 +37,35 @@ type Props = {
  * the gaps between columns and along the gaps between rows, and where those are
  * is a fact about the whole board.
  */
-export default function ChainLinks({
-  scrollRef,
-  links,
-  revision,
-  animate,
-  settling,
-  stepped,
-}: Props) {
+/**
+ * Where a card sits in the scrolled content, by layout rather than by paint.
+ *
+ * `getBoundingClientRect` was the obvious way and the wrong one: it includes
+ * transforms, and cards carry a transform for the two hundred milliseconds they
+ * spend sliding to a new row. Measured then, a column is not where its column
+ * is — the lefts no longer agree, so the gaps between columns are computed from
+ * nonsense and a lane can be placed inside a card. Worse, the last measurement
+ * of a shuffle is taken mid-flight and then kept: the picture stays wrong after
+ * everything has come to rest. Layout offsets do not move while a transform
+ * plays, so the route is the same before, during and after.
+ */
+function layoutBox(node: HTMLElement, container: HTMLElement): Rect {
+  let left = 0;
+  let top = 0;
+  let el: HTMLElement | null = node;
+  while (el && el !== container && container.contains(el)) {
+    const parent = el.offsetParent as HTMLElement | null;
+    // The outermost element still inside the scroller is the coordinate space
+    // the curve layer is stretched over, so its own offset is not ours to add.
+    if (!parent || !container.contains(parent)) break;
+    left += el.offsetLeft;
+    top += el.offsetTop;
+    el = parent;
+  }
+  return { left, top, right: left + node.offsetWidth, bottom: top + node.offsetHeight };
+}
+
+export default function ChainLinks({ scrollRef, links, revision, animate, stepped }: Props) {
   const [curves, setCurves] = useState<Path[]>([]);
 
   const measure = useCallback(() => {
@@ -56,24 +75,12 @@ export default function ChainLinks({
       return;
     }
 
-    const origin = container.getBoundingClientRect();
-    // Positions are taken inside the scrolled content, so the layer scrolls
-    // with the cards instead of being re-measured on every scroll frame.
-    const dx = container.scrollLeft - origin.left;
-    const dy = container.scrollTop - origin.top;
-
     const boxes = new Map<string, Rect>();
     const cards: Rect[] = [];
     for (const node of container.querySelectorAll<HTMLElement>('[data-course]')) {
       const id = node.dataset.course;
       if (!id) continue;
-      const box = node.getBoundingClientRect();
-      const rect: Rect = {
-        left: box.left + dx,
-        right: box.right + dx,
-        top: box.top + dy,
-        bottom: box.bottom + dy,
-      };
+      const rect = layoutBox(node, container);
       boxes.set(id, rect);
       cards.push(rect);
     }
@@ -101,24 +108,6 @@ export default function ChainLinks({
       window.removeEventListener('resize', schedule);
     };
   }, [measure, scrollRef, revision]);
-
-  /**
-   * While cards are sliding, follow them.
-   *
-   * The measurement above happens once, and once is right for a layout that
-   * has finished moving. A card animating to a new row is somewhere else on
-   * every frame, and a curve pinned to where it will end up detaches from the
-   * card it is drawn from for the length of the animation — the one moment the
-   * line is most obviously about that card.
-   */
-  useEffect(() => {
-    if (!settling) return;
-    let frame = requestAnimationFrame(function tick() {
-      measure();
-      frame = requestAnimationFrame(tick);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [settling, measure]);
 
   if (!curves.length) return null;
 

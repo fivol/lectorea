@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 /**
  * Cards that changed places slide there, cards that just arrived fade in.
@@ -14,7 +14,9 @@ import { useLayoutEffect, useRef, useState } from 'react';
  * has laid the new order out, compared against the ones kept from the previous
  * commit, and the difference is played backwards as a transform. Nothing is
  * animated by React — the elements keep their own layout, and the transform is
- * dropped as soon as it has run.
+ * dropped as soon as it has run. Which is also why the curves are not told the
+ * animation is happening: a transform is paint, the layout underneath it never
+ * moves, and `ChainLinks` reads the layout.
  */
 
 /** Long enough to be followed, short enough not to be waited on. */
@@ -27,9 +29,8 @@ export function useShuffle(
   /** Changes whenever the order might have. */
   signature: string,
   enabled: boolean
-): boolean {
+): void {
   const seen = useRef<Map<string, [number, number]> | null>(null);
-  const [settling, setSettling] = useState(false);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -89,10 +90,5 @@ export function useShuffle(
       );
     }
 
-    setSettling(true);
-    const done = window.setTimeout(() => setSettling(false), DURATION);
-    return () => window.clearTimeout(done);
   }, [containerRef, signature, enabled]);
-
-  return settling;
 }

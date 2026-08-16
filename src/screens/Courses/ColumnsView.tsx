@@ -160,7 +160,7 @@ export default function ColumnsView({
     [columns, gap]
   );
 
-  const settling = useShuffle(scrollRef, arrangement, !reducedMotion);
+  useShuffle(scrollRef, arrangement, !reducedMotion);
 
   /**
    * The edges of the chain, as pairs of course ids.
@@ -363,7 +363,6 @@ export default function ColumnsView({
             links={links}
             revision={`${selectedId}:${columns.length}:${total}:${gap}`}
             animate={!reducedMotion}
-            settling={settling}
             stepped={stepped}
           />
 
