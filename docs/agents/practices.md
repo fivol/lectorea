@@ -142,6 +142,30 @@ run it backwards over what is already live — and put the free filters first
 (settled by hand, on a vetted channel) so the paid one runs on the remainder:
 682 probes rather than 1308.
 
+## Sum the rows; do not infer the whole
+
+The heading over a run of parts prints **Один курс · 78 ч** and does not print
+how many parts the course has. Both numbers were once wanted for the same
+reason, and only one of them can be had honestly: the hours are the sum of the
+rows drawn under the line, while the count of parts came off the largest number
+parsed out of somebody else's titles, so a run of `s3, s4` announced four parts
+above two rows.
+
+The test is not "is this number useful" — both were — but **what the number is
+measured over**. A figure summed from what is on screen stays true when the
+crawl finds one more part; a figure inferred about the thing the rows came from
+is a guess that grows more confident as it grows more wrong.
+
+**Generally:** before printing a derived number, say out loud what it is a fact
+about. If the answer is the catalogue's own rows, print it. If the answer is the
+world outside the catalogue, the rows are evidence and not a measurement, and
+the reader is better served by being able to count them.
+
+Rejected alongside it: putting the lecture count on the same line. Every row
+already carries its own «14 лекций», so the group total is a second running sum
+the eye has to reconcile against them, and unlike the hours it *is* recoverable
+at a glance.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

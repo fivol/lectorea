@@ -215,14 +215,22 @@ hidden — only the line is. The setting is remembered, like the stage filter: i
 says something about how somebody reads rather than about what they are reading.
 
 **Ступеньки** beside it changes how a line is drawn rather than how many there
-are. Off, each is a single curve from one card's edge to the next, which is what
-a cubic is good at over a long horizontal run. On, a line that drops further than
-it reaches is routed instead: out of the card, along to a lane in the gap between
-columns, down the lane, into the next card, corners rounded — and everything
+are. Off, each is a single curve from one card's edge to the next. On, every line
+is routed at right angles instead: out of the card, along to a lane in the gap
+between columns, down the lane, into the next card, corners rounded. Everything
 leading into one course shares its lane and arrives together, which is the fork a
-chain actually has. The columns stand twice as far apart in that mode, because a
-lane needs a corridor and 24px is not one. Neither drawing is more correct than
-the other; both are remembered.
+chain actually has.
+
+A line that skips a column gets two lanes and a row channel — down the gap to the
+right of the card it leaves, across the horizontal gap *between* two rows, then
+down the gap to the left of the card it enters. Rows line up across columns, so a
+channel clear in one column is clear in all of them, and the line passes between
+the cards rather than over them. That is the case the curve drew worst: a long
+diagonal sweeping across whatever stood in the way.
+
+The columns stand twice as far apart in that mode, because a lane needs a
+corridor and 24px is not one. Neither drawing is more correct than the other;
+both are remembered.
 
 Cards of one field stay together vertically, so switching on a domain filter
 lights a stripe rather than a spray. The columns scroll sideways and say so: the
@@ -365,10 +373,19 @@ two, and the × or the dimmed list behind it to close.
 
   A course a university cut into parts — «Часть 2», a second semester, `[s3]` —
   is drawn as one entry: the parts in order, a rule down their left and **Один
-  курс** over them. The heading says that and no more. It used to count the
-  parts, and the count came off the highest number we could parse out of the
-  titles, so a run of `s3, s4` announced four parts above two rows; the parts
-  are on the screen and nobody needs us to add them up. **Части вместе**, next
+  курс · 78 ч** over them. The hours are the sum of the rows underneath and
+  nothing more, which is what makes them printable: four semesters at «19.9 ч»
+  each is a sum the reader would otherwise do in their head, and it is the
+  figure that decides whether this is a term's work or two years'. It is also
+  what makes a run comparable with the single recordings it is ranked against —
+  ИТМО's four-semester «Дискретная математика» reads 78 ч where MIT 6.042J is
+  33 ч, and until the run said so the list put a two-year programme next to a
+  one-term course with no way to tell them apart. The count of parts is the
+  number deliberately missing: it came off the highest number we could parse out
+  of the titles, so a run of `s3, s4` announced four parts above two rows. The
+  rule the two cases make between them: **a number summed from the rows on
+  screen may be printed; a number inferred about the course they came from may
+  not.** **Части вместе**, next
   to the sort, turns the grouping off for anyone hunting one recording rather
   than a course to sit down with, and appears only where there is a run to
   group. With it on, a run is admitted or rejected whole: one part passing the

@@ -3,6 +3,7 @@ import type { BuiltCourse, BuiltPlaylist } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { loadPlaylistsCached } from '@/lib/data';
+import { formatHours, hoursFromSeconds } from '@/lib/format';
 import { suggestPlaylistUrl } from '@/lib/repo';
 import { useCatalogParams } from '@/lib/url';
 import { useProfile } from '@/store/profile';
@@ -10,7 +11,7 @@ import PlaylistFilters from './PlaylistFilters';
 import PlaylistRow from './PlaylistRow';
 import PlaylistModal from './PlaylistModal';
 import { playlistHeadings } from './playlist-label';
-import { groupRuns, type ListItem } from './series';
+import { groupRuns, runSeconds, type ListItem } from './series';
 import { ButtonLink } from '@/components/ui';
 import {
   applyFilters,
@@ -252,13 +253,23 @@ export default function PlaylistList({ course }: Props) {
                    what it is there to say. Starting at the first part and
                    ending at the last is what makes it a bracket. */
                 <div key={item.key} className="py-2">
-                  <p className="pb-0.5 pl-3 text-xs text-ink-faint">
+                  <p className="num pb-0.5 pl-3 text-xs text-ink-faint">
                     {/* No count. The parts are right there to be counted, and
                         ours was a guess: it came off the highest number found
                         in the titles, so a run of «s3, s4» announced itself as
                         four parts and a course whose numbering we never
-                        understood could say anything at all. */}
-                    {t('ui.playlists.oneCourse')}
+                        understood could say anything at all.
+
+                        The hours are a different kind of number and are safe to
+                        print: they are the sum of the rows drawn under this
+                        line, not an estimate of somebody else's course. It is
+                        the one figure the reader cannot get by looking — four
+                        parts at «19.9 ч» each is a mental sum before you know
+                        whether this is a term or two years — and it is what
+                        makes a run comparable with the single recordings it is
+                        ranked against. */}
+                    {t('ui.playlists.oneCourse')} ·{' '}
+                    {t('ui.playlist.hours', { n: formatHours(hoursFromSeconds(runSeconds(item))) })}
                   </p>
                   <div className="border-l-2 border-line-strong pl-2">{item.parts.map(row)}</div>
                 </div>

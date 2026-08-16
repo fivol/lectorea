@@ -55,6 +55,19 @@ export function groupRuns(rows: BuiltPlaylist[], all: BuiltPlaylist[] = rows): L
 }
 
 /**
+ * How long the whole run is, over the parts that are actually drawn.
+ *
+ * Not a claim about the course somebody else teaches — a run whose middle part
+ * was never filmed sums to less than the course runs, and that is the right
+ * answer, because the sum has to describe the rows under the heading rather
+ * than the timetable they came from. `groupRuns` draws every part of a run it
+ * shows at all, so «the parts» and «the rows» are the same set.
+ */
+export function runSeconds(item: Extract<ListItem, { kind: 'run' }>): number {
+  return item.parts.reduce((total, playlist) => total + playlist.totalSeconds, 0);
+}
+
+/**
  * What a university called this part. The word is theirs — «часть» where they
  * wrote «часть», «семестр» where the number was a semester — because a reader
  * matching our list against their timetable is matching the word too.

@@ -243,6 +243,56 @@ were read again. **A refusal is a judgement about what was seen, not a permanent
 verdict** — but reversing one means reading the titles again, not remembering
 differently.
 
+## Twenty-four playlists of one course are four semesters read to four streams
+
+`discrete-math` holds 24 ИТМО recordings, and the shape of them is the shape of
+a lot of the Russian catalogue. Read as a list they look like a channel dumping
+everything it has; they are two independent facts multiplied together.
+
+**The course really is four semesters.** The topics of one run are disjoint,
+which is the only proof that settles it — `s1` sets, Boolean functions, Post,
+circuits, coding, Burnside–Pólya; `s2` probability, Markov chains, automata,
+context-free grammars; `s3` graphs, random graphs, matroids; `s4` generating
+functions, computability, Turing machines. 78 ч over 56 lectures, against 33 ч
+for MIT 6.042J. Not one term stretched over four: it carries what a Western
+curriculum splits into discrete maths, theory of computation and an information
+theory course, and drops number theory, which ИТМО reads separately.
+
+**And each of the four semesters is read to several streams at once**, by
+different lecturers, all filmed and all published to the same channel. So
+`[s1] … Васильев` and `[s1] … Станкевич` are not two parts of anything — they
+are the same semester twice, and their lecture titles agree line for line for
+the first eight lectures. Васильев, Станкевич, Голиков and Клёпов are four
+readings of one programme, not four courses.
+
+**The corollary for anything that counts.** A course with 4 semesters × 4
+lecturers × several intakes generates a couple of dozen playlists and one
+syllabus, so playlist count says nothing about how much distinct material a
+course has. Ask how many *runs* it has, and how long one run is. What broke the
+naive read of this course was the assumption that a channel with 24 recordings
+of one subject was hoarding duplicates.
+
+## `year` is the first video's date, and that is not the year the part was read
+
+Two different things pull them apart, and only one is a problem.
+
+**The title carries the intake, the videos carry the calendar.** ИТМО writes
+`[s2 | 2024]` for semester two of the *2024 intake*, filmed in spring 2025 — so
+every even semester's title is a year behind its own videos. 35 of the 240
+titles that carry a year in the crawl disagree with the year computed from
+their first video, and they are almost all this. **Do not reconcile them.**
+`follows()` in `scripts/lib/series.ts` is built on the calendar year — semester
+n of an intake starting in Y is read in Y + ⌊n/2⌋ — and reading the year off the
+title instead would break every chain at its first spring semester.
+
+**A channel patching a new stream's playlist with old recordings does break the
+chain.** `[s4 | 2022] Дискретная математика, А.С. Станкевич` has videos titled
+«ДМ y2020-2к-л1» in it, so its first video is dated 2021, so it chains onto the
+`s3` of the 2019 intake instead of standing with the 2022 one. The tell is
+inside the playlist rather than on it: the lecture titles use two naming
+conventions at once, one of them naming a different year. Nothing detectable
+from the outside, which is why this is here and not in the build.
+
 ## The unit is the semester, in both directions
 
 A channel publishing one playlist per *chapter* binds every fragment as
