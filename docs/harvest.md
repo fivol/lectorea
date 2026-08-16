@@ -257,6 +257,19 @@ section](#a-playlist-is-not-a-course-because-it-is-called-one) below.
 `channels.yaml` came from this one hunt, two thirds of them via mirrors rather
 than by being found directly — see [channel-hunt.md](channel-hunt.md).
 
+**It saturates per course, and quickly.** A third pass over the same courses
+with a different phrasing («курс» rather than «лекции», which is what
+`--variant=1` is for) found 154 new playlists against the first pass's 402 —
+and 478 of its 1172 candidates were things the first two waves had already
+queued. Search has one first page per question; the way to get more out of it
+is a different question, not a second page or a second run.
+
+**Budget for what it refills for free.** Resolving 4079 candidates through
+`playlists.list` also put 3500 playlist *descriptions* on disk, and `data:mine`
+read 2796 new playlist links out of them at no cost — then 4278 more once the
+crawl had walked their videos. The expensive seam pays for the cheapest one, so
+run `data:mine` again before calling a hunt finished.
+
 ### A playlist is not a course because it is called one
 
 «Linguistics», 50 videos, by a channel called *A random human*. The title names
