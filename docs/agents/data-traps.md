@@ -270,7 +270,7 @@ mirrors. The mirrors are worth more than the playlists were:
 **Any playlist bound to a course by a channel that did not make its videos is
 attributed to the wrong provider** — the signal is worth having outside a hunt.
 
-That last line was acted on on 2026-08-16 by `_authors.ts`, which asks the same
+That last line became a pipeline step on 2026-08-16 — `data:authors`, which asks the same
 one-unit question of what is **already published** rather than of candidates.
 The catalogue answered far better than search does: of 682 probes, 631 own their
 material, 34 are mirrors and 17 were collections. **92% against the hunt's 5%** —
@@ -319,4 +319,4 @@ most ninety lectures, so refuse above some number. It was measured on
 
 A ceiling would cost as much real material as it removed rubbish, and the
 vetted side has the larger maximum. **Size is not the signal; authorship is** —
-which is why the answer is `_authors.ts` and a unit, not a constant.
+which is why the answer is `data:authors` and a unit, not a constant.

@@ -129,7 +129,7 @@ where a thing sits, say so, rather than about the word alone.
 The ownership probe — `playlistItems.list`, 1 unit, who made the videos — was
 written for `_hunt.ts` to filter candidates. Everything bound before it existed
 was decided on a title, which is precisely what cannot see a bag of bookmarks.
-`_authors.ts` points the same unit at the live catalogue and found 17 published
+`data:authors` points the same unit at the live catalogue and found 17 published
 collections, among them «Filme» (the films, under film studies) and 752 videos
 under one CMU course code.
 

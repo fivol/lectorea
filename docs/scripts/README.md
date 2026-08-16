@@ -37,7 +37,7 @@ the same `pnpm` script CI runs. What it adds is the ordering and the guards.
 Everything the crawl does, in the order that buys the most for the day's quota:
 
 ```
-import → discover → mine → match → refresh → subscribers → match → embeds → build
+import → discover → mine → match → refresh → subscribers → match → authors → embeds → build
 ```
 
 Two things about that order are worth stating, because they are the reason the
@@ -52,6 +52,16 @@ so whatever `match` has decided by the time it runs is what the day is spent on.
 **And again after it.** A playlist discovered this run has no metadata yet, and
 a title is the whole of what the rule pass reads. The second `match` is free and
 picks up everything the refresh just gave a name to.
+
+**Then the one question a title cannot answer.** `authors` asks
+`playlistItems.list` who made the videos under each *new* binding, at a unit
+apiece. A playlist called «Linguistics» with 268 videos in it is a course when a
+linguist uploaded them and a bag of bookmarks when they come from forty
+channels, and nothing in a title tells the two apart. It runs after the second
+`match` because it needs bindings to judge, and before `build` because a
+collection it refuses must not reach `public/data`. The verdict is kept in
+`cache.db`, so a playlist is asked once and never again — the second night costs
+almost nothing.
 
 The free seams are in there too, in the places where they refill: `mine` reads
 links out of API bodies already on disk and finds more of them after every
@@ -237,7 +247,7 @@ make pipeline
 ```
 
 Which is `import → discover → mine → match → refresh → subscribers → match →
-embeds → build`, in that order for the reasons
+authors → embeds → build`, in that order for the reasons
 [above](#the-three-sequences-with-a-shorter-name). Spelled out, a day of it is:
 
 ```bash

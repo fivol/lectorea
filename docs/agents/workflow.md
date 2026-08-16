@@ -51,7 +51,7 @@ pnpm exec tsx -e "import {openDb} from './scripts/lib/db.ts'; const db=openDb({r
 
 ## The order that must not be rearranged
 
-`import → discover → mine → match → refresh → subscribers → match → embeds → build`.
+`import → discover → mine → match → refresh → subscribers → match → authors → embeds → build`.
 The reasons are in [scripts/README.md](../scripts/README.md#make-pipeline); two
 of them matter to an agent:
 

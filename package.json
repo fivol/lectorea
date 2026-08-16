@@ -28,6 +28,7 @@
     "data:mine": "tsx scripts/11-mine.ts",
     "data:subscribers": "tsx scripts/12-subscribers.ts",
     "data:embeds": "tsx scripts/13-embeds.ts",
+    "data:authors": "tsx scripts/14-authors.ts",
     "data:map": "tsx scripts/10-map.ts",
     "map:ground": "tsx scripts/map-ground.ts",
     "cache:publish": "tsx scripts/cache-snapshot.ts publish",

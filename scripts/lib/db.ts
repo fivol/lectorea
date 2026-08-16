@@ -95,6 +95,26 @@ CREATE TABLE IF NOT EXISTS matches (
   updated_at TEXT
 );
 
+-- Who made the videos a playlist lists, from one page of playlistItems.
+--
+-- Kept because the answer costs a unit and never changes: a playlist does not
+-- stop being somebody's bookmarks. Without this table the ownership step would
+-- re-buy the same verdict every night, which is the whole of its price.
+--
+-- kind is one of own / mirror / collection, and only a collection is a refusal:
+-- a mirror is a real course filed under the wrong channel, and throwing it away
+-- would cost material that in 24 of 34 cases exists nowhere else here.
+-- (No backticks in this comment: SCHEMA is a template literal, and one closes it.)
+CREATE TABLE IF NOT EXISTS ownership (
+  playlist_id TEXT PRIMARY KEY,
+  sampled INTEGER,
+  own_share REAL,
+  kind TEXT,
+  owner_id TEXT,
+  owner_title TEXT,
+  checked_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS quota (
   date TEXT,
   key TEXT,

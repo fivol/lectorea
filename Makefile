@@ -71,18 +71,20 @@ pipeline: require-key ## Everything the crawl does, in quota order, until the da
 	  if [ -n "$${3:-}" ]; then echo "$$3"; fi; \
 	  $(MAKE) "$$1" || failed="$$failed $$1"; \
 	}; \
-	echo "▸ 1/9  import       · playlists named by the catalogues in data/sources.yaml"; \
+	echo "▸ 1/10 import       · playlists named by the catalogues in data/sources.yaml"; \
 	$(MAKE) import || echo "·· import failed — carrying on; it is the one step that needs the open web"; \
-	step discover    "2/9  discover     · channels → their playlists (skips any scanned in the last 30 days)"; \
-	step mine        "3/9  mine         · playlists linked from bodies already on disk — no quota, no network"; \
-	step match       "4/9  match        · before the crawl on purpose: matching is free and decides" \
+	step discover    "2/10 discover     · channels → their playlists (skips any scanned in the last 30 days)"; \
+	step mine        "3/10 mine         · playlists linked from bodies already on disk — no quota, no network"; \
+	step match       "4/10 match        · before the crawl on purpose: matching is free and decides" \
 	                 "                      which playlists the expensive video step walks first"; \
-	step refresh     "5/9  refresh      · metadata → videos → liveness, until the queue or the quota drains"; \
-	step subscribers "6/9  subscribers  · single digits of quota; without it the rating has no room size"; \
-	step match       "7/9  match        · again: the refresh gave titles to playlists that had none," \
+	step refresh     "5/10 refresh      · metadata → videos → liveness, until the queue or the quota drains"; \
+	step subscribers "6/10 subscribers  · single digits of quota; without it the rating has no room size"; \
+	step match       "7/10 match        · again: the refresh gave titles to playlists that had none," \
 	                 "                      and a title is the whole of what the rule pass reads"; \
-	step embeds      "8/9  embeds       · which playlists the player refuses as list= (oEmbed, no quota)"; \
-	step data        "9/9  build        · data/ + cache.db → public/data, and the validator with it"; \
+	step authors     "8/10 authors      · who made the videos under each new binding — the one question" \
+	                 "                      a title cannot answer. 1 unit, once per playlist, never again"; \
+	step embeds      "9/10 embeds       · which playlists the player refuses as list= (oEmbed, no quota)"; \
+	step data        "10/10 build       · data/ + cache.db → public/data, and the validator with it"; \
 	echo; \
 	if [ -n "$$failed" ]; then \
 	  echo "✗ pipeline reached the end, but these steps failed:$$failed"; \
@@ -206,6 +208,10 @@ subscribers: require-key ## Channel subscriber counts — the denominator under 
 .PHONY: embeds
 embeds: ## Which playlists the embedded player refuses as list=. oEmbed, no quota
 	@$(PNPM) data:embeds $(N)
+
+.PHONY: authors
+authors: require-key ## Who made the videos under each published binding. 1 unit each, and only once per playlist
+	@$(PNPM) data:authors $(N)
 
 
 ##@ The crawl cache (data/cache.db — a week of quota, and never committed)
