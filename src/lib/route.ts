@@ -156,15 +156,28 @@ export function routeSteps(legs: Leg[], boxes: Map<string, Rect>, cards: Rect[])
    * widened to hold. Ordered by the height they sit at, so lanes do not cross
    * each other on the way in.
    */
-  const runs = new Map<number, Map<string, number[]>>();
-  const note = (gap: number, key: string, y: number): void => {
-    const lanes = runs.get(gap) ?? new Map<string, number[]>();
-    lanes.set(key, [...(lanes.get(key) ?? []), y]);
+  type Lane = { low: number; high: number; tails: number[] };
+  const runs = new Map<number, Map<string, Lane>>();
+  const note = (gap: number, key: string, from: number, tail: number): void => {
+    const lanes = runs.get(gap) ?? new Map<string, Lane>();
+    const had = lanes.get(key);
+    const low = Math.min(from, tail);
+    const high = Math.max(from, tail);
+    lanes.set(
+      key,
+      had
+        ? { low: Math.min(had.low, low), high: Math.max(had.high, high), tails: [...had.tails, tail] }
+        : { low, high, tails: [tail] }
+    );
     runs.set(gap, lanes);
   };
   for (const plan of plans) {
-    note(plan.inGap, plan.leg.to, plan.y2);
-    if (plan.outGap !== null) note(plan.outGap, plan.leg.from, plan.y1);
+    // The tail is where the run stops descending and turns right again, which
+    // is the height at which it can be cut by somebody else's descent.
+    note(plan.inGap, plan.leg.to, plan.channel ?? plan.y1, plan.y2);
+    if (plan.outGap !== null && plan.channel !== null) {
+      note(plan.outGap, plan.leg.from, plan.y1, plan.channel);
+    }
   }
 
   const laneAt = new Map<string, number>();
@@ -173,9 +186,36 @@ export function routeSteps(legs: Leg[], boxes: Map<string, Rect>, cards: Rect[])
     const right = columns[gap + 1] ?? left + LANE_SPACING * 2;
     const low = left + RADIUS;
     const high = right - RADIUS;
-    const ordered = [...lanes.entries()].sort(
-      (a, b) => average(a[1]) - average(b[1]) || a[0].localeCompare(b[0])
-    );
+    /**
+     * A run whose descent would cut another's tail goes on the outside of it.
+     *
+     * Ordering by the height a run arrives at is the obvious rule and it is
+     * backwards. Five courses fanning out of one card leave along the same
+     * line and peel off it one at a time; whichever peels off last has to run
+     * its vertical across every tail that peeled off before it, so every pair
+     * of them crosses — six crossings for the five that hang off algorithms.
+     * Turned round, the card furthest away leaves first and its descent is
+     * clear of the rest.
+     *
+     * «Furthest first» is only the common shape of the real rule, though, and
+     * on its own it made nine other chains worse. What decides it is whether
+     * one run's tail lies inside the other's descent: if it does, the descent
+     * has to be the one further from the cards, or it cuts the tail. Ties, and
+     * pairs where neither contains the other, fall back to the longer run
+     * first, which is the fan.
+     */
+    const cuts = (over: Lane, under: Lane): boolean =>
+      under.tails.some((tail) => tail > over.low + FLAT && tail < over.high - FLAT);
+    const ordered = [...lanes.entries()].sort(([keyA, a], [keyB, b]) => {
+      const aCutsB = cuts(a, b);
+      const bCutsA = cuts(b, a);
+      if (aCutsB !== bCutsA) return aCutsB ? -1 : 1;
+      return (
+        b.high - b.low - (a.high - a.low) ||
+        (a.low + a.high) / 2 - (b.low + b.high) / 2 ||
+        keyA.localeCompare(keyB)
+      );
+    });
     for (const [index, [key]] of ordered.entries()) {
       if (low >= high) {
         laneAt.set(`${gap}:${key}`, (left + right) / 2);
@@ -311,8 +351,6 @@ function nearest(values: number[], value: number): number {
 }
 
 const mid = (rect: Rect): number => rect.top + (rect.bottom - rect.top) / 2;
-const average = (values: number[]): number =>
-  values.reduce((sum, value) => sum + value, 0) / values.length;
 const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
 const p = (value: number): string => value.toFixed(1);
