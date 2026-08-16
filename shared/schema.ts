@@ -647,6 +647,19 @@ export const ProfileSchema = z.object({
        */
       fullGraph: z.boolean().catch(false),
       /**
+       * Draw the chain as right angles down a lane in the gap between columns,
+       * rather than as one curve from card to card.
+       *
+       * Off by default: the curve is the quieter drawing and the one the screen
+       * has always used. Stepped is the better *diagram* — lines that share a
+       * target merge into one lane instead of arriving from four directions —
+       * and it wants the columns further apart to have somewhere to run, which
+       * is a real cost in how much of the catalogue fits on screen. Neither is
+       * obviously right, and the difference is entirely a matter of taste, so
+       * it is asked rather than decided.
+       */
+      steppedLines: z.boolean().catch(false),
+      /**
        * Whether the phone sheet opens with the course's links and path
        * unfolded. Closed to start with: the sheet is opened to find something
        * to watch, and three sections of neighbouring courses used to stand

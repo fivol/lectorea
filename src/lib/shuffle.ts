@@ -28,32 +28,39 @@ export function useShuffle(
   signature: string,
   enabled: boolean
 ): boolean {
-  const seen = useRef<Map<string, number> | null>(null);
+  const seen = useRef<Map<string, [number, number]> | null>(null);
   const [settling, setSettling] = useState(false);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Measured inside the scrolled content, or scrolling sideways between two
-    // renders would read as every card in the column having moved.
+    // Measured inside the scrolled content, or scrolling between two renders
+    // would read as every card on the canvas having moved.
     const origin = container.getBoundingClientRect();
-    const offset = container.scrollTop - origin.top;
+    const offsetX = container.scrollLeft - origin.left;
+    const offsetY = container.scrollTop - origin.top;
 
     const cards = [...container.querySelectorAll<HTMLElement>('[data-card]')];
-    const now = new Map<string, number>();
-    const moved: Array<[HTMLElement, number]> = [];
+    const now = new Map<string, [number, number]>();
+    const moved: Array<[HTMLElement, number, number]> = [];
     const arrived: HTMLElement[] = [];
 
     for (const card of cards) {
       const id = card.dataset.card;
       if (!id) continue;
-      const top = card.getBoundingClientRect().top + offset;
-      now.set(id, top);
+      const box = card.getBoundingClientRect();
+      const left = box.left + offsetX;
+      const top = box.top + offsetY;
+      now.set(id, [left, top]);
 
       const was = seen.current?.get(id);
       if (was === undefined) arrived.push(card);
-      else if (Math.abs(was - top) > 0.5) moved.push([card, was - top]);
+      // Sideways as well as down: changing how the chain is drawn changes how
+      // far apart the columns stand, and every card travels with its column.
+      else if (Math.abs(was[0] - left) > 0.5 || Math.abs(was[1] - top) > 0.5) {
+        moved.push([card, was[0] - left, was[1] - top]);
+      }
     }
 
     // The first pass only takes the measurements: everything is new on a first
@@ -63,9 +70,12 @@ export function useShuffle(
     seen.current = now;
     if (first || !enabled || (!moved.length && !arrived.length)) return;
 
-    for (const [card, delta] of moved) {
+    for (const [card, dx, dy] of moved) {
       card.animate(
-        [{ transform: `translateY(${delta.toFixed(1)}px)` }, { transform: 'none' }],
+        [
+          { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` },
+          { transform: 'none' },
+        ],
         { duration: DURATION, easing: EASE }
       );
     }

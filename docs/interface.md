@@ -214,6 +214,16 @@ in the panel names every direct prerequisite either way, so the fact is never
 hidden — only the line is. The setting is remembered, like the stage filter: it
 says something about how somebody reads rather than about what they are reading.
 
+**Ступеньки** beside it changes how a line is drawn rather than how many there
+are. Off, each is a single curve from one card's edge to the next, which is what
+a cubic is good at over a long horizontal run. On, a line that drops further than
+it reaches is routed instead: out of the card, along to a lane in the gap between
+columns, down the lane, into the next card, corners rounded — and everything
+leading into one course shares its lane and arrives together, which is the fork a
+chain actually has. The columns stand twice as far apart in that mode, because a
+lane needs a corridor and 24px is not one. Neither drawing is more correct than
+the other; both are remembered.
+
 Cards of one field stay together vertically, so switching on a domain filter
 lights a stripe rather than a spray. The columns scroll sideways and say so: the
 edges fade where there is more, and stop fading at the ends. Opening the panel
