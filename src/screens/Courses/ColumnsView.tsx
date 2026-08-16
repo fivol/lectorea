@@ -5,6 +5,8 @@ import { useCatalog } from '@/lib/catalog';
 import { useIsDesktop, useReducedMotion } from '@/lib/hooks';
 import { useHighlight } from '@/lib/highlight';
 import { CARD_WIDTH, COLUMN_GAP } from '@/lib/layout';
+import { placeGuests, type Edge } from '@/lib/order';
+import { useShuffle } from '@/lib/shuffle';
 import { useUi } from '@/store/ui';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
@@ -80,7 +82,7 @@ export default function ColumnsView({
    * the column rather than leaving holes: a filter that shows three courses
    * spread over forty empty slots reads as a broken page.
    */
-  const columns = useMemo(() => {
+  const shelved = useMemo(() => {
     const shown = courses.filter((course) => visible.has(course.id));
     const buckets = new Map<number, BuiltCourse[]>();
     for (const course of shown) {
@@ -94,7 +96,62 @@ export default function ColumnsView({
       }));
   }, [courses, visible]);
 
+  /**
+   * Which cards the chain covers, and every edge inside it.
+   *
+   * Separate from `links` because both the ordering below and the drawn lines
+   * need this, and because it is the *graph* rather than what is drawn of it:
+   * the columns must not rearrange themselves when «Все связи» is pressed, so
+   * the order is settled against every edge whether or not the tree keeps it.
+   */
+  const chain = useMemo(() => {
+    const focus = highlight.focusId;
+    const upstream = new Set<string>();
+    const opened = new Set<string>();
+    if (!highlight.active || !focus) return { focus: null, upstream, opened, edges: [] as Edge[] };
+
+    for (const column of shelved) {
+      for (const course of column.courses) {
+        const emphasis = highlight.emphasisOf(course.id);
+        if (emphasis === 'self' || emphasis === 'direct' || emphasis === 'transitive') {
+          upstream.add(course.id);
+        } else if (emphasis === 'downstream') {
+          opened.add(course.id);
+        }
+      }
+    }
+
+    const edges: Edge[] = [];
+    for (const id of upstream) {
+      for (const dep of catalog.courseById.get(id)?.deps ?? []) {
+        if (upstream.has(dep)) edges.push({ from: dep, to: id });
+      }
+    }
+    for (const id of opened) edges.push({ from: focus, to: id });
+
+    return { focus, upstream, opened, edges };
+  }, [highlight, shelved, catalog]);
+
+  /**
+   * The columns as drawn: the field's own cards in the order the build gave
+   * them, the borrowed ones dropped wherever the chain reads best. See
+   * `placeGuests` — it is the guests that carry nine tenths of the crossings,
+   * because their `row` was decided by a band they are visiting from.
+   */
+  const columns = useMemo(
+    () => placeGuests(shelved, guests, chain.edges),
+    [shelved, guests, chain.edges]
+  );
+
   const total = columns.reduce((sum, column) => sum + column.courses.length, 0);
+
+  /** Everything on the canvas, in the order it stands in — the FLIP's cue. */
+  const arrangement = useMemo(
+    () => columns.map((column) => column.courses.map((course) => course.id).join(',')).join('|'),
+    [columns]
+  );
+
+  const settling = useShuffle(scrollRef, arrangement, !reducedMotion);
 
   /**
    * The edges of the chain, as pairs of course ids.
@@ -126,65 +183,60 @@ export default function ColumnsView({
    *
    * The parent kept is the nearest course that needs this one — fewest columns
    * to the right, then nearest row — because a tree drawn with short edges is
-   * the whole reason for asking for a tree.
+   * the whole reason for asking for a tree. Nearest by the row it is *standing*
+   * in, not by the catalogue's: a guest has just been moved to wherever it read
+   * best, and picking its parent by the row it no longer occupies would hand
+   * the tree the long edge the move was made to avoid.
    */
   const links = useMemo<Link[]>(() => {
-    const focus = highlight.focusId;
-    if (!highlight.active || !focus) return [];
+    const { focus, upstream, opened, edges } = chain;
+    if (!focus) return [];
 
-    const upstream = new Set<string>();
-    const opened = new Set<string>();
-    for (const column of columns) {
-      for (const course of column.courses) {
-        const emphasis = highlight.emphasisOf(course.id);
-        if (emphasis === 'self' || emphasis === 'direct' || emphasis === 'transitive') {
-          upstream.add(course.id);
-        } else if (emphasis === 'downstream') {
-          opened.add(course.id);
-        }
-      }
-    }
-
-    const depsOn = (id: string): string[] =>
-      (catalog.courseById.get(id)?.deps ?? []).filter((dep) => upstream.has(dep));
+    const seat = new Map<string, { column: number; row: number }>();
+    columns.forEach((column, index) =>
+      column.courses.forEach((course, row) => seat.set(course.id, { column: index, row }))
+    );
 
     /** The one course each card is hung under when the graph is cut to a tree. */
     const parentOf = new Map<string, string>();
     if (!fullGraph) {
-      const needs = new Map<string, BuiltCourse[]>();
-      for (const id of upstream) {
-        const course = catalog.courseById.get(id);
-        if (!course) continue;
-        for (const dep of depsOn(id)) needs.set(dep, [...(needs.get(dep) ?? []), course]);
+      const needs = new Map<string, string[]>();
+      for (const edge of edges) {
+        if (!upstream.has(edge.from) || !upstream.has(edge.to)) continue;
+        needs.set(edge.from, [...(needs.get(edge.from) ?? []), edge.to]);
       }
       for (const [dep, dependants] of needs) {
-        const here = catalog.courseById.get(dep);
-        const nearest = dependants.reduce((best, course) => {
-          if (course.level !== best.level) return course.level < best.level ? course : best;
-          const reach = Math.abs(course.row - (here?.row ?? 0));
-          const bestReach = Math.abs(best.row - (here?.row ?? 0));
-          return reach < bestReach ? course : best;
+        const here = seat.get(dep);
+        const nearest = dependants.reduce((best, id) => {
+          const one = seat.get(id);
+          const other = seat.get(best);
+          if (!one || !other) return best;
+          if (one.column !== other.column) return one.column < other.column ? id : best;
+          const reach = Math.abs(one.row - (here?.row ?? 0));
+          const bestReach = Math.abs(other.row - (here?.row ?? 0));
+          return reach < bestReach ? id : best;
         });
-        parentOf.set(dep, nearest.id);
+        parentOf.set(dep, nearest);
       }
     }
 
     const out: Link[] = [];
-    for (const id of upstream) {
-      for (const dep of depsOn(id)) {
-        // A card whose every dependant is off the canvas has no parent to be
-        // hung under, so it keeps what it has rather than being cut adrift.
-        if (!fullGraph && parentOf.has(dep) && parentOf.get(dep) !== id) continue;
-        out.push({ from: dep, to: id, depth: highlight.depthOf(dep) });
+    for (const edge of edges) {
+      if (opened.has(edge.to)) {
+        // Downstream is a fan, not a graph: the selection is a prerequisite of
+        // each of these by definition, and nothing further is drawn. A fan is
+        // already a tree, so the switch has nothing to say about it.
+        out.push({ from: edge.from, to: edge.to, depth: 0 });
+        continue;
       }
+      // A card whose every dependant is off the canvas has no parent to be
+      // hung under, so it keeps what it has rather than being cut adrift.
+      if (!fullGraph && parentOf.has(edge.from) && parentOf.get(edge.from) !== edge.to) continue;
+      out.push({ from: edge.from, to: edge.to, depth: highlight.depthOf(edge.from) });
     }
-    // Downstream is a fan, not a graph: the selection is a prerequisite of each
-    // of these by definition, and nothing further is drawn. A fan is already a
-    // tree, so the switch has nothing to say about it.
-    for (const id of opened) out.push({ from: focus, to: id, depth: 0 });
 
     return out.sort((a, b) => a.depth - b.depth);
-  }, [highlight, columns, catalog, fullGraph]);
+  }, [chain, columns, highlight, fullGraph]);
 
   /**
    * Bring a course into view when the path list or the search box asks for it,
@@ -299,6 +351,7 @@ export default function ColumnsView({
             links={links}
             revision={`${selectedId}:${columns.length}:${total}`}
             animate={!reducedMotion}
+            settling={settling}
           />
 
           {columns.map((column) => (
@@ -320,7 +373,10 @@ export default function ColumnsView({
                 {column.courses.map((course) => {
                   const emphasis = highlight.active ? highlight.emphasisOf(course.id) : 'self';
                   return (
-                    <li key={course.id}>
+                    // The FLIP reads its positions off the row rather than off
+                    // the card: the card carries a transform of its own for the
+                    // hover lift, and two animations on one property fight.
+                    <li key={course.id} data-card={course.id}>
                       <CourseCard
                         course={course}
                         domain={catalog.domainById.get(course.domains[0])}

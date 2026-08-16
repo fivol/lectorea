@@ -121,10 +121,44 @@ When a filter hides part of a column the remainder collapses upward. Rows stop
 lining up globally, and that is the right behaviour: a column holding three cards
 spread across forty empty slots reads as a broken page, not as a filtered one.
 
-A filter hides rather than fades, and nothing outside it is kept as context — not
-even a prerequisite. A foreign card sitting several columns from anything that
-referred to it read as part of the field you asked for. The panel answers that
-question instead, in «Требует знания» and «Даст понимание курсов».
+A filter hides rather than fades. The one exception is a selection: the course
+being read, and every prerequisite its chain runs through, are borrowed onto the
+canvas as guests carrying the tag of the field they came from, and are dropped
+again when the selection changes — see [the interface](interface.md#filters).
+Where those guests stand is the one layout decision the client makes; the next
+section is about it.
+
+## Where the borrowed cards stand
+
+`row` is decided once over the whole catalogue with `bandOrder` as its first key,
+which is what a guest carries with it into a view it is only visiting: it lands
+after every card of the field on show, however far that is from the course that
+borrowed it. Measured over all 206 courses, each selected under its own field's
+filter, that is where the crossings are — 74 line crossings in the default tree,
+and only 8 of them between a field's own cards. The build's barycentre is doing
+its job; it is simply not solving the problem this screen has.
+
+So `placeGuests` in `src/lib/order.ts` runs at render time, over the visible
+cards only, and moves nothing but the guests:
+
+1. Natives keep their `row` order and are keyed by their position among natives,
+   so no rearrangement of guests can disturb them.
+2. Each guest is keyed by the average row of what it connects to in the column
+   being swept — the same barycentre as the build, four sweeps each way. Rows are
+   renumbered after every column rather than after every sweep; reading positions
+   from before the sweep started converges to a visibly worse answer.
+3. Then adjacent swaps: any pair involving a guest is exchanged when doing so
+   lowers the number of crossings, for up to six rounds. This is not garnish —
+   barycentre alone stops at 37 of the 74, and the swaps take it to 15.
+
+The order is settled against every edge of the chain, not against the ones the
+tree keeps, so pressing «Все связи» redraws lines without moving cards.
+
+Reordering the natives too would reach 6 crossings. It is not worth it: the
+columns are meant to be a map, and a map that reshuffles under every question is
+not one. Cards that do move are animated — see `useShuffle` — because a column
+that is silently different reads as a screen that was replaced rather than as the
+same cards in new places.
 
 ## Why not dagre
 
@@ -142,8 +176,9 @@ draw. What is left is ~80 lines with no dependency in the build.
 
 ## What the client does
 
-Nothing about layout. It reads `level` and `row`, groups cards into columns and
-renders them.
+Almost nothing about layout. It reads `level` and `row`, groups cards into
+columns and renders them; the one thing it decides for itself is where a
+borrowed card stands, above.
 
 The graph queries it does run are all cheap re-derivations that would cost more
 to ship than to compute (`src/lib/catalog.tsx`):

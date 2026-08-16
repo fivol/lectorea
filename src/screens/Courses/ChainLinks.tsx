@@ -10,6 +10,8 @@ type Props = {
   /** Bumped by the caller when the layout may have changed under the curves. */
   revision: unknown;
   animate: boolean;
+  /** Cards are sliding to new rows right now — see `useShuffle`. */
+  settling: boolean;
 };
 
 type Curve = { key: string; d: string; length: number; depth: number };
@@ -28,7 +30,7 @@ type Curve = { key: string; d: string; length: number; depth: number };
  * layout is the browser's: cards are flex children, and their real positions
  * are the only ones that are true after a filter, a resize or a scroll.
  */
-export default function ChainLinks({ scrollRef, links, revision, animate }: Props) {
+export default function ChainLinks({ scrollRef, links, revision, animate, settling }: Props) {
   const [curves, setCurves] = useState<Curve[]>([]);
 
   const measure = useCallback(() => {
@@ -94,6 +96,24 @@ export default function ChainLinks({ scrollRef, links, revision, animate }: Prop
       window.removeEventListener('resize', schedule);
     };
   }, [measure, scrollRef, revision]);
+
+  /**
+   * While cards are sliding, follow them.
+   *
+   * The measurement above happens once, and once is right for a layout that
+   * has finished moving. A card animating to a new row is somewhere else on
+   * every frame, and a curve pinned to where it will end up detaches from the
+   * card it is drawn from for the length of the animation — the one moment the
+   * line is most obviously about that card.
+   */
+  useEffect(() => {
+    if (!settling) return;
+    let frame = requestAnimationFrame(function tick() {
+      measure();
+      frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [settling, measure]);
 
   if (!curves.length) return null;
 
