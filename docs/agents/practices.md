@@ -181,6 +181,49 @@ already carries its own «14 лекций», so the group total is a second runn
 the eye has to reconcile against them, and unlike the hours it *is* recoverable
 at a glance.
 
+## The rules are the sieve; a reader is the confirmation
+
+Nothing reaches the catalogue on the rule pass's word alone. `lib/rules.ts`
+decides from a title and publishes about 13% of the 41 000 candidates; a reader
+then judges each of those, and `08-build.ts` publishes only what the reader
+confirmed. The verdict lives in the `verdicts` table — `ok`, `wrong-course`
+(which republishes under the course the reader named), `not-a-course`, `unsure`
+— and **an absent verdict means "not confirmed", never "fine"**.
+
+The first full pass, 2026-08-16, read all 5469 published bindings in 37 batches
+of 150: **4148 ok, 1204 not a course, 101 rebound, 16 unsure.** 24% wrong, twice
+what a hand-read sample of 120 had estimated.
+
+**Why a reader rather than more rules.** The three dominant errors are all
+legible in the title and none is reachable by a keyword: a *unit* of a course
+published as a playlist (99 Khan Academy chemistry units in one batch alone), a
+title whose subject is a homonym of another course's («Genesis» → genetics,
+«The Greeks» → the Greek *language*, «Learning with Conditional Guarantees» →
+learning sciences), and a vendor dump or event archive wearing a subject name.
+The complement holds too: a bag of bookmarks is *invisible* in the title, which
+is why ownership stays a paid API question ([above](#ask-the-expensive-question-of-what-is-already-published-not-only-of-what-is-new))
+and not a reading task.
+
+**Generally:** where a cheap rule has good recall and poor precision, keep it as
+the sieve and put the judgement after it — but make the gate say out loud what
+silence means, or "not looked at yet" quietly becomes "approved".
+
+## A batch handed to a reader is checked before it is trusted
+
+Every verdict file is validated against its batch before import: same count,
+same ids, no duplicates, and a suggested course that is actually a course. The
+check earns its keep immediately — one agent's prose reported 151 verdicts for a
+150-row batch while the file it wrote was correct, and another proposed a course
+id the catalogue does not have. Both would have been silent corruption.
+
+`_review.ts import` turns an unknown course id into `not-a-course` rather than
+storing it: a binding to a course that does not exist is not a suggestion, it is
+a dangling reference.
+
+**Generally:** a reader that returns structured data is a source like any other.
+Reconcile it against what you sent, and never let a free-text field become a key
+without checking it resolves.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

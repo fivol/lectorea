@@ -115,6 +115,29 @@ CREATE TABLE IF NOT EXISTS ownership (
   checked_at TEXT
 );
 
+-- The reading a model gave a binding the rules had already accepted.
+--
+-- The rule pass is a first sieve, not the answer: it reads a title and cannot
+-- see that «Trigonometry 3 - PRECALCULUS 8» is one topic of a course, that
+-- «Crash Course in Music History» is not contemporary history, or that «Love
+-- Babbar DSA 450 Questions» is a problem set. A sample of 120 published
+-- bindings on 2026-08-16 was ~12% wrong in exactly those three shapes, and all
+-- three are visible in the title — which is what makes a reader the right
+-- instrument for them, and playlistItems (see the ownership table) the right
+-- one for the collections a title cannot betray.
+--
+-- verdict is one of ok / wrong-course / not-a-course / unsure. Only ok
+-- publishes; wrong-course carries the course it should have been.
+-- (No backticks in this comment: SCHEMA is a template literal, and one closes it.)
+CREATE TABLE IF NOT EXISTS verdicts (
+  playlist_id TEXT PRIMARY KEY,
+  verdict TEXT,
+  suggested_course TEXT,
+  note TEXT,
+  model TEXT,
+  checked_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS quota (
   date TEXT,
   key TEXT,
@@ -514,6 +537,23 @@ export type MatchRow = {
 export const MATCH_THRESHOLD = 0.75;
 
 /** A binding the catalogue can show: reviewed by hand, or confident enough. */
+/**
+ * A reader's answer about a binding the rules already accepted.
+ *
+ * Only `ok` publishes. `wrong-course` publishes under `suggested_course`
+ * instead; `not-a-course` and `unsure` keep the playlist out. A row that is
+ * absent has not been read yet — `08-build.ts` treats that as "not confirmed",
+ * never as "fine".
+ */
+export type VerdictRow = {
+  playlist_id: string;
+  verdict: 'ok' | 'wrong-course' | 'not-a-course' | 'unsure';
+  suggested_course: string | null;
+  note: string | null;
+  model: string | null;
+  checked_at: string | null;
+};
+
 export function isBindingConfident(match: Pick<MatchRow, 'confidence' | 'reviewed'>): boolean {
   return match.reviewed === 1 || match.confidence >= MATCH_THRESHOLD;
 }

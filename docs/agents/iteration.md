@@ -118,6 +118,39 @@ already paid for, without asking the same questions again. A second pass over
 the same courses wants `--variant=1`: search has one first page per question, and
 the way to get more out of it is a different question.
 
+### 3c. Confirm the new bindings before they publish
+
+Nothing the rule pass accepts reaches the catalogue until a reader has confirmed
+it — `08-build.ts` publishes a binding only when `verdicts` says `ok`, and an
+absent verdict counts as "not confirmed"
+([practices.md](practices.md#the-rules-are-the-sieve-a-reader-is-the-confirmation)).
+So a run that bound anything new ends here, or the new material stays invisible.
+
+```bash
+pnpm tsx scripts/_review.ts export /tmp/review --size=150
+```
+
+That writes one batch per 150 unconfirmed bindings plus `courses.txt`, the list
+every verdict is judged against. Hand each batch to a subagent — one per batch,
+they run in parallel, and the concurrency cap is 20. The brief that produced the
+2026-08-16 pass is in the commit; the part that matters is the *examples*, since
+the three shapes a reader is there to catch (a unit of a course, a homonym, a
+vendor dump) are learned from instances rather than from the definition.
+
+```bash
+pnpm tsx scripts/_review.ts import /tmp/review && make data
+```
+
+`import` validates every file against its batch before writing — count, ids,
+duplicates — and turns a suggested course that does not exist into a refusal
+rather than a dangling reference. Both guards fired on the first run.
+
+**Expect a quarter of it to go.** 1204 of 5469 on the first pass, and the loss
+is concentrated in whichever seams publish something other than one semester per
+playlist — the table in
+[data-traps.md](data-traps.md#the-rules-are-not-12-wrong--they-are-blind-to-unstructured-sources)
+says which.
+
 ### 4. Verify, then publish
 
 ```bash

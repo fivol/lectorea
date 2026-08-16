@@ -16,7 +16,7 @@
 [![The map](docs/images/map.webp)](https://lectorea.org/)
 
 207 courses across 39 fields of knowledge, each one knowing what it depends on,
-and some 6800 recordings of them from 320 universities and channels. That
+and some 5600 recordings of them from 320 universities and channels. That
 is the difference from a search engine: YouTube can find you a lecture on tensor
 analysis, but it cannot tell you that you will not understand it without linear
 algebra. Lectorea answers the two questions that actually come up:

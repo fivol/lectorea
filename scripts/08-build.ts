@@ -59,6 +59,7 @@ import {
   isBindingConfident,
   openDb,
   type MatchRow,
+  type VerdictRow,
   type PlaylistRow,
   type VideoRow,
   type ChannelRow,
@@ -330,6 +331,12 @@ function assemblePlaylists(sources: Sources): Assembled {
     const matchRows = db.prepare(`SELECT * FROM matches`).all() as MatchRow[];
     const matches = new Map(matchRows.map((m) => [m.playlist_id, m]));
 
+    // What a reader made of each binding the rules accepted. Empty on a cache
+    // that has never been reviewed, which is why `resolveCourses` says out loud
+    // what an absent verdict means rather than defaulting to publish.
+    const verdictRows = db.prepare(`SELECT * FROM verdicts`).all() as VerdictRow[];
+    const verdicts = new Map(verdictRows.map((v) => [v.playlist_id, v]));
+
     const channelRows = db.prepare(`SELECT * FROM channels`).all() as ChannelRow[];
     const channels = new Map(channelRows.map((c) => [c.id, c]));
 
@@ -364,7 +371,7 @@ function assemblePlaylists(sources: Sources): Assembled {
       // One recording, possibly several courses: «Алгоритмы и структуры
       // данных» is one semester teaching two of ours, and it belongs in both
       // shards rather than in whichever we picked.
-      const bound = resolveCourses(row.id, matches, sources).filter((id) => courseIds.has(id));
+      const bound = resolveCourses(row.id, matches, sources, verdicts).filter((id) => courseIds.has(id));
       if (!bound.length) continue;
       const courseId = bound[0];
 
@@ -515,7 +522,8 @@ function assemblePlaylists(sources: Sources): Assembled {
 function resolveCourses(
   playlistId: string,
   matches: Map<string, MatchRow>,
-  sources: Sources
+  sources: Sources,
+  verdicts: Map<string, VerdictRow>
 ): string[] {
   if (playlistId in sources.overrides.matches) {
     return boundCourses(sources.overrides.matches[playlistId]);
@@ -524,7 +532,28 @@ function resolveCourses(
   if (!match?.course_id) return [];
   // Unreviewed low-confidence guesses stay out of the catalogue.
   if (!isBindingConfident(match)) return [];
-  return [match.course_id];
+
+  /*
+   * The rules are the sieve; a reader is the confirmation.
+   *
+   * `lib/rules.ts` decides from a title, and a title cannot say that
+   * «Trigonometry 3 - PRECALCULUS 8» is one topic of a course or that «Crash
+   * Course in Music History» is not contemporary history. A sample of 120
+   * published bindings was ~12% wrong in shapes exactly like those, every one
+   * of them legible to somebody actually reading the line — so nothing reaches
+   * the catalogue on the rules' word alone.
+   *
+   * A person still outranks everybody: `overrides.yaml` returned above, and
+   * `reviewed = 1` never gets here without one.
+   */
+  const verdict = verdicts.get(playlistId);
+  if (!verdict) return match.reviewed === 1 ? [match.course_id] : [];
+  if (verdict.verdict === 'ok') return [match.course_id];
+  // A reader that moved the binding keeps it, under the course it named.
+  if (verdict.verdict === 'wrong-course' && verdict.suggested_course) {
+    return [verdict.suggested_course];
+  }
+  return [];
 }
 
 function resolveProvider(

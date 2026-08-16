@@ -327,6 +327,34 @@ material, 34 are mirrors and 17 were collections. **92% against the hunt's 5%** 
 the crawl seams are clean and the search seam is not, which is the argument for
 running them in that order and not the other way round.
 
+## The rules are not "12% wrong" — they are blind to unstructured sources
+
+The 2026-08-16 reading of all 5469 published bindings refused 24% of them, and
+the useful part is not the average but its **variance by source**:
+
+| Source of the batch | Refused of 150 |
+|---|---|
+| NPTEL / IIT (coded semester courses) | 0 |
+| МГУ, ВШЭ, МФТИ (per-semester recordings) | 3–4 |
+| MIT / Stanford (courses plus everything else the channel makes) | 24 |
+| mixed and mined | 35–68 |
+| Khan Academy | 124 |
+
+So the rule pass is not uniformly unreliable. It is **excellent where a channel
+publishes one semester per playlist and blind where it does not** — and the
+shapes it cannot see are the same three every time: a *unit* of a course
+published as a playlist, a subject that is a homonym of another course, and a
+vendor dump or event archive wearing a subject name.
+
+Two consequences worth keeping:
+
+- **Judge a seam by its unit, not by its prestige.** Khan Academy is excellent
+  teaching and almost entirely unusable here, because its unit is a topic. MIT
+  OpenCourseWare is the same institution as MIT's «How We Teach» talks.
+- **A vetted channel is not a clean channel.** `_authors.ts` skips vetted
+  channels for free because they own their material — which is true and says
+  nothing about whether what they publish is a semester.
+
 ## English plurals: store the singular, and only when the phrase has two words
 
 `findPhrase` tolerates three letters on the right edge for Russian inflection,
