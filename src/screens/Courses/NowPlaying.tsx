@@ -76,31 +76,43 @@ export default function NowPlaying({
         every player there has ever been and need no label beside a running
         lecture; marking one off is a claim about the reader's own progress,
         and a claim is worth a word.
+
+        Three columns and not a row, because the pair is transport and transport
+        sits under the middle of the picture — a `justify-between` would hang it
+        off the left edge, and `ml-auto` on the button would centre the pair on
+        whatever was left over rather than on the frame. The empty first column
+        is what pays for that.
       */}
-      <div className="mt-2 flex items-center gap-1.5">
-        <IconButton
-          icon="chevron-left"
-          label={t('ui.player.prevLecture')}
-          disabled={!onPrev}
-          className="disabled:pointer-events-none disabled:opacity-40"
-          onClick={() => onPrev?.()}
-        />
-        <IconButton
-          icon="chevron-right"
-          label={t('ui.player.nextLecture')}
-          disabled={!onNext}
-          className="disabled:pointer-events-none disabled:opacity-40"
-          onClick={() => onNext?.()}
-        />
+      <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <span aria-hidden="true" />
+        <div className="flex items-center gap-1">
+          <IconButton
+            icon="chevron-left"
+            label={t('ui.player.prevLecture')}
+            disabled={!onPrev}
+            className="disabled:pointer-events-none disabled:opacity-40"
+            onClick={() => onPrev?.()}
+          />
+          <IconButton
+            icon="chevron-right"
+            label={t('ui.player.nextLecture')}
+            disabled={!onNext}
+            className="disabled:pointer-events-none disabled:opacity-40"
+            onClick={() => onNext?.()}
+          />
+        </div>
+        {/* «Отметить» rather than «отметить просмотренной»: it stands under the
+            title of the lecture it is about and beside a tick, and the long
+            form is what forces the arrows off centre on a phone. */}
         <Button
           small
           variant={done ? 'primary' : 'default'}
           icon="check"
           iconSize={14}
-          className="ml-auto"
+          className="justify-self-end"
           onClick={onToggleDone}
         >
-          {done ? t('ui.player.lectureDone') : t('ui.playlist.markWatched')}
+          {done ? t('ui.player.lectureDone') : t('ui.player.markLecture')}
         </Button>
       </div>
     </div>

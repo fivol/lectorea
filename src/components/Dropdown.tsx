@@ -32,6 +32,13 @@ type Props = {
   label: ReactNode;
   /** Shown as a dot on the trigger when the control holds a value. */
   active?: boolean;
+  /**
+   * What the trigger is, where its own word does not say. Most of these are
+   * labelled «Язык» or «Год» and need nothing; a control whose label is the
+   * value itself — the player's «1,5×» — has to say somewhere that it is the
+   * speed.
+   */
+  title?: string;
   children: ReactNode;
   align?: 'left' | 'right';
   className?: string;
@@ -64,6 +71,7 @@ const POPOVER_HEIGHT = 320;
 export default function Dropdown({
   label,
   active,
+  title,
   children,
   align = 'left',
   className = '',
@@ -122,7 +130,13 @@ export default function Dropdown({
       if (!inside(event.target as Node)) close();
     };
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') close();
+      if (event.key !== 'Escape') return;
+      // Escape closes the top layer, and while this is open the top layer is
+      // this. Without the stop it also reaches the modal underneath — whose
+      // own handler sits on `window`, one step further along the same bubble —
+      // and a reader dismissing a menu loses the player behind it.
+      event.stopPropagation();
+      close();
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKey);
@@ -137,7 +151,16 @@ export default function Dropdown({
       {/* No dot beside the label: the chip already changes colour when it holds
           a value, and what that value *is* is spelled out in the removable
           chips below — so the dot repeated a signal twice and crowded the row. */}
-      <Chip on={active} onClick={() => (open ? close() : setOpen(true))} ariaExpanded={open}>
+      {/* `title` and not `ariaLabel`: the label is the value on a control like
+          the player's speed, and an accessible name of «скорость
+          воспроизведения» would say what it is at the price of never saying
+          what it is set to. As a title it becomes the description instead. */}
+      <Chip
+        on={active}
+        title={title}
+        onClick={() => (open ? close() : setOpen(true))}
+        ariaExpanded={open}
+      >
         {label}
         <Icon name="chevron-down" size={12} />
       </Chip>

@@ -239,6 +239,7 @@
   "ui.player.prevLecture": "Предыдущая лекция",
   "ui.player.nextLecture": "Следующая лекция",
   "ui.player.lectureDone": "Просмотрена",
+  "ui.player.markLecture": "Отметить",
   "ui.player.about": "О записи",
   "ui.playlist.playHint": "Плеер загрузится по клику",
   "ui.playlist.views": "просмотры",

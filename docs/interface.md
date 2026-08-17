@@ -609,15 +609,22 @@ lectures under it, and everything the catalogue knows about the recording down
 the side — the shape somebody is in while deciding whether this is the course to
 take on.
 
-The glyph in the corner, and pressing play, put it in the other. The dialog
-grows to the width and height it can have, the frame takes whatever the dialog
-has left over rather than a stated ratio, and the lecture list moves to the side
-and becomes the queue: the row playing is lit, it brings itself into view when
-the player walks on without being asked, and the recording's own progress stands
-over it — «11 из 26 лекций · 12 из 29 ч» — so what is left of the course is
-answered where the next lecture is chosen. That is the screen for the hour
-somebody actually spends here, and it is deliberately not fullscreen: fullscreen
-is YouTube's own and takes the ticks, the queue and the progress away with it.
+The glyph — in the corner of the header, and again under the right-hand corner
+of the picture where a player keeps that button — and pressing play, put it in
+the other. The dialog grows to the width and height it can have, the frame takes
+whatever the dialog has left over rather than a stated ratio, and the lecture
+list moves to the side and becomes the queue: the row playing is lit, it brings
+itself into view when the player walks on without being asked, and the
+recording's own progress stands over it — «11 из 26 лекций · 12 из 29 ч» — so
+what is left of the course is answered where the next lecture is chosen. That is
+the screen for the hour somebody actually spends here, and it is deliberately
+not fullscreen: fullscreen is YouTube's own and takes the ticks, the queue and
+the progress away with it.
+
+The queue is a **stated width** and the picture takes everything the dialog
+grows by. A column of numbered titles and a length needs about twenty
+characters; every pixel past that comes out of the one thing the reader is here
+for, and a share of the width would hand the queue a third of a large display.
 
 Under the picture is what the frame cannot say. A YouTube embed names the
 lecture and its place in the playlist only while its chrome is up, and the
@@ -634,6 +641,13 @@ first. Nothing else moves — one lecture list, one set of ticks, one set of
 numbers, laid out twice. For a course cut into parts, «Часть 2» comes with it and
 stands over the queue rather than at the far end of the sheet, since the reader
 who has run out of lectures is looking at the bottom of the queue.
+
+Two things do not travel: **«В избранное» and «Отметить все 26»**. Both are
+decisions about the recording as a whole and neither is a thing anybody does
+while a lecture is running — on the watching screen they would be two full-width
+buttons of nothing to do, one of which wipes the ticks of a course in progress.
+Marking off here is one lecture at a time, under the picture and down the queue,
+and the sheet somebody reads before starting still has both.
 
 Which shape a recording opens in is **not** remembered, and that is the one
 setting in this dialog that is not. It would buy nothing: watching starts with a
@@ -688,18 +702,28 @@ hand. Counting only milestones leaves the bar still for a fortnight while
 somebody works through a forty-hour prerequisite; counting only fractions loses
 the milestone.
 
-**Speed.** A strip of buttons under the frame — «0,5× … 2×» — plus `Shift + .`
-and `Shift + ,`, and the choice is remembered: it belongs to the reader, not to
-the lecture, so the next part and the next session open at it.
+**The strip under the frame** carries the two things the embed cannot: on the
+left what the player is doing — the speed — and on the right what shape it is
+in, under the corner of the picture and directly beside the fullscreen button
+inside the frame, because that is the corner a hand already goes to.
+
+**Speed** is one chip saying «1,25×», which opens the list of rates; `Shift + .`
+and `Shift + ,` step along the same list without opening anything. It was the
+whole ladder of eight buttons on a plate with the current one lit in the accent,
+and that is a lot of furniture under a video for a setting somebody picks once
+and keeps for a term — the choice is remembered, because it belongs to the
+reader rather than to the lecture, so the next part and the next session open at
+it. The chip turns accent only when the speed is not 1×, which is the one state
+worth noticing from across the room.
 
 The rates are the ones the player says it has, not a list of our own. **2× is
 its ceiling**, and it does not refuse anything above it — `setPlaybackRate(3)`
-is answered with a frame reporting 2 — so a button offering 3× would be a
-button that lies. (A browser extension can go past it because it runs *inside*
+is answered with a frame reporting 2 — so a row offering 3× would be a row that
+lies. (A browser extension can go past it because it runs *inside*
 `youtube.com` and sets `playbackRate` on the `<video>` element directly. A page
 embedding the player cannot reach across origins to that element, and the only
 door it has — the player's own API — is the one that rounds down.) Reading the
-player's list also means the strip grows by itself on the day the ceiling moves.
+player's list also means the list grows by itself on the day the ceiling moves.
 
 **The keyboard is the page's, not the frame's.** A click on the video hands
 focus to another origin, and from that moment every key press is delivered

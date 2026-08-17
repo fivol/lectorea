@@ -400,7 +400,7 @@ export default function PlaylistModal({
           `relative flex h-full w-full animate-scale-in flex-col overflow-hidden
            bg-surface shadow-[var(--shadow-modal)] md:rounded-pop md:border md:border-line`,
           watching
-            ? 'md:h-[92svh] md:w-[min(84rem,95vw)]'
+            ? 'md:h-[92svh] md:w-[min(100rem,96vw)]'
             : 'md:h-auto md:max-h-[88svh] md:w-[min(64rem,92vw)]'
         )}
       >
@@ -438,8 +438,11 @@ export default function PlaylistModal({
           className={cx(
             'min-h-0 flex-1 lg:overflow-hidden',
             watching
-              ? `flex flex-col
-                 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)]`
+              ? // A stated width rather than a share: the queue is a column of
+                // numbered titles and a length, and every pixel past what those
+                // need comes out of the picture. It is the picture the reader is
+                // here for, so it takes everything the dialog grows by.
+                'flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]'
               : `grid overflow-y-auto overscroll-contain
                  lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]`
           )}
@@ -521,11 +524,29 @@ export default function PlaylistModal({
               )}
             </div>
 
-            {/* Under the frame rather than over it: an overlay would sit on
-                YouTube's own chrome, and the strip is pressed while the lecture
-                runs. Only once there is a player to talk to — before that it is
-                a control for nothing. */}
-            {playing ? <PlayerSpeed rate={rate} rates={rates} onPick={setRate} /> : null}
+            {/* The controls the frame cannot carry, in the strip below it
+                rather than over it: an overlay would sit on YouTube's own
+                chrome, and these are pressed while the lecture runs. Only once
+                there is a player to talk to — before that they control nothing.
+
+                The two ends are where a player puts them: what it is doing on
+                the left, what shape it is in on the right, under the corner of
+                the picture and beside the fullscreen button inside the frame,
+                because that is the corner a hand already goes to. The one in
+                the header stays — it is the way *back* on a dialog that has no
+                strip when nothing is playing. */}
+            {playing ? (
+              <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-1.5">
+                <PlayerSpeed rate={rate} rates={rates} onPick={setRate} />
+                <IconButton
+                  className="ml-auto"
+                  icon={watching ? 'collapse' : 'fit'}
+                  label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
+                  aria-pressed={watching}
+                  onClick={() => setView(watching ? 'list' : 'watch')}
+                />
+              </div>
+            ) : null}
 
             {/* Which lecture this is, how far into it, and the three controls
                 that belong to the one being watched rather than to the
@@ -856,31 +877,43 @@ export default function PlaylistModal({
                   </button>
                 </p>
               ) : null}
-              <Button
-                variant={favorite ? 'primary' : 'default'}
-                icon={favorite ? 'star-filled' : 'star'}
-                iconSize={16}
-                className="w-full justify-center"
-                onClick={() => toggleFavorite(playlist.id)}
-              >
-                {favorite ? t('ui.course.favoriteOn') : t('ui.course.favorite')}
-              </Button>
-              {/* The label names what the press does. Half way through, that is
-                  «отметить все 30» — not «просмотрено», which is a claim about
-                  a state the row of ticks above already contradicts. */}
-              <Button
-                variant={progress.complete ? 'primary' : 'default'}
-                icon="check"
-                iconSize={16}
-                className="w-full justify-center"
-                onClick={() => setAll(!progress.complete)}
-              >
-                {progress.complete
-                  ? t('ui.playlist.watchedOn')
-                  : progress.started
-                    ? t('ui.playlist.watchedAll', { n: progress.total })
-                    : t('ui.playlist.watched')}
-              </Button>
+              {/* Two decisions about the recording as a whole — save it for
+                  later, and call the whole thing watched — and neither is a
+                  thing anybody does while a lecture is running. They belong to
+                  the sheet somebody reads before starting; on the watching
+                  screen they would be two full-width buttons of nothing to do,
+                  one of which wipes the ticks of a course in progress. What
+                  marking off looks like here is one lecture at a time, under
+                  the picture and down the queue. */}
+              {watching ? null : (
+                <>
+                  <Button
+                    variant={favorite ? 'primary' : 'default'}
+                    icon={favorite ? 'star-filled' : 'star'}
+                    iconSize={16}
+                    className="w-full justify-center"
+                    onClick={() => toggleFavorite(playlist.id)}
+                  >
+                    {favorite ? t('ui.course.favoriteOn') : t('ui.course.favorite')}
+                  </Button>
+                  {/* The label names what the press does. Half way through, that
+                      is «отметить все 30» — not «просмотрено», which is a claim
+                      about a state the row of ticks above already contradicts. */}
+                  <Button
+                    variant={progress.complete ? 'primary' : 'default'}
+                    icon="check"
+                    iconSize={16}
+                    className="w-full justify-center"
+                    onClick={() => setAll(!progress.complete)}
+                  >
+                    {progress.complete
+                      ? t('ui.playlist.watchedOn')
+                      : progress.started
+                        ? t('ui.playlist.watchedAll', { n: progress.total })
+                        : t('ui.playlist.watched')}
+                  </Button>
+                </>
+              )}
               <ButtonLink
                 href={watchUrl(listId, shownId ?? playlist.videos[0]?.id)}
                 icon="external"

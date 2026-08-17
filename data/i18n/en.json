@@ -239,6 +239,7 @@
   "ui.player.prevLecture": "Previous lecture",
   "ui.player.nextLecture": "Next lecture",
   "ui.player.lectureDone": "Watched",
+  "ui.player.markLecture": "Mark done",
   "ui.player.about": "About this recording",
   "ui.playlist.playHint": "The player loads on click",
   "ui.playlist.views": "views",
