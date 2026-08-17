@@ -47,12 +47,8 @@ export function FactTile({
   hint?: ReactNode;
 }) {
   const tile = (
-    <div
-      className={`min-w-0 rounded-card bg-surface-2 px-2 py-2 text-center ${
-        hint ? 'cursor-help' : ''
-      }`}
-    >
-      <Icon name={icon} size={13} className="mx-auto text-ink-faint" />
+    <div className={`inlay min-w-0 px-2 py-2 text-center ${hint ? 'cursor-help' : ''}`}>
+      <Icon name={icon} size={13} className="ink-soft mx-auto" />
       <p className="num mt-1 truncate text-sm font-medium leading-tight text-ink">{value}</p>
       {/* The caption wraps where the number truncates. A tile is a quarter of a
           sidebar wide, «средняя лекция» does not fit across it in any language
@@ -60,7 +56,7 @@ export function FactTile({
           to be guessed — while the number it belongs to is four characters and
           never near the edge. The tiles are grid items, so the taller caption
           simply makes all three boxes the same taller height. */}
-      <p className="mt-0.5 text-[10px] leading-tight text-ink-faint">{label}</p>
+      <p className="ink-soft mt-0.5 text-[11px] leading-tight">{label}</p>
     </div>
   );
 
@@ -122,10 +118,10 @@ export function Meter({
   return (
     <Tooltip content={hint}>
       <div className="cursor-help">
-        <div className="flex items-center gap-1.5 text-xs">
-          <Icon name={icon} size={13} className="text-ink-faint" />
-          <span className="min-w-0 flex-1 truncate text-ink-faint">{label}</span>
-          <span className="num shrink-0 text-ink-dim">{value}</span>
+        <div className="ink-soft flex items-center gap-1.5 text-xs">
+          <Icon name={icon} size={13} />
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          <span className="num shrink-0 text-ink">{value}</span>
         </div>
         <span className="mt-1 block h-1 overflow-hidden rounded-full bg-surface-2">
           <span

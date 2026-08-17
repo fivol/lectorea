@@ -8,8 +8,9 @@ import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from './Icon';
+import { LectureThumb, ResumeCard } from './ResumeCard';
 import { WeekGoalBar } from './WeekGoal';
-import { Button } from './ui';
+import { IconButton } from './ui';
 
 /**
  * The profile, said in one card, on the front page.
@@ -85,7 +86,8 @@ export default function ProfileSummary({
   className?: string;
 }) {
   const highlights = useHighlights();
-  if (!highlights.any) return null;
+  const hidden = useUi((state) => state.summaryHidden);
+  if (!highlights.any || hidden) return null;
   if (variant === 'bar') return <SummaryBar highlights={highlights} className={className} />;
   return <SummaryCard highlights={highlights} variant={variant} className={className} />;
 }
@@ -110,7 +112,7 @@ function SummaryCard({
 }) {
   const { t, plural } = useT();
   const { resume, week, streak } = highlights;
-  const openProfile = useUi((state) => state.openProfile);
+  const hideSummary = useUi((state) => state.hideSummary);
   const floating = variant === 'card';
 
   return (
@@ -123,18 +125,21 @@ function SummaryCard({
           <Icon name="profile" size={14} />
         </span>
         <span className="mono-label truncate text-ink-dim">{t('ui.home.title')}</span>
-        {/* A ghost is a word rather than a plate, so it carries no layout of its
-            own — and a chevron after the word needs one, or it drops to a line
-            of its own the moment the row is tight. */}
-        <Button
-          variant="ghost"
-          small
-          className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap"
-          onClick={openProfile}
-        >
-          {t('ui.nav.profile')}
-          <Icon name="chevron-right" size={12} />
-        </Button>
+        {/* A × rather than a second «Профиль».
+            The word was here and in the header at the same time, a thumb apart,
+            and the door to the panel has always been the one in the corner —
+            the card is a shortcut into it, not a second entrance that needs
+            announcing. What the corner of a card is actually good for is
+            getting rid of the card: this is somebody's own study looking back
+            at them, and there are days for that and days not. It comes back on
+            the next load, so nothing is lost by pressing it. */}
+        <IconButton
+          icon="close"
+          iconSize={14}
+          label={t('ui.home.hide')}
+          className="ml-auto shrink-0"
+          onClick={hideSummary}
+        />
       </div>
 
       <div className={floating ? 'space-y-2.5' : 'flex flex-col gap-3 sm:flex-row sm:items-center'}>
@@ -213,10 +218,10 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
       <button
         type="button"
         onClick={() => openResume(resume)}
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-full py-1 pl-1 pr-2 text-left
-                   transition-colors duration-fast ease-out hover:bg-surface-2"
+        className="inlay-hover group flex min-w-0 flex-1 items-center gap-2 rounded-full py-1 pl-1
+                   pr-2 text-left"
       >
-        <Thumbnail videoId={resume.lastVideoId} className="h-8 w-12 shrink-0" iconSize={11} />
+        <LectureThumb videoId={resume.lastVideoId} className="h-8 w-12 shrink-0" iconSize={11} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-xs font-semibold text-ink">
             {resume.entry.title}
@@ -255,57 +260,13 @@ function ResumeButton({ resume, className = '' }: { resume: ResumePointer; class
   const course = catalog.courseById.get(resume.entry.courseId);
 
   return (
-    <button
-      type="button"
+    <ResumeCard
+      videoId={resume.lastVideoId}
+      title={resume.entry.title}
+      subtitle={course ? t(`course.${course.id}.title`) : resume.entry.courseId}
       onClick={() => openResume(resume)}
-      /*
-        `w-full` is not decoration: a button sizes itself to its content even
-        when it is a block-level flex container, so without it the row grows to
-        the width of the lecture's title and the truncation below never fires —
-        which is exactly how the name ran off the edge of the card.
-      */
-      className={`group flex w-full min-w-0 items-center gap-2.5 rounded-card p-1 text-left
-                  transition-colors duration-fast ease-out hover:bg-surface-2 ${className}`}
-    >
-      <Thumbnail videoId={resume.lastVideoId} className="h-11 w-[4.5rem] shrink-0" iconSize={13} />
-      <span className="min-w-0 flex-1">
-        <span className="mono-label block text-accent">{t('ui.profile.continue')}</span>
-        <span className="mt-0.5 block truncate text-sm font-semibold text-ink">
-          {resume.entry.title}
-        </span>
-        <span className="block truncate text-[11px] text-ink-faint">
-          {course ? t(`course.${course.id}.title`) : resume.entry.courseId}
-        </span>
-      </span>
-    </button>
-  );
-}
-
-function Thumbnail({
-  videoId,
-  className,
-  iconSize,
-}: {
-  videoId?: string;
-  className: string;
-  iconSize: number;
-}) {
-  return (
-    <span className={`relative overflow-hidden rounded bg-surface-2 ${className}`}>
-      {videoId ? (
-        <img
-          src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-cover"
-        />
-      ) : null}
-      <span className="absolute inset-0 flex items-center justify-center">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-canvas/70 text-ink">
-          <Icon name="play" size={iconSize} />
-        </span>
-      </span>
-    </span>
+      className={className}
+    />
   );
 }
 
@@ -316,14 +277,17 @@ function WeekTime({ seconds }: { seconds: number }) {
   return <Tile value={value} label={t('ui.profile.stats.week', { noun })} />;
 }
 
+/* An inlay rather than a hairline box: this card floats over the map as often
+   as it sits on a page, and `border-line` is invisible against the land the
+   plate is cut from — see `.inlay` in `index.css`. */
 function Tile({ value, label }: { value: number | string; label: string }) {
   return (
     <span
-      className="flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5
-                 rounded-card border border-line px-2 py-1.5 text-center"
+      className="inlay flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5
+                 px-2 py-1.5 text-center"
     >
       <span className="num text-h3 leading-none text-ink">{value}</span>
-      <span className="text-[10px] leading-tight text-ink-faint">{label}</span>
+      <span className="ink-soft text-[11px] leading-tight">{label}</span>
     </span>
   );
 }

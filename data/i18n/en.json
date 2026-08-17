@@ -338,6 +338,7 @@
   "ui.profile.remaining": "≈{hours} h left",
   "ui.profile.noGoal": "Add a course to favourites on the map — it becomes a goal, and progress along its path shows up here",
   "ui.home.title": "Your learning",
+  "ui.home.hide": "Hide until next visit",
   "ui.home.streak": "{n} {noun} in a row",
   "ui.profile.toMap": "To the map",
   "ui.profile.openInGraph": "Open in the catalogue",

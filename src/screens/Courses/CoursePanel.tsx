@@ -2,12 +2,14 @@ import { useEffect, useMemo } from 'react';
 import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { formatHours, hoursFromSeconds, inkOn, withAlpha } from '@/lib/format';
+import { formatDuration, formatHours, hoursFromSeconds, inkOn, withAlpha } from '@/lib/format';
 import { percent, useCourseProgress } from '@/lib/progress';
 import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
+import { useCatalogParams } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import ProgressBar from '@/components/ProgressBar';
+import { ResumeCard } from '@/components/ResumeCard';
 import { Button, Chip, IconButton } from '@/components/ui';
 import LinksBlock from './LinksBlock';
 import PlaylistList from './PlaylistList';
@@ -39,6 +41,7 @@ export default function CoursePanel({
   const cycleStatus = useProfile((state) => state.cycleCourseStatus);
   const toggleFavorite = useProfile((state) => state.toggleCourseFavorite);
   const setEcho = useUi((state) => state.setEcho);
+  const params = useCatalogParams();
   const scheme = useResolvedTheme();
   // Its own shard and nothing else — the path's courses are `LinksBlock`'s
   // business, and asking for eight more here would make opening any course
@@ -135,15 +138,40 @@ export default function CoursePanel({
         </div>
 
         {/*
-          The lectures behind this course, by the recording being watched.
+          Where this course was left, and the way straight back into it.
 
-          Only once there are any — before that the line would say «0 из 30» of
-          a playlist nobody has chosen yet, which is a fact about the catalogue
+          Only once there is one — before that the line would say «0 из 30» of a
+          playlist nobody has chosen yet, which is a fact about the catalogue
           rather than about the reader. It names the recording, because a course
           carries a dozen and a bare «12 из 30» does not say which twelve.
+
+          The lecture on top of the bar rather than beside it: somebody coming
+          back to a half-watched course wants one press, and finding it meant
+          scrolling past the description and the whole path block to the list,
+          then working out which of thirteen recordings the percentage above was
+          even about. Which recording that is has never been in doubt for the
+          code — `courseProgress` picks it, and picks the same one the bar is
+          drawn from — it was simply never offered. The press opens the player at
+          that recording, where the poster is already saying «Продолжить с
+          лекции N»; it does not start the video, because an 800 KB embed on a
+          click that might have been aimed at the title is not a favour.
         */}
         {progress ? (
-          <div className="mt-3">
+          <div className="inlay mt-3 p-2">
+            {progress.next ? (
+              <ResumeCard
+                videoId={progress.next.video.id}
+                title={
+                  <>
+                    <span className="num text-ink-faint">{progress.next.index + 1}.</span>{' '}
+                    {progress.next.video.title}
+                  </>
+                }
+                subtitle={<span className="num">{formatDuration(progress.next.video.seconds)}</span>}
+                onClick={() => params.setPlaylist(progress.playlist.id)}
+                className="mb-2"
+              />
+            ) : null}
             <ProgressBar
               done={progress.done}
               total={progress.total}

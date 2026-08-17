@@ -105,9 +105,14 @@ to measure: a playlist sealed as watched is worth the lectures under it that had
 no tick of their own, and a lecture the player finishes on its own is worth
 nothing extra, having already been paid for as it played.
 
-The avatar stays in the header either way. The summary is a shortcut into the
-profile, not a replacement for the door to it, and two ways in cost nothing next
-to a reader looking for the button where it has always been.
+The avatar stays in the header either way, and it is the only door: the card
+used to carry a «Профиль ›» of its own, a thumb away from the button in the
+corner saying the same word. What the corner of the card holds instead is a ×.
+This is a reader's own study looking back at them and there are mornings for
+that and mornings not, so it can be put away — for the visit, not for good. The
+dismissal is held in the view state and never written to the profile: a setting
+nobody remembers making is a card gone for ever, with no way back that is any
+easier to find than the panel it was pointing at. A reload brings it back.
 
 Nothing on it costs a download. The playlist that was open last, the lecture
 that was playing, the ticks and the days of study are all in the profile
@@ -189,14 +194,22 @@ chain of prerequisites ending at that course — so reading left to right is
 reading how much has to come first, and a line above the columns says exactly
 that.
 
-Pointing at a card lights up what it needs and fades the rest; selecting one
-also draws the curves along that chain, and only that chain — over 200 cards
-they were a web of noise, but over the six or seven of one path they answer what
-the columns cannot, which of the cards on the left this one actually needs.
-Select a course and the line above changes to say so — half the screen has just
-dimmed, and the legend explaining the columns would leave the reason for it
-unsaid; the **?** beside it opens the full legend, which also appears by itself
-on a first visit.
+Selecting a card lights up what it needs, fades the rest and draws the curves
+along that chain, and only that chain — over 200 cards they were a web of noise,
+but over the six or seven of one path they answer what the columns cannot, which
+of the cards on the left this one actually needs. Select a course and the line
+above changes to say so — half the screen has just dimmed, and the legend
+explaining the columns would leave the reason for it unsaid; the **?** beside it
+opens the full legend, which also appears by itself on a first visit.
+
+Backwards only. «Открывает путь к» is the same relation read from the other end,
+and it is named in the panel rather than drawn: the courses ahead are not
+borrowed onto the canvas the way the prerequisites behind are, so a fan of lines
+forward could only ever reach whichever of them the current field happened to
+contain — an answer that looks complete and is not. Clicking one of them draws
+it. That course becomes the selection, the relation is a prerequisite of it, and
+it is drawn right to left like everything else on this screen, with the whole
+chain behind it brought in.
 
 By default the chain is drawn as a tree: one line out of each card, to the
 nearest course that needs it. Following any line still arrives at the selection
@@ -259,9 +272,10 @@ A domain filter shows that field and nothing else — not even a prerequisite fr
 elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead.
 
-Two kinds of card are borrowed back, and only while a course is selected: the
-selected course itself when the filter does not cover it, and every prerequisite
-its chain runs through, however far back. Game theory needs probability,
+Three kinds of card are borrowed back, and only while a course is selected: the
+selected course itself when the filter does not cover it, every prerequisite its
+chain runs through, however far back, and — for as long as the pointer is on it
+— whatever course the panel is being asked about. Game theory needs probability,
 probability needs combinatorics — with probability filed under another field the
 card lit up with nothing drawn behind it, and «Опирается на» in the panel named
 a course the columns refused to show.
@@ -274,6 +288,16 @@ chain — three cards on average, seventeen at the worst, which is what sequence
 analysis genuinely stands on — it is spent on an explicit click, and it is
 dropped the moment the selection changes. With nothing selected the field still
 decides what the columns hold.
+
+The third is the lightest of the three and the only one no click pays for.
+Pointing at any course the panel names — «Открывает путь к», «Рекомендуется»,
+«Рядом», a step of the path — lifts its card in the columns, and where the
+filter is not showing that card, it fades one in where the course belongs and
+takes it away again on mouse-out. «Открывает путь к» is where it matters most:
+what a course opens is usually somebody else's subject, so under a field filter
+that list used to be a set of names pointing at nothing. One card, not a chain —
+this answers where that course stands, and what it stands on is what clicking it
+is for.
 
 A borrowed card carries a tag naming the field it came from, and pressing it
 moves the columns to that field with the course still selected.
@@ -319,6 +343,20 @@ On a phone it is a sheet that comes up over the list and stops with the row it
 was opened from still in sight. Drag it up for the whole card, down to put it
 back, down again to send it away — or tap the grab bar to switch between the
 two, and the × or the dimmed list behind it to close.
+
+A course already under way opens with the way back into it: the lecture that
+comes next, on a still, over the bar that says how far along the recording is
+and which recording that is. Which one is not a choice being made here — a
+course carries thirteen recordings and the panel has always drawn its bar from
+the furthest-along one ([progress](#progress-down-to-the-lecture)); it simply
+never offered it. Before this, coming back meant scrolling past the description
+and the whole path block to the list, then working out which of thirteen rows
+the percentage above had been about. The press opens the player at that
+recording, where the poster is already saying «Продолжить с лекции N» — it does
+not start the video, because 800 KB of embed on a press that might have been
+aimed at the title is not a favour. It is the same block the front page offers
+([where you were](#where-you-were)), which knows the recording but not what is
+inside it; here the shard is in hand, so the offer is the lecture itself.
 
 - **Опирается на** and **Открывает путь к** are the same relation read in either
   direction, so they use the same card and sit next to each other, whichever

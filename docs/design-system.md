@@ -155,6 +155,35 @@ The chrome is set in the map's own lettering, mono and spaced caps
 a word inside it. The chosen half of a switch, an active filter and the current
 tab are all the same accent inlay: a 24% wash with a 60% ring.
 
+### Derived, where a named colour cannot follow
+
+The palette names one colour per job, and every name is measured against
+`--c-surface` — which is right until the thing wearing it floats somewhere else.
+The front-page card is a plate over the map, and inside it: `border-line` is a
+slate hairline on teal land, so the three counts read as numbers loose in the
+corner; `--c-surface-2` as a hover fill is a slate slab dropped into the plate;
+`--c-ink-faint` under a number lands near 2:1, which is a caption that is
+technically present. All three were correct on the page and wrong on the map,
+and no fourth token fixes it — the ground is a variable.
+
+So three materials are **mixed from whatever ink is in force** rather than named:
+
+| Class | What it is | Where |
+|---|---|---|
+| `.inlay` | a box standing on its ground: 7% ink fill, 10% ink edge, `--radius-md` | `FactTile`, the front-page counts, the resume block in the panel |
+| `.inlay-hover` | the same material arriving under the pointer instead of resting there | rows that travel — the resume card, the phone bar |
+| `.ink-soft` | 72% of the ink: a caption that has to be **read** | the word under a number, a metric's name |
+
+They work over the map for free, because the map restates `--c-ink` along with
+everything else and a mix follows it without being told. The rule of thumb:
+`--c-ink-faint` is for what a reader is meant to skip — placeholders, disabled
+controls, decoration. The word under a number is not one of those; «дня подряд»
+is what makes the 3 mean anything, so it is `.ink-soft`.
+
+`hover:bg-surface-2` is still the right answer for a row that only ever sits on
+a surface — a lecture in the player, a playlist in the list. It is the ones that
+travel that need the mix.
+
 Keyboard focus is `2px solid var(--c-accent)` with a 2px offset, on everything
 interactive including cards. It is set once, on `:focus-visible` in the base
 layer, so nothing has to remember it.

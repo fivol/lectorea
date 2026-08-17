@@ -304,6 +304,63 @@
   }
 
   /*
+   * The inlay: a box sunk into whatever it happens to lie on.
+   *
+   * A tile drawn with `border-line` is a box that exists only on the one
+   * surface that border was picked against. The three counts on the front page
+   * float inside a plate cut from the land, and a slate hairline on teal is a
+   * box nobody can see — which is how «3 дня подряд» came to look like three
+   * numbers loose in a corner of the map. The same trap catches any named fill:
+   * `--c-surface-2` is a dark slab over the night sea, because the sea is
+   * lighter than every surface in the dark palette.
+   *
+   * So the material is derived rather than named — a wash of whatever ink is in
+   * force, and a little more of it for the edge. In dark that lands lighter than
+   * its ground, in light darker, and over the map it follows the map's own
+   * restated ink without being told about it. It is the plate's rule one step
+   * quieter: a box is a thing standing on the ground, never a hole in it.
+   */
+  .inlay {
+    background: color-mix(in srgb, var(--c-ink) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c-ink) 10%, transparent);
+    border-radius: var(--radius-md);
+  }
+
+  /*
+   * The same material arriving under the pointer instead of resting there.
+   *
+   * `hover:bg-surface-2` is the right answer inside a panel and the wrong one
+   * anywhere the ground is not a surface — a row in the front-page card lit up
+   * slate over the sea. Where a row is only ever on a surface, the Tailwind
+   * class is still fine; this is for the ones that travel.
+   */
+  .inlay-hover {
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+  .inlay-hover:hover {
+    background: color-mix(in srgb, var(--c-ink) 7%, transparent);
+  }
+
+  /*
+   * A caption that has to be read, on ground that is not always the page.
+   *
+   * `--c-ink-faint` is a fixed grey chosen against `--c-surface`, and it is the
+   * right colour for what it is named for: placeholders, disabled controls,
+   * things a reader is meant to skip. The word under a number is not one of
+   * those — «дня подряд» is what makes the 3 mean anything — and printed faint
+   * on a plate over the night sea it came to about 2:1, which is a caption that
+   * is technically present.
+   *
+   * A share of the ink in force instead. It keeps the step down from the number
+   * above it, and it takes that step from whatever palette it lands in — the
+   * page, a plate, an inlay on a plate over the map — rather than from the one
+   * surface the grey was measured against.
+   */
+  .ink-soft {
+    color: color-mix(in srgb, var(--c-ink) 72%, transparent);
+  }
+
+  /*
    * Everything that can be pressed is a capsule.
    *
    * The map is drawn out of round shapes on round shapes and the controls over
@@ -349,9 +406,20 @@
   .btn-ghost {
     @apply border-transparent bg-transparent text-ink-dim;
   }
+  /*
+   * A ghost lands on a card, on a plate and over the map, and `--c-surface-2`
+   * is only the right fill on the first of the three: over the night sea it
+   * dropped a slate slab into a plate cut from the land. The wash is the ink's,
+   * so it is the ground plus a little light in dark and the ground less a
+   * little in light, whatever the ground turns out to be.
+   *
+   * No underline with it. It was standing in for the fill this hover did not
+   * have on the surfaces where the fill was invisible, and a rule under a word
+   * inside a capsule is a link idiom on something that is not a link.
+   */
   .btn-ghost:hover {
-    @apply text-ink underline;
-    background: var(--c-surface-2);
+    @apply text-ink;
+    background: color-mix(in srgb, var(--c-ink) 10%, transparent);
     border-color: transparent;
   }
 

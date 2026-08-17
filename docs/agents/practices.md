@@ -286,6 +286,26 @@ you, taking it back is a three-part job — take it, replace everything it was
 answering, and re-check what your own handlers now receive that they never used
 to. A partial version of this is a regression wearing a feature's clothes.
 
+## A colour named against one surface is wrong on every other surface
+
+Three separate complaints about the front-page card — invisible tile borders, an
+ugly hover, captions that could not be read — were one bug. `border-line`,
+`--c-surface-2` and `--c-ink-faint` are all measured against `--c-surface`, and
+that card is a plate cut from the land, floating over the sea. Each token was
+correct where it was chosen and wrong where the component actually stood.
+
+The fix is not a fourth token but a **mix**: `.inlay`, `.inlay-hover` and
+`.ink-soft` are shares of `--c-ink`, so they follow whatever palette is in force
+— including the map's, which restates the inks for the light theme without
+telling anybody. See
+[design-system.md](../design-system.md#derived-where-a-named-colour-cannot-follow).
+
+**Generally:** before reaching for a palette name, ask what this element will be
+standing on — one surface, or several. A component that travels takes a derived
+colour; a component that lives in one place may name one. And when a reader
+reports two or three ugly things in the same corner of the screen, look for the
+single assumption underneath before fixing them one at a time.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

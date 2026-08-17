@@ -47,8 +47,20 @@ export type UiStore = {
    * them can overlap and the second one closing must not speak for the first.
    */
   keyboardHeld: number;
+  /**
+   * Whether «Ваше обучение» has been put away — for this visit only.
+   *
+   * Here rather than in the profile on purpose. The card is a reader's own
+   * study staring back at them, and there are days when that is the last thing
+   * somebody wants on the front page; but a dismissal written to disk is a
+   * setting nobody remembers making, and the card would then be gone for good
+   * with no way back that is any easier to find than the profile panel it
+   * points at. A reload brings it back, which is what «разово» means.
+   */
+  summaryHidden: boolean;
 
   setEcho: (id: string | null) => void;
+  hideSummary: () => void;
   /** Claim the keyboard for a layer; the returned function gives it back. */
   holdKeyboard: () => () => void;
   openProfile: () => void;
@@ -63,8 +75,10 @@ export const useUi = create<UiStore>((set, get) => ({
   focusRequest: null,
   mapView: 'map',
   keyboardHeld: 0,
+  summaryHidden: false,
 
   setEcho: (id) => set({ echoCourseId: id }),
+  hideSummary: () => set({ summaryHidden: true }),
   holdKeyboard: () => {
     set({ keyboardHeld: get().keyboardHeld + 1 });
     let released = false;

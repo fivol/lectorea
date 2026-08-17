@@ -338,6 +338,7 @@
   "ui.profile.remaining": "осталось ≈{hours} ч",
   "ui.profile.noGoal": "Добавьте курс в избранное на карте — он станет целью, и здесь появится прогресс по его пути",
   "ui.home.title": "Ваше обучение",
+  "ui.home.hide": "Скрыть до следующего захода",
   "ui.home.streak": "{n} {noun} подряд",
   "ui.profile.toMap": "К карте",
   "ui.profile.openInGraph": "Открыть в каталоге",
