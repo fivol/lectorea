@@ -23,6 +23,7 @@ export type IconName =
   | 'plus'
   | 'minus'
   | 'fit'
+  | 'collapse'
   | 'download'
   | 'upload'
   | 'copy'
@@ -65,6 +66,10 @@ const PATHS: Record<IconName, string> = {
   plus: 'M12 5v14M5 12h14',
   minus: 'M5 12h14',
   fit: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  // `fit` turned inside out: the same four corners, folded in rather than
+  // pushed out. The pair is what the two states of one control need — a glyph
+  // that only ever means "bigger" cannot say it has been.
+  collapse: 'M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5',
   download: 'M12 3v12m0 0l-4-4m4 4l4-4M4 19h16',
   upload: 'M12 21V9m0 0L8 13m4-4l4 4M4 5h16',
   // Two sheets, the one behind drawn only where it shows. A full second rect

@@ -9,7 +9,7 @@ import {
 } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
-import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
+import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
 import { percent, playlistProgress } from '@/lib/progress';
 import { courseHref, useCatalogParams } from '@/lib/url';
@@ -19,7 +19,9 @@ import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import { FactTile, FactTiles, Meter } from '@/components/Facts';
-import { Button, ButtonLink, Chip, IconButton } from '@/components/ui';
+import { Button, ButtonLink, Chip, IconButton, cx } from '@/components/ui';
+import LectureList from './LectureList';
+import NowPlaying from './NowPlaying';
 import PlayerSpeed from './PlayerSpeed';
 import { FilterName, StatusBadge } from './PlaylistRow';
 import type { FilterFacet } from './playlist-filters';
@@ -48,6 +50,20 @@ type Props = {
 /** What the player is showing, and where it was asked to start. */
 type Playing = { id: string; start: number };
 
+/**
+ * Two shapes of one dialog.
+ *
+ * `list` is the sheet about a recording: a small frame, the lectures under it,
+ * and everything the catalogue knows about it beside them — what somebody
+ * reads while deciding whether to take this recording on.
+ *
+ * `watch` is the screen it is studied on: the frame takes the room, the
+ * lectures become a queue beside it, and what is playing gets said in words
+ * under the picture. The fact sheet is still there, under the queue, because a
+ * question about the recording does not stop being asked once it is running.
+ */
+export type PlayerView = 'list' | 'watch';
+
 export default function PlaylistModal({
   playlist,
   courseId,
@@ -56,7 +72,7 @@ export default function PlaylistModal({
   filter,
   onClose,
 }: Props) {
-  const { t, lang } = useT();
+  const { t, count, lang } = useT();
   const { prev, next } = neighbours(playlist, run);
   /** Courses this recording also teaches, minus the one we are reading it in. */
   const alsoCovers = [playlist.courseId, ...playlist.alsoCourses].filter((id) => id !== courseId);
@@ -99,14 +115,31 @@ export default function PlaylistModal({
   // The iframe is mounted only after an explicit click: YouTube pulls ~800 KB
   // per embed, and opening a modal to read the lecture list must not cost that.
   const [playing, setPlaying] = useState<Playing | null>(null);
+  /**
+   * Which lecture is actually in the frame, and where its playhead is.
+   *
+   * Kept apart from `playing`, which is what the frame was *asked* to load and
+   * is therefore the iframe's key: writing the lecture YouTube walked on to
+   * into that state would rebuild the frame and start the lecture again from
+   * the top. Everything the reader is shown — the row lit in the queue, the
+   * title under the picture, which lecture the tick marks off — follows this
+   * one instead, so it stays true through an autoplay the app never ordered.
+   */
+  const [at, setAt] = useState<{ id: string; sec: number } | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
+  /** Which of the two shapes the dialog is in — see `PlayerView`. */
+  const [view, setView] = useState<PlayerView>('list');
+  const watching = view === 'watch';
 
   const close = useCallback(() => onClose(), [onClose]);
   useEscape(true, close);
   useScrollLock(true);
   const trapRef = useFocusTrap(true);
 
-  useEffect(() => setPlaying(null), [playlist.id]);
+  useEffect(() => {
+    setPlaying(null);
+    setAt(null);
+  }, [playlist.id]);
 
   /**
    * While a lecture runs, the keyboard is the player's.
@@ -148,7 +181,14 @@ export default function PlaylistModal({
     // every frame after it — the next part, the dialog reopened — starts there.
     rate: savedRate,
     onRate: (next) => setSetting('playbackRate', next),
-    onPosition: (videoId, sec, played) => recordPosition(videoId, sec, context, played),
+    onPosition: (videoId, sec, played) => {
+      // The screen's own copy of where the playhead is. It cannot be read back
+      // out of the profile: «Место остановки» switches the stored position off,
+      // and somebody who asked not to be *remembered* has not asked to stop
+      // being *shown* how far into the lecture they are.
+      setAt({ id: videoId, sec });
+      recordPosition(videoId, sec, context, played);
+    },
     // «player», so the day is not charged for the lecture's whole length on top
     // of the time the frame has already reported watching it.
     onWatched: (videoId) => setVideosDone([videoId], true, context, 'player'),
@@ -226,11 +266,19 @@ export default function PlaylistModal({
     ? `https://i.ytimg.com/vi/${playlist.videos[0].id}/hqdefault.jpg`
     : null;
 
-  /** Open a lecture, picking up where it was left unless it is already done. */
+  /**
+   * Open a lecture, picking up where it was left unless it is already done.
+   *
+   * Playing is what puts the dialog into the watching shape. Nothing else does
+   * — a lecture YouTube walks on to by itself leaves the view alone, and so
+   * does the reader who went back to the fact sheet with the lecture running.
+   */
   const play = (video: Video): void => {
     const mark = profile.videos[video.id];
     const sec = !mark?.done && isResumable(mark?.sec) ? mark.sec : 0;
     setPlaying({ id: video.id, start: sec });
+    setAt({ id: video.id, sec });
+    setView('watch');
   };
 
   /** The poster plays the first lecture that is not behind you, not the first. */
@@ -257,6 +305,67 @@ export default function PlaylistModal({
   };
 
   /*
+   * The lecture on screen, and the two beside it.
+   *
+   * `at` first and `playing` only as the opening frame's stand-in: what the
+   * reader is looking at is whatever the player last named, which after an
+   * autoplay is not what the app asked for. A lecture the shard does not carry
+   * — a private entry YouTube walked into — is simply not one of these rows,
+   * and the strip under the frame stands down rather than naming it wrongly.
+   */
+  const shownId = at?.id ?? playing?.id ?? null;
+  const shownIndex = shownId ? playlist.videos.findIndex((video) => video.id === shownId) : -1;
+  const shown = shownIndex === -1 ? null : playlist.videos[shownIndex];
+  const shownDone = shown ? progress.complete || (profile.videos[shown.id]?.done ?? false) : false;
+  const step = (delta: number) => {
+    const video = playlist.videos[shownIndex + delta];
+    return video ? () => play(video) : null;
+  };
+
+  /*
+   * Where this sits in the run, and the way out of it in either direction. A
+   * course cut in half is the one case where the next thing to watch is not a
+   * matter of taste, and the player is where that question is asked.
+   *
+   * Written once and stood in one of two places: on the fact sheet while a
+   * recording is being read about, and directly over the queue while it is
+   * being watched — where the reader who has just run out of lectures is
+   * looking, rather than a hundred rows below them.
+   */
+  const seriesNav =
+    playlist.series && run.length > 1 ? (
+      <div className="mt-3 rounded-card border border-line px-3 py-2">
+        {/* Which part this is, and nothing about how many there are: that
+            number was the highest one we could find in the titles, which is a
+            claim about a university's numbering and not something the
+            catalogue can know. The buttons below say what actually exists. */}
+        <p className="text-xs text-ink-faint">{partLabel(playlist.series, t)}</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {prev ? (
+            <Button
+              variant="default"
+              icon="chevron-left"
+              iconSize={14}
+              onClick={() => onOpenPart?.(prev.id)}
+            >
+              {prev.series ? partLabel(prev.series, t) : t('ui.playlist.prevPart')}
+            </Button>
+          ) : null}
+          {next ? (
+            <Button
+              variant="primary"
+              icon="chevron-right"
+              iconSize={14}
+              onClick={() => onOpenPart?.(next.id)}
+            >
+              {next.series ? partLabel(next.series, t) : t('ui.playlist.nextPart')}
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    ) : null;
+
+  /*
    * Portalled, like every other layer that covers the window: on a phone this
    * opens from inside the course sheet, and a fixed box inside a transformed
    * ancestor is no longer fixed to the window but to the sheet — which crops it
@@ -275,6 +384,11 @@ export default function PlaylistModal({
         else. The switch is a media query rather than a measured viewport,
         because the layout is the browser's job and doing it in JavaScript costs
         a first frame in the wrong shape on every open.
+
+        Watching takes the room it can get, and takes it as a stated height
+        rather than a ceiling: the frame is what grows into whatever is left
+        over, and `max-h` on a box that sizes itself to its content gives it
+        nothing to grow into.
       */}
       <div
         ref={trapRef}
@@ -282,10 +396,13 @@ export default function PlaylistModal({
         aria-modal="true"
         aria-label={playlist.title}
         tabIndex={-1}
-        className="relative flex h-full w-full animate-scale-in flex-col overflow-hidden
-                   bg-surface shadow-[var(--shadow-modal)]
-                   md:h-auto md:max-h-[88svh] md:w-[min(64rem,92vw)] md:rounded-pop
-                   md:border md:border-line"
+        className={cx(
+          `relative flex h-full w-full animate-scale-in flex-col overflow-hidden
+           bg-surface shadow-[var(--shadow-modal)] md:rounded-pop md:border md:border-line`,
+          watching
+            ? 'md:h-[92svh] md:w-[min(84rem,95vw)]'
+            : 'md:h-auto md:max-h-[88svh] md:w-[min(64rem,92vw)]'
+        )}
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
           {/* Two lines rather than one: these titles carry the term and the
@@ -294,6 +411,16 @@ export default function PlaylistModal({
             {playlist.title}
             {provider ? <span className="text-ink-faint"> — {provider.title}</span> : null}
           </h2>
+          {/* The way between the two shapes, and the way back the watching one
+              needs. A glyph rather than a word because it sits beside the ×
+              on a phone header that is already carrying a two-line title —
+              and it is the glyph every player wears for the same act. */}
+          <IconButton
+            icon={watching ? 'collapse' : 'fit'}
+            label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
+            aria-pressed={watching}
+            onClick={() => setView(watching ? 'list' : 'watch')}
+          />
           <IconButton icon="close" label={t('ui.common.close')} onClick={close} />
         </header>
 
@@ -302,12 +429,22 @@ export default function PlaylistModal({
           and the sidebar scroll on their own. `minmax(0,1fr)` is what lets the
           lecture titles truncate: an `auto` track takes its width from the
           longest title and pushes the sidebar off the dialog.
+
+          Watching is the one shape that does not scroll as a whole even on a
+          phone: the frame stays put at the top and the queue under it scrolls,
+          which is what a screen somebody spends an hour on has to do.
         */}
         <div
-          className="grid min-h-0 flex-1 overflow-y-auto overscroll-contain
-                     lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] lg:overflow-hidden"
+          className={cx(
+            'min-h-0 flex-1 lg:overflow-hidden',
+            watching
+              ? `flex flex-col
+                 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)]`
+              : `grid overflow-y-auto overscroll-contain
+                 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]`
+          )}
         >
-          <div className="flex min-w-0 flex-col lg:min-h-0">
+          <div className={cx('flex min-w-0 flex-col lg:min-h-0', watching && 'shrink-0')}>
             {/*
               A ratio box with nothing in flow inside it: the poster is 480×360
               and in flow it hands the box a content-based minimum height of its
@@ -315,8 +452,19 @@ export default function PlaylistModal({
               list off the screen. Out of flow, the height is the ratio and
               nothing else — capped against the viewport so the list always
               keeps about half the dialog.
+
+              Watching drops the ratio once there are two columns and takes the
+              height instead: the stage is then whatever the dialog has left
+              over, and the black inside it is the player's own letterbox. Note
+              what is *not* here — `shrink-0` alongside `lg:flex-1`, which
+              Tailwind emits later and would pin the stage to nothing.
             */}
-            <div className="relative aspect-video w-full shrink-0 bg-black lg:max-h-[42svh]">
+            <div
+              className={cx(
+                'relative aspect-video w-full bg-black',
+                watching ? 'lg:aspect-auto lg:min-h-0 lg:flex-1' : 'shrink-0 lg:max-h-[42svh]'
+              )}
+            >
               {playing === null ? (
                 <button
                   type="button"
@@ -324,8 +472,20 @@ export default function PlaylistModal({
                   onClick={playNext}
                   aria-label={t('ui.playlist.play')}
                 >
+                  {/* Cropped to fill wherever the box is a stated ratio, fitted
+                      only on the free-form stage: there the shape is whatever
+                      the dialog had left over, and a 4:3 still cropped to a
+                      1.3:1 box loses the lecturer off the top and bottom.
+                      Fitted, it sits on black exactly where the picture will. */}
                   {poster ? (
-                    <img src={poster} alt="" className="h-full w-full object-cover opacity-70" />
+                    <img
+                      src={poster}
+                      alt=""
+                      className={cx(
+                        'h-full w-full object-cover opacity-70',
+                        watching && 'lg:object-contain'
+                      )}
+                    />
                   ) : null}
                   <span className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-canvas transition-transform group-hover:scale-105">
@@ -367,32 +527,106 @@ export default function PlaylistModal({
                 a control for nothing. */}
             {playing ? <PlayerSpeed rate={rate} rates={rates} onPick={setRate} /> : null}
 
-            {/* The lecture list comes from the shard, not from the API. */}
-            <ol className="divide-y divide-line lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
-              {playlist.videos.length ? (
-                playlist.videos.map((video, index) => (
-                  <LectureRow
-                    key={video.id}
-                    video={video}
-                    index={index}
-                    playing={playing?.id === video.id}
-                    sealed={progress.complete && !profile.videos[video.id]?.done}
-                    onPlay={() => play(video)}
-                    onTick={(next, extend) => tick(index, next, extend)}
-                  />
-                ))
-              ) : (
-                <li className="px-4 py-6 text-center text-sm text-ink-faint">
-                  {t('ui.common.loading')}
-                </li>
-              )}
-            </ol>
+            {/* Which lecture this is, how far into it, and the three controls
+                that belong to the one being watched rather than to the
+                recording as a whole. Only where the frame is on something the
+                shard knows about — see `shown`. */}
+            {watching && shown ? (
+              <NowPlaying
+                video={shown}
+                index={shownIndex}
+                total={playlist.videos.length}
+                at={at?.id === shown.id ? at.sec : 0}
+                done={shownDone}
+                onPrev={step(-1)}
+                onNext={step(1)}
+                onToggleDone={() => tick(shownIndex, !shownDone, false)}
+              />
+            ) : null}
+
+            {/* The lecture list comes from the shard, not from the API. It
+                stands under the frame while the recording is being read about
+                and moves into the sidebar while it is being watched — one list
+                either way, because two would be two sets of ticks. */}
+            {watching ? null : (
+              <LectureList
+                videos={playlist.videos}
+                playingId={shownId}
+                complete={progress.complete}
+                onPlay={play}
+                onTick={tick}
+                className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain"
+              />
+            )}
           </div>
 
           <aside
-            className="flex min-w-0 flex-col border-t border-line
-                       lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-t-0"
+            className={cx(
+              `flex min-w-0 flex-col border-t border-line
+               lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-t-0`,
+              watching && 'min-h-0 flex-1 overflow-y-auto overscroll-contain'
+            )}
           >
+            {watching ? (
+              <>
+                {/*
+                  Where the recording as a whole stands, over the queue it is
+                  counted from. Sticky, because it is the one line here that
+                  the reader is coming back to between lectures and the queue
+                  under it can be a hundred rows long.
+
+                  Before anything has been watched it says how big the thing
+                  is instead: a bar at nought over «0 из 26» is the lecture
+                  count printed twice, once as a shape that says nothing.
+                */}
+                <div className="sticky top-0 z-10 border-b border-line bg-surface px-4 py-2.5">
+                  {progress.started ? (
+                    <>
+                      <ProgressBar
+                        done={progress.done}
+                        total={progress.total}
+                        fill={progress.fraction}
+                        label={`${percent(progress.fraction)}%`}
+                      />
+                      <p className="num mt-1 text-[11px] text-ink-faint">
+                        {t('ui.playlist.watchedOf', {
+                          done: progress.done,
+                          total: progress.total,
+                          hours: formatHours(hoursFromSeconds(progress.watchedSeconds)),
+                          of: formatHours(hoursFromSeconds(progress.totalSeconds)),
+                        })}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="num text-[11px] text-ink-faint">
+                      {count(playlist.videoCount, 'lecture')} ·{' '}
+                      {t('ui.playlist.hours', {
+                        n: formatHours(hoursFromSeconds(playlist.totalSeconds)),
+                      })}
+                    </p>
+                  )}
+                </div>
+
+                {seriesNav ? <div className="px-4 pb-3">{seriesNav}</div> : null}
+
+                <LectureList
+                  videos={playlist.videos}
+                  playingId={shownId}
+                  complete={progress.complete}
+                  follow
+                  onPlay={play}
+                  onTick={tick}
+                />
+
+                {/* The fact sheet does not go away while the lecture runs, it
+                    goes below the queue: «who is this, how long, is it any
+                    good» is asked as often on the third lecture as on the
+                    first. The heading is what says there is more under the
+                    list. */}
+                <p className="mono-label border-t border-line px-4 pt-4">{t('ui.player.about')}</p>
+              </>
+            ) : null}
+
             <div className="min-w-0 p-4">
               <p className="text-sm font-medium text-ink">
                 {lecturerFilter ? (
@@ -419,42 +653,7 @@ export default function PlaylistModal({
                 {rest}
               </p>
 
-              {/* Where this sits in the run, and the way out of it in either
-                  direction. A course cut in half is the one case where the next
-                  thing to watch is not a matter of taste, and the player is
-                  where that question is asked. */}
-              {playlist.series && run.length > 1 ? (
-                <div className="mt-3 rounded-card border border-line px-3 py-2">
-                  {/* Which part this is, and nothing about how many there are:
-                      that number was the highest one we could find in the
-                      titles, which is a claim about a university's numbering
-                      and not something the catalogue can know. The buttons
-                      below say what actually exists. */}
-                  <p className="text-xs text-ink-faint">{partLabel(playlist.series, t)}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {prev ? (
-                      <Button
-                        variant="default"
-                        icon="chevron-left"
-                        iconSize={14}
-                        onClick={() => onOpenPart?.(prev.id)}
-                      >
-                        {prev.series ? partLabel(prev.series, t) : t('ui.playlist.prevPart')}
-                      </Button>
-                    ) : null}
-                    {next ? (
-                      <Button
-                        variant="primary"
-                        icon="chevron-right"
-                        iconSize={14}
-                        onClick={() => onOpenPart?.(next.id)}
-                      >
-                        {next.series ? partLabel(next.series, t) : t('ui.playlist.nextPart')}
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
+              {watching ? null : seriesNav}
 
               {/* One recording, two courses — «Алгоритмы и структуры данных»
                   is a semester of both, and saying so is how the reader knows
@@ -470,8 +669,9 @@ export default function PlaylistModal({
               {/* Above the fact sheet, because it is the one thing here that is
                   about the reader rather than about the recording. Absent until
                   there is something to say: an empty bar over «0 из 30» repeats
-                  the lecture count two lines below it. */}
-              {progress.started ? (
+                  the lecture count two lines below it — and absent while
+                  watching, where it stands over the queue instead. */}
+              {progress.started && !watching ? (
                 <div className="mt-4">
                   <ProgressBar
                     done={progress.done}
@@ -629,8 +829,17 @@ export default function PlaylistModal({
             </div>
 
             {/* Pinned to the bottom of whichever box scrolls — the dialog on a
-                phone, the sidebar itself once it is a column. */}
-            <div className="sticky bottom-0 mt-auto space-y-1.5 border-t border-line bg-surface p-4">
+                phone, the sidebar itself once it is a column. It lets go on a
+                phone that is watching: three buttons about the recording as a
+                whole, standing over a queue that has three rows left, are the
+                wrong three inches of a screen that has the video and its
+                controls above it already. They scroll into reach instead. */}
+            <div
+              className={cx(
+                'mt-auto space-y-1.5 border-t border-line bg-surface p-4',
+                watching ? 'lg:sticky lg:bottom-0' : 'sticky bottom-0'
+              )}
+            >
               {promoted && course ? (
                 <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-accent">
                   <Icon name="check" size={12} />
@@ -673,7 +882,7 @@ export default function PlaylistModal({
                     : t('ui.playlist.watched')}
               </Button>
               <ButtonLink
-                href={watchUrl(listId, playing?.id ?? playlist.videos[0]?.id)}
+                href={watchUrl(listId, shownId ?? playlist.videos[0]?.id)}
                 icon="external"
                 iconSize={16}
                 className="w-full justify-center"
@@ -689,126 +898,4 @@ export default function PlaylistModal({
   );
 }
 
-/**
- * One lecture: a name that plays, how long it runs, and a tick at the end.
- *
- * The tick is last because the list is read before it is used: the eye goes
- * down the titles, and a column of empty boxes in front of them is a form to
- * fill in rather than a lecture list. At the right edge it is where a finished
- * lecture leaves its mark, next to the length it took.
- *
- * The tick is its own control rather than part of the row, and it has to be —
- * a checkbox inside a button is not something HTML allows, and the two answer
- * different questions anyway. «I watched this on YouTube» is the reason the
- * tick exists at all: without it, everything watched outside this player is
- * invisible to the site, which makes the progress it shows a lie of omission.
- *
- * Shift extends from the last one ticked, because the person who comes to this
- * list having watched twelve of thirty elsewhere should not have to press
- * twelve times.
- */
-function LectureRow({
-  video,
-  index,
-  playing,
-  sealed,
-  onPlay,
-  onTick,
-}: {
-  video: Video;
-  index: number;
-  playing: boolean;
-  /** Counted watched by the playlist's seal rather than by a tick of its own. */
-  sealed: boolean;
-  onPlay: () => void;
-  onTick: (next: boolean, extend: boolean) => void;
-}) {
-  const { t } = useT();
-  const mark = useProfile((state) => state.profile.videos[video.id]);
-  const done = sealed || (mark?.done ?? false);
-  /** Where the playhead was left, when that is a place worth coming back to. */
-  const at = !done && isResumable(mark?.sec) ? mark.sec : 0;
-  const part = at ? Math.min(100, (at / Math.max(1, video.seconds)) * 100) : 0;
-
-  /*
-   * The hover belongs to the row, not to the button inside it.
-   *
-   * It used to be on the title button alone, which stops short of the tick —
-   * so pointing at a lecture lit a box ending two thirds of the way across,
-   * with the tick left standing on the unlit strip beside it. The row is one
-   * thing to the reader and highlights as one, the same way a playlist row
-   * does; the tick keeps its own ink change to say which half is under the
-   * pointer.
-   */
-  return (
-    <li
-      className={`relative flex items-center transition-colors duration-fast ease-out
-                  ${playing ? 'bg-accent-soft' : 'hover:bg-surface-2'}`}
-    >
-      {/* How far into the lecture you are, drawn across the row it is about.
-          It was a two-pixel hairline along the bottom edge before, which is
-          where the divider between rows already is — and it was painted in
-          `bg-accent/60`, an opacity modifier Tailwind silently dropped, so
-          there was nothing there at all. See `themed` in tailwind.config.js. */}
-      {part ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 bg-accent/15"
-          style={{ width: `${part}%` }}
-        >
-          {/* The playhead itself: the wash says how much, this says exactly
-              where, and it is the one mark that stays legible on the row the
-              player is currently sitting on. */}
-          <span className="absolute inset-y-0 right-0 w-[2px] bg-accent" />
-        </span>
-      ) : null}
-
-      <button
-        type="button"
-        onClick={onPlay}
-        className={`relative flex min-w-0 flex-1 items-center gap-3 py-2 pl-4 text-left text-sm
-                    transition-colors duration-fast ease-out
-                    ${playing ? 'text-ink' : done ? 'text-ink-faint' : 'text-ink-dim'}`}
-      >
-        <span className="num w-4 shrink-0 text-right text-xs text-ink-faint">{index + 1}.</span>
-        <span className="min-w-0 flex-1 truncate">{video.title}</span>
-        {/*
-          Both numbers, always in that order: where you are, then how long it
-          is. The slot used to hold the position *instead* of the length, which
-          made one column mean two different things depending on the row — and
-          while the lecture played it was a figure counting up on its own with
-          nothing beside it to be counted against. Paired, it reads the way the
-          time under any player does.
-        */}
-        <span className="num shrink-0 text-xs text-ink-faint">
-          {at ? (
-            <>
-              <span className="text-accent">{formatDuration(at)}</span>
-              <span className="px-0.5">/</span>
-            </>
-          ) : null}
-          {formatDuration(video.seconds)}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={done}
-        aria-label={`${t('ui.playlist.markWatched')}: ${video.title}`}
-        onClick={(event) => onTick(!done, event.shiftKey)}
-        className="relative flex h-11 w-10 shrink-0 items-center justify-center text-ink-faint
-                   transition-colors duration-fast ease-out hover:text-ink"
-      >
-        <span
-          className={`flex h-[18px] w-[18px] items-center justify-center rounded border
-                      transition-colors duration-fast ease-out
-                      ${done ? 'border-accent bg-accent text-canvas' : 'border-line-strong'}`}
-        >
-          {done ? <Icon name="check" size={12} /> : null}
-        </span>
-      </button>
-    </li>
-  );
-}
 

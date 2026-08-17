@@ -599,6 +599,54 @@ why none of them is a «характеристика · значение» line 
 poster says «Продолжить с лекции N» rather than «Play», because after the first
 session that is the only offer worth making.
 
+### Reading about a recording, and watching one
+
+Those are two different sittings, and the dialog has a shape for each. What is
+described above is the first: a frame across the top at a comfortable size, the
+lectures under it, and everything the catalogue knows about the recording down
+the side — the shape somebody is in while deciding whether this is the course to
+take on.
+
+The glyph in the corner, and pressing play, put it in the other. The dialog
+grows to the width and height it can have, the frame takes whatever the dialog
+has left over rather than a stated ratio, and the lecture list moves to the side
+and becomes the queue: the row playing is lit, it brings itself into view when
+the player walks on without being asked, and the recording's own progress stands
+over it — «11 из 26 лекций · 12 из 29 ч» — so what is left of the course is
+answered where the next lecture is chosen. That is the screen for the hour
+somebody actually spends here, and it is deliberately not fullscreen: fullscreen
+is YouTube's own and takes the ticks, the queue and the progress away with it.
+
+Under the picture is what the frame cannot say. A YouTube embed names the
+lecture and its place in the playlist only while its chrome is up, and the
+chrome goes away a second after the pointer does — so «Лекция 2 из 26», the
+title, how far into it the playhead is, the way to the lecture before and after,
+and a button that marks this one off are written out below the frame and stay
+written. On a phone the frame stops scrolling with the page and the queue
+scrolls under it, which is the one thing a phone owes a screen somebody watches
+an hour of video on.
+
+The fact sheet does not go away, it goes under the queue behind a «О ЗАПИСИ»
+line: how good a recording is gets asked as often on the third lecture as on the
+first. Nothing else moves — one lecture list, one set of ticks, one set of
+numbers, laid out twice. For a course cut into parts, «Часть 2» comes with it and
+stands over the queue rather than at the far end of the sheet, since the reader
+who has run out of lectures is looking at the bottom of the queue.
+
+Which shape a recording opens in is **not** remembered, and that is the one
+setting in this dialog that is not. It would buy nothing: watching starts with a
+press on the picture whatever the shape, and that press is what changes it — so
+the memory would only decide what somebody sees while *deciding* about a
+recording they have not played yet, which is the question the other shape is
+for.
+
+**The frame keeps its place in the tree through all of it.** An iframe that is
+moved in the DOM reloads, and a reloaded YouTube embed starts the lecture from
+the top — so the two shapes are one tree with different classes on it rather
+than two layouts, and everything that may move around the player is something
+without a video in it. See
+[the practice](agents/practices.md#a-live-third-party-frame-may-be-restyled-never-moved).
+
 A part-watched lecture says where it stopped *beside* its length — «29:21 /
 1:05:14», the position in the accent colour — and the row is filled to that
 fraction behind the title, with the playhead marked where the fill ends. The

@@ -408,6 +408,48 @@ holding by accident. Wrappers are `li` here, so `li` is what the selector says.
 site", it is in the wrong file. Ask which element actually knows the reason —
 usually the container — and put it there once.
 
+## A live third-party frame may be restyled, never moved
+
+The player dialog now has two shapes — a sheet about a recording and a screen it
+is watched on — and the obvious way to build the second is a second layout. It
+is also the one way that cannot work: **an iframe reloads when it is moved in
+the DOM**, and a reloaded YouTube embed starts the lecture again from the top.
+React moves a node whenever its position in the tree changes, so a `? :` around
+the whole body, a portal into another container, or one wrapper `div` added on
+one branch and not the other are each enough to throw away the reader's hour.
+
+So the two shapes are **one tree wearing different classes**. The frame's
+ancestors are the same elements in the same order in both; what differs is
+`className`, and everything that genuinely moves between the columns — the
+lecture list, the progress line — is markup with no video in it. The test is
+one line and worth running after any layout change around a player: mark the
+node, switch, and ask whether the mark survived.
+
+```js
+document.querySelector('iframe').dataset.mark = 'keepme'; // then switch, then:
+document.querySelector('iframe').dataset.mark ?? 'REMOUNTED';
+```
+
+Two things fell out of it that generalise past this dialog:
+
+- **A class list that flips between layouts is a place to read Tailwind's
+  output order, not just its names.** `shrink-0` and `lg:flex-1` on the same
+  element look like the media query wins; `flex-shrink` is a later property
+  group than `flex`, so the base class does. Where two utilities in one list
+  can contradict each other, build the whole string with a ternary and let only
+  one of them exist.
+- **A frame that has been replaced can still speak.** The embed posts about four
+  frames a second, and the last one from the outgoing player arrives *after* the
+  new one has been asked for — so the screen named the lecture that had just
+  been left, under a picture already playing the next. `event.source` against
+  `iframe.current?.contentWindow` sorts them, and dropping a legitimate frame on
+  the way costs nothing at four a second.
+
+**Generally:** anything on the page that holds live state the app cannot rebuild
+— a playing frame, a media element, a canvas with a context — is not markup to
+be re-arranged. Decide what its container is once, and let the layout change
+around it.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

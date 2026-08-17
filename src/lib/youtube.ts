@@ -317,6 +317,19 @@ export function useYouTubePlayer({
 
     const onMessage = (event: MessageEvent): void => {
       if (event.origin !== YT_ORIGIN) return;
+      /*
+       * Only the frame that is on screen now.
+       *
+       * Opening another lecture replaces the iframe, and the one being torn
+       * down gets a last word in: a delivery still in flight names the lecture
+       * that has just been left, arriving after the new one was asked for. With
+       * nothing to sort them by, the screen answered «лекция 1» under a frame
+       * playing lecture 2 until the new player spoke a second later. The sender
+       * says which frame it is, so that is what decides — and a legitimate
+       * frame dropped on the way is nothing, since the player sends four a
+       * second.
+       */
+      if (event.source && event.source !== iframe.current?.contentWindow) return;
       let payload: { event?: string; info?: Info };
       try {
         payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;

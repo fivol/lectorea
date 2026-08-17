@@ -246,6 +246,24 @@ the frame; the read after it is true. And when the DOM and the drawing disagree,
 suspect the frame before suspecting the code: the giveaway is state that is
 *consistent one frame behind* rather than wrong.
 
+### A new string was added to the dictionary and the screen showed the key
+
+**Assumed:** `data/i18n/ru.json` is the dictionary, so a key added there is on
+screen after the dev server reloads.
+**It was:** the app fetches `/data/i18n/ru.json` — `public/data/i18n/`, which
+the build writes from that file *plus* the aliases out of `data/keywords`. The
+new label rendered as `ui.player.lectureOf` while `check:i18n` passed, which
+reads the source and is right about it.
+
+**How not to repeat it:** the obvious fix, `pnpm data:build`, is the one to
+avoid in a shared tree — it runs whatever `scripts/08-build.ts` says right now
+and republishes the whole catalogue over somebody's half-finished idea
+([above](#and-so-is-publicdata-which-no-git-add-discipline-protects)). Ten lines
+of Python merging the handful of new keys into both `public/data/i18n/*.json`
+answers the same question and touches nothing else. The wider rule: **when an
+edit does not show up, ask what the app actually fetched** — the network tab, or
+`curl` at the path — before re-reading the code that renders it.
+
 ---
 
 ## Environment

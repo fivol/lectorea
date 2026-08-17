@@ -75,6 +75,11 @@ missed.
    own from that — and the button that cycles it by hand is still there, which
    is what makes "what can I study right now" answerable.
 
+   Pressing play gives the player its own screen: a large picture, the lectures
+   beside it as a queue, and under the frame the lecture you are on, how far
+   into it you are, the way to the next one and a button to mark it off — so a
+   whole course can be worked through without ever opening YouTube.
+
    ![A recording open in the player, its lectures ticked off](docs/images/lectures.webp)
 
 ## What is in it
