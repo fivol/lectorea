@@ -8,6 +8,7 @@ import { courseHref, useCourseSlice } from '@/lib/url';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from './Icon';
+import { CountTile } from './Facts';
 import { LectureThumb, ResumeCard } from './ResumeCard';
 import { WeekGoalBar } from './WeekGoal';
 import { IconButton } from './ui';
@@ -150,13 +151,13 @@ function SummaryCard({
             {/* Only once there is one. A «0 дней подряд» is a scolding, and the
                 first day of a habit is not the moment to deliver one. */}
             {streak ? (
-              <Tile
+              <CountTile
                 value={streak}
                 label={t('ui.profile.stats.streak', { noun: plural(streak, 'day') })}
               />
             ) : null}
             <WeekTime seconds={week.seconds} />
-            <Tile
+            <CountTile
               value={week.lectures}
               label={t('ui.profile.stats.week', { noun: plural(week.lectures, 'lecture') })}
             />
@@ -274,22 +275,7 @@ function ResumeButton({ resume, className = '' }: { resume: ResumePointer; class
 function WeekTime({ seconds }: { seconds: number }) {
   const { t, span } = useT();
   const { value, noun } = span(seconds);
-  return <Tile value={value} label={t('ui.profile.stats.week', { noun })} />;
-}
-
-/* An inlay rather than a hairline box: this card floats over the map as often
-   as it sits on a page, and `border-line` is invisible against the land the
-   plate is cut from — see `.inlay` in `index.css`. */
-function Tile({ value, label }: { value: number | string; label: string }) {
-  return (
-    <span
-      className="inlay flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5
-                 px-2 py-1.5 text-center"
-    >
-      <span className="num text-h3 leading-none text-ink">{value}</span>
-      <span className="ink-soft text-[11px] leading-tight">{label}</span>
-    </span>
-  );
+  return <CountTile value={value} label={t('ui.profile.stats.week', { noun })} />;
 }
 
 /** Back into the playlist that was open, with its own field behind it. */

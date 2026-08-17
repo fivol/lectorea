@@ -64,6 +64,31 @@ export function FactTile({
 }
 
 /**
+ * A count, with the word that says what it counts.
+ *
+ * `FactTile` without the glyph and with the number set large — the same inlay,
+ * the same caption treatment. It is for numbers a reader is tallying rather than
+ * reading off a sheet: days in a row, courses finished. There is no glyph
+ * because there is no vocabulary of them here — «изучается» has no picture that
+ * three readers would agree on, and an invented one is a puzzle beside a number
+ * that was perfectly clear.
+ *
+ * A bare «27» over the word «лекций» is four different facts depending on who is
+ * reading it — watched, saved, available, left — so the label is not optional.
+ */
+export function CountTile({ value, label }: { value: number | string; label: string }) {
+  return (
+    <span
+      className="inlay flex min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5
+                 px-2 py-1.5 text-center"
+    >
+      <span className="num text-h3 leading-none text-ink">{value}</span>
+      <span className="ink-soft text-[11px] leading-tight">{label}</span>
+    </span>
+  );
+}
+
+/**
  * The row of tiles.
  *
  * `auto-fit` rather than a fixed three: this lands in a sidebar on the desktop

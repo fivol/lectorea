@@ -194,13 +194,25 @@ chain of prerequisites ending at that course — so reading left to right is
 reading how much has to come first, and a line above the columns says exactly
 that.
 
-In the corner over them, for a reader who has been here before, is where they
-stopped **in what is on screen** — the same block the front page offers
-([where you were](#where-you-were)), on the same plate, asked of the filter's
-own courses. A field somebody has deliberately narrowed to is not the place to
-be offered a lecture from some other subject, so the pointer is scoped: filter
-to химия and the offer is the chemistry recording, filter to a field nothing has
-been watched in and there is nothing there at all.
+In the corner over them, for a reader who has been here before, is **their own
+standing in the slice on screen** — the front page's card
+([where you were](#where-you-were)), on the same plate, asked of this field
+instead of the catalogue. Both halves narrow with the filter: the recording
+offered is the last one opened *in this field*, and under it are three counts of
+*these* courses — «1 пройдено · 2 изучается · 7 всего курсов». A card that kept
+the global numbers under a heading naming the field would be the worst of the
+two, scoped-looking and not scoped.
+
+So the heading names what it counts: «ВАШ ПРОГРЕСС · ХИМИЯ», and «ВАШ ПРОГРЕСС»
+with no filter, where the slice really is everything. It does not try to decline
+the name into «в Химии» — the catalogue holds «Науки о Земле» and «Компьютерная
+лингвистика» too, and a product guessing at Russian cases gets one of them wrong
+in public. The counts cost nothing to work out: course status is in the profile
+and the denominator is the filter's own size. Lectures and hours in a field are
+not offered for the same reason the front page does not offer them — they live
+in the shards, and a card in a corner is not worth three quarters of a megabyte.
+Filter to a field nothing has been watched in and there is no card at all: three
+zeroes over somebody's first visit to химия is a scolding.
 
 It floats rather than sitting in the flow, and that was the second try. As a
 strip across the top it pushed every column down by its own height on every

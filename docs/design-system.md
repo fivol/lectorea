@@ -292,6 +292,7 @@ category and a share of an audience all arrive in the same small grey type.
 | Kind | Shape | On the recording sheet |
 |---|---|---|
 | a number that is the point | `FactTile` — glyph, number, caption under it; `FactTiles` lays them out | 26 лекций · 3.7 ч · ~8 мин |
+| a count a reader is tallying | `CountTile` — the same inlay, number set large, no glyph | 3 дня подряд · 1 пройдено · 7 всего курсов |
 | a category, one of a handful | a `Chip` — the word, with nothing laid out beside it | «Разная длина», «урок», «фрагмент», «ru» |
 | a number that means nothing alone | `Meter` — glyph, name, number, and the scale it is read against | просмотры, лайки, комментарии, досматриваемость |
 

@@ -19,6 +19,8 @@ import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/D
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ProfileButton from '@/components/ProfileButton';
+import Icon from '@/components/Icon';
+import { CountTile } from '@/components/Facts';
 import { ResumeCard } from '@/components/ResumeCard';
 import { BottomSheet, Cap, Chip, IconButton, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
@@ -410,7 +412,7 @@ export default function CoursesScreen() {
                     the corner of that is one thing too many — the panel carries
                     its own «Продолжить» anyway, and a better one, naming the
                     lecture rather than the recording. */}
-                {selected ? null : <ResumeFloat within={visible} />}
+                {selected ? null : <FieldProgress within={visible} field={field} />}
               </div>
             </div>
           </div>
@@ -480,29 +482,39 @@ export default function CoursesScreen() {
 }
 
 /**
- * Where you stopped — in what is actually on screen.
+ * Your own standing in the slice on screen: the front page's card, asked of this
+ * field instead of the catalogue.
  *
- * The front page offers the last thing opened anywhere, because the whole
- * catalogue is what it is showing. Here the reader has narrowed to a field, and
- * the same global answer would be an offer about some other subject standing
- * over the one they came to look at. So the pointer is asked of the filter's own
- * courses: filter to химия and the offer is the chemistry recording; filter to a
- * field nothing has been watched in and there is nothing here at all.
+ * The front page answers «where was I» across everything, because everything is
+ * what it is showing. Here the reader has narrowed to химия, and both halves of
+ * the card have to narrow with them: the recording offered is the last one
+ * opened **in this field**, and the counts are of **these** courses. A card that
+ * kept the global numbers under a heading naming the field would be the worst of
+ * the two — scoped-looking and not scoped.
  *
- * A plate in the corner, like the front page's, and for the reason the front
- * page's is one: it is an offer, not part of the catalogue. In the flow it was a
- * strip across the top pushing every column down by its own height on every
- * visit — the columns are read by scanning down them, and two centimetres off
- * the top is two centimetres off all seven at once. Floating, it costs the
- * screen nothing and covers a corner of one column, which is scrolled past
- * rather than lost. The × puts it away, and it is the same × as the front
- * page's: one flag, one meaning — «not this visit» — wherever it is pressed.
+ * Hence the heading says which field it is counting. There is no attempt to
+ * decline the name into «в Химии»: the catalogue holds «Науки о Земле» and
+ * «Компьютерная лингвистика» as well, and a product that guesses at Russian
+ * cases gets one of them wrong in public. A separator says the same thing and
+ * survives every name and both languages.
+ *
+ * The three counts are free — course status lives in the profile, and the
+ * denominator is the filter's own size — so this costs no download, exactly like
+ * the front page's. Lectures and hours in a field are not here for the same
+ * reason: they live in the shards, and a card in a corner is not worth three
+ * quarters of a megabyte.
+ *
+ * A plate in the corner rather than a strip in the flow: a strip pushed every
+ * column down by its own height on every visit, and the columns are read by
+ * scanning down them. Floating, it covers a corner of one column, which is
+ * scrolled past rather than lost. The × is the front page's ×, one flag and one
+ * meaning — «not this visit» — wherever it is pressed.
  *
  * The press keeps the filters exactly as they are, unlike the front page's,
  * which has to invent a slice to land in. It also asks the columns to scroll the
  * card into view, so what opens has a visible place to have come from.
  */
-function ResumeFloat({ within }: { within: ReadonlySet<string> }) {
+function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: string | null }) {
   const { t } = useT();
   const catalog = useCatalog();
   const navigate = useNavigate();
@@ -510,10 +522,28 @@ function ResumeFloat({ within }: { within: ReadonlySet<string> }) {
   const requestFocus = useUi((state) => state.requestFocus);
   const hidden = useUi((state) => state.summaryHidden);
   const hideSummary = useUi((state) => state.hideSummary);
+  const courses = useProfile((state) => state.profile.courses);
   const resume = useResumePointer(within);
 
-  if (!resume || hidden) return null;
-  const course = catalog.courseById.get(resume.entry.courseId);
+  /* Counted over the filter's own set, so «всего» is the number of cards on
+     screen and the two figures in front of it are shares of that. A stage or a
+     university filter narrows it too, which is right: the question the card
+     answers is «how am I doing with what I am looking at». */
+  const stats = useMemo(() => {
+    let done = 0;
+    let going = 0;
+    for (const id of within) {
+      const status = courses[id]?.status;
+      if (status === 'done') done += 1;
+      else if (status === 'in_progress') going += 1;
+    }
+    return { done, going, total: within.size };
+  }, [within, courses]);
+
+  // Nothing to continue and nothing behind you in this field: an empty card
+  // announcing three zeroes over somebody's first visit to химия is a scolding.
+  if (hidden || (!resume && !stats.done && !stats.going)) return null;
+  const course = resume ? catalog.courseById.get(resume.entry.courseId) : null;
 
   return (
     /* Held clear of the scrollbars on both edges, and never wider than the
@@ -521,26 +551,46 @@ function ResumeFloat({ within }: { within: ReadonlySet<string> }) {
        × outside the window. */
     <div className="pointer-events-none absolute right-3 top-3 z-20 flex w-[19.5rem]
                     max-w-[calc(100%-1.5rem)] justify-end">
-      <div className="plate pointer-events-auto flex w-full items-start gap-1 rounded-card p-1.5">
-        <ResumeCard
-          videoId={resume.lastVideoId}
-          title={resume.entry.title}
-          subtitle={course ? t(`course.${course.id}.title`) : resume.entry.courseId}
-          onClick={() => {
-            const query = new URLSearchParams(params.search);
-            query.set('playlist', resume.entry.id);
-            navigate(courseHref(resume.entry.courseId, `?${query.toString()}`));
-            requestFocus(resume.entry.courseId);
-          }}
-          className="min-w-0 flex-1"
-        />
-        <IconButton
-          icon="close"
-          iconSize={13}
-          label={t('ui.home.hide')}
-          className="shrink-0"
-          onClick={hideSummary}
-        />
+      <div className="plate pointer-events-auto w-full rounded-card p-3">
+        <div className="mb-2.5 flex items-center gap-2">
+          <span className="profile-disc shrink-0">
+            <Icon name="profile" size={14} />
+          </span>
+          <span className="mono-label truncate text-ink-dim">
+            {field
+              ? t('ui.home.progressIn', { name: t(`domain.${field}.title`) })
+              : t('ui.home.progress')}
+          </span>
+          <IconButton
+            icon="close"
+            iconSize={14}
+            label={t('ui.home.hide')}
+            className="ml-auto shrink-0"
+            onClick={hideSummary}
+          />
+        </div>
+
+        <div className="space-y-2.5">
+          {resume ? (
+            <ResumeCard
+              videoId={resume.lastVideoId}
+              title={resume.entry.title}
+              subtitle={course ? t(`course.${course.id}.title`) : resume.entry.courseId}
+              onClick={() => {
+                const query = new URLSearchParams(params.search);
+                query.set('playlist', resume.entry.id);
+                navigate(courseHref(resume.entry.courseId, `?${query.toString()}`));
+                requestFocus(resume.entry.courseId);
+              }}
+            />
+          ) : null}
+
+          <div className="flex items-stretch gap-2">
+            <CountTile value={stats.done} label={t('ui.home.stats.done')} />
+            <CountTile value={stats.going} label={t('ui.home.stats.going')} />
+            <CountTile value={stats.total} label={t('ui.home.stats.courses')} />
+          </div>
+        </div>
       </div>
     </div>
   );
