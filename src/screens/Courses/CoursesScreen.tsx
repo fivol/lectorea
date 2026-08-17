@@ -166,10 +166,11 @@ export default function CoursesScreen() {
    * So the echo is the canvas's business and not only the card's: whatever the
    * panel points at stands in its column while it is being pointed at, faded in
    * where it belongs, tagged with the field it came from, and gone again on
-   * mouse-out. One card, not a chain — this answers «where does that one
-   * stand», and the chain behind it is what clicking it is for.
+   * mouse-out, with the edge to the course being read drawn alongside it — see
+   * `links` in `ColumnsView`. One card, not a chain: this answers «where does
+   * that one stand», and the chain behind it is what clicking it is for.
    */
-  const echoId = useUi((state) => state.echoCourseId);
+  const echoId = useUi((state) => state.echo?.id ?? null);
   const preview = selected && echoId && !settled.has(echoId) ? echoId : null;
 
   const onCanvas = useMemo(

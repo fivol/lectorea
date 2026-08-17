@@ -320,6 +320,13 @@ for as long as it is pointed at (`preview` in `CoursesScreen`). «Также п�
 «Рядом» and the path steps come right with the same three lines, and a list added
 later is fixed before it is written.
 
+The signal then had to carry both ends. `echo` is `{ id, from }` rather than an
+id, because a name in a panel *is* one end of a relation and the panel it stands
+in is the other — with both, pointing can be answered with the edge itself and
+not only with the card lighting up, which is what «наведи и проведи связь» asked
+for. A signal that carries only what the sender was looking at can answer «which
+one»; one that carries the relation can answer «why».
+
 The same reading settled the forward curves, which went at the same time. They
 could only ever be drawn to the descendants the filter happened to keep, while
 the prerequisites behind a course are borrowed in whole — so one half of the

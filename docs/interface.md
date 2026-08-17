@@ -223,6 +223,13 @@ above changes to say so — half the screen has just dimmed, and the legend
 explaining the columns would leave the reason for it unsaid; the **?** beside it
 opens the full legend, which also appears by itself on a first visit.
 
+One card is marked out, and it is the one being read: a ring, and every other
+card in its own field's colour. The chain used to be painted as well — an accent
+border and a wash behind every card in it — and with half the screen ringed in
+shades of one green the card you had actually clicked was the hardest of them to
+find. What separates the chain from the rest is that the rest is dimmed and
+drained of colour, and that the lines run along the chain and nowhere else.
+
 Backwards only. «Открывает путь к» is the same relation read from the other end,
 and it is named in the panel rather than drawn: the courses ahead are not
 borrowed onto the canvas the way the prerequisites behind are, so a fan of lines
@@ -320,6 +327,14 @@ that list used to be a set of names pointing at nothing. One card, not a chain �
 this answers where that course stands, and what it stands on is what clicking it
 is for.
 
+The line comes with the card. Pointing at a name draws the edge between it and
+the course being read, in whichever direction the catalogue has it — so the
+courses ahead, which the canvas otherwise leaves undrawn, are drawn one at a
+time by the reader asking for them, and so is the second prerequisite that
+**Все связи** hides while it is off. Only where the relation really is a
+prerequisite: a line here says «this has to come first» and nothing else, so
+«Также полезно» and «Рядом» borrow their card in and draw nothing.
+
 A borrowed card carries a tag naming the field it came from, and pressing it
 moves the columns to that field with the course still selected.
 
@@ -384,8 +399,8 @@ inside it; here the shard is in hand, so the offer is the lecture itself.
   field the neighbour comes from, with the full chain below the pair. On the
   panel each list caps its height and scrolls inside itself: a course that opens
   eight others must not push its own recordings off the screen. Pointing at any
-  of these cards shows the course where it stands in the columns, borrowing it
-  in if the filter is not showing it
+  of these cards shows the course where it stands in the columns — borrowed in
+  if the filter is not showing it — and draws the line between the two
   ([the columns](#filters)); pressing it opens that course, and what was
   «открывает путь к» is drawn as «опирается на» from the other end.
 

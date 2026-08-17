@@ -22,8 +22,6 @@ type Props = {
   /** Cascade delay in ms — zero when reduced motion is requested. */
   delay: number;
   selected: boolean;
-  /** In the chain of the selected course: a weaker relative of `selected`. */
-  inPath: boolean;
   /** From outside the current filter, here only while it is being read. */
   guest: boolean;
   /** Set for one pulse after the card has been scrolled to. */
@@ -41,7 +39,6 @@ function CourseCardInner({
   emphasis,
   delay,
   selected,
-  inPath,
   guest,
   pulsing,
   echoed,
@@ -57,8 +54,6 @@ function CourseCardInner({
   const opacity = EMPHASIS_OPACITY[emphasis];
   const muted = emphasis === 'muted';
   const empty = course.playlistCount === 0;
-
-  const accent = emphasis === 'downstream' ? 'var(--c-accent)' : colour;
 
   return (
     /*
@@ -101,17 +96,26 @@ function CourseCardInner({
                   ${pulsing ? 'focus-pulse' : ''}`}
       style={{
         transitionDelay: `${delay}ms`,
-        // In-path cards carry a wash of the accent — present, clearly weaker
-        // than the ring on the selected card, and readable in both themes.
-        background: inPath && !selected ? 'var(--c-accent-soft)' : 'var(--c-surface)',
-        borderColor: selected || echoed
-          ? accent
-          : inPath
-            ? 'var(--c-accent)'
-            : withAlpha(accent, muted ? 0.2 : 0.45),
+        /*
+         * One card is marked out, and it is the one being read. Every other
+         * card wears its own field's colour, whatever it is to the selection.
+         *
+         * The chain used to be marked as well — an accent border and a wash of
+         * accent behind it on every card in it, and an accent-tinted border on
+         * everything the selection opened. Half the cards on screen were then
+         * ringed in some shade of the same green, and «this is the one you
+         * clicked» was the hardest of them to pick out. What separates the
+         * chain from the rest is that the rest is dimmed and drained of colour,
+         * and the lines run along the chain and nowhere else; neither of those
+         * needs a border to help it.
+         */
+        background: 'var(--c-surface)',
+        borderColor: selected ? colour : withAlpha(colour, muted ? 0.2 : 0.45),
         borderWidth: selected ? 2 : 1,
+        // The echo lifts the card and shadows it exactly as a pointer on the
+        // card itself would — an answer to a pointer, not a mark on the map.
         boxShadow: selected
-          ? `0 0 0 3px ${withAlpha(accent, 0.2)}, var(--shadow-card)`
+          ? `0 0 0 3px ${withAlpha(colour, 0.2)}, var(--shadow-card)`
           : echoed
             ? 'var(--shadow-card)'
             : undefined,

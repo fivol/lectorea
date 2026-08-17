@@ -227,6 +227,25 @@ Port 5199 is usually another session's server and `--strictPort` will not share
 it: add a second entry to `.claude/launch.json` on a free port for the length of
 the check, and take it out again.
 
+### The browser pane was asked what it had drawn, and it had not drawn anything
+
+**Assumed:** hover the element, wait 400 ms, read the DOM with `javascript_tool`
+— that is what is on screen.
+**It was:** the pane paints only when something asks it to. `ChainLinks` measures
+inside `requestAnimationFrame`, and rAF does not fire in a tab that is not being
+painted, so the curves were the ones from the last *screenshot*. Half an hour
+went into a bug that did not exist: the React state was right, the DOM had the
+new card, the effect had re-run with the new edge, and the SVG still held the
+previous frame's paths. The instrumentation confirmed it — `useEffect` ran with
+10 legs, the `rAF` callback had never been called since.
+
+**How not to repeat it:** **take a screenshot before reading anything that a
+frame produces** — anything behind `requestAnimationFrame`, a transition, an
+animation, `ResizeObserver`, or an `IntersectionObserver`. The screenshot forces
+the frame; the read after it is true. And when the DOM and the drawing disagree,
+suspect the frame before suspecting the code: the giveaway is state that is
+*consistent one frame behind* rather than wrong.
+
 ---
 
 ## Environment

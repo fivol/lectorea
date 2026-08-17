@@ -60,14 +60,16 @@ export default function ColumnsView({
   const isDesktop = useIsDesktop();
 
   /**
-   * The card a name in the panel is pointing at.
+   * The card a name in the panel is pointing at, and the panel it was named in.
    *
    * Set by hovering a prerequisite, a next course or a step of the path — the
    * one case where something outside the columns has to say «this one». It
-   * lifts that card and nothing else: the reading of the screen belongs to the
-   * selection, and a glance at a list on the right is not a new selection.
+   * lifts that card and draws the one edge being pointed at, and does nothing
+   * else: the reading of the screen belongs to the selection, and a glance at a
+   * list on the right is not a new selection.
    */
-  const echoId = useUi((state) => state.echoCourseId);
+  const echo = useUi((state) => state.echo);
+  const echoId = echo?.id ?? null;
   const focusRequest = useUi((state) => state.focusRequest);
 
   const profile = useProfile((state) => state.profile);
@@ -261,6 +263,43 @@ export default function ColumnsView({
   }, [chain, columns, highlight, fullGraph]);
 
   /**
+   * The chain's lines, plus the one the pointer is asking about.
+   *
+   * A name in the panel is one end of a relation and the panel it stands in is
+   * the other, so pointing at it can be answered with the line itself rather
+   * than only with the card lighting up — including for edges the canvas is not
+   * otherwise drawing: what a course opens up, and the second prerequisite the
+   * tree dropped when «Все связи» is off.
+   *
+   * Only where the relation is a prerequisite, in whichever direction the panel
+   * happened to name it. A line on this canvas says «this has to come first» and
+   * that is the whole of what it says; «Также полезно» and «Рядом» are ties of
+   * another kind, and drawing them the same way would make the picture claim
+   * something the catalogue does not. Those still borrow their card in.
+   *
+   * `deps` decides the direction, not the two seats: a prerequisite's level is
+   * strictly lower than its dependant's, so the edge always runs left to right,
+   * which is the one direction `routeSteps` can draw.
+   */
+  const drawn = useMemo<Link[]>(() => {
+    if (!echo?.from || echo.from === echo.id) return links;
+
+    const there = catalog.courseById.get(echo.id);
+    const here = catalog.courseById.get(echo.from);
+    const edge = there?.deps.includes(echo.from)
+      ? { from: echo.from, to: echo.id }
+      : here?.deps.includes(echo.id)
+        ? { from: echo.id, to: echo.from }
+        : null;
+    if (!edge) return links;
+    if (links.some((link) => link.from === edge.from && link.to === edge.to)) return links;
+
+    // Last, so it is painted over the chain rather than under it. Off-canvas
+    // ends are dropped by the router, which measures before it draws.
+    return [...links, { ...edge, depth: 0 }];
+  }, [links, echo, catalog]);
+
+  /**
    * Bring a course into view when the path list or the search box asks for it,
    * then pulse its ring once. A smooth scroll that ends somewhere in a field of
    * identical cards leaves you looking for what moved; the pulse says which one
@@ -373,7 +412,7 @@ export default function ColumnsView({
         <div className="relative flex min-w-max items-start p-5" style={{ gap }}>
           <ChainLinks
             scrollRef={scrollRef}
-            links={links}
+            links={drawn}
             revision={`${selectedId}:${columns.length}:${total}:${gap}`}
             animate={!reducedMotion}
             stepped={stepped}
@@ -414,11 +453,6 @@ export default function ColumnsView({
                         // Standing in a column it does not belong to: the card
                         // says which field it came from and leads back to it.
                         guest={guests.has(course.id)}
-                        inPath={
-                          highlight.pinned &&
-                          course.id !== selectedId &&
-                          (emphasis === 'direct' || emphasis === 'transitive')
-                        }
                         pulsing={course.id === pulsingId}
                         // A name in the panel is being pointed at, and this is
                         // the card it means.

@@ -145,10 +145,33 @@ export default function LegendPopover({ variant = 'columns' }: { variant?: 'colu
                     >
                       {t('ui.legend.dimmed')}
                     </Row>
+                    {/* The one card on the canvas that is painted rather than
+                        simply lit: the chain around it is told by the dimming
+                        of everything else and by the lines, so a second mark
+                        would only compete with this one. */}
                     <Row
-                      mark={<span className="h-4 w-6 rounded border border-accent bg-accent-soft" />}
+                      mark={
+                        <span className="h-4 w-6 rounded border-2 border-accent bg-surface
+                                         shadow-[0_0_0_2px_var(--c-accent-soft)]" />
+                      }
                     >
-                      {t('ui.legend.inPath')}
+                      {t('ui.legend.selected')}
+                    </Row>
+                    <Row
+                      mark={
+                        <svg viewBox="0 0 24 16" className="h-4 w-6" aria-hidden="true">
+                          <path
+                            d="M1 12 C8 12, 16 4, 23 4"
+                            fill="none"
+                            stroke="var(--c-accent)"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            opacity={0.7}
+                          />
+                        </svg>
+                      }
+                    >
+                      {t('ui.legend.line')}
                     </Row>
                     {/* The tag itself, at its own size: it is the only mark on
                         a card that is not a state but a place, and drawing it

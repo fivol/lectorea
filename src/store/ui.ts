@@ -11,6 +11,16 @@ import { create } from 'zustand';
 
 export type MapView = 'map' | 'blocks';
 
+/**
+ * A course the panel is pointing at, and the course it was named from.
+ *
+ * Both ends, because a name in the panel is one end of a relation and the panel
+ * it stands in is the other: the columns can then borrow the card in, lift it
+ * *and* draw the edge between the two. `from` is null where there is no edge to
+ * draw — a step of the path is already joined to everything it belongs to.
+ */
+export type Echo = { id: string; from: string | null };
+
 export type UiStore = {
   /**
    * Set by the panel and the path list on hover, to lift the matching card in
@@ -21,7 +31,7 @@ export type UiStore = {
    * "what does this one need" — is the question a click already answers, in a
    * reading that then holds still.
    */
-  echoCourseId: string | null;
+  echo: Echo | null;
   profileOpen: boolean;
   /** Bumped when a course should be scrolled into view. */
   focusRequest: { courseId: string; nonce: number } | null;
@@ -59,7 +69,8 @@ export type UiStore = {
    */
   summaryHidden: boolean;
 
-  setEcho: (id: string | null) => void;
+  /** `from` is the panel the name was read in — the other end of the edge. */
+  setEcho: (id: string | null, from?: string | null) => void;
   hideSummary: () => void;
   /** Claim the keyboard for a layer; the returned function gives it back. */
   holdKeyboard: () => () => void;
@@ -70,14 +81,14 @@ export type UiStore = {
 };
 
 export const useUi = create<UiStore>((set, get) => ({
-  echoCourseId: null,
+  echo: null,
   profileOpen: false,
   focusRequest: null,
   mapView: 'map',
   keyboardHeld: 0,
   summaryHidden: false,
 
-  setEcho: (id) => set({ echoCourseId: id }),
+  setEcho: (id, from = null) => set({ echo: id ? { id, from } : null }),
   hideSummary: () => set({ summaryHidden: true }),
   holdKeyboard: () => {
     set({ keyboardHeld: get().keyboardHeld + 1 });

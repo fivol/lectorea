@@ -61,7 +61,9 @@ export default function CourseLinkCard({
     <Tooltip content={hint}>
       <Link
         to={courseHref(courseId, search)}
-        onMouseEnter={() => setEcho(courseId)}
+        // Both ends: the card to lift, and the course this panel is about, so
+        // the columns can draw the edge between the two while it is pointed at.
+        onMouseEnter={() => setEcho(courseId, from)}
         onMouseLeave={() => setEcho(null)}
         onClick={() => requestFocus(courseId)}
         className="flex items-center gap-2.5 rounded-card border bg-surface p-2 transition-colors
