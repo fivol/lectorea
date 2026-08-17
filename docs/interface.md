@@ -194,6 +194,20 @@ chain of prerequisites ending at that course — so reading left to right is
 reading how much has to come first, and a line above the columns says exactly
 that.
 
+Above that line, for a reader who has been here before, is where they stopped
+**in what is on screen** — the same block the front page offers
+([where you were](#where-you-were)), asked of the filter's own courses. A field
+somebody has deliberately narrowed to is not the place to be offered a lecture
+from some other subject, so the pointer is scoped: filter to химия and the offer
+is the chemistry recording, filter to a field nothing has been watched in and
+there is no strip at all. It is in the flow rather than floating, because the
+columns have no open water for a card to lie over — every square of them is
+something to read — and it takes its two centimetres only when it has something
+to say. It also goes quiet while the panel is open on that very course, whose
+own block names the lecture rather than the recording and is the better answer.
+Pressing it keeps the filters exactly as they are and scrolls the card into
+view, so what opens has a visible place to have come from.
+
 Selecting a card lights up what it needs, fades the rest and draws the curves
 along that chain, and only that chain — over 200 cards they were a web of noise,
 but over the six or seven of one path they answer what the columns cannot, which

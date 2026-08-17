@@ -338,17 +338,27 @@ export function useContinue(): WatchEntry | null {
  */
 export type ResumePointer = { entry: RecentEntry; lastVideoId?: string };
 
-export function useResumePointer(): ResumePointer | null {
+/**
+ * @param within Only courses in this set count, for a screen that is looking at
+ *   part of the catalogue rather than at all of it. The columns filtered to a
+ *   field offer where you stopped **in that field**: the last thing opened
+ *   anywhere is the front page's answer, and repeating it over a field somebody
+ *   has deliberately narrowed to is an offer about a different subject
+ *   altogether. Omitted on the front page, where the whole catalogue is the
+ *   slice.
+ */
+export function useResumePointer(within?: ReadonlySet<string> | null): ResumePointer | null {
   const profile = useProfile((state) => state.profile);
 
   return useMemo(() => {
     for (const entry of profile.recent) {
+      if (within && !within.has(entry.courseId)) continue;
       const saved = profile.playlists[entry.id];
       if (saved?.watched) continue;
       return { entry, lastVideoId: saved?.lastVideoId };
     }
     return null;
-  }, [profile.recent, profile.playlists]);
+  }, [profile.recent, profile.playlists, within]);
 }
 
 /** Hours and lectures behind you, across everything the profile knows about. */
