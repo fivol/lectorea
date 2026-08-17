@@ -529,8 +529,26 @@ export const DayLogSchema = z.object({
 });
 export type DayLog = z.infer<typeof DayLogSchema>;
 
+/**
+ * The shape this build writes. Anything higher was written by a newer site.
+ *
+ * Declared above `ProfileSchema` because the schema reads it, and a `const` is
+ * in its temporal dead zone until the line that declares it runs — below the
+ * schema this is a `ReferenceError` at import, which is the module failing to
+ * load at all rather than a bug anybody gets to debug.
+ */
+export const PROFILE_VERSION = 4;
+
 export const ProfileSchema = z.object({
-  version: z.literal(3),
+  /*
+   * The literal and `PROFILE_VERSION` are one number written twice, and they
+   * were once written twice with two different values: bumping the constant
+   * alone made `migrateProfile` produce a profile its own schema rejects, and
+   * a rejected profile is read as corrupt and **replaced by an empty one**.
+   * Every stored profile in existence would have been wiped by the update that
+   * was meant to carry its goal across. So the schema takes the constant.
+   */
+  version: z.literal(PROFILE_VERSION),
   updatedAt: z.string(),
   courses: z
     .record(
@@ -708,19 +726,32 @@ export const ProfileSchema = z.object({
        */
       playbackRate: z.number().min(0.25).max(4).catch(1),
       /**
-       * Hours of study to aim for in a week, or null for no goal.
+       * Minutes of study to aim for on a day of study, or null for no goal.
        *
        * A setting rather than a number derived from anything: how much somebody
        * means to study is the one fact about their week the site cannot work
-       * out for itself. Hours because that is what the week is measured in —
-       * see `days` — and a goal counted in lectures would be met by six
-       * ten-minute explainers.
+       * out for itself. Time rather than lectures, or a goal would be met by
+       * six ten-minute explainers.
+       *
+       * The **day** is what is stored, and it used to be the week. A week is
+       * the unit somebody plans in and the day is the unit they act in, and
+       * only the second one can rate a day: a strip of squares shaded against
+       * a weekly figure is shaded against nothing. The week is still asked and
+       * still shown — it is this times `goalDays`, which is exact, where the
+       * division the other way round lands on «43 минуты» and reads as a
+       * target nobody set.
        *
        * Null is the default and stays the default. A goal nobody asked for is a
        * debt handed to somebody who came here to watch a lecture, and the whole
        * point of it is that it was chosen.
        */
-      weekGoal: z.number().min(0).nullable().catch(null),
+      dayGoal: z.number().min(0).nullable().catch(null),
+      /**
+       * Days of the week that goal is meant for. Half of one setting: nobody
+       * studies seven days in seven, and a week counted as seven days of the
+       * day's goal is a bar that cannot be filled by anybody keeping to it.
+       */
+      goalDays: z.number().int().min(1).max(7).catch(5),
     })
     .default({
       lang: 'ru',
@@ -729,7 +760,8 @@ export const ProfileSchema = z.object({
       maxStage: null,
       panelLinks: 'closed',
       resume: true,
-      weekGoal: null,
+      dayGoal: null,
+      goalDays: 5,
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
@@ -748,9 +780,6 @@ export const DAYS_LIMIT = 730;
  * profile already written.
  */
 export const PROFILE_KEY = 'catalog.profile.v1';
-
-/** The shape this build writes. Anything higher was written by a newer site. */
-export const PROFILE_VERSION = 3;
 
 /**
  * A stored profile brought up to the current shape.
@@ -793,7 +822,63 @@ export function migrateProfile(raw: unknown): unknown {
     next.days = days.map((day) => (typeof day === 'string' ? { day, sec: 0, lectures: 0 } : day));
   }
 
+  /*
+   * Version 3 aimed at a week; version 4 aims at a day, so many days a week.
+   *
+   * The week that was chosen is preserved rather than reinterpreted — see
+   * `goalPairFor`, which picks the pair of offered steps whose product is
+   * nearest to it, and lands exactly on every one of the six weeks that could
+   * be chosen. Somebody who set five hours a week gets an hour a day, five
+   * days a week, and their bar reads the same on the morning after the update
+   * as it did the night before, which is the whole bar for a migration of a
+   * setting.
+   */
+  if (version < 4) {
+    const settings = (next.settings ?? {}) as Record<string, unknown>;
+    const weekGoal = settings.weekGoal;
+    const { weekGoal: _dropped, ...rest } = settings;
+    next.settings =
+      typeof weekGoal === 'number' && weekGoal > 0
+        ? { ...rest, ...goalPairFor(weekGoal) }
+        : { ...rest, dayGoal: null, goalDays: 5 };
+  }
+
   return next;
+}
+
+/** Minutes a day the goal control offers. */
+export const DAY_GOALS = [15, 30, 45, 60, 90, 120] as const;
+/** And days a week. Two is a habit; one is a lecture with a date on it. */
+export const GOAL_DAYS = [2, 3, 4, 5, 6, 7] as const;
+
+/**
+ * The offered pair whose week comes nearest to a week somebody already chose.
+ *
+ * Thirty-six pairs, so it is a search rather than arithmetic — and the search
+ * is what makes it exact: every one of the old ladder's six weeks (1, 2, 3, 5,
+ * 7, 10 hours) is a product of two offered steps, and rounding the division
+ * instead would have turned an hour a week into fifteen minutes over four days
+ * *or* five, one of which is not an hour.
+ *
+ * Ties go to the pair with the most days: the same week spread wider is the
+ * one more likely to be kept, and it is the reading that makes «дней закрыто»
+ * worth counting.
+ */
+export function goalPairFor(weekHours: number): { dayGoal: number; goalDays: number } {
+  let best = { dayGoal: 60, goalDays: 5 };
+  let closest = Infinity;
+  for (const days of GOAL_DAYS) {
+    for (const minutes of DAY_GOALS) {
+      const distance = Math.abs((minutes * days) / 60 - weekHours);
+      // `<=`, with days walked from fewest to most, is what makes the tie go
+      // to the wider spread.
+      if (distance <= closest + 1e-9) {
+        closest = distance;
+        best = { dayGoal: minutes, goalDays: days };
+      }
+    }
+  }
+  return best;
 }
 
 /* ────────────────────────────  Constants  ──────────────────────────── */

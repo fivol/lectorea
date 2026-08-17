@@ -153,7 +153,10 @@ export function profilePrompt({
     lines.length ? ['', heading, ...lines] : [];
 
   const activity = activityOf(profile.days, today, 1);
-  const goalHours = profile.settings.weekGoal;
+  // The goal is a day and a number of days now; what an assistant planning a
+  // term wants is still the week, which is the product of the two.
+  const { dayGoal, goalDays } = profile.settings;
+  const goalHours = dayGoal ? (dayGoal * goalDays) / 60 : null;
 
   const out = [
     t('ui.prompt.intro', { site }),

@@ -330,6 +330,34 @@ window.addEventListener('message', (e) => {
 
 ---
 
+## Migrations
+
+### One version number was written in two places, and only one was bumped
+
+**Assumed:** `PROFILE_VERSION = 4` is the version, so bumping it is the whole
+of "the profile shape changed".
+**It was:** `ProfileSchema` carried `version: z.literal(3)` of its own. So
+`migrateProfile` dutifully stamped a 4 onto every stored profile and the schema
+that ran immediately after it rejected the result — and `readProfile` reads a
+failed parse as `corrupt`, which means **an empty profile**. Every reader who
+opened the site after that deploy would have lost every tick, every day of
+study and every streak, to an update whose whole purpose was to carry their
+goal across.
+
+It was caught by the first assertion of the first test written for the
+migration, which is the only reason it is in this file rather than in the
+release notes.
+
+**How not to repeat it:** fixed at the source — the schema reads the constant
+(`z.literal(PROFILE_VERSION)`), which also means the constant has to be
+declared above it, since a `const` below is a `ReferenceError` at import. The
+wider rule: **a migration is the one piece of code here that rewrites a
+reader's data with no copy anywhere**, so it gets a test before it gets a
+commit, and the test asserts what must *survive* rather than what changed. And
+when a value has to agree in two files, one of them reads the other.
+
+---
+
 ## Environment
 
 ### The quota ledger is keyed by the Pacific day

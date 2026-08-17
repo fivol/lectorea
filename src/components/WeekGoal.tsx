@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useT } from '@/i18n';
-import { WEEK_GOALS, useWeekGoal, type WeekGoal } from '@/lib/activity';
+import { DAY_GOALS, GOAL_DAYS, useDayGoal, useWeekGoal, type WeekGoal } from '@/lib/activity';
 import { formatHours } from '@/lib/format';
 import { useProfile } from '@/store/profile';
 import Icon from './Icon';
@@ -57,13 +57,22 @@ export function WeekGoalBar({ className = '' }: { className?: string }) {
 function GoalName({
   goal,
   size,
+  /**
+   * Spell the pair out — «45 минут в день, 5 дней в неделю» — rather than
+   * naming the bar. The panel is where the goal is set and the sentence is
+   * what says what was set; the plate in the corner of the map has room for
+   * three words and gets «Цель на неделю», since what a reader wants from it
+   * there is the shape of the bar and not the terms of it.
+   */
+  detail = false,
   className = '',
 }: {
   goal: WeekGoal;
   size: number;
+  detail?: boolean;
   className?: string;
 }) {
-  const { t } = useT();
+  const { t, count, plural } = useT();
 
   return (
     <span className={`flex items-center gap-1.5 ${className}`}>
@@ -71,7 +80,12 @@ function GoalName({
           after it, and two accents in one line leave the eye nowhere to land. */}
       <span className="flex items-center gap-1.5">
         <Icon name="target" size={size} />
-        {t('ui.profile.goal.week')}
+        {detail
+          ? t('ui.profile.goal.pair', {
+              perDay: count(Math.round((goal.hours * 60) / goal.days), 'minute'),
+              days: `${goal.days} ${plural(goal.days, 'day')}`,
+            })
+          : t('ui.profile.goal.week')}
       </span>
       {goal.met ? (
         <span className="flex items-center gap-1 font-semibold text-accent">
@@ -97,7 +111,12 @@ function GoalBar({ goal, className = '' }: { goal: WeekGoal; className?: string 
    * with the numeral and write «из 3 часа». «ч» does not decline, so the line is
    * right in every language that writes its own template around it.
    */
-  const label = t('ui.profile.goal.of', { done: formatHours(goal.done), goal: goal.hours });
+  const label = t('ui.profile.goal.of', {
+    done: formatHours(goal.done),
+    // Rounded like every other hour on these screens. The week is a product of
+    // two chosen steps now and lands on «3,75» as readily as on «5».
+    goal: formatHours(goal.hours),
+  });
 
   return (
     <ProgressBar
@@ -122,19 +141,29 @@ function GoalBar({ goal, className = '' }: { goal: WeekGoal; className?: string 
 /**
  * The bar with the choosing attached: the panel's copy.
  *
- * The row of hours is folded away once a goal is set. It is a decision somebody
- * makes about once, and a permanent strip of seven buttons under a number reads
- * as a control panel rather than as a week.
+ * The ladders are folded away once a goal is set. It is a decision somebody
+ * makes about once, and a permanent strip of buttons under a number reads as a
+ * control panel rather than as a week.
+ *
+ * Two rows, one decision. The minutes are what a day is rated against and the
+ * days are what makes a week out of them, and neither is an answer on its own:
+ * «45 минут» says nothing about a week and «5 дней» nothing about a day. They
+ * are set together and printed together, and the week under them is their
+ * product rather than a third thing to choose.
  */
 export function WeekGoalRow() {
   const { t } = useT();
   const goal = useWeekGoal();
+  const day = useDayGoal();
   const setSetting = useProfile((state) => state.setSetting);
   const [editing, setEditing] = useState(false);
 
-  const choose = (hours: number | null): void => {
-    setSetting('weekGoal', hours);
-    setEditing(false);
+  const chooseMinutes = (minutes: number | null): void => {
+    setSetting('dayGoal', minutes);
+    // Only the "off" end closes the ladders. Picking a length is half the
+    // decision, and folding the days away under the hand that has just chosen
+    // minutes is the control deciding it knows what somebody meant.
+    if (!minutes) setEditing(false);
   };
 
   if (!goal && !editing) {
@@ -159,7 +188,7 @@ export function WeekGoalRow() {
   return (
     <div className="mt-2 space-y-2 border-t border-line pt-2">
       <div className="flex items-baseline gap-2 text-xs text-ink-faint">
-        {goal ? <GoalName goal={goal} size={12} /> : <span>{t('ui.profile.goal.week')}</span>}
+        {goal ? <GoalName goal={goal} size={12} detail /> : <span>{t('ui.profile.goal.week')}</span>}
         <Button
           variant="ghost"
           small
@@ -173,21 +202,51 @@ export function WeekGoalRow() {
 
       {goal ? <GoalBar goal={goal} /> : null}
 
+      {/*
+        The week said in days rather than in hours.
+        «2,1 из 3,75 ч» and «3 из 5 дней закрыто» are both true of the same
+        week, and only the second says whether the habit is going the way it
+        was meant to: five short evenings and one long Sunday come to the same
+        number of hours and are not the same week. It is also the one line the
+        day's goal buys that nothing else on this screen could print.
+      */}
+      {goal ? (
+        <p className="num text-[11px] text-ink-faint">
+          {t('ui.profile.goal.closed', { done: goal.closed, days: goal.days })}
+        </p>
+      ) : null}
+
       {editing ? (
-        <Segmented
-          value={String(goal?.hours ?? 0)}
-          label={t('ui.profile.goal.week')}
-          options={[
-            { value: '0', label: t('ui.profile.goal.off') },
-            // Short forms — «5 ч» — because seven full ones do not fit a phone
-            // and the row would scroll past its own options.
-            ...WEEK_GOALS.map((hours) => ({
-              value: String(hours),
-              label: t('ui.profile.goal.hours', { n: hours }),
-            })),
-          ]}
-          onChange={(value) => choose(Number(value) || null)}
-        />
+        <div className="space-y-1.5">
+          <Segmented
+            value={String(day?.minutes ?? 0)}
+            label={t('ui.profile.goal.perDay')}
+            options={[
+              { value: '0', label: t('ui.profile.goal.off') },
+              // Short forms — «45 м» — because seven full ones do not fit a
+              // phone and the row would scroll past its own options.
+              ...DAY_GOALS.map((minutes) => ({
+                value: String(minutes),
+                label: t('ui.profile.goal.minutes', { n: minutes }),
+              })),
+            ]}
+            onChange={(value) => chooseMinutes(Number(value) || null)}
+          />
+          {/* The second half appears only once there is a first: days a week
+              of nothing a day is a row of buttons that changes no number on
+              the screen. */}
+          {day ? (
+            <Segmented
+              value={String(goal?.days ?? 5)}
+              label={t('ui.profile.goal.daysAWeek')}
+              options={GOAL_DAYS.map((days) => ({
+                value: String(days),
+                label: String(days),
+              }))}
+              onChange={(value) => setSetting('goalDays', Number(value))}
+            />
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

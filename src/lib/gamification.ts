@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { BuiltPlaylist, Profile, Video } from '@shared/schema';
-import { useActivity, useWeekGoal } from './activity';
+import { useActivity, useDayGoal, useWeekGoal } from './activity';
 import { unlocksOf, useCatalog } from './catalog';
 import { clamp } from './format';
 import type { PlaylistProgress } from './progress';
@@ -83,22 +83,44 @@ export function useToday(): Today {
   }, [days]);
 }
 
-export type WeekLeft = { seconds: number; met: boolean };
+export type DayLeft = {
+  /** Still to be spent today, in seconds. Zero once the day is made. */
+  seconds: number;
+  /** What today was aimed at, so the line can print «25 из 45 минут». */
+  target: number;
+  met: boolean;
+  /** Days of the week made so far, out of how many were meant — only once met. */
+  closed: number;
+  days: number;
+};
 
 /**
- * How much of the week's goal is still to be spent, or nothing at all.
+ * What is left of today's goal, or nothing at all.
  *
  * Nothing at all is the answer for a reader who never set a goal, and that is
  * the point: an unasked-for target is a debt, and the argument against handing
  * one out is the same one the path bar and `WeekGoal` are written against.
+ *
+ * The **day** rather than the week, which is what this line used to carry. A
+ * week's remainder read from inside a lecture is a number about a plan; the
+ * day's is a number about the next twenty minutes, and the next twenty minutes
+ * are what the reader is deciding on. The week has not gone anywhere — it is
+ * the bar on the front page and in the panel, where looking back is what the
+ * screen is for.
  */
-export function useWeekLeft(): WeekLeft | null {
-  const goal = useWeekGoal();
-  const { week } = useActivity();
+export function useDayLeft(): DayLeft | null {
+  const day = useDayGoal();
+  const week = useWeekGoal();
   return useMemo(() => {
-    if (!goal) return null;
-    return { seconds: Math.max(0, goal.hours * 3600 - week.seconds), met: goal.met };
-  }, [goal, week.seconds]);
+    if (!day || !week) return null;
+    return {
+      seconds: Math.max(0, day.seconds - day.done),
+      target: day.seconds,
+      met: day.met,
+      closed: week.closed,
+      days: week.days,
+    };
+  }, [day, week]);
 }
 
 /* ───────────────────────────  2 · milestones  ───────────────────────────

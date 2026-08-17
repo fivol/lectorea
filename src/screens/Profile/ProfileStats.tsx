@@ -1,6 +1,13 @@
 import { useMemo, type ReactNode } from 'react';
 import { useT, type Translator } from '@/i18n';
-import { ACTIVITY_WINDOW, levelOf, startOfWeek, useActivity, type Day } from '@/lib/activity';
+import {
+  ACTIVITY_WINDOW,
+  levelOf,
+  startOfWeek,
+  useActivity,
+  useDayGoal,
+  type Day,
+} from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
 import { formatDate, formatHours, hoursFromSeconds } from '@/lib/format';
 import { useGoalsProgress } from '@/lib/goals';
@@ -148,6 +155,7 @@ export default function ProfileStats() {
 function ActivityStrip() {
   const { t, count, span, lang } = useT();
   const activity = useActivity();
+  const dayGoal = useDayGoal();
   const week = activity.week;
 
   return (
@@ -171,7 +179,8 @@ function ActivityStrip() {
             // Midday, so that formatting it in the reader's own zone cannot
             // walk the date back to the day before.
             title={dayTitle(day, formatDate(`${day.day}T12:00`, lang), span, count)}
-            data-level={levelOf(day)}
+            // Against the reader's own day where they set one — see `levelOf`.
+            data-level={levelOf(day, dayGoal?.seconds)}
             className={`day-cell h-4 flex-1 rounded-[2px] ${
               // The seam: a Monday carries the week's gap in front of it, and
               // the first square never does — a strip that opens with a gap

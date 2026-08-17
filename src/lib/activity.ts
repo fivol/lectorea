@@ -35,11 +35,23 @@ export type Week = { seconds: number; lectures: number; days: number };
 /**
  * How full a day looks in the strip, 0 to 4.
  *
- * The steps are lengths of study rather than counts of anything: a lecture is
- * about fifty minutes here, so the first step is a start, the second is one
- * lecture, the third is an evening and the fourth is more than that. Counting
+ * The steps are lengths of study rather than counts of anything: counting
  * lectures instead would put a day of six ten-minute explainers above a day of
  * two hours, which is not what either day felt like.
+ *
+ * **Against the reader's own day where they have set one**, and against a fixed
+ * ladder where they have not. The ladder was a number somebody picked for
+ * everybody: for a reader whose evening is two lectures every square is the
+ * darkest one there is, and for a reader with ten minutes on a train none of
+ * them ever leaves the first step — in both cases the strip stops describing
+ * the habit and describes the calibration. A share of a chosen day says the
+ * one thing a square can usefully say, which is whether that day was the day
+ * they meant to have: a start, half of it, made, and more than made.
+ *
+ * The price is that changing the goal repaints the last four weeks. That is
+ * the right way round — it is the reader's own yardstick and nobody else reads
+ * this strip — but it is why the fixed ladder stays for the profiles with no
+ * goal rather than being replaced by a default one.
  *
  * A day logged with nothing measured still reaches the first step. Days from
  * before the log kept seconds are exactly that, and letting them fall back to
@@ -47,9 +59,13 @@ export type Week = { seconds: number; lectures: number; days: number };
  */
 const DAY_STEPS = [30 * 60, 60 * 60, 2 * 60 * 60];
 
-export function levelOf(day: Day): 0 | 1 | 2 | 3 | 4 {
+/** A quarter of the day's goal, half of it, the whole of it, half as much again. */
+const GOAL_STEPS = [0.5, 1, 1.5];
+
+export function levelOf(day: Day, goalSeconds?: number | null): 0 | 1 | 2 | 3 | 4 {
   if (!day.studied) return 0;
-  return (DAY_STEPS.filter((step) => day.seconds >= step).length + 1) as 1 | 2 | 3 | 4;
+  const steps = goalSeconds ? GOAL_STEPS.map((share) => share * goalSeconds) : DAY_STEPS;
+  return (steps.filter((step) => day.seconds >= step).length + 1) as 1 | 2 | 3 | 4;
 }
 
 const DAY = 86_400_000;
@@ -154,40 +170,100 @@ export function useActivity(window = ACTIVITY_WINDOW): Activity {
 }
 
 /**
- * What a week can be aimed at, in hours.
+ * What a day of study can be aimed at, and how many of them a week holds.
  *
- * It starts at one because the week worth aiming at is the first one: somebody
- * who has watched nothing yet is choosing between an hour and giving up, not
- * between five and seven. The steps widen as they go for the same reason a
- * volume knob does — the difference between one hour and two is a decision, the
- * difference between eight and nine is not.
+ * One decision in two halves — «45 минут, 5 дней в неделю» — from which both
+ * numbers the product prints fall out: the day it rates every square against,
+ * and the week it fills the bar with. It used to be the week alone, which
+ * could rate nothing smaller than itself, and dividing a week by seven to get
+ * a day would have handed a five-hour week a target of forty-three minutes on
+ * a Sunday it was never meant to include.
+ *
+ * The minutes start at fifteen because the day worth aiming at is the first
+ * one: somebody who has watched nothing is choosing between a quarter of an
+ * hour and giving up. Both ladders widen as they go, for the reason a volume
+ * knob does.
  */
-export const WEEK_GOALS = [1, 2, 3, 5, 7, 10] as const;
+export { DAY_GOALS, GOAL_DAYS } from '@shared/schema';
 
 /** A goal for the week and how far into it the reader is. */
 export type WeekGoal = {
-  /** What was aimed at, in hours. */
+  /** What was aimed at, in hours — the day's goal across the days it is for. */
   hours: number;
   /** What has been done, in the same unit — so the two can be printed together. */
   done: number;
   /** 0..1, never past 1: a bar that overflows is a bar that has stopped meaning anything. */
   fraction: number;
   met: boolean;
+  /** Days of study the week is meant to hold, and how many of them are made. */
+  days: number;
+  closed: number;
 };
 
-/** The goal in force, or nothing — which is what a profile that never set one has. */
+/** A goal for today, which is the half of it a day can be rated against. */
+export type DayGoal = {
+  /** What was aimed at, in minutes. */
+  minutes: number;
+  seconds: number;
+  /** Behind you today, in seconds. */
+  done: number;
+  fraction: number;
+  met: boolean;
+};
+
+/** The pair as it is stored, or nothing — which is what a profile with no goal has. */
+function useGoalPair(): { minutes: number; days: number } | null {
+  const minutes = useProfile((state) => state.profile.settings.dayGoal);
+  const days = useProfile((state) => state.profile.settings.goalDays);
+  return useMemo(() => (minutes ? { minutes, days } : null), [minutes, days]);
+}
+
+/**
+ * The week in force, or nothing.
+ *
+ * `closed` counts the days of this week that reached the day's goal, which is
+ * the statement about a habit that hours cannot make: «3 дня закрыто» and «2,1
+ * часа» are both true of the same week and only the first one says whether it
+ * is going the way it was meant to.
+ */
 export function useWeekGoal(): WeekGoal | null {
-  const hours = useProfile((state) => state.profile.settings.weekGoal);
-  const { week } = useActivity();
+  const pair = useGoalPair();
+  const activity = useActivity();
 
   return useMemo(() => {
-    if (!hours) return null;
-    const target = hours * 3600;
+    if (!pair) return null;
+    const target = pair.minutes * 60 * pair.days;
+    const monday = startOfWeek(activity.recent[activity.recent.length - 1]?.day ?? '');
+    const closed = activity.recent.filter(
+      (day) => day.day >= monday && day.seconds >= pair.minutes * 60
+    ).length;
     return {
-      hours,
-      done: hoursFromSeconds(week.seconds),
-      fraction: Math.min(1, week.seconds / target),
-      met: week.seconds >= target,
+      hours: target / 3600,
+      done: hoursFromSeconds(activity.week.seconds),
+      fraction: Math.min(1, activity.week.seconds / target),
+      met: activity.week.seconds >= target,
+      days: pair.days,
+      closed,
     };
-  }, [hours, week.seconds]);
+  }, [pair, activity]);
+}
+
+/** The day in force, or nothing. */
+export function useDayGoal(): DayGoal | null {
+  const pair = useGoalPair();
+  const activity = useActivity();
+
+  return useMemo(() => {
+    if (!pair) return null;
+    const seconds = pair.minutes * 60;
+    // The last square of the strip is today, by construction — see `activityOf`.
+    const done = activity.recent[activity.recent.length - 1]?.seconds ?? 0;
+    return {
+      minutes: pair.minutes,
+      seconds,
+      done,
+      fraction: Math.min(1, done / seconds),
+      met: done >= seconds,
+    };
+  }, [pair, activity]);
 }

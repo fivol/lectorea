@@ -747,12 +747,17 @@ at every site.
   newest-first, where the crowd walked the list the other way. That leaves 58%
   of the long recordings with a curve and the rest with none, and none means
   nothing is drawn. See [rating.md](rating.md#the-view-curve).
-- **Сегодня.** «Сегодня — 2 лекции, 1,5 часа · До цели недели — 3,5 часа», over
-  the queue. Both numbers already existed, in the profile and on the front page
-  — which is to say nowhere near the moment the decision they are about gets
-  made. Nobody decides whether to watch one more lecture while looking at the
-  map. The week's half appears only for somebody who set a goal, and turns
-  accent for the week in which it is made.
+- **Сегодня.** «Сегодня — 25 из 45 минут · ещё 20 минут», over the queue, and
+  «Сегодня — 50 из 45 минут · День закрыт · 1 из 5 дней недели» on the evening
+  it is made, accented. Both numbers already existed, in the profile and on the
+  front page — which is to say nowhere near the moment the decision they are
+  about gets made. Nobody decides whether to watch one more lecture while
+  looking at the map. The **day** rather than the week, which is why the goal
+  is stored as one ([the profile](#the-profile)): a week's remainder read from
+  inside a lecture is a number about a plan, and «ещё 20 минут» is a decision
+  about the lecture that just ended. With no goal set it is the plain report it
+  was — «Сегодня — 2 лекции, 1,5 часа» — and with nothing behind today it is
+  the target on its own rather than a zero.
 - **Конец записи.** The last lecture of a long recording used to end the way one
   lecture ends: a checkbox went green. It is an event now — «Запись пройдена ·
   25 лекций · 3,4 ч» — and it carries the one reward this catalogue can hand
@@ -882,12 +887,20 @@ So it reads top to bottom as the routine it describes:
   front page's card is counted from. Nothing else in the profile could answer
   it: a tick says a lecture is behind you, never when it got there.
 
-  So the strip is shaded rather than filled: four steps by how long the day
-  was — a start, a lecture, an evening, more than that — because a fortnight of
-  ten minutes and a fortnight of evenings are not the same habit and a row of
-  identical squares says they are. The steps are lengths and not counts of
-  lectures, or a day of six ten-minute explainers would outrank a day of two
-  hours. A day logged before the log kept seconds reaches the first step
+  So the strip is shaded rather than filled, because a fortnight of ten minutes
+  and a fortnight of evenings are not the same habit and a row of identical
+  squares says they are. **Against the day the reader set themselves** where
+  they set one — a quarter of it, half, made, and more than made — and against
+  a fixed ladder of half an hour, an hour and two hours where they did not.
+  The ladder alone was a number somebody picked for everybody: for a reader
+  whose evening is two lectures every square is the darkest there is, and for a
+  reader with ten minutes on a train none of them ever leaves the first step,
+  and in both cases the strip has stopped describing the habit and started
+  describing the calibration. The steps are lengths and not counts of lectures
+  either way, or a day of six ten-minute explainers would outrank a day of two
+  hours. Changing the goal repaints the last four weeks, which is the right way
+  round — it is the reader's own yardstick and nobody else reads this strip.
+  A day logged before the log kept seconds reaches the first step
   anyway — an update must not delete somebody's history — and hovering any
   square says the date and what was done on it.
 
@@ -902,18 +915,37 @@ So it reads top to bottom as the routine it describes:
   3 лекции». It is the last seven squares said in numbers, and it is the pair
   the front page carries, so the two screens cannot disagree about the week.
 
-  Under *that* is the one number on either screen that is chosen rather than
-  earned: **цель на неделю**, in hours. Everything else in the profile is a
-  report, and a report answers "how am I doing" only against something —
-  «4,1 часа» is a fact, «4,1 из 5 ч» is a position. It is off until somebody
-  sets it and one press from off again, because a goal handed to a reader who
-  came here to watch one lecture is a debt they never took on, which is the
-  same argument the path bar below is written against.
+  Under *that* is the one thing on either screen that is chosen rather than
+  earned: **the goal**, and it is one decision in two halves — «45 минут в
+  день, 5 дней в неделю». Everything else in the profile is a report, and a
+  report answers "how am I doing" only against something: «4,1 часа» is a fact,
+  «4,1 из 5 ч» is a position. It is off until somebody sets it and one press
+  from off again, because a goal handed to a reader who came here to watch one
+  lecture is a debt they never took on, which is the same argument the path bar
+  below is written against.
 
-  The choosing folds away once it is done — a permanent row of seven buttons
-  under a number reads as a control panel rather than as a week — and the bar
-  travels to the front page, where there is room to see how far along the week
-  is and none to argue about how long it should be. It travels with its name:
+  **A day, times the days it is for.** It used to be a week and nothing else,
+  and a week can rate nothing smaller than itself: the squares of the strip had
+  to be shaded against a ladder invented for everybody, and the player could
+  only offer «осталось 3,5 часа до цели недели» — true, unactionable, and
+  faintly grim at eleven at night. The day is the unit somebody acts in. The
+  week is still asked for and still shown, because it is the unit they plan in,
+  and it is the product of the two halves rather than a third thing to choose —
+  exact, where a week divided by seven lands on «43 минуты» on a Sunday nobody
+  meant to include. A profile written before this keeps the week it chose:
+  every one of the six the old control offered is a product of two offered
+  steps, so five hours a week becomes an hour a day over five days and the bar
+  reads the same the morning after the update.
+
+  What the day buys, beyond the shading, is a line hours cannot write:
+  **«3 из 5 дней закрыто»**. Five short evenings and one long Sunday come to
+  the same number of hours and are not the same week, and only the count of
+  days says which one happened.
+
+  The choosing folds away once it is done — two permanent rows of buttons under
+  a number read as a control panel rather than as a week — and the bar travels
+  to the front page, where there is room to see how far along the week is and
+  none to argue about how long it should be. It travels with its name:
   «0,9 из 5 ч» alone under three tiles is a riddle about what five of what
   belongs to whom, and one dim line answers it. The unit is written «ч» rather
   than «часов» on purpose: Russian «из» takes the genitive, where «из 3 часов»
