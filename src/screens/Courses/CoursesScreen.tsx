@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { chainAncestors, useCatalog, useFilteredCourses } from '@/lib/catalog';
+import { useResumePointer } from '@/lib/progress';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
@@ -18,7 +19,8 @@ import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/D
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ProfileButton from '@/components/ProfileButton';
-import { BottomSheet, Cap, Chip, Plate, PlateDivider } from '@/components/ui';
+import { ResumeCard } from '@/components/ResumeCard';
+import { BottomSheet, Cap, Chip, IconButton, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -393,7 +395,7 @@ export default function CoursesScreen() {
                 ) : null}
                 <LegendPopover />
               </div>
-              <div className="min-h-0 flex-1">
+              <div className="relative min-h-0 flex-1">
                 <ColumnsView
                   courses={catalog.courses}
                   visible={onCanvas}
@@ -402,6 +404,12 @@ export default function CoursesScreen() {
                   onSelect={onSelect}
                   onDeselect={onDeselect}
                 />
+                {/* Only with nothing selected. A selection is a chain lit up
+                    across these columns and a panel naming it, and a plate over
+                    the corner of that is one thing too many — the panel carries
+                    its own «Продолжить» anyway, and a better one, naming the
+                    lecture rather than the recording. */}
+                {selected ? null : <ResumeFloat within={visible} />}
               </div>
             </div>
           </div>
@@ -466,6 +474,73 @@ export default function CoursesScreen() {
         one line saying the catalogue can be corrected.
       */}
       <ContributeBar>{t('ui.footer.contributeCourses')}</ContributeBar>
+    </div>
+  );
+}
+
+/**
+ * Where you stopped — in what is actually on screen.
+ *
+ * The front page offers the last thing opened anywhere, because the whole
+ * catalogue is what it is showing. Here the reader has narrowed to a field, and
+ * the same global answer would be an offer about some other subject standing
+ * over the one they came to look at. So the pointer is asked of the filter's own
+ * courses: filter to химия and the offer is the chemistry recording; filter to a
+ * field nothing has been watched in and there is nothing here at all.
+ *
+ * A plate in the corner, like the front page's, and for the reason the front
+ * page's is one: it is an offer, not part of the catalogue. In the flow it was a
+ * strip across the top pushing every column down by its own height on every
+ * visit — the columns are read by scanning down them, and two centimetres off
+ * the top is two centimetres off all seven at once. Floating, it costs the
+ * screen nothing and covers a corner of one column, which is scrolled past
+ * rather than lost. The × puts it away, and it is the same × as the front
+ * page's: one flag, one meaning — «not this visit» — wherever it is pressed.
+ *
+ * The press keeps the filters exactly as they are, unlike the front page's,
+ * which has to invent a slice to land in. It also asks the columns to scroll the
+ * card into view, so what opens has a visible place to have come from.
+ */
+function ResumeFloat({ within }: { within: ReadonlySet<string> }) {
+  const { t } = useT();
+  const catalog = useCatalog();
+  const navigate = useNavigate();
+  const params = useCatalogParams();
+  const requestFocus = useUi((state) => state.requestFocus);
+  const hidden = useUi((state) => state.summaryHidden);
+  const hideSummary = useUi((state) => state.hideSummary);
+  const resume = useResumePointer(within);
+
+  if (!resume || hidden) return null;
+  const course = catalog.courseById.get(resume.entry.courseId);
+
+  return (
+    /* Held clear of the scrollbars on both edges, and never wider than the
+       columns it lies on — a plate cropped by the viewport is a plate with the
+       × outside the window. */
+    <div className="pointer-events-none absolute right-3 top-3 z-20 flex w-[19.5rem]
+                    max-w-[calc(100%-1.5rem)] justify-end">
+      <div className="plate pointer-events-auto flex w-full items-start gap-1 rounded-card p-1.5">
+        <ResumeCard
+          videoId={resume.lastVideoId}
+          title={resume.entry.title}
+          subtitle={course ? t(`course.${course.id}.title`) : resume.entry.courseId}
+          onClick={() => {
+            const query = new URLSearchParams(params.search);
+            query.set('playlist', resume.entry.id);
+            navigate(courseHref(resume.entry.courseId, `?${query.toString()}`));
+            requestFocus(resume.entry.courseId);
+          }}
+          className="min-w-0 flex-1"
+        />
+        <IconButton
+          icon="close"
+          iconSize={13}
+          label={t('ui.home.hide')}
+          className="shrink-0"
+          onClick={hideSummary}
+        />
+      </div>
     </div>
   );
 }
