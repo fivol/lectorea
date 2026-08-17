@@ -103,7 +103,7 @@ export default function LinksBlock({ course, search }: Props) {
       {course.deps.length ? (
         <div>
           <h3 className="mb-2 text-sm font-medium">{t('ui.prereq.title')}</h3>
-          <ul className={`grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
+          <ul className={`card-grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
             {course.deps.map((id) => (
               <li key={id}>
                 <CourseLinkCard courseId={id} search={search} from={course.id} />
@@ -130,7 +130,7 @@ export default function LinksBlock({ course, search }: Props) {
       {unlocks.length ? (
         <div>
           <h3 className="mb-2 text-sm font-medium">{t('ui.unlocks.title')}</h3>
-          <ul className={`grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
+          <ul className={`card-grid gap-1.5 sm:grid-cols-2 ${capCards}`}>
             {unlocks.map((step) => (
               <li key={step.id}>
                 <CourseLinkCard
@@ -265,7 +265,7 @@ function Weak({
           </button>
         </Tooltip>
       </h3>
-      <ul className={`grid gap-1.5 opacity-75 sm:grid-cols-2 ${cap}`}>
+      <ul className={`card-grid gap-1.5 opacity-75 sm:grid-cols-2 ${cap}`}>
         {ids.map((id) => (
           <li key={id}>
             <CourseLinkCard courseId={id} search={search} from={from} />

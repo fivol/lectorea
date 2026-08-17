@@ -373,6 +373,34 @@ incomplete until the rule travels with it. Write the sentence once, key it to
 the fact rather than to the screen, and attach it at every site — then check the
 site can actually show it.
 
+## A layout rule belongs to the container, not to every card in it
+
+Two cards side by side in «Открывает путь к» were different heights: the one
+with a two-line title was sixteen pixels taller than its neighbour, and the row
+read as a table someone had knocked out of line.
+
+The obvious fix is `h-full` on the card. It is also the fix that has to be
+remembered again at the next card, and the next list — and the reason it was
+needed at all is invisible from the card: the grid *does* stretch its cells,
+but a semantic list is `ul > li > a`, and the `li` swallows the stretch. Only
+the container knows there is a wrapper in the way.
+
+So the rule went into the container: `.card-grid` in `index.css`, which makes
+every `li` a stretch box that hands the row's height down to whatever it holds
+([design-system.md](../design-system.md#a-row-of-cards-is-one-height)). Nothing
+in `CourseLinkCard` changed, and the three lists on the panel — prerequisites,
+what a course opens, the weak ties — were fixed by one word each.
+
+Rejected: `.card-grid > * { display: grid }`, which would have covered a `div`
+wrapper too. Most grids in this codebase hold their cards *directly*, and that
+rule turns a card's own block or flex layout into a grid — it survives today
+only because Tailwind's utility layer wins on source order, which is a rule
+holding by accident. Wrappers are `li` here, so `li` is what the selector says.
+
+**Generally:** when a fix reads as "and remember to do this at every call
+site", it is in the wrong file. Ask which element actually knows the reason —
+usually the container — and put it there once.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

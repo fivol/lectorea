@@ -222,29 +222,24 @@
     letter-spacing: -0.01em;
   }
 
-  /* Keyboard focus must be visible everywhere — it is part of the quality floor. */
-  :focus-visible {
-    outline: 2px solid var(--c-accent);
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
-
   /*
-   * …except on the boxes that are only focusable so that something can put
-   * focus in them.
+   * No focus outline. Anywhere.
    *
-   * Every layer that traps focus — the player, the profile, the shortcut sheet,
-   * the phone sheet — starts by focusing its own container, which carries
-   * `tabindex="-1"` for exactly that reason and nothing else. The rule above
-   * then draws a two-pixel accent line around the whole dialog, which reads as
-   * a selected object rather than as "the keyboard is in here", and there is
-   * nothing the reader can do to make it go away.
+   * It used to be a two-pixel accent line on `:focus-visible`, and the trouble
+   * with it is that the browser decides when it appears. A press with the mouse
+   * leaves none — but the next key stroke of any kind, a space to scroll the
+   * panel included, lights up whatever was pressed last and leaves it lit, so a
+   * reader who never touched Tab gets a ring around a fold they clicked a
+   * minute ago with no way to dismiss it.
    *
-   * Nothing is lost by it: `-1` means the element is out of the tab order, so
-   * this can never hide where Tab actually went — that is a control, and
-   * controls keep their ring.
+   * The cost is real and is accepted here: somebody navigating by keyboard now
+   * has to infer where Tab went from the hover styling, which not every control
+   * has. Restoring it is this rule minus the `none` — see
+   * `docs/design-system.md`. The fields keep their own accent ring on
+   * `:focus-within`, because that one is part of the capsule rather than a
+   * rectangle drawn round it, and it is where typing actually goes.
    */
-  [tabindex='-1']:focus-visible {
+  :focus-visible {
     outline: none;
   }
 
@@ -1090,6 +1085,29 @@
   }
   .collapse[data-open='true'] > * {
     visibility: visible;
+  }
+
+  /*
+   * A grid of cards, everything on a line the same height.
+   *
+   * A grid stretches its cells by itself, so a card that *is* the cell already
+   * comes out as tall as its row. What the stretch cannot do is reach through a
+   * wrapper: a list of links is `ul > li > a`, the `li` takes the row's height
+   * and the card inside it stays as tall as its own text — which is how a
+   * one-line title ended up in a box ending short of the two-line one beside
+   * it, in every list of neighbouring courses on the panel.
+   *
+   * So the wrapper becomes a stretch box of its own and hands the height
+   * straight down to whatever it holds. It is one rule rather than an `h-full`
+   * remembered at each call site, and it holds for the next list too: a grid
+   * either holds its cards directly, or wraps them in list items, and both are
+   * right by construction.
+   */
+  .card-grid {
+    display: grid;
+  }
+  .card-grid > li {
+    display: grid;
   }
 
   /*

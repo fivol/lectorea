@@ -384,6 +384,18 @@ where the columns themselves become a vertical list grouped by difficulty. On
 the phone the sheet owns the scrolling rather than the panel (`scroll={false}`),
 because the drag has to know how far the text has been read.
 
+### A row of cards is one height
+
+`.card-grid` instead of `grid` wherever the cells are cards. A grid stretches
+its cells by itself, so a card that *is* the cell already comes out as tall as
+its row; what the stretch cannot do is reach through a wrapper. A list of links
+is `ul > li > a`, the `li` takes the row's height and the card inside it stays
+as tall as its own text — which is how a one-line title ended up in a box
+ending short of the two-line one beside it, in every list of neighbouring
+courses on the panel. The class makes each `li` a stretch box of its own and
+hands the height straight down, so a card never has to be told `h-full` and the
+next list is right by construction.
+
 ## Deliberate departures from the written spec
 
 Three, each for a reason that outlived the spec:
