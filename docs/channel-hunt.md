@@ -412,6 +412,47 @@ Refused, each after reading the titles:
   nothing else, so not a channel. Both turned out to be **already bound at
   0.95**, mined from a link: the check before adding is a query, not a memory.
 
+## The sixth seam, 2026-08-17 — the catalogue naming its own candidates
+
+Not a hunt: `data:authors --min=20` probed 1336 published bindings at a unit
+each — **1253 own their material, 75 mirrors, 8 collections** — and the mirrors
+are a channel list nobody had to search for. A mirror is a course this catalogue
+already publishes, already judged worth publishing, with the name of whoever
+actually filmed it attached. That is a stronger vetting than any ranked search
+result, and it costs nothing extra: the unit was spent on the attribution.
+
+The 75 mirrors have 58 distinct owners. 14 of them are channels this catalogue
+already knows, and the build now files their 26 playlists under them — 23 of
+which a reader also confirmed, so they carry the right name in the catalogue
+today, with nothing written by hand. The other **44
+owners, behind 49 playlists, are not here yet**, and they are the next hunt's
+input rather than this iteration's work: adding one means crawling it, and a
+crawl is a day of quota.
+
+The largest, by videos already published under somebody else's name:
+
+| Owner | What of ours it made |
+|---|---|
+| Brandon Foltz | «Statistics 101», 115 videos under `statistics` |
+| DTUdk | DTU Introduction to Statistics, 111 |
+| Brian Caffo | Statistical Inference (Coursera), 68 |
+| Michel Bierlaire | Optimization: principles and algorithms, 65 (EPFL) |
+| Sarada Herke | Graph Theory, 62 |
+| Stanford Dbclass | Jennifer Widom's Introduction to Databases, 58 |
+| William Hoff | Computer Vision Lectures, 57 (Mines) |
+| JimKurose | Computer Networking: A Top-Down Approach, 54 |
+| Jordan Boyd-Graber | NLP, CMSC 470 Maryland, 51 |
+| Christof Paar | Introduction to Cryptography, 48 |
+| Remzi Arpaci-Dusseau | CS-537 Operating Systems, 39 (Wisconsin) |
+| Jeffrey A. Bilmes | EE514/515 Information Theory, 37 (UW) |
+
+Most of them are **a lecturer's own channel**, which is the shape a search
+ranks last and this seam ranks first. Note also that *Stanford*
+`UC-EnprmCZ3OXyAoG7vjVNCA` turns up again, refused in the fifth hunt as the
+institutional channel — a mirror pointing at a channel is evidence about *one
+playlist*, not a recommendation of the whole channel, and the refusals above
+still stand.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this

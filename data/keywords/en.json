@@ -224,15 +224,7 @@
     "multivariable",
     "vector calculus"
   ],
-  "course.linear-algebra": [
-    "linear algebra",
-    "linalg",
-    "matrices",
-    "vectors",
-    "eigenvalues",
-    "analytic geometry",
-    "analytical geometry"
-  ],
+  "course.linear-algebra": ["linear algebra","linalg","matrices","vectors","eigenvalues"],
   "course.discrete-math": [
     "discrete math",
     "discrete mathematics",
@@ -295,16 +287,7 @@
     "diffeq",
     "differential equation"
   ],
-  "course.pde": [
-    "pde",
-    "pdes",
-    "partial differential equations",
-    "mathematical physics",
-    "heat equation",
-    "wave equation",
-    "methods of mathematical physics",
-    "partial differential equation"
-  ],
+  "course.pde": ["pde","pdes","partial differential equations","heat equation","wave equation","partial differential equation"],
   "course.differential-geometry": [
     "differential geometry",
     "diff geo",
@@ -1440,12 +1423,7 @@
     "instrumentation",
     "sensors"
   ],
-  "course.transport-phenomena": [
-    "transport phenomena",
-    "heat transfer",
-    "mass transfer",
-    "fluid mechanics"
-  ],
+  "course.transport-phenomena": ["transport phenomena","momentum transfer"],
   "course.ocean-engineering": [
     "ocean engineering",
     "offshore engineering",
@@ -1488,5 +1466,41 @@
     "automated planning",
     "expert systems",
     "expert system"
-  ]
+  ],
+
+  "course.analytic-geometry": ["analytic geometry","analytical geometry","conic section"],
+
+  "course.algebraic-geometry": ["algebraic geometry","algebraic variety","scheme theory"],
+
+  "course.lie-theory": ["lie group","lie algebra","lie theory","representation theory"],
+
+  "course.homological-algebra": ["homological algebra","homology theory","cohomology"],
+
+  "course.mathematical-physics": ["mathematical physics","methods of mathematical physics"],
+
+  "course.fluid-mechanics": ["fluid mechanics","fluid dynamics","hydraulics","computational fluid dynamics"],
+
+  "course.heat-transfer": ["heat transfer","heat and mass transfer","heat exchanger"],
+
+  "course.electrical-machines": ["electrical machine","electric machine","electrical drive","energy conversion"],
+
+  "course.power-systems": ["power system","power engineering","power plant engineering"],
+
+  "course.communication-systems": ["communication system","digital communication","communication engineering"],
+
+  "course.microprocessors": ["microprocessor","microcontroller","embedded system"],
+
+  "course.engineering-drawing": ["engineering drawing","engineering graphics","technical drawing"],
+
+  "course.data-science": ["data science","data analysis","data analytics"],
+
+  "course.high-performance-computing": ["high performance computing","parallel programming","parallel computing"],
+
+  "course.accounting": ["accounting","financial accounting","management accounting","cost accounting"],
+
+  "course.entrepreneurship": ["entrepreneurship","startup","new venture"],
+
+  "course.business-communication": ["business communication","business writing","professional communication"],
+
+  "course.power-electronics": ["power electronics","power converter","pulse width modulation"]
 }

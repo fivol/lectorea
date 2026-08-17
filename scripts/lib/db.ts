@@ -128,10 +128,19 @@ CREATE TABLE IF NOT EXISTS ownership (
 --
 -- verdict is one of ok / wrong-course / not-a-course / unsure. Only ok
 -- publishes; wrong-course carries the course it should have been.
+--
+-- course_id is what the reader was answering *about*, and it is the difference
+-- between a verdict and a permanent pass. A reader asked whether «Fluid
+-- Mechanics» belongs under transport phenomena; when a keyword change later
+-- moves that playlist to a fluid mechanics course, the old ok is not an answer
+-- to the new question. Without the column the build would republish it under a
+-- course no reader ever saw — silently, and precisely on the playlists a rule
+-- change touched, which are the ones worth looking at.
 -- (No backticks in this comment: SCHEMA is a template literal, and one closes it.)
 CREATE TABLE IF NOT EXISTS verdicts (
   playlist_id TEXT PRIMARY KEY,
   verdict TEXT,
+  course_id TEXT,
   suggested_course TEXT,
   note TEXT,
   model TEXT,
@@ -186,6 +195,7 @@ const ADDED_COLUMNS: Array<{ table: string; column: string; type: string }> = [
   { table: 'playlists', column: 'list_playable', type: 'INTEGER' },
   { table: 'playlists', column: 'list_checked_at', type: 'TEXT' },
   { table: 'matches', column: 'refused', type: 'INTEGER DEFAULT 0' },
+  { table: 'verdicts', column: 'course_id', type: 'TEXT' },
 ];
 
 function addColumns(db: Db): void {
@@ -193,7 +203,32 @@ function addColumns(db: Db): void {
     const columns = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
     if (!columns.length || columns.some((existing) => existing.name === column)) continue;
     db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+    if (table === 'verdicts' && column === 'course_id') backfillVerdictCourses(db);
   }
+}
+
+/**
+ * What the 5469 verdicts written before the column existed were answering.
+ *
+ * Run once, in the same statement that adds the column, and that timing is the
+ * whole argument for it: a verdict is written against whatever `matches` said
+ * at the time, and at the moment the column appears nothing has re-matched
+ * since — so the current binding *is* the question that was asked. A minute
+ * later it stops being true, which is why this is not a repair somebody can run
+ * whenever they think of it.
+ *
+ * Rows the copy on disk cannot account for stay null, and `resolveCourses`
+ * reads a null as "no drift detectable" rather than as a refusal: taking 5469
+ * confirmations away to be safe would empty the catalogue.
+ */
+function backfillVerdictCourses(db: Db): void {
+  const filled = db
+    .prepare(
+      `UPDATE verdicts SET course_id = (SELECT course_id FROM matches WHERE playlist_id = verdicts.playlist_id)
+        WHERE course_id IS NULL`
+    )
+    .run();
+  if (filled.changes) console.log(`· ${filled.changes} verdicts stamped with the course they judged`);
 }
 
 /**
@@ -306,7 +341,19 @@ export function dbHasMaterial(): boolean {
  */
 const SNAPSHOT_STAMP = 'snapshot_published_at';
 
-/** Timestamps a crawl writes. Anything later than the stamp is unpublished work. */
+/**
+ * Timestamps unpublished work writes. Anything later than the stamp is work
+ * that exists on this disk and nowhere else.
+ *
+ * The last two are not crawling and belong here for the same reason the rest
+ * do: **what makes work worth protecting is that it cannot be had again for
+ * free, not that it came off the API.** A judgement is the expensive kind — a
+ * verdict is a reader's pass over a title, an ownership row is a unit spent on
+ * `playlistItems` — and while this list held only crawl columns a copy that had
+ * spent an afternoon judging looked untouched, so `shouldRestore` cheerfully
+ * took the release over it. That is half of how 682 ownership probes went; the
+ * other half, and the belt to this braces, is `MERGED` in `cache-snapshot.ts`.
+ */
 const WORK_COLUMNS: Array<[table: string, column: string]> = [
   ['playlists', 'stats_fetched_at'],
   ['playlists', 'videos_fetched_at'],
@@ -315,6 +362,8 @@ const WORK_COLUMNS: Array<[table: string, column: string]> = [
   ['channels', 'last_discovered_at'],
   ['channels', 'stats_fetched_at'],
   ['matches', 'updated_at'],
+  ['verdicts', 'checked_at'],
+  ['ownership', 'checked_at'],
 ];
 
 /** The publish this copy descends from, or null when it has never been in one. */
@@ -548,6 +597,8 @@ export const MATCH_THRESHOLD = 0.75;
 export type VerdictRow = {
   playlist_id: string;
   verdict: 'ok' | 'wrong-course' | 'not-a-course' | 'unsure';
+  /** The binding that was judged. Null on rows written before the column. */
+  course_id: string | null;
   suggested_course: string | null;
   note: string | null;
   model: string | null;

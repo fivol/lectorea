@@ -91,3 +91,9 @@
   domains: [physics]
   stage: master-2
   deps: [quantum-mechanics]
+
+- id: mathematical-physics
+  domains: [physics, math]
+  stage: bachelor-3
+  deps: [pde]
+  soft: [complex-analysis]

@@ -128,3 +128,26 @@
   domains: [math]
   stage: bachelor-3
   deps: [abstract-algebra, topology]
+
+- id: analytic-geometry
+  domains: [math]
+  stage: bachelor-1
+  soft: [linear-algebra]
+
+- id: algebraic-geometry
+  domains: [math]
+  stage: master-1
+  deps: [abstract-algebra]
+  soft: [topology]
+
+- id: lie-theory
+  domains: [math]
+  stage: master-1
+  deps: [abstract-algebra]
+  soft: [differential-geometry]
+
+- id: homological-algebra
+  domains: [math]
+  stage: master-1
+  deps: [abstract-algebra]
+  soft: [category-theory]

@@ -340,6 +340,55 @@ function assemblePlaylists(sources: Sources): Assembled {
     const channelRows = db.prepare(`SELECT * FROM channels`).all() as ChannelRow[];
     const channels = new Map(channelRows.map((c) => [c.id, c]));
 
+    /*
+     * Who actually filmed a mirror.
+     *
+     * `14-authors.ts` keeps a playlist whose videos come from one outside
+     * channel, because it is a real course and dropping it would delete
+     * material that in most cases exists nowhere else here. What is wrong about
+     * it is the name over it: the provider is read off whoever *listed* the
+     * playlist, and for a mirror that is a re-uploader. «MIT 6.036
+     * Introduction to Machine Learning» filed under an account that made none
+     * of it is the shape.
+     *
+     * Fixed here rather than by hand in `overrides.channels`, because the
+     * override is keyed by *channel* and the fault is per *playlist* — the same
+     * re-uploader also posts its own material, and moving the whole channel
+     * would mislabel that instead. One line of build instead of an entry per
+     * playlist that somebody has to notice and write.
+     */
+    const realOwner = new Map<string, { id: string; title: string | null }>(
+      (
+        db
+          .prepare(
+            `SELECT playlist_id, owner_id, owner_title FROM ownership WHERE kind = 'mirror'`
+          )
+          .all() as Array<{ playlist_id: string; owner_id: string | null; owner_title: string | null }>
+      )
+        .filter((row) => Boolean(row.owner_id))
+        .map((row) => [row.playlist_id, { id: row.owner_id!, title: row.owner_title }])
+    );
+
+    /*
+     * And what nobody made: a playlist whose fifty sampled videos come from
+     * forty channels is somebody's bookmarks, whatever its title claims.
+     *
+     * Read here rather than trusted to the `matches` row `14-authors.ts` also
+     * writes, because that row is not a safe place to keep an answer — a
+     * refusal by any pass is deliberately reversible and `data:match --force`
+     * re-reads every one of them, so a keyword change silently republishes
+     * collections that cost a unit each to identify. The evidence is in
+     * `ownership` and does not expire; the build asks it directly and the two
+     * steps stop being ordered.
+     */
+    const collections = new Set(
+      (
+        db
+          .prepare(`SELECT playlist_id FROM ownership WHERE kind = 'collection'`)
+          .all() as Array<{ playlist_id: string }>
+      ).map((row) => row.playlist_id)
+    );
+
     // `views` rides along for the rating: the shape of the view curve down a
     // playlist is the only thing in the data that says whether people stayed.
     const videoRows = db
@@ -371,12 +420,22 @@ function assemblePlaylists(sources: Sources): Assembled {
       // One recording, possibly several courses: «Алгоритмы и структуры
       // данных» is one semester teaching two of ours, and it belongs in both
       // shards rather than in whichever we picked.
-      const bound = resolveCourses(row.id, matches, sources, verdicts).filter((id) => courseIds.has(id));
+      const bound = resolveCourses(row.id, matches, sources, verdicts, collections).filter((id) =>
+        courseIds.has(id)
+      );
       if (!bound.length) continue;
       const courseId = bound[0];
 
       const channel = channels.get(row.channel_id);
-      const providerId = resolveProvider(row.channel_id, channel, yamlChannels, sources, providerIds);
+      const providerId = resolveProvider(
+        row.id,
+        row.channel_id,
+        channels,
+        realOwner,
+        yamlChannels,
+        sources,
+        providerIds
+      );
 
       const videoRowsHere = videosByPlaylist.get(row.id) ?? [];
       const videos = videoRowsHere.map((v) => ({
@@ -434,7 +493,17 @@ function assemblePlaylists(sources: Sources): Assembled {
           alsoCourses: bound.slice(1),
           title,
           channelId: row.channel_id,
-          channelTitle: channel?.title ?? yamlChannels.get(row.channel_id)?.title ?? '',
+          // The same substitution as `providerId` and for the same reason: this
+          // is the name the card prints under the title, and on a mirror the
+          // listing channel is not who taught it. `owner_title` rather than the
+          // channels table because the probe recorded it either way — a third
+          // of the owners are channels this catalogue has never crawled, and
+          // those are exactly the ones whose name it cannot otherwise print.
+          channelTitle:
+            realOwner.get(row.id)?.title ||
+            channel?.title ||
+            yamlChannels.get(row.channel_id)?.title ||
+            '',
           providerId,
           lecturer: override?.lecturer ?? detectLecturer(title),
           lang: override?.lang ?? row.lang ?? detectLang(title, yamlChannels.get(row.channel_id)?.lang ?? 'ru'),
@@ -523,7 +592,8 @@ function resolveCourses(
   playlistId: string,
   matches: Map<string, MatchRow>,
   sources: Sources,
-  verdicts: Map<string, VerdictRow>
+  verdicts: Map<string, VerdictRow>,
+  collections: Set<string>
 ): string[] {
   if (playlistId in sources.overrides.matches) {
     return boundCourses(sources.overrides.matches[playlistId]);
@@ -532,6 +602,9 @@ function resolveCourses(
   if (!match?.course_id) return [];
   // Unreviewed low-confidence guesses stay out of the catalogue.
   if (!isBindingConfident(match)) return [];
+  // A bag of other people's videos, however well its title names a course.
+  // A person outranks the probe, as they outrank every pass here.
+  if (collections.has(playlistId) && match.reviewed !== 1) return [];
 
   /*
    * The rules are the sieve; a reader is the confirmation.
@@ -546,8 +619,20 @@ function resolveCourses(
    * A person still outranks everybody: `overrides.yaml` returned above, and
    * `reviewed = 1` never gets here without one.
    */
+  /*
+   * And the confirmation is of a *pairing*, not of a playlist. A reader was
+   * shown «Fluid Mechanics» under transport phenomena and said yes to that
+   * question; once a fluid mechanics course exists and the rules move the
+   * playlist onto it, the yes is an answer to a question nobody asked. So a
+   * verdict stamped with a different course counts as no verdict, and the
+   * playlist goes back into the queue `_review.ts export` reads.
+   *
+   * Null is the one exception, and it means "written before the column
+   * existed". Reading it as drift would take 5469 confirmations away at once.
+   */
   const verdict = verdicts.get(playlistId);
-  if (!verdict) return match.reviewed === 1 ? [match.course_id] : [];
+  const stale = verdict?.course_id != null && verdict.course_id !== match.course_id;
+  if (!verdict || stale) return match.reviewed === 1 ? [match.course_id] : [];
   if (verdict.verdict === 'ok') return [match.course_id];
   // A reader that moved the binding keeps it, under the course it named.
   if (verdict.verdict === 'wrong-course' && verdict.suggested_course) {
@@ -556,19 +641,39 @@ function resolveCourses(
   return [];
 }
 
+/**
+ * Whose name goes over this playlist.
+ *
+ * Asked of the channel that **made** the videos where those differ from the one
+ * that listed them — a mirror is a real course under a re-uploader's name, and
+ * the provider is the only field that is wrong about it. The re-uploader is
+ * still the fallback, and deliberately: when the true owner is a channel this
+ * catalogue has never heard of, both sides answer `unknown` and there is
+ * nothing to trade. Of the 75 mirrors found on 2026-08-17 this moved 26 off
+ * `unknown` onto a real provider and took nothing off one — the remaining 49
+ * have owners nobody here has crawled, and are the next channel hunt's input
+ * (docs/channel-hunt.md).
+ */
 function resolveProvider(
-  channelId: string,
-  channel: ChannelRow | undefined,
+  playlistId: string,
+  listedBy: string,
+  channels: Map<string, ChannelRow>,
+  realOwner: Map<string, { id: string }>,
   yamlChannels: Map<string, { providerId: string }>,
   sources: Sources,
   providerIds: Set<string>
 ): string {
-  const candidate =
-    sources.overrides.channels[channelId] ??
-    channel?.provider_id ??
-    yamlChannels.get(channelId)?.providerId ??
-    'unknown';
-  return providerIds.has(candidate) ? candidate : 'unknown';
+  const of = (channelId: string): string | null => {
+    const candidate =
+      sources.overrides.channels[channelId] ??
+      channels.get(channelId)?.provider_id ??
+      yamlChannels.get(channelId)?.providerId ??
+      null;
+    return candidate && providerIds.has(candidate) ? candidate : null;
+  };
+
+  const owner = realOwner.get(playlistId)?.id;
+  return (owner ? of(owner) : null) ?? of(listedBy) ?? 'unknown';
 }
 
 /* ──────────────────────────────  Providers  ────────────────────────────── */

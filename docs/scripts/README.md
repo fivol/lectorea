@@ -63,6 +63,20 @@ collection it refuses must not reach `public/data`. The verdict is kept in
 `cache.db`, so a playlist is asked once and never again — the second night costs
 almost nothing.
 
+It has a third answer besides "a course" and "a bag": **a mirror**, one outside
+channel behind almost all the videos. That is a real course and keeps its
+binding — dropping it would delete material that mostly exists nowhere else here
+— and what is wrong about it is only the name over it. `build` reads
+`ownership.kind` and files a mirror under whoever *made* the videos, so «MIT
+6.036 Introduction to Machine Learning» stops being credited to the account that
+re-posted it. Nothing is written by hand for this; the probe's row is the fix.
+
+Both verdicts are read out of `ownership` by `build` rather than trusted to the
+`matches` row `authors` also writes, which is what makes the two steps
+independent: every refusal in `matches` is reversible and `data:match --force`
+re-reads all of them, so a keyword change used to quietly republish collections
+that had each cost a unit to identify.
+
 The free seams are in there too, in the places where they refill: `mine` reads
 links out of API bodies already on disk and finds more of them after every
 crawl, `import` re-reads the published curricula in `data/sources.yaml`. `import`

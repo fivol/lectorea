@@ -52,3 +52,18 @@
   stage: bachelor-2
   deps: [management-intro]
   related: [social-psychology]
+
+- id: accounting
+  domains: [management]
+  stage: bachelor-1
+
+- id: entrepreneurship
+  domains: [management]
+  stage: bachelor-3
+  deps: [management-intro]
+  soft: [marketing, finance]
+
+- id: business-communication
+  domains: [management]
+  stage: bachelor-1
+  soft: [management-intro]

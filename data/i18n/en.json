@@ -1040,5 +1040,59 @@
   "link.project-management.software-engineering": "Estimation, risk and iteration become concrete in software projects, while engineering practices depend on managing the whole project.",
   "link.ocean-engineering.oceanography": "Oceanography describes waves, currents and the seabed; ocean engineering turns that environment into loads and design constraints.",
   "course.artificial-intelligence.title": "Artificial intelligence",
-  "course.artificial-intelligence.desc": "Search, heuristics, knowledge representation, planning, reasoning under uncertainty"
+  "course.artificial-intelligence.desc": "Search, heuristics, knowledge representation, planning, reasoning under uncertainty",
+
+  "course.analytic-geometry.title": "Analytic geometry",
+  "course.analytic-geometry.desc": "Lines and planes, conics and quadric surfaces in coordinates",
+
+  "course.algebraic-geometry.title": "Algebraic geometry",
+  "course.algebraic-geometry.desc": "Affine and projective varieties, sheaves and schemes",
+
+  "course.lie-theory.title": "Lie groups and Lie algebras",
+  "course.lie-theory.desc": "Continuous symmetry: Lie groups, Lie algebras and their representations",
+
+  "course.homological-algebra.title": "Homological algebra",
+  "course.homological-algebra.desc": "Complexes, exact sequences, the Ext and Tor functors",
+
+  "course.mathematical-physics.title": "Mathematical physics",
+  "course.mathematical-physics.desc": "Special functions, Green's functions and integral transforms",
+
+  "course.fluid-mechanics.title": "Fluid mechanics",
+  "course.fluid-mechanics.desc": "Navier–Stokes, boundary layers, turbulence and hydraulics",
+
+  "course.heat-transfer.title": "Heat transfer",
+  "course.heat-transfer.desc": "Conduction, convection, radiation and heat exchangers",
+
+  "course.electrical-machines.title": "Electrical machines",
+  "course.electrical-machines.desc": "Transformers, DC and AC machines, electric drives",
+
+  "course.power-systems.title": "Power systems",
+  "course.power-systems.desc": "Generation, transmission and distribution, network operation and protection",
+
+  "course.communication-systems.title": "Communication systems",
+  "course.communication-systems.desc": "Modulation, noise, digital transmission",
+
+  "course.microprocessors.title": "Microprocessors and embedded systems",
+  "course.microprocessors.desc": "Microcontroller architecture, peripherals, low-level programming",
+
+  "course.engineering-drawing.title": "Engineering drawing",
+  "course.engineering-drawing.desc": "Descriptive geometry, projections and technical drawing",
+
+  "course.data-science.title": "Data science",
+  "course.data-science.desc": "Collecting, cleaning and exploring data, visualisation and inference",
+
+  "course.high-performance-computing.title": "High-performance computing",
+  "course.high-performance-computing.desc": "Parallel programming with MPI, OpenMP and CUDA, and how algorithms scale",
+
+  "course.accounting.title": "Accounting",
+  "course.accounting.desc": "Double entry, financial statements, cost accounting",
+
+  "course.entrepreneurship.title": "Entrepreneurship",
+  "course.entrepreneurship.desc": "Starting a company: the idea, the business model, the money, the growth",
+
+  "course.business-communication.title": "Business communication",
+  "course.business-communication.desc": "Negotiation, presentations and business writing",
+
+  "course.power-electronics.title": "Power electronics",
+  "course.power-electronics.desc": "Converters, rectifiers and inverters, PWM and switch control"
 }

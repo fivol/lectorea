@@ -80,6 +80,32 @@ type Stamp = { published_at: string; playlists: number; videos: number };
  */
 const HEAVY = 'raw_responses';
 
+/**
+ * Tables a restore **merges** instead of replacing, because their rows are
+ * judgements rather than crawl state.
+ *
+ * Everything else here follows one rule — the release is the source of truth —
+ * and for the crawl that is right: a playlist's video count is a fact about
+ * YouTube, so the newest copy of it wins and the older one has nothing to add.
+ * A judgement is not that. `verdicts` is a reader's answer about one binding
+ * and `ownership` is a unit spent asking who filmed it; both are keyed per
+ * playlist, both accumulate wherever the asking happened, and **two copies
+ * holding different rows is the normal state, not a conflict.** The nightly job
+ * judges what it crawled, a laptop clears a backlog, and neither has any claim
+ * on the other's rows.
+ *
+ * Replacing them cost 682 ownership probes on 2026-08-16: they were written in
+ * the morning, a restore later that day deleted the table and put the release's
+ * eight rows in its place, and nothing said so. The 5469 verdicts behind the
+ * whole catalogue were one `make pull` from going the same way — 35 minutes of
+ * subagents and 3.3M tokens that no quota buys back.
+ *
+ * So the merge is newest-per-key and never deletes. It needs a single-column
+ * primary key and a `checked_at`, which is the shape both tables already have
+ * and the shape the next one should copy.
+ */
+const MERGED = new Set(['verdicts', 'ownership']);
+
 async function main(): Promise<void> {
   const command = process.argv[2];
   if (command === 'publish') return publish();
@@ -397,6 +423,10 @@ function fetchStamp(): Stamp | null {
  *
  * Columns are intersected rather than assumed: a cache last opened before a
  * migration has fewer of them, and `SELECT *` would line the wrong ones up.
+ *
+ * The exception is `MERGED`, where the two copies are peers rather than an old
+ * and a new one: those tables are unioned by key, newest `checked_at` winning,
+ * and no row of this machine's is deleted.
  */
 function swapInto(incoming: string): void {
   const db = new Database(paths.cacheDb);
@@ -413,10 +443,15 @@ function swapInto(incoming: string): void {
         .all() as Array<{ name: string; sql: string }>
     ).filter((table) => table.name !== HEAVY);
 
+    const info = (schema: string, table: string) =>
+      db.prepare(`PRAGMA ${schema}.table_info("${table}")`).all() as Array<{
+        name: string;
+        pk: number;
+      }>;
     const columns = (schema: string, table: string): string[] =>
-      (db.prepare(`PRAGMA ${schema}.table_info("${table}")`).all() as Array<{ name: string }>).map(
-        (column) => column.name
-      );
+      info(schema, table).map((column) => column.name);
+
+    const merged: string[] = [];
 
     db.transaction(() => {
       for (const table of tables) {
@@ -428,6 +463,38 @@ function swapInto(incoming: string): void {
         }
         const shared = theirs.filter((column) => mine.includes(column));
         const list = shared.map((column) => `"${column}"`).join(', ');
+
+        if (MERGED.has(table.name)) {
+          merged.push(table.name);
+          const before = countRows(db, table.name);
+          const key = info('main', table.name).filter((column) => column.pk).map((c) => c.name);
+          // Both conditions are on the shape `MERGED` is documented to require.
+          // Falling through to the replace would be the silent version of this,
+          // and the silent version is what cost the 682 probes.
+          if (key.length !== 1 || !shared.includes('checked_at')) {
+            throw new Error(
+              `${table.name} is listed as merged but has no single-column key with a checked_at`
+            );
+          }
+          const set = shared
+            .filter((column) => column !== key[0])
+            .map((column) => `"${column}" = excluded."${column}"`)
+            .join(', ');
+          // `WHERE true` is not decoration: without it SQLite reads the ON
+          // CONFLICT as part of the SELECT and refuses the statement.
+          db.exec(
+            `INSERT INTO main."${table.name}" AS old (${list})
+             SELECT ${list} FROM snap."${table.name}" WHERE true
+             ON CONFLICT("${key[0]}") DO UPDATE SET ${set}
+               WHERE excluded."checked_at" > old."checked_at"`
+          );
+          console.log(
+            `· ${table.name}: ${before} here + ${countRows(db, table.name) - before} from the release, ` +
+              `kept rather than replaced`
+          );
+          continue;
+        }
+
         db.exec(`DELETE FROM main."${table.name}"`);
         db.exec(`INSERT INTO main."${table.name}" (${list}) SELECT ${list} FROM snap."${table.name}"`);
       }
@@ -485,6 +552,10 @@ function quiet(args: string[]): boolean {
 
 function mb(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function countRows(db: Database.Database, table: string): number {
+  return (db.prepare(`SELECT COUNT(*) AS rows FROM main."${table}"`).get() as { rows: number }).rows;
 }
 
 main().catch((error: unknown) => {

@@ -2,9 +2,11 @@
  * Scratch: hand the published bindings to a reader, in batches, and take the
  * verdicts back.
  *
- * The nightly path is `15-verdicts.ts`, which asks the model itself. This is
- * the same review done by subagents in a session — the one-off that clears the
- * backlog the rules published before any reader existed. Two modes:
+ * There is no nightly path: the reading is done by subagents inside a session,
+ * which is why this is a scratch script and not a pipeline step. A headless
+ * version would want an API key the repository does not have, and until it
+ * exists the gate is safe in the right direction — an unconfirmed binding does
+ * not publish, so the catalogue goes quiet rather than wrong. Two modes:
  *
  *   pnpm tsx scripts/_review.ts export <dir> [--size=150]   # batches + the course list
  *   pnpm tsx scripts/_review.ts import <dir>                # verdict files → cache.db
@@ -34,12 +36,17 @@ function exportBatches(dir: string, size: number): void {
   const sources = loadSources();
 
   // A hand decision already outranks every pass, so it needs no reader; and a
-  // row already judged is not asked twice.
+  // row already judged is not asked twice — unless the binding has moved under
+  // it, because the answer was about the pairing. `course_id` is null on the
+  // rows written before it existed, and those are taken as still current.
   const settled = new Set(Object.keys(sources.overrides.matches));
-  const judged = new Set(
-    (db.prepare(`SELECT playlist_id FROM verdicts`).all() as Array<{ playlist_id: string }>).map(
-      (r) => r.playlist_id
-    )
+  const judged = new Map(
+    (
+      db.prepare(`SELECT playlist_id, course_id FROM verdicts`).all() as Array<{
+        playlist_id: string;
+        course_id: string | null;
+      }>
+    ).map((r) => [r.playlist_id, r.course_id])
   );
 
   const rows = (
@@ -54,7 +61,12 @@ function exportBatches(dir: string, size: number): void {
             AND m.reviewed = 0 AND p.title IS NOT NULL`
       )
       .all() as Row[]
-  ).filter((r) => !settled.has(r.id) && !judged.has(r.id));
+  ).filter((r) => {
+    if (settled.has(r.id)) return false;
+    if (!judged.has(r.id)) return true;
+    const judgedAs = judged.get(r.id);
+    return judgedAs != null && judgedAs !== r.course;
+  });
 
   fs.mkdirSync(dir, { recursive: true });
 
@@ -85,12 +97,26 @@ function importVerdicts(dir: string): void {
   const courseIds = new Set(sources.courses.map((c) => c.id));
 
   const write = db.prepare(
-    `INSERT INTO verdicts (playlist_id, verdict, suggested_course, note, model, checked_at)
-     VALUES (?, ?, ?, ?, ?, ?)
+    `INSERT INTO verdicts (playlist_id, verdict, course_id, suggested_course, note, model, checked_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(playlist_id) DO UPDATE SET
-       verdict = excluded.verdict, suggested_course = excluded.suggested_course,
+       verdict = excluded.verdict, course_id = excluded.course_id,
+       suggested_course = excluded.suggested_course,
        note = excluded.note, model = excluded.model, checked_at = excluded.checked_at`
   );
+
+  /*
+   * The course each batch put in front of the reader. Read back off the batch
+   * file rather than off `matches`, because between an export and its import
+   * the rules may have moved the binding — and what the verdict is *about* is
+   * the line the reader actually saw.
+   */
+  const asked = new Map<string, string>();
+  for (const file of fs.readdirSync(dir).filter((f) => /^batch-.*\.json$/.test(f))) {
+    for (const row of JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')) as Row[]) {
+      asked.set(row.id, row.course);
+    }
+  }
 
   const files = fs.readdirSync(dir).filter((f) => /^verdicts-.*\.json$/.test(f));
   const counts: Record<string, number> = {};
@@ -114,13 +140,14 @@ function importVerdicts(dir: string): void {
       // suggestion, it is a typo — and silently storing it would publish a
       // binding to nothing.
       const suggested = row.course && courseIds.has(row.course) ? row.course : null;
+      const judged = asked.get(row.id) ?? null;
       if (row.verdict === 'wrong-course' && !suggested) {
-        write.run(row.id, 'not-a-course', null, row.note ?? null, 'agent', now);
+        write.run(row.id, 'not-a-course', judged, null, row.note ?? null, 'agent', now);
         counts['not-a-course'] = (counts['not-a-course'] ?? 0) + 1;
         written += 1;
         continue;
       }
-      write.run(row.id, row.verdict, suggested, row.note ?? null, 'agent', now);
+      write.run(row.id, row.verdict, judged, suggested, row.note ?? null, 'agent', now);
       counts[row.verdict] = (counts[row.verdict] ?? 0) + 1;
       written += 1;
     }

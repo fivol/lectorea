@@ -1040,5 +1040,59 @@
   "link.project-management.software-engineering": "Оценка сроков, риски и итерации получают конкретный материал в разработке ПО, а инженерные практики требуют управлять всем проектом.",
   "link.ocean-engineering.oceanography": "Океанография описывает волны, течения и дно, а морская инженерия превращает эту среду в нагрузки и ограничения конструкции.",
   "course.artificial-intelligence.title": "Искусственный интеллект",
-  "course.artificial-intelligence.desc": "Поиск, эвристики, представление знаний, планирование, вывод в условиях неопределённости"
+  "course.artificial-intelligence.desc": "Поиск, эвристики, представление знаний, планирование, вывод в условиях неопределённости",
+
+  "course.analytic-geometry.title": "Аналитическая геометрия",
+  "course.analytic-geometry.desc": "Прямые и плоскости, кривые и поверхности второго порядка в координатах",
+
+  "course.algebraic-geometry.title": "Алгебраическая геометрия",
+  "course.algebraic-geometry.desc": "Аффинные и проективные многообразия, пучки, схемы",
+
+  "course.lie-theory.title": "Группы и алгебры Ли",
+  "course.lie-theory.desc": "Непрерывные симметрии: группы Ли, алгебры Ли и их представления",
+
+  "course.homological-algebra.title": "Гомологическая алгебра",
+  "course.homological-algebra.desc": "Комплексы, точные последовательности, функторы Ext и Tor",
+
+  "course.mathematical-physics.title": "Методы математической физики",
+  "course.mathematical-physics.desc": "Специальные функции, функции Грина, интегральные преобразования",
+
+  "course.fluid-mechanics.title": "Механика жидкости и газа",
+  "course.fluid-mechanics.desc": "Уравнения Навье — Стокса, пограничный слой, турбулентность, гидравлика",
+
+  "course.heat-transfer.title": "Теплопередача",
+  "course.heat-transfer.desc": "Теплопроводность, конвекция, излучение, расчёт теплообменников",
+
+  "course.electrical-machines.title": "Электрические машины",
+  "course.electrical-machines.desc": "Трансформаторы, машины постоянного и переменного тока, электропривод",
+
+  "course.power-systems.title": "Электроэнергетические системы",
+  "course.power-systems.desc": "Генерация, передача и распределение энергии, режимы и защита сетей",
+
+  "course.communication-systems.title": "Системы связи",
+  "course.communication-systems.desc": "Модуляция, помехоустойчивость, цифровая передача данных",
+
+  "course.microprocessors.title": "Микропроцессоры и встраиваемые системы",
+  "course.microprocessors.desc": "Архитектура микроконтроллеров, периферия, программирование на низком уровне",
+
+  "course.engineering-drawing.title": "Инженерная графика",
+  "course.engineering-drawing.desc": "Начертательная геометрия, проекции, чертёж и стандарты оформления",
+
+  "course.data-science.title": "Наука о данных",
+  "course.data-science.desc": "Сбор, очистка и разведочный анализ данных, визуализация, выводы",
+
+  "course.high-performance-computing.title": "Высокопроизводительные вычисления",
+  "course.high-performance-computing.desc": "Параллельное программирование, MPI, OpenMP, CUDA, масштабирование",
+
+  "course.accounting.title": "Бухгалтерский учёт",
+  "course.accounting.desc": "Двойная запись, финансовая отчётность, учёт затрат",
+
+  "course.entrepreneurship.title": "Предпринимательство",
+  "course.entrepreneurship.desc": "Как устроен запуск компании: идея, бизнес-модель, деньги, рост",
+
+  "course.business-communication.title": "Деловая коммуникация",
+  "course.business-communication.desc": "Переговоры, презентации, деловая переписка",
+
+  "course.power-electronics.title": "Силовая электроника",
+  "course.power-electronics.desc": "Преобразователи, выпрямители и инверторы, ШИМ, управление ключами"
 }

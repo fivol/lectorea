@@ -322,6 +322,19 @@ cheapest first:
    rule's own below-threshold guesses too, and has to beat them to replace them
 3. **Manual review** — anything still below 0.75 goes into the queue for
    `pnpm data:review`, and what it decides is crawled first next time round
+4. **A reader confirms what got through** — everything the cascade accepted is
+   read once more against the course list, and `08-build.ts` publishes only what
+   came back `ok`. An absent verdict means "not confirmed", never "fine". This
+   is where 24% of the first 5469 bindings went, and none of the three shapes it
+   catches is reachable by a rule: a *unit* of a course published as a playlist,
+   a subject that is a homonym of another course, and a vendor dump wearing a
+   subject name
+
+The verdict is stamped with the **course it was about**, and stops applying when
+the binding moves. A reader who approved «Fluid Mechanics» under transport
+phenomena did not approve it under a fluid mechanics course that did not exist
+at the time, so adding one puts those bindings back in the queue rather than
+carrying the old yes across.
 
 **Every language at once, and why that is not obvious.** `loadSources(lang)`
 picks the language a build renders in, and for the rule pass that question has
@@ -599,13 +612,29 @@ irreversible direction:
   nothing, locally. There is no generation to compare, so there is no answer,
   and guessing costs a week of quota
 
-And one thing it does without being asked: **keeps this machine's
+And two things it does without being asked. The first: **keeps this machine's
 `raw_responses`.** The snapshot deliberately leaves them out, so replacing the
 file would cost a laptop its 3.5 GB archive of verbatim API bodies on every
 pull — the archive that makes "fix the parser and re-run" possible instead of
 "fix the parser and wait until tomorrow". So a cache that already holds material
 is updated table by table instead of overwritten: the 190 MB that travelled is
 swapped in, the raw bodies stay.
+
+The second: **merges the judgements instead of replacing them.** `verdicts` and
+`ownership` are not crawl state. A verdict is a reader's answer about one
+binding, an ownership row is a unit spent asking who filmed a playlist, both are
+keyed per playlist, and **two copies holding different rows of them is the
+normal state** — the nightly job judges what it crawled, a laptop clears a
+backlog, and neither has a claim on the other's rows. So those tables are
+unioned by key with the newer `checked_at` winning, and nothing local is
+deleted.
+
+The rule they used to follow cost 682 ownership probes on 2026-08-16: written in
+the morning, deleted by a restore the same day, replaced with the eight rows the
+publishing machine happened to hold, and silent about all of it. A table joins
+the merged set by having a single-column key and a `checked_at`; adding one to
+`MERGED` in `cache-snapshot.ts` is the whole of it, and the day to do it is the
+day the table is created.
 
 The snapshot leaves out `raw_responses`, which is 3.5 GB of the 3.6 and read only
 by `11-mine` and `stats`, both local. What travels is 190 MB, 65 compressed.

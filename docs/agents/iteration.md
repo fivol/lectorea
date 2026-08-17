@@ -151,6 +151,30 @@ playlist — the table in
 [data-traps.md](data-traps.md#the-rules-are-not-12-wrong--they-are-blind-to-unstructured-sources)
 says which.
 
+`export` also re-asks the bindings whose *course* has moved since they were
+judged, not only the ones never judged: a verdict answers a pairing and stops
+applying when the pairing changes
+([practices.md](practices.md#a-judgement-is-about-a-pairing-and-it-expires-when-the-pairing-moves)).
+So a keyword change or a new course produces a short review round of its own,
+and that round is part of the change rather than optional.
+
+### 3d. And when the answer is a course the catalogue does not have
+
+A reader that keeps saying `ok` about the *nearest* course is reporting a hole,
+not approving a binding. Count it before believing it:
+
+```bash
+pnpm tsx scripts/_gaps.ts                    # waiting / taken / refused per candidate
+pnpm tsx scripts/_gaps.ts fluid-mechanics    # and the titles on both sides
+```
+
+Adding one is `pnpm course:new`, then the texts and keywords in both languages —
+and then **the name back from whoever was standing in for it**, in
+`data/aliases/*.json` as well as the keywords, or the addition just makes the
+titles ambiguous ([data-traps.md](data-traps.md#and-the-tie-a-new-course-creates-is-where-the-old-one-was-standing-in)).
+`_probe.ts` is what says whether it worked; the row to watch is `- потеряет
+привязку`, which should be small and boring.
+
 ### 4. Verify, then publish
 
 ```bash
@@ -283,6 +307,7 @@ that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
 | Command | Cost | What it answers |
 |---|---|---|
 | `_refusals.ts [bucket] [out.json]` | free | why were these playlists refused |
+| `_gaps.ts [course-id]` | free | is a course worth adding — what waits for it, and what it would take from its neighbours |
 | `_noisy.ts [min]` | free | which keywords claim and never win |
 | `_probe.ts [gained\|lost\|changed]` | free | what would a rule change do to the whole catalogue |
 | `_holes.ts [min]` | free | which channels does the catalogue keep choosing but never crawl |

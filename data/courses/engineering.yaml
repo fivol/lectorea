@@ -75,3 +75,49 @@
   related: [oceanography]
   refs:
     syllabus: https://catalog.mit.edu/subjects/2/
+
+- id: fluid-mechanics
+  domains: [engineering]
+  stage: bachelor-3
+  deps: [mechanics]
+  soft: [pde]
+
+- id: heat-transfer
+  domains: [engineering]
+  stage: bachelor-3
+  deps: [thermodynamics]
+  soft: [fluid-mechanics]
+
+- id: electrical-machines
+  domains: [engineering]
+  stage: bachelor-3
+  deps: [electrical-circuits]
+  soft: [electrodynamics]
+
+- id: power-systems
+  domains: [engineering]
+  stage: bachelor-4
+  deps: [electrical-circuits]
+  soft: [electrical-machines]
+
+- id: communication-systems
+  domains: [engineering]
+  stage: bachelor-4
+  deps: [signal-processing]
+  soft: [probability]
+
+- id: microprocessors
+  domains: [engineering]
+  stage: bachelor-2
+  deps: [digital-logic]
+  soft: [computer-architecture]
+
+- id: engineering-drawing
+  domains: [engineering]
+  stage: bachelor-1
+
+- id: power-electronics
+  domains: [engineering]
+  stage: bachelor-4
+  deps: [analog-electronics]
+  soft: [electrical-machines]

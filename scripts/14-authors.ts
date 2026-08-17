@@ -217,19 +217,24 @@ async function main(): Promise<void> {
 
   /*
    * Mirrors are not refused and are not silent either: the binding is right and
-   * the provider under it is wrong, which nothing downstream can notice on its
-   * own. Naming the real owner here is also the cheapest channel candidate the
-   * catalogue produces — it is a channel it already chose, by name.
+   * the provider under it is wrong. `08-build.ts` now reads `kind = 'mirror'`
+   * and files the playlist under whoever made the videos, so the row written
+   * above *is* the fix and there is nothing to do by hand.
+   *
+   * What is still worth printing is the owner's name, because it is the
+   * cheapest channel candidate this catalogue produces — a channel it has
+   * already chosen, by name, from material it already publishes. Two thirds of
+   * `channels.yaml` arrived this way (docs/harvest.md).
    */
   if (mirrors.length) {
-    console.log(`\n· ${mirrors.length} kept but filed under the wrong channel:`);
+    console.log(`\n· ${mirrors.length} filed under whoever made them, not whoever listed them:`);
     for (const row of mirrors.sort((a, b) => b.videos - a.videos).slice(0, 15)) {
       console.log(
         `  ⇒ ${String(row.videos).padStart(4)}× ${row.courseId.padEnd(22)} ` +
           `${row.title.slice(0, 40)} — really ${row.owner}`
       );
     }
-    console.log('  attribution is fixed by hand in data/overrides.yaml (channels:)');
+    console.log('  the owners not yet in channels.yaml are the next hunt, already vetted');
   }
 
   const left = due.length - batch.length;

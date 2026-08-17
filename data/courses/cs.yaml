@@ -106,3 +106,15 @@
   domains: [cs]
   stage: bachelor-4
   deps: [networks, cryptography]
+
+- id: data-science
+  domains: [cs]
+  stage: bachelor-3
+  deps: [statistics, programming-intro]
+  soft: [ml-intro]
+
+- id: high-performance-computing
+  domains: [cs]
+  stage: bachelor-4
+  deps: [computer-architecture]
+  soft: [algorithms]

@@ -208,6 +208,82 @@ and not a reading task.
 the sieve and put the judgement after it — but make the gate say out loud what
 silence means, or "not looked at yet" quietly becomes "approved".
 
+## A judgement is about a pairing, and it expires when the pairing moves
+
+A reader was shown «Fluid Mechanics» filed under transport phenomena and said
+`ok`. That is not an opinion about the playlist; it is an answer to one
+question. Add a fluid mechanics course, let `data:match --force` move the
+binding, and the old yes silently becomes a confirmation of a pairing nobody
+ever saw — **precisely on the rows a rule change touched, which are the ones
+worth looking at.**
+
+So `verdicts` carries `course_id`, the binding that was judged, and
+`resolveCourses` treats a verdict stamped with a different course as no verdict:
+back out of the catalogue, back into the queue `_review.ts export` reads. The 18
+courses added on 2026-08-17 sent 393 bindings back through that door — most of
+them new, the rest drifted — and the round came back **282 ok, 106 not a course,
+3 rebound, 2 unsure**. 27% refused, in line with the 24% of the first pass, and
+the refusals are the shape the new courses attract: GATE and ICAI exam-prep
+batches wearing an engineering or accounting subject name, and semesters of
+three to five uploaded videos.
+
+**Generally:** when an expensive answer is stored, store *what was asked*
+alongside it. An answer keyed only by its subject outlives the question, and the
+failure is invisible — the row still says `ok`.
+
+## An answer that cost a unit does not live in a row the next pass rewrites
+
+`14-authors.ts` spends one unit deciding that a playlist is somebody's bookmarks
+and writes the refusal into `matches`. Every refusal in `matches` is deliberately
+reversible, and `data:match --force` re-reads all of them — so a keyword change
+republishes collections that were each paid for, and nothing in either step
+knows the other happened.
+
+The fix is not to make the refusal sticky. It is that **the row is the wrong
+place**: the evidence is in `ownership`, it does not expire, and `08-build.ts`
+now reads `kind = 'collection'` directly and refuses there. The two steps stop
+being ordered, `--force` becomes free of consequences again, and the unit is
+never re-bought. The same move fixed the mirrors: `kind = 'mirror'` is read in
+the build to file the playlist under whoever *made* the videos, instead of an
+`overrides.channels` entry per playlist that somebody has to notice and write —
+and an override keyed by channel could not have expressed it anyway, since the
+same re-uploader also posts material of its own.
+
+**Generally:** a derived judgement belongs in the table that holds its evidence,
+and the consumer reads it. Copying it into a mutable working row makes the
+answer depend on the order two steps ran in, which is the kind of bug that only
+shows up months later as a number that drifted.
+
+## A missing course is counted before it is added
+
+The 2026-08-16 reading kept answering `ok` with a shrug: «Fluid Mechanics» under
+transport phenomena, «Аналитическая геометрия» under linear algebra,
+«Гомологическая алгебра» under category theory. Those are not matching mistakes
+— they are the catalogue being asked for a course it does not have and answering
+with the nearest one.
+
+A hole is easy to feel and easy to imagine, so `_gaps.ts` counts it. Each
+candidate gets three numbers: **waiting** (playlists naming it that nothing
+holds), **taken** (playlists already published under some other course, listed
+by which) and **refused** (ones a reader has already thrown out, never added
+in). `taken` concentrated in one course is the nearest-fit answer at scale and
+the strongest case there is — `fluid-mechanics` was 50 waiting and 17 taken, all
+17 from `transport-phenomena`.
+
+Two readings that saved courses from being added on volume alone:
+
+- **`waiting` is not evidence if the material is not coursework.** `cloud-computing`
+  showed 53 and was Kubernetes tutorials and CKA exam prep; `web-development`
+  showed 40 and was bootcamps. Both refused. The phrase names an industry skill,
+  not a curriculum subject, and the reader would have thrown the lot out.
+- **A semester is not a subject.** «Physics II» had 32 waiting and two readers
+  flagging it independently, and was still refused: what Physics II covers
+  depends on the university, and this catalogue's unit is the subject.
+
+**Generally:** before adding a category to a taxonomy, measure what would move
+into it and what it would take from its neighbours. Adding on the strength of a
+felt gap is how a taxonomy grows entries nothing ever lands in.
+
 ## A batch handed to a reader is checked before it is trusted
 
 Every verdict file is validated against its batch before import: same count,

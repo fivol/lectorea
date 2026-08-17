@@ -50,6 +50,34 @@ where `discover` wrote both forms once. The wider rule: **an entity here can hav
 two names, and the hand-edited file almost always carries the readable one while
 the API answers with the canonical one.**
 
+### A restore was read as "take what is newer", and it is "replace what is there"
+
+**Assumed:** `cache:restore` brings the release's crawl over a stale copy, so a
+table this machine filled in and the release has never seen comes through
+untouched.
+**It was:** `swapInto` walks every table **in the snapshot** and does
+`DELETE FROM main.<table>` before inserting. `ownership` is in the snapshot, so
+682 probes bought that morning were deleted and replaced with the eight rows the
+publishing machine happened to hold. Nothing said so — the restore prints
+playlists, videos and matches. It was found a day later by querying a table that
+should have had hundreds of rows and had eight, and the same `make pull` was one
+command away from taking 5469 verdicts with it: 35 minutes of subagents and
+3.3M tokens, which no quota buys back.
+
+The guard that should have caught it did not, for a second reason worth having
+separately: `shouldRestore` refuses when the local copy "has crawled since",
+and `WORK_COLUMNS` listed only crawl timestamps. A machine that had spent an
+afternoon *judging* looked untouched.
+
+**How not to repeat it:** two rules, and the first is the general one.
+**Anything a machine computed and has not published is work, whatever produced
+it** — put its timestamp in `WORK_COLUMNS` the day the table is created, not the
+day something is lost. And **a table of per-key judgements is merged, never
+replaced**: `MERGED` in `cache-snapshot.ts` unions by primary key with the newer
+`checked_at` winning, because two copies holding different rows of it is the
+normal state and not a conflict. The shape that qualifies is a single-column key
+plus a `checked_at`, which is what `verdicts` and `ownership` already are.
+
 ---
 
 ## Quota and accounting

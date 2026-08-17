@@ -224,6 +224,12 @@ channels:                     # channelId → providerId
 `06-review.ts` writes the `matches` section. The file is committed — it is the
 reviewed record and what goes into the pull request.
 
+`channels:` is for a channel that is wholly filed under the wrong provider, and
+**not** for a playlist somebody re-posted. A re-uploader also posts material of
+its own, so moving the channel would mislabel that instead; a mirror is a
+property of the playlist and `08-build.ts` reads it out of `ownership`
+([scripts/README.md](scripts/README.md#make-pipeline)).
+
 ## Localisation and course text
 
 Every user-facing string is in `data/i18n/{lang}.json`; the code holds keys only.

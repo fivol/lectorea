@@ -11,12 +11,12 @@
 [![site](https://img.shields.io/badge/site-lectorea.org-2ea043)](https://lectorea.org/)
 [![deploy](https://github.com/fivol/lectorea/actions/workflows/deploy.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/deploy.yml)
 [![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
-[![courses](https://img.shields.io/badge/courses-207_in_39_fields-4c8eda)](https://lectorea.org/)
+[![courses](https://img.shields.io/badge/courses-225_in_39_fields-4c8eda)](https://lectorea.org/)
 
 [![The map](docs/images/map.webp)](https://lectorea.org/)
 
-207 courses across 39 fields of knowledge, each one knowing what it depends on,
-and some 5600 recordings of them from 320 universities and channels. That
+225 courses across 39 fields of knowledge, each one knowing what it depends on,
+and some 5800 recordings of them from 320 universities and channels. That
 is the difference from a search engine: YouTube can find you a lecture on tensor
 analysis, but it cannot tell you that you will not understand it without linear
 algebra. Lectorea answers the two questions that actually come up:

@@ -52,6 +52,40 @@ The four that were resolved had a specific course that should simply win:
 The test is not "is this word ambiguous in English" but **"does one of these two
 courses own it, with the other holding a redundant copy"**.
 
+### And the tie a *new* course creates is where the old one was standing in
+
+Adding 17 courses on 2026-08-17 took 40 bindings from wrong to nothing on the
+first probe, and every one of them was a tie the addition had just made. The
+reason is in `data/aliases/*.json` rather than in the keywords: a course the
+catalogue lacks does not go unmatched, it gets filed under the nearest one and
+somebody writes the missing name down as an alias of it.
+
+| the alias | was standing in as |
+|---|---|
+| «Гомологическая алгебра» | `category-theory` |
+| «Аналитическая геометрия» | `linear-algebra` |
+| «Методы математической физики» | `pde` |
+| «Тепломассообмен» | `transport-phenomena` |
+
+So **adding a course means taking its name back**, from `aliases` and from
+`keywords` both, and the aliases are the half that is easy to miss because
+nothing about a keyword list mentions them. With the four moved, the same probe
+read 364 gained, 8 lost, 37 rebound.
+
+The eight that stayed lost are the honest kind and were left alone: «Data
+Analytics with Python» is genuinely claimed as hard by `programming-intro` and
+`data-science` at once, which is a question for a person and not for a rule.
+
+One case ran the other way and is worth keeping: «Уравнения математической
+физики» **is** the Russian name of the PDE course, not of mathematical physics,
+so `pde` kept it and the new course took only «Методы математической физики».
+The gap analysis suggests the split; the curriculum decides it.
+
+The eighteenth course, `power-electronics`, was added an hour later with the
+rule already known — its name taken back from `power-systems` in the same edit —
+and the probe read **0 lost, 28 rebound, nothing emptied** on the first run.
+That is what the check costs when it is done in the right order.
+
 ## A blank row in the queue is not a hard case, it is a missing title
 
 The review queue is sorted by views and read from the top, so a playlist with no
