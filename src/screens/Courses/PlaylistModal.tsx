@@ -17,8 +17,8 @@ import { embedSrc, isResumable, useYouTubeTracking, watchUrl } from '@/lib/youtu
 import { useProfile, type WatchContext } from '@/store/profile';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
-import { Button, ButtonLink, IconButton } from '@/components/ui';
-import Tooltip from '@/components/Tooltip';
+import { FactTile, FactTiles, Meter } from '@/components/Facts';
+import { Button, ButtonLink, Chip, IconButton } from '@/components/ui';
 import PlayerSpeed from './PlayerSpeed';
 import { FilterName, StatusBadge } from './PlaylistRow';
 import type { FilterFacet } from './playlist-filters';
@@ -473,62 +473,84 @@ export default function PlaylistModal({
                 </div>
               ) : null}
 
-              <dl className="num mt-4 space-y-1 text-xs">
-                <Fact
-                  label={t('ui.playlist.label.lectures')}
+              {/* How big the thing is, in the three numbers somebody deciding
+                  whether to take it on actually weighs. Tiles rather than the
+                  «характеристика · значение» lines that were here: those three
+                  numbers were set in the same small grey type as the five
+                  categorical facts under them, and the one question the sheet
+                  is opened with — how many hours is this — had to be found
+                  among them. See `Facts.tsx`. */}
+              <FactTiles className="mt-4">
+                <FactTile
+                  icon="list"
                   value={String(playlist.videoCount)}
+                  label={t('ui.playlist.label.lectures')}
                 />
-                <Fact
-                  label={t('ui.playlist.label.total')}
+                <FactTile
+                  icon="clock"
                   value={t('ui.playlist.hours', {
                     n: formatHours(hoursFromSeconds(playlist.totalSeconds)),
                   })}
+                  label={t('ui.playlist.label.total')}
                 />
-                <Fact
-                  label={t('ui.playlist.label.avg')}
-                  value={`${t('ui.playlist.avgLecture', {
+                <FactTile
+                  icon="hourglass"
+                  value={t('ui.playlist.avgLecture', {
                     n: formatMinutes(playlist.medianSeconds),
-                  })} · ${t(`ui.playlist.length.${playlist.lectureLength}`)}`}
+                  })}
+                  label={t('ui.playlist.label.avg')}
                 />
-                {/* Only «фрагмент», which is the half of this field worth
-                    printing. «Полнота: неизвестна» is a line about the
-                    catalogue rather than about the playlist, and «полнота:
-                    полный курс» is a regex over the title plus «twelve videos
-                    or more» — 77% of the catalogue passes it, and it sat
-                    directly above a «тип» row making the same claim on
-                    structural evidence. Two answers, one of them cheap. */}
-                {playlist.completeness !== 'partial' ? null : (
-                  <Fact
-                    label={t('ui.playlist.label.completeness')}
-                    value={t(`ui.playlist.completeness.${playlist.completeness}`)}
-                  />
-                )}
+              </FactTiles>
+
+              {/* What the recording *is*, in the words it is one of a few of.
+                  A category laid out as a value in a table is a word pretending
+                  to be data — «тип · Разная длина» is two words where one of
+                  them is a column heading. As chips they are what they always
+                  were: tags, read in whatever order the eye lands on them. */}
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 {/* Here even when it is «Лекции», which the row leaves unsaid:
                     the row is a list to be scanned and this is a sheet about
                     one recording, where the ordinary answer is still an
                     answer. */}
-                <Fact
-                  label={t('ui.playlist.label.type')}
-                  value={t(`ui.playlist.type.${playlistTypeOf(playlist)}`)}
-                />
-                <Fact
-                  label={t('ui.playlist.label.captions')}
-                  value={
-                    playlist.captions.length
-                      ? playlist.captions.join(', ')
-                      : t('ui.playlist.noCaptions')
-                  }
-                />
-              </dl>
+                <Chip hint={t(`ui.playlist.type.${playlistTypeOf(playlist)}.hint`)}>
+                  {t(`ui.playlist.type.${playlistTypeOf(playlist)}`)}
+                </Chip>
+                {/* The classification of the number in the tile above it, which
+                    is why it wears the same glyph. */}
+                <Chip icon="hourglass">{t(`ui.playlist.length.${playlist.lectureLength}`)}</Chip>
+                {/* Only «фрагмент», which is the half of this field worth
+                    printing. «Полнота: неизвестна» is a line about the
+                    catalogue rather than about the playlist, and «полнота:
+                    полный курс» is a regex over the title plus «twelve videos
+                    or more» — 77% of the catalogue passes it, and it said the
+                    same thing the type beside it says on structural evidence.
+                    Two answers, one of them cheap.
+
+                    In the warning colour, like «Подборка» on a row and for the
+                    same reason: it is the one word here that changes what you
+                    would do with the recording. */}
+                {playlist.completeness !== 'partial' ? null : (
+                  <Chip className="text-warning" hint={t('ui.playlist.label.completeness')}>
+                    {t(`ui.playlist.completeness.${playlist.completeness}`)}
+                  </Chip>
+                )}
+                <Chip icon="captions" hint={t('ui.playlist.label.captions')}>
+                  {playlist.captions.length
+                    ? playlist.captions.join(', ')
+                    : t('ui.playlist.noCaptions')}
+                </Chip>
+              </div>
 
               <div className="mt-4 space-y-2">
-                <StatBar
+                <Meter
+                  icon="eye"
                   label={t('ui.playlist.views')}
                   value={formatCompact(playlist.stats.views, lang)}
                   fraction={1}
                   hint={t('ui.playlist.relativeHint')}
                 />
-                <StatBar
+                <Meter
+                  icon="like"
                   label={t('ui.playlist.likes')}
                   value={formatCompact(playlist.stats.likes, lang)}
                   fraction={
@@ -536,7 +558,8 @@ export default function PlaylistModal({
                   }
                   hint={t('ui.playlist.relativeHint')}
                 />
-                <StatBar
+                <Meter
+                  icon="comment"
                   label={t('ui.playlist.comments')}
                   value={formatCompact(playlist.stats.comments, lang)}
                   fraction={
@@ -545,9 +568,13 @@ export default function PlaylistModal({
                   hint={t('ui.playlist.relativeHint')}
                 />
                 {/* The share of the audience still there at the end — the one
-                    number here that is about the course rather than its size. */}
+                    number here that is about the course rather than its size,
+                    and the only bar on this sheet that is a real share of a
+                    real whole. Hence the accent, and the finish flag. */}
                 {retention !== null ? (
-                  <StatBar
+                  <Meter
+                    icon="flag"
+                    tone="accent"
                     label={t('ui.playlist.retention')}
                     value={`${Math.round(retention * 100)}%`}
                     fraction={retention}
@@ -768,48 +795,3 @@ function LectureRow({
   );
 }
 
-/** One line of the fact sheet. The value wraps rather than truncates — every
- *  one of them is short, and a clipped «без субтитров» says the opposite. */
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className="shrink-0 text-ink-faint">{label}</dt>
-      <dd className="min-w-0 text-right text-ink-dim">{value}</dd>
-    </div>
-  );
-}
-
-/**
- * A metric as a bar. The bar is a relative scale — likes and comments are
- * shown against what a playlist of this size usually gets, not against the raw
- * number — so it has to say so, or it reads as a percentage of something.
- *
- * Name and number sit on their own line above the bar: side by side they need
- * three fixed widths to stay aligned, and the sidebar is not a fixed width.
- */
-function StatBar({
-  label,
-  value,
-  fraction,
-  hint,
-}: {
-  label: string;
-  value: string;
-  fraction: number;
-  hint: string;
-}) {
-  const width = Math.max(4, Math.min(100, fraction * 100));
-  return (
-    <Tooltip content={hint}>
-      <div className="cursor-help">
-        <div className="flex items-baseline justify-between gap-2 text-xs">
-          <span className="min-w-0 truncate text-ink-faint">{label}</span>
-          <span className="num shrink-0 text-ink-dim">{value}</span>
-        </div>
-        <span className="mt-1 block h-1 overflow-hidden rounded-full bg-surface-2">
-          <span className="block h-full rounded-full bg-formal" style={{ width: `${width}%` }} />
-        </span>
-      </div>
-    </Tooltip>
-  );
-}

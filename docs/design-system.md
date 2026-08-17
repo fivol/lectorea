@@ -239,6 +239,38 @@ are two sizes of the same door: the summary is the profile said in one card on
 the front page, and where it is on screen for good the plain button steps aside
 — see [the interface](interface.md#where-you-were).
 
+## Three shapes for a fact
+
+A sheet about one thing — a recording, and in time a course or a channel —
+collects a dozen facts about it, and the obvious way to print them is the worst
+one: a column of «характеристика · значение» lines. Eight of those in a row is a
+table with the rules taken out. Every line carries the same weight, the eye walks
+left to right eight times to find the one number it came for, and a count, a
+category and a share of an audience all arrive in the same small grey type.
+
+`src/components/Facts.tsx` prints a fact as **what kind of fact it is**:
+
+| Kind | Shape | On the recording sheet |
+|---|---|---|
+| a number that is the point | `FactTile` — glyph, number, caption under it; `FactTiles` lays them out | 26 лекций · 3.7 ч · ~8 мин |
+| a category, one of a handful | a `Chip` — the word, with nothing laid out beside it | «Разная длина», «урок», «фрагмент», «ru» |
+| a number that means nothing alone | `Meter` — glyph, name, number, and the scale it is read against | просмотры, лайки, комментарии, досматриваемость |
+
+The test is what the reader does with it. A count is weighed against their own
+evening, so it is set large and given room. A category is weighed against
+nothing — it is a word, and a word laid out as a value in a table is a word
+pretending to be data. A view count is meaningless on its own, so it never
+appears without the bar saying what it is being compared with; the one bar that
+is a real share of a real whole — досматриваемость — is the only one in the
+accent, and the rest stay a relative scale that says so when pointed at.
+
+The glyph never replaces the word. An eye is found without reading, and
+«просмотры» is still there for whoever has not met the glyph before — the same
+rule colour follows here, that it may repeat a meaning but never be the only
+thing carrying it. The eight glyphs this needed (`eye`, `like`, `comment`,
+`clock`, `hourglass`, `captions`, `list`, `flag`) went into the one sprite in
+`src/components/Icon.tsx` rather than an icon package.
+
 ## Components worth knowing about
 
 - **`Tooltip`** — the explained state. Portalled, 400ms in and nothing on the

@@ -247,6 +247,25 @@ built from what the thing reports rather than from what was measured. A tool
 that silently rounds is worse than one that errors, and only a probe tells the
 two apart.
 
+## A «характеристика · значение» list is a shape that was never chosen
+
+The metadata sheet in the player was eight of them in a column: лекций 26,
+длительность 3.7 ч, тип «Разная длина», просмотры 770,1 тыс. Nobody designed
+that — it is what a `Record<label, value>` looks like when it is printed in the
+order it was declared, and the reader pays for it by scanning eight lines to
+find the one number they opened the sheet for.
+
+The fix was not to restyle the lines but to ask, of each one, **what kind of
+fact it is**: a count, a category, or a number that means nothing without a
+comparison. Three shapes, three components, in
+[design-system.md](../design-system.md#three-shapes-for-a-fact).
+
+**Generally:** when a block reads as technical, look at whether its shape was
+decided or inherited from the data structure behind it. Facts of different kinds
+laid out identically is the usual reason a screen feels like a database dump,
+and no amount of typography fixes it — the layout has to stop treating a word
+and a view count as the same thing.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

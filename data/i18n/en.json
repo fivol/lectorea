@@ -840,7 +840,6 @@
   "ui.playlist.type.uneven.hint": "One lecture in ten or more is nothing like the rest: ten-minute ones next to ninety-minute ones. Not a shelf but a course, and no two sittings are alike — its «average lecture» says little",
   "ui.playlist.type.seminars.hint": "Problem sessions rather than lectures: that is what most of the recordings inside call themselves",
   "ui.playlist.type.collection.hint": "Not a course but a shelf on a subject: views do not fall off along the order, and it shows how it was put together — over years, in unequal lengths, unnumbered. People arrive at these from search, anywhere in the middle",
-  "ui.playlist.label.type": "type",
   "course.civil-law.title": "Civil law",
   "course.civil-law.desc": "Persons, property, transactions, obligations and contracts",
   "course.criminal-law.title": "Criminal law",

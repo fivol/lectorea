@@ -34,7 +34,15 @@ export type IconName =
   | 'moon'
   | 'warning'
   | 'flame'
-  | 'help';
+  | 'help'
+  | 'eye'
+  | 'like'
+  | 'comment'
+  | 'clock'
+  | 'hourglass'
+  | 'captions'
+  | 'list'
+  | 'flag';
 
 /** One inline sprite instead of an icon package — twenty glyphs is not a dependency. */
 const PATHS: Record<IconName, string> = {
@@ -85,6 +93,26 @@ const PATHS: Record<IconName, string> = {
   flame:
     'M12 2.6c.6 2.8 2.3 4 3.5 5.5A6.7 6.7 0 0117 12.2a5 5 0 01-10 0c0-1.9.8-3.3 2-4.5.2 1.2.7 1.9 1.4 2.3.3-2.7.7-5 1.6-7.4z',
   help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.6 9.4a2.5 2.5 0 114 2.4c-.9.6-1.6 1-1.6 2.2m0 3v.4',
+  /*
+   * The eight below are the metadata sheet's vocabulary — see `Facts.tsx`. Each
+   * one stands beside a word rather than instead of it: an eye next to
+   * «просмотры» is found without reading, and the word is still there for the
+   * reader who has not met the glyph before.
+   */
+  eye: 'M3 12c2.2-3.4 5.2-5.2 9-5.2s6.8 1.8 9 5.2c-2.2 3.4-5.2 5.2-9 5.2S5.2 15.4 3 12zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z',
+  // The cuff is a separate rectangle rather than part of the outline: joined to
+  // the thumb it turns into a single blob at thirteen pixels.
+  like: 'M7 20.5V10.5l4.3-7a1.6 1.6 0 012.9 1.3l-1.1 4.6h5.3a2 2 0 011.9 2.6l-1.9 6.4a2.5 2.5 0 01-2.4 1.8H7zM3.5 10.5h3.5v10H3.5z',
+  comment: 'M20 16a2 2 0 01-2 2H8.5L4 21.5V6a2 2 0 012-2h12a2 2 0 012 2z',
+  clock: 'M12 4.2a7.8 7.8 0 100 15.6 7.8 7.8 0 000-15.6zM12 7.8V12l3 1.8',
+  hourglass: 'M7 3.5h10M7 20.5h10M7.5 3.5v3.2L12 12l-4.5 5.3v3.2M16.5 3.5v3.2L12 12l4.5 5.3v3.2',
+  // Two open «c»s in a frame, the shape the control has worn on every player
+  // since teletext. Drawn as arcs rather than letters so it survives 13px.
+  captions:
+    'M4.5 6h15a1.5 1.5 0 011.5 1.5v9a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 16.5v-9A1.5 1.5 0 014.5 6zM10.6 10.4a2.3 2.3 0 100 3.2M17.1 10.4a2.3 2.3 0 100 3.2',
+  list: 'M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01',
+  // A finish flag: how many of the people who started are still there at the end.
+  flag: 'M5.5 21V4m0 .5h11.2l-1.9 3.6 1.9 3.6H5.5',
 };
 
 const FILLED: IconName[] = ['star-filled', 'play', 'half', 'grid', 'flame'];

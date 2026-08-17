@@ -466,8 +466,14 @@ whatever the last visit saw, replaced the moment the network answers.
 ![A recording open: the player, the lectures with their ticks, the numbers behind the rating](images/lectures.webp)
 
 Opening a recording gives the player, the lectures under it with a tick each,
-and — on the right — the same numbers the rating was computed from, so a status
-can always be traced back to what produced it ([rating.md](rating.md)). The
+and — on the right — the recording said in three shapes: how much of it there is
+(lectures, hours, an average lecture, as tiles), what it is (a chip each for the
+type, the length of a lecture, the subtitles, and «фрагмент» where it is one),
+and the same numbers the rating was computed from, each beside the scale it is
+read against, so a status can always be traced back to what produced it
+([rating.md](rating.md)). Which fact gets which shape is not a matter of taste —
+[the design system](design-system.md#three-shapes-for-a-fact) sets it, and it is
+why none of them is a «характеристика · значение» line any more. The
 poster says «Продолжить с лекции N» rather than «Play», because after the first
 session that is the only offer worth making.
 
