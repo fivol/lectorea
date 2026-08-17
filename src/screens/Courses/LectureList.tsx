@@ -1,13 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useMemo, useRef } from 'react';
 import type { Video } from '@shared/schema';
 import { useT } from '@/i18n';
 import { formatDuration } from '@/lib/format';
+import { GAME, segmentsOf } from '@/lib/gamification';
 import { isResumable } from '@/lib/youtube';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
+import { AudienceMark } from '@/components/game/Audience';
+import { SegmentHeader } from '@/components/game/Milestone';
 
 type Props = {
   videos: Video[];
+  /**
+   * [game:audience] The share of the audience still there at each lecture, or
+   * nothing where the view curve is not a course's — see `gamification.ts`.
+   */
+  audience?: number[];
   /**
    * The lecture in the frame right now, which is not always the one that was
    * asked for: with `list=` YouTube walks to the next one by itself.
@@ -39,6 +47,7 @@ type Props = {
  */
 export default function LectureList({
   videos,
+  audience,
   playingId,
   complete,
   follow = false,
@@ -48,6 +57,18 @@ export default function LectureList({
 }: Props) {
   const { t } = useT();
   const list = useRef<HTMLOListElement>(null);
+
+  /*
+   * [game:milestones] Where the stages start, keyed by the row that opens one.
+   *
+   * Empty for anything short enough to be read whole — `segmentsOf` refuses
+   * rather than cutting a twelve-lecture course into three — so the ordinary
+   * list is exactly the list it was.
+   */
+  const headers = useMemo(() => {
+    if (!GAME.milestones) return new Map<number, ReturnType<typeof segmentsOf>[number]>();
+    return new Map(segmentsOf(videos).map((segment) => [segment.from, segment]));
+  }, [videos]);
 
   /*
    * `block: 'nearest'` rather than `center`: a row already on screen is left
@@ -66,15 +87,21 @@ export default function LectureList({
     <ol ref={list} className={`divide-y divide-line ${className}`}>
       {videos.length ? (
         videos.map((video, index) => (
-          <LectureRow
-            key={video.id}
-            video={video}
-            index={index}
-            playing={playingId === video.id}
-            sealed={complete}
-            onPlay={() => onPlay(video)}
-            onTick={(next, extend) => onTick(index, next, extend)}
-          />
+          <Fragment key={video.id}>
+            {/* [game:milestones] */}
+            {headers.has(index) ? (
+              <SegmentHeader segment={headers.get(index)!} videos={videos} sealed={complete} />
+            ) : null}
+            <LectureRow
+              video={video}
+              index={index}
+              share={audience?.[index] ?? null}
+              playing={playingId === video.id}
+              sealed={complete}
+              onPlay={() => onPlay(video)}
+              onTick={(next, extend) => onTick(index, next, extend)}
+            />
+          </Fragment>
         ))
       ) : (
         <li className="px-4 py-6 text-center text-sm text-ink-faint">{t('ui.common.loading')}</li>
@@ -104,6 +131,7 @@ export default function LectureList({
 function LectureRow({
   video,
   index,
+  share,
   playing,
   sealed,
   onPlay,
@@ -111,6 +139,8 @@ function LectureRow({
 }: {
   video: Video;
   index: number;
+  /** [game:audience] The share of the audience still here, 0..100, or nothing. */
+  share: number | null;
   playing: boolean;
   /** Counted watched by the playlist's seal rather than by a tick of its own. */
   sealed: boolean;
@@ -165,7 +195,13 @@ function LectureRow({
                     transition-colors duration-fast ease-out
                     ${playing ? 'text-ink' : done ? 'text-ink-faint' : 'text-ink-dim'}`}
       >
-        <span className="num w-4 shrink-0 text-right text-xs text-ink-faint">{index + 1}.</span>
+        {/* The number, and under it [game:audience] — the crowd at this row.
+            One column rather than two: the mark is about this lecture's place
+            in the recording, which is what the number says as well. */}
+        <span className="w-5 shrink-0">
+          <span className="num block text-right text-xs text-ink-faint">{index + 1}.</span>
+          <AudienceMark share={share} />
+        </span>
         <span className="min-w-0 flex-1 truncate">{video.title}</span>
         {/*
           Both numbers, always in that order: where you are, then how long it

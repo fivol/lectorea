@@ -144,6 +144,31 @@ Checked and found not to matter: the tail being recently uploaded (median
 retention 0.446 for tails under 6 months versus 0.418 for tails over 3 years)
 and playlist length (0.406 at 6–12 videos, 0.378 at 100+).
 
+### The same curve, kept per lecture
+
+`retention` is the curve reduced to one number for the rating. `audienceCurve`
+keeps its shape: the share of the opening lectures' views that survives to each
+position, 0..100, one entry per video, shipped in the shard as `audience`. The
+interface draws it down the lecture list and reads the reader's own position
+off it ([interface.md](interface.md#what-makes-a-long-recording-finishable)).
+
+It is the same evidence under three extra rules, all of them about not saying
+more than views can support:
+
+- **the head is the median of the first three**, not the first video, or a
+  playlist whose opener went round on somebody's feed reads as having lost half
+  its audience by lecture two;
+- **it is a running minimum** — views wobble a few per cent between neighbours,
+  and "the audience that could have reached here" does not grow;
+- **`series` only, and never reversed.** The first is the gate
+  `measuredRetention` applies; the second is the 67 newest-first playlists,
+  where the crowd walked the list in the opposite direction to the reader and
+  there is no honest single direction to draw. 1655 of the 2833 recordings of
+  twenty lectures or more end up with a curve.
+
+The cost is about a byte a lecture in the shard, which did not move the 25 MB
+`public/data/playlists` measurably.
+
 ## How the playlist was built
 
 The curve alone used to decide whether to call something «Подборка», and it was

@@ -702,6 +702,79 @@ hand. Counting only milestones leaves the bar still for a fortnight while
 somebody works through a forty-hour prerequisite; counting only fractions loses
 the milestone.
 
+### What makes a long recording finishable
+
+2732 recordings in the catalogue run to twenty lectures or more, 1707 of them to
+twenty hours or more, and the longest is 515 lectures. Everything above counts
+either the whole world — the streak, the week, the strip of days — or the whole
+object: eleven per cent of a recording, a course that is «изучается». Between
+one lecture and eighty-two hours there was nothing, and one lecture of sixty
+moves a bar by 1.7%. An evening that leaves no mark is an evening nobody
+repeats.
+
+Five things are said in the player about the middle distance. All five are
+reports of something that already happened — none of them sets anybody a target
+they did not choose — and each is silent until it has something true to say.
+They are switched on and off in one place, `GAME` in
+[`src/lib/gamification.ts`](../src/lib/gamification.ts), and tagged `[game:…]`
+at every site.
+
+- **Вехи.** A long recording is cut into stages of about three hours — three to
+  eight lectures, whichever comes first — and the queue carries a rule between
+  them saying which stage it is and what the rows under it come to: «ВЕХА 2 ИЗ
+  15 · 3 лекции · 4,6 часа», with «✓ пройдена» once it is behind you. Over the
+  bar, one line says how near the next one is: «До вехи — 4 лекции, 1,7 часа».
+  A stage is never *named*, and that is a measurement rather than a shrug: of
+  the 2732 long recordings only 170 — 6% — carry a section marker in their
+  titles that can be parsed at all, so «Глава 2» would be invented for fifteen
+  recordings in sixteen. What a stage is instead is a fact about the rows it
+  covers, which is the same rule the run-of-parts heading follows
+  ([practices](agents/practices.md#sum-the-rows-do-not-infer-the-whole--and-the-label-is-part-of-the-sum)).
+  Nothing under twelve lectures, or under two stages' worth of hours, is cut up
+  at all.
+- **Где остановились остальные.** The catalogue has always known this and has
+  only ever said it about the recording — «досматриваемость 33%». Read per
+  lecture it is a fact about the reader: «Вы прошли дальше, чем 83% начавших»,
+  and a small bar under each lecture number showing the crowd thinning down the
+  list, which also says which lecture is the wall before you reach it. It is
+  the one thing here nobody else could build, and it needs no account, no
+  server and nobody tracked. Drawn only where the view curve is a course's —
+  the gate `measuredRetention` already applies, plus the 67 recordings that run
+  newest-first, where the crowd walked the list the other way. That leaves 58%
+  of the long recordings with a curve and the rest with none, and none means
+  nothing is drawn. See [rating.md](rating.md#the-view-curve).
+- **Сегодня.** «Сегодня — 2 лекции, 1,5 часа · До цели недели — 3,5 часа», over
+  the queue. Both numbers already existed, in the profile and on the front page
+  — which is to say nowhere near the moment the decision they are about gets
+  made. Nobody decides whether to watch one more lecture while looking at the
+  map. The week's half appears only for somebody who set a goal, and turns
+  accent for the week in which it is made.
+- **Конец записи.** The last lecture of a long recording used to end the way one
+  lecture ends: a checkbox went green. It is an event now — «Запись пройдена ·
+  25 лекций · 3,4 ч» — and it carries the one reward this catalogue can hand
+  out honestly, because the graph already knows it: **«Открылось»**, the courses
+  whose every prerequisite is now behind you. Not the same list as «Открывает
+  путь к» in the panel, which is what a course leads to whenever you get there;
+  this is what is reachable today, and it is empty and silent far more often
+  than not.
+- **Сколько это недель.** Under the tiles that say how big a recording is,
+  what it costs in the reader's own weeks: «≈15 недель при цели 5 часов в
+  неделю · примерно до 30 ноября». The pace is the week's goal where there is
+  one and the **measured** last four weeks where there is not — most readers
+  never set a goal, and a measured pace is a report rather than a target, which
+  is why it needs no opt-in. Which of the two it is gets said in the sentence
+  and the rule is in the bubble on it, per
+  [the rule about derived figures](agents/practices.md#a-derived-number-carries-the-rule-that-produced-it-at-every-place-it-is-printed).
+  Nothing under two weeks, and no date past a year.
+
+What is deliberately **not** here: badges, points, levels and a shelf of
+trophies. The catalogue cannot honestly certify anything, and a monument says
+nothing about whether anybody is still studying — which is the same argument
+that keeps the lifetime totals off the front page. Nor is there anything a
+reader could press to win: the seal «Отметить все» credits the day exactly what
+the lectures under it are worth and no more, for the same reason the streak
+cannot be kept alive by pressing the light switch.
+
 **The strip under the frame** carries the two things the embed cannot: on the
 left what the player is doing — the speed — and on the right what shape it is
 in, under the corner of the picture and directly beside the fullscreen button

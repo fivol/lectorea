@@ -526,6 +526,53 @@ Two things fell out of it that generalise past this dialog:
 be re-arranged. Decide what its container is once, and let the layout change
 around it.
 
+## A feature that might be switched off is a flag and a tag, in one file
+
+Five gamification mechanics went into the player at once — stages inside a
+recording, the audience curve, the day's numbers, the finished-recording card,
+the plan in weeks. Between them they touch a schema field, a build step, two
+screens, five components and twenty dictionary keys, and the brief was that any
+one of them could be turned off later without an excavation.
+
+The shape that answers it is **one module that owns the mechanic end to end**.
+`src/lib/gamification.ts` holds the `GAME` flags, every pure function behind
+them and every hook they need; `src/components/game/` holds one component per
+mechanic; each component's default export checks its own flag and returns
+`null` before any hook runs, so a call site needs no condition of its own. And
+every site — component, call site, schema field, build line, test — carries a
+`[game:<key>]` tag, which makes the whole of one mechanic a single grep:
+
+```bash
+grep -rn "game:audience" src scripts shared tests docs
+```
+
+Two details that are load-bearing. The flag check has to be in a **wrapper**
+around the component rather than inside it, or the early return sits above
+hooks and React refuses it. And the module has to be the *only* new import a
+screen takes: PlaylistModal gained five imports and thirty lines, and none of
+the arithmetic — what a stage is, where the reader stands against the crowd,
+how many weeks are left — is written there, so switching a flag cannot leave a
+half-computed value behind.
+
+**Generally:** when a batch of related features lands in code that other
+sessions are also editing, the unit to protect is *reversibility*. One owner
+module, one flag each, one grep-able tag, and no logic at the call sites — then
+"take it out again" is a word and a deletion of files nobody else touched.
+
+## A key assembled at the call site is a key `check:i18n` calls dead
+
+`t(source === 'goal' ? 'ui.game.planGoal' : 'ui.game.planPace', params)` reads
+perfectly and is invisible to the checker, which matches `\bt\(\s*'…'` — so the
+four keys behind it were reported as orphans, which is the report that gets
+somebody to delete them six months later. Writing both branches out
+(`fromGoal ? t('ui.game.planGoal', params) : t('ui.game.planPace', params)`)
+costs one line and puts them back under the gate.
+
+**Generally:** the dictionary gate reads the source as text, so any key the
+code *computes* is a key it cannot see. Template keys are the one exception it
+handles (`t(\`course.${id}.title\`)` becomes a wildcard) — everything else has
+to appear as a literal directly inside the call.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

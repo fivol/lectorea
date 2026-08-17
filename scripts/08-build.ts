@@ -30,6 +30,7 @@ import {
 import { layoutColumns } from './lib/layout.js';
 import {
   clamp,
+  audienceCurve,
   curveOf,
   durationSpreadOf,
   isCollection,
@@ -532,6 +533,15 @@ function assemblePlaylists(sources: Sources): Assembled {
           engagement: engagementOf(stats),
           retention: curve?.retention,
           curve: curve?.kind,
+          // [game:audience] The same curve kept per lecture rather than
+          // reduced to a ratio: about a byte a lecture, and the only thing in
+          // the catalogue that can tell a reader eleven lectures into a
+          // sixty-lecture course that they are further along than most of the
+          // people who started it. See `audienceCurve`.
+          audience: audienceCurve(
+            videoRowsHere.map((v) => v.views),
+            curve
+          ),
           collection,
           fullCourse,
           oddLengths: structure.oddLengths ?? undefined,

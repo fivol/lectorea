@@ -320,6 +320,53 @@ export function curveOf(views: Array<number | null | undefined>, chronological =
   return { retention, rho, scatter, reversed: !chronological, kind: curveKind(rho, scatter) };
 }
 
+/** How many opening lectures the head of the curve is taken from. */
+const AUDIENCE_HEAD = 3;
+
+/**
+ * [game:audience] The view curve read per lecture, for the reader's own position.
+ *
+ * `curveOf` reduces the same numbers to one ratio for the rating. This keeps
+ * the shape: the share of the opening lectures' views that survives to each
+ * position, 0..100, one entry per video in playlist order. The interface draws
+ * it down the lecture list and uses it to tell a reader how much of the
+ * audience they are now past — see `docs/interface.md`.
+ *
+ * Three decisions, all of them about not overstating what views can say:
+ *
+ * - **The head is a median of the first three**, not the first video. A course
+ *   whose opening lecture went round once on somebody's feed would otherwise
+ *   read as having lost 60% of its audience by lecture two.
+ * - **It is a running minimum.** Views wobble by a few per cent from one
+ *   lecture to the next, and "the audience that could have reached here" is
+ *   not a quantity that grows; without the floor the marks read as a crowd
+ *   arriving and leaving in waves, which is noise given a shape.
+ * - **`series` only, and never reversed.** The first is the gate
+ *   `measuredRetention` already applies: on a shelf entered from search the
+ *   ratio describes arrival rather than staying. The second is the 67
+ *   playlists that run newest-first, where the crowd walked the list in the
+ *   opposite direction to the reader and no honest single direction exists.
+ */
+export function audienceCurve(
+  views: Array<number | null | undefined>,
+  curve: Curve | null
+): number[] | undefined {
+  if (!curve || curve.kind !== 'series' || curve.reversed) return undefined;
+
+  const known = views.filter((value): value is number => typeof value === 'number' && value > 0);
+  if (known.length < MIN_CURVE_VIDEOS) return undefined;
+  const head = median(known.slice(0, AUDIENCE_HEAD));
+  if (head <= 0) return undefined;
+
+  let floor = 100;
+  return views.map((value) => {
+    // A missing view count is not a drop: the crowd is carried across it.
+    if (typeof value !== 'number' || value <= 0) return floor;
+    floor = Math.min(floor, clamp(Math.round((value / head) * 100), 0, 100));
+    return floor;
+  });
+}
+
 /**
  * True when a playlist runs newest-first.
  *

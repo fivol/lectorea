@@ -19,6 +19,11 @@ import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import { FactTile, FactTiles, Meter } from '@/components/Facts';
+import AudienceLine from '@/components/game/Audience';
+import FinishCard from '@/components/game/FinishCard';
+import MilestoneLine from '@/components/game/Milestone';
+import TodayLine from '@/components/game/TodayLine';
+import WeekPlan from '@/components/game/WeekPlan';
 import { Button, ButtonLink, Chip, IconButton, cx } from '@/components/ui';
 import LectureList from './LectureList';
 import NowPlaying from './NowPlaying';
@@ -572,6 +577,7 @@ export default function PlaylistModal({
             {watching ? null : (
               <LectureList
                 videos={playlist.videos}
+              audience={playlist.audience}
                 playingId={shownId}
                 complete={progress.complete}
                 onPlay={play}
@@ -617,6 +623,13 @@ export default function PlaylistModal({
                           of: formatHours(hoursFromSeconds(progress.totalSeconds)),
                         })}
                       </p>
+                      {/* The two facts a percentage cannot carry: how near the
+                          next stage is, and where the rest of the audience
+                          got to. Both are about this recording and belong
+                          with the bar that measures it. */}
+                      <MilestoneLine playlist={playlist} className="mt-1" /> {/* [game:milestones] */}
+                      <AudienceLine playlist={playlist} progress={progress} className="mt-0.5" />
+                      {/* [game:audience] */}
                     </>
                   ) : (
                     <p className="num text-[11px] text-ink-faint">
@@ -626,12 +639,17 @@ export default function PlaylistModal({
                       })}
                     </p>
                   )}
+                  {/* Outside the branch: the day is the reader's and does not
+                      depend on whether they have started this particular
+                      recording. [game:today] */}
+                  <TodayLine className="mt-1" />
                 </div>
 
                 {seriesNav ? <div className="px-4 pb-3">{seriesNav}</div> : null}
 
                 <LectureList
                   videos={playlist.videos}
+              audience={playlist.audience}
                   playingId={shownId}
                   complete={progress.complete}
                   follow
@@ -708,6 +726,9 @@ export default function PlaylistModal({
                       of: formatHours(hoursFromSeconds(progress.totalSeconds)),
                     })}
                   </p>
+                  <MilestoneLine playlist={playlist} className="mt-1" /> {/* [game:milestones] */}
+                  <AudienceLine playlist={playlist} progress={progress} className="mt-0.5" />
+                  {/* [game:audience] */}
                 </div>
               ) : null}
 
@@ -739,6 +760,13 @@ export default function PlaylistModal({
                   label={t('ui.playlist.label.avg')}
                 />
               </FactTiles>
+
+              {/* And the fourth number, which is the three above divided by the
+                  reader rather than by anything about the recording: how many
+                  weeks of their own studying this is. It sits under the tiles
+                  because it is only an answer once «82 ч» has been read.
+                  [game:weeks] */}
+              <WeekPlan playlist={playlist} progress={progress} className="mt-2" />
 
               {/* What the recording *is*, in the words it is one of a few of.
                   A category laid out as a value in a table is a word pretending
@@ -861,6 +889,17 @@ export default function PlaylistModal({
                 watching ? 'lg:sticky lg:bottom-0' : 'sticky bottom-0'
               )}
             >
+              {/* The end of a long recording, said as an event and not as a
+                  checkbox — with the courses it has just opened, which is the
+                  one reward this catalogue can hand out honestly because the
+                  graph already knows it. Above the course-promoted line: that
+                  one is about a status changing, this is about the work.
+                  [game:finish] */}
+              <FinishCard
+                playlist={playlist}
+                progress={progress}
+                hrefFor={(id) => courseHref(id, courseSearch)}
+              />
               {promoted && course ? (
                 <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-accent">
                   <Icon name="check" size={12} />

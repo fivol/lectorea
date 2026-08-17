@@ -342,6 +342,22 @@ export const BuiltPlaylistSchema = PlaylistSchema.extend({
   retention: z.number().optional(),
   curve: CurveKind.optional(),
   /**
+   * [game:audience] The same fact as `retention`, read per lecture rather than
+   * over the whole: the share of the opening lectures' views that survives to
+   * each one, 0..100 and one entry per video in `videos`.
+   *
+   * It only ever falls, because "could have got this far" is not a quantity
+   * that grows — see `audienceCurve` in `08-build.ts` for the running minimum
+   * and for why the head is a median of the first few rather than the first
+   * video alone. Written only where `curve` is `series`, the same gate
+   * `measuredRetention` applies: on a shelf entered from search the number
+   * computes and describes arrival rather than staying.
+   *
+   * Costs about one byte per lecture in the shard. Absent is the normal case
+   * and every reader of it treats absence as "no answer", never as zero.
+   */
+  audience: z.array(z.number()).optional(),
+  /**
    * A shelf of videos rather than a course — the `collection` type.
    *
    * Not the same question as `curve`, and deliberately kept apart from it.

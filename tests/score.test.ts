@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   approvalOf,
+  audienceCurve,
   channelDeviations,
   CLASSIC_YEAR,
   curveKind,
@@ -119,6 +120,42 @@ describe('the view curve', () => {
     expect(curveKind(-0.9, 1.5)).toBe('assorted'); // decays, but wildly scattered
     expect(curveKind(0.1, 0.2)).toBe('assorted'); // tight, but unrelated to order
     expect(curveKind(-0.35, 0.9)).toBe('unclear');
+  });
+
+  // [game:audience] The same numbers kept per lecture — see `audienceCurve`.
+  describe('the audience curve', () => {
+    it('falls from a hundred and never climbs back', () => {
+      const audience = audienceCurve(decaying, curveOf(decaying))!;
+      expect(audience).toHaveLength(decaying.length);
+      expect(audience[0]).toBe(100);
+      expect(audience.at(-1)).toBeLessThan(20);
+      for (let i = 1; i < audience.length; i++) {
+        expect(audience[i]).toBeLessThanOrEqual(audience[i - 1]);
+      }
+    });
+
+    it('holds the floor across a lecture whose views are missing', () => {
+      const gapped = [...decaying];
+      gapped[5] = null as unknown as number;
+      const audience = audienceCurve(gapped, curveOf(gapped))!;
+      expect(audience[5]).toBe(audience[4]);
+      expect(audience[6]).toBeLessThan(audience[5]);
+    });
+
+    it('does not climb when one lecture in the middle went round on its own', () => {
+      const spike = [...decaying];
+      spike[7] = 900;
+      const audience = audienceCurve(spike, curveOf(spike))!;
+      expect(audience[7]).toBe(audience[6]);
+    });
+
+    it('says nothing where the ratio would not be about staying', () => {
+      // A shelf entered from search: the number computes and means arrival.
+      expect(audienceCurve(scattered, curveOf(scattered))).toBeUndefined();
+      // And newest-first, where the crowd walked the list the other way.
+      expect(audienceCurve(decaying, curveOf(decaying, false))).toBeUndefined();
+      expect(audienceCurve(decaying, null)).toBeUndefined();
+    });
   });
 });
 
