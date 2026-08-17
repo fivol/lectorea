@@ -1,26 +1,27 @@
 import { useMemo } from 'react';
 import { useT } from '@/i18n';
 import { offeredRates } from '@/lib/youtube';
-import Dropdown, { Caption, RadioRow } from '@/components/Dropdown';
 
 /**
- * How fast the lecture runs.
+ * How fast the lecture runs, as buttons.
  *
  * YouTube has this in its own menu and on `Shift + .`, and neither is reachable
  * here: the embed is a cross-origin frame, so it only sees a key press while it
  * holds focus — and a page cannot hand a key to another origin. The keyboard is
  * dealt with in `useYouTubePlayer`, which takes focus back out of the frame; a
- * control that needs no focus at all is the other half.
- *
- * It is one chip saying what the speed is, and it used to be the whole ladder
- * of them — eight buttons on a plate with the current one lit in the accent,
- * under a video, which is a lot of furniture for a setting somebody changes
- * once and keeps for a term. As a chip it says «1,25×» quietly and turns accent
- * only when the speed is not 1×, which is the one state worth noticing from
- * across the screen. Where it opens, it is still one press per rate.
+ * strip of buttons is the half that needs no focus at all.
  *
  * The rates are the player's own list rather than ours (see `FALLBACK_RATES`),
- * so a row cannot promise a speed the player would round down on the quiet.
+ * so a button cannot promise a speed the player would round down on the quiet.
+ *
+ * **Not `Segmented`, and not a menu.** The kit's switch is a plate with an
+ * accent slab sliding under the chosen half, and under a video that is the
+ * loudest thing on the screen — a setting somebody picks once, shouting over
+ * the lecture. Folding it into a chip that opens a list quietened it and cost a
+ * press on every change, which is the wrong trade for a control reached
+ * mid-sentence. So it stays a row of buttons and gives up the plate instead:
+ * bare numerals in the player's own furniture, the current one accented and set
+ * in medium so the colour is not the only thing carrying it.
  */
 export default function PlayerSpeed({
   rate,
@@ -33,22 +34,30 @@ export default function PlayerSpeed({
 }) {
   const { t, lang } = useT();
   const offered = useMemo(() => offeredRates(rates, rate), [rates, rate]);
-  const say = (value: number): string => `${value.toLocaleString(lang)}×`;
 
   return (
-    <Dropdown
-      label={<span className="num">{say(rate)}</span>}
+    <div
+      role="group"
+      aria-label={t('ui.player.speed')}
       title={t('ui.player.speed')}
-      active={rate !== 1}
+      className="scroll-x-plain flex min-w-0 items-center gap-0.5"
     >
-      {/* The list is a column of «1,25×» and nothing else, so it says what it
-          is a list of — the trigger's own word is the value. */}
-      <Caption>{t('ui.player.speed')}</Caption>
-      {offered.map((value) => (
-        <RadioRow key={value} checked={value === rate} onChange={() => onPick(value)}>
-          <span className="num">{say(value)}</span>
-        </RadioRow>
-      ))}
-    </Dropdown>
+      {offered.map((value) => {
+        const on = value === rate;
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onPick(value)}
+            className={`num shrink-0 px-2 py-1 text-[11px] leading-none
+                        transition-colors duration-fast ease-out
+                        ${on ? 'font-semibold text-accent' : 'text-ink-faint hover:text-ink'}`}
+          >
+            {value.toLocaleString(lang)}×
+          </button>
+        );
+      })}
+    </div>
   );
 }

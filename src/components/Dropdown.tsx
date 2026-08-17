@@ -32,13 +32,6 @@ type Props = {
   label: ReactNode;
   /** Shown as a dot on the trigger when the control holds a value. */
   active?: boolean;
-  /**
-   * What the trigger is, where its own word does not say. Most of these are
-   * labelled «Язык» or «Год» and need nothing; a control whose label is the
-   * value itself — the player's «1,5×» — has to say somewhere that it is the
-   * speed.
-   */
-  title?: string;
   children: ReactNode;
   align?: 'left' | 'right';
   className?: string;
@@ -71,7 +64,6 @@ const POPOVER_HEIGHT = 320;
 export default function Dropdown({
   label,
   active,
-  title,
   children,
   align = 'left',
   className = '',
@@ -151,16 +143,7 @@ export default function Dropdown({
       {/* No dot beside the label: the chip already changes colour when it holds
           a value, and what that value *is* is spelled out in the removable
           chips below — so the dot repeated a signal twice and crowded the row. */}
-      {/* `title` and not `ariaLabel`: the label is the value on a control like
-          the player's speed, and an accessible name of «скорость
-          воспроизведения» would say what it is at the price of never saying
-          what it is set to. As a title it becomes the description instead. */}
-      <Chip
-        on={active}
-        title={title}
-        onClick={() => (open ? close() : setOpen(true))}
-        ariaExpanded={open}
-      >
+      <Chip on={active} onClick={() => (open ? close() : setOpen(true))} ariaExpanded={open}>
         {label}
         <Icon name="chevron-down" size={12} />
       </Chip>

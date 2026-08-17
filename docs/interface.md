@@ -784,23 +784,28 @@ left what the player is doing — the speed — and on the right what shape it i
 in, under the corner of the picture and directly beside the fullscreen button
 inside the frame, because that is the corner a hand already goes to.
 
-**Speed** is one chip saying «1,25×», which opens the list of rates; `Shift + .`
-and `Shift + ,` step along the same list without opening anything. It was the
-whole ladder of eight buttons on a plate with the current one lit in the accent,
-and that is a lot of furniture under a video for a setting somebody picks once
-and keeps for a term — the choice is remembered, because it belongs to the
-reader rather than to the lecture, so the next part and the next session open at
-it. The chip turns accent only when the speed is not 1×, which is the one state
-worth noticing from across the room.
+**Speed** is a row of rates — «0,5× … 2×» — plus `Shift + .` and `Shift + ,`,
+and the choice is remembered: it belongs to the reader rather than to the
+lecture, so the next part and the next session open at it. It is one press per
+rate and stays one press per rate; what it gave up instead is the plate. As the
+kit's switch — a capsule with an accent slab sliding under the chosen half — it
+was the loudest thing on a screen showing a lecture, for a setting somebody
+picks once and keeps for a term. Bare numerals in the player's own furniture say
+the same thing quietly, with the current one accented *and* set in medium, so
+the colour is not the only thing carrying it.
+
+Rejected in between: folding the rates into a chip that opens a list. It is
+quieter still and costs a press on every change — the wrong trade for a control
+reached in the middle of a sentence.
 
 The rates are the ones the player says it has, not a list of our own. **2× is
 its ceiling**, and it does not refuse anything above it — `setPlaybackRate(3)`
-is answered with a frame reporting 2 — so a row offering 3× would be a row that
-lies. (A browser extension can go past it because it runs *inside*
+is answered with a frame reporting 2 — so a button offering 3× would be a
+button that lies. (A browser extension can go past it because it runs *inside*
 `youtube.com` and sets `playbackRate` on the `<video>` element directly. A page
 embedding the player cannot reach across origins to that element, and the only
 door it has — the player's own API — is the one that rounds down.) Reading the
-player's list also means the list grows by itself on the day the ceiling moves.
+player's list also means the strip grows by itself on the day the ceiling moves.
 
 **The keyboard is the page's, not the frame's.** A click on the video hands
 focus to another origin, and from that moment every key press is delivered
