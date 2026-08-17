@@ -124,6 +124,20 @@ export const MILESTONE_SECONDS = 3 * 3600;
 export const MILESTONE_MIN = 3;
 export const MILESTONE_MAX = 8;
 /**
+ * And a ceiling on how many stages a recording may be cut into.
+ *
+ * The lecture cap above is the one that goes wrong at scale, because it is the
+ * one that fires when lectures are *short*. «College Algebra» is 2462 clips
+ * of thirty-five seconds inside 24 hours: eight of them never reach three
+ * hours, so the cap closed every stage and the list came out with 308 rules
+ * through it, each over five minutes of material. 119 recordings did this.
+ *
+ * So the walk is run again with a wider cap when it overflows — a stage of a
+ * recording like that is a hundred clips, and the honest reading of the number
+ * beside it («124 лекции · 1,2 часа») is still what the rows come to.
+ */
+export const MILESTONE_MAX_STAGES = 20;
+/**
  * Under this a recording is its own milestone and cutting it up is noise: the
  * mechanic is for the long ones, and a twelve-lecture course already shows its
  * whole self in one screen of list.
@@ -154,14 +168,37 @@ export function segmentsOf(videos: Video[]): Segment[] {
   const total = videos.reduce((sum, video) => sum + video.seconds, 0);
   if (total < 2 * MILESTONE_SECONDS) return [];
 
-  const bounds: Array<{ from: number; to: number; seconds: number }> = [];
+  let bounds = walk(videos, MILESTONE_MAX, MILESTONE_SECONDS);
+  if (bounds.length > MILESTONE_MAX_STAGES) {
+    // Both bounds are widened, because either of them can be the one that
+    // overflowed: 2462 clips of half a minute overflow the lecture cap, and a
+    // 250-hour recording of hour-long lectures overflows the clock. Divided
+    // through, each lands on about twenty stages either way.
+    bounds = walk(
+      videos,
+      Math.ceil(videos.length / MILESTONE_MAX_STAGES),
+      total / MILESTONE_MAX_STAGES
+    );
+  }
+  if (bounds.length < 2) return [];
+
+  return bounds.map((bound, index) => ({ ...bound, index: index + 1, total: bounds.length }));
+}
+
+/** One pass down the lectures, closing a stage on whichever bound comes first. */
+function walk(
+  videos: Video[],
+  maxLectures: number,
+  target: number
+): Array<Omit<Segment, 'index' | 'total'>> {
+  const bounds: Array<Omit<Segment, 'index' | 'total'>> = [];
   let from = 0;
   let seconds = 0;
   for (const [index, video] of videos.entries()) {
     seconds += video.seconds;
     const count = index - from + 1;
-    const full = seconds >= MILESTONE_SECONDS && count >= MILESTONE_MIN;
-    if (full || count >= MILESTONE_MAX) {
+    const full = seconds >= target && count >= MILESTONE_MIN;
+    if (full || count >= maxLectures) {
       bounds.push({ from, to: index, seconds });
       from = index + 1;
       seconds = 0;
@@ -180,9 +217,7 @@ export function segmentsOf(videos: Video[]): Segment[] {
       bounds.push(tail);
     }
   }
-  if (bounds.length < 2) return [];
-
-  return bounds.map((bound, index) => ({ ...bound, index: index + 1, total: bounds.length }));
+  return bounds;
 }
 
 export type Milestone = Segment & {

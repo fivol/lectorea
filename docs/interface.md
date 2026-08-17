@@ -731,7 +731,11 @@ at every site.
   covers, which is the same rule the run-of-parts heading follows
   ([practices](agents/practices.md#sum-the-rows-do-not-infer-the-whole--and-the-label-is-part-of-the-sum)).
   Nothing under twelve lectures, or under two stages' worth of hours, is cut up
-  at all.
+  at all, and nothing is cut into more than about twenty stages — «College
+  Algebra» is 2462 clips of thirty-five seconds, where eight of them never
+  reach three hours and the lecture cap alone put 308 rules through the list.
+  Two thirds of the catalogue's recordings end up with stages, six of them at
+  the median.
 - **Где остановились остальные.** The catalogue has always known this and has
   only ever said it about the recording — «досматриваемость 33%». Read per
   lecture it is a fact about the reader: «Вы прошли дальше, чем 83% начавших»,
