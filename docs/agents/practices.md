@@ -323,6 +323,15 @@ built from what the thing reports rather than from what was measured. A tool
 that silently rounds is worse than one that errors, and only a probe tells the
 two apart.
 
+**And measure the stream, not only the answers.** The probe above asked what the
+player *can* do and got a straight reply. What it never asked was what the
+player *keeps saying* — and the answer, found a day too late, is that its frames
+are partial updates: `duration` is absent from every periodic one, so a rule
+comparing it against `currentTime` was reading `n / undefined` for the whole
+second half of every lecture
+([pitfalls](pitfalls.md#a-field-was-read-off-whichever-frame-happened-to-arrive)).
+A running tally of which keys each frame carries is ten lines and settles it.
+
 ## A «характеристика · значение» list is a shape that was never chosen
 
 The metadata sheet in the player was eight of them in a column: лекций 26,

@@ -292,6 +292,42 @@ answers the same question and touches nothing else. The wider rule: **when an
 edit does not show up, ask what the app actually fetched** — the network tab, or
 `curl` at the path — before re-reading the code that renders it.
 
+### A field was read off whichever frame happened to arrive
+
+**Assumed:** the YouTube embed's `infoDelivery` frames are snapshots, so
+`info.duration` is there to be compared against `info.currentTime` and a lecture
+crossing 90% marks itself watched. That is what the code did for a year, and
+what [interface.md](../interface.md#progress-down-to-the-lecture) has always
+promised.
+**It was:** they are **partial updates**. Recorded in the running player: 84
+consecutive delivery frames carried `currentTime` and *not one* of them carried
+`duration` — it comes with the `videoData` frames, which land at the start, on a
+seek and on a state change, all of which happen while `currentTime` is near
+zero. So `at.sec / duration` was `n / undefined` for the whole second half of
+every lecture, and the 90% rule fired only by luck.
+
+The fallback could not save it either. Under `list=` autoplay **the player never
+reports `ENDED`**: at the seam it goes `PLAYING → -1 (unstarted, currentTime 0,
+no videoData) → 3 (buffering) → PLAYING` with the next lecture's id. So a
+lecture watched to the last second kept an empty tick, and the two frames in the
+middle also rewound its stored position to zero on the way past. A lone-video
+embed — the `listPlayable: false` playlists — *does* send `ENDED`, which is why
+the app's own walk to the next lecture always worked and hid how narrow the
+ledge was.
+
+**How not to repeat it:** accumulate a stream like this into state you own
+(`current = { id, sec, duration }`) and never compare two fields that arrived in
+different frames. And the way this was settled in ten minutes is worth copying —
+a listener pushed into `window.__frames` from the console, then a tally of which
+keys each frame actually carries:
+
+```js
+window.addEventListener('message', (e) => {
+  if (!String(e.origin).includes('youtube')) return;
+  const i = JSON.parse(e.data)?.info; if (i) (window.__frames ??= []).push(Object.keys(i).join());
+});
+```
+
 ---
 
 ## Environment

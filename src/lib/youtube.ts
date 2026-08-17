@@ -64,9 +64,18 @@ export function offeredRates(rates: number[], current: number): number[] {
 /** Below this there is nothing to come back to — it is the start. */
 const RESUME_FLOOR_SEC = 15;
 
-/** YouTube's own state numbers; only the three that mean something here. */
+/**
+ * YouTube's own state numbers; only the ones that mean something here.
+ *
+ * `UNSTARTED` is the one that is not obvious. It is what the player reports
+ * *between* two lectures of a playlist — with `currentTime: 0` and no
+ * `videoData` at all, so a frame carrying it says nothing about the lecture
+ * this side still thinks is playing, and its zero must not be written down as
+ * that lecture's position.
+ */
 const ENDED = 0;
 const PLAYING = 1;
+const UNSTARTED = -1;
 
 type Info = {
   currentTime?: number;
@@ -232,7 +241,21 @@ export function useYouTubePlayer({
    */
   const peak = useRef(rate);
 
-  const current = useRef<{ id: string; sec: number } | null>(null);
+  /**
+   * The lecture in the frame: which one, where its playhead is, and how long it
+   * is.
+   *
+   * The length is **remembered** rather than read off each frame, and that is
+   * the whole of why a lecture watched to the end used to keep its empty tick.
+   * The player sends about four frames a second and only a handful of them are
+   * about the video: measured on 2026-08-17, 84 consecutive delivery frames
+   * carried `currentTime` and *not one* carried `duration` — it comes with the
+   * `videoData` frames, which land at the start, on a seek and on a state
+   * change. So a fraction computed from one frame is `undefined / undefined`
+   * for the whole second half of every lecture, which is exactly the half where
+   * it would have said «watched».
+   */
+  const current = useRef<{ id: string; sec: number; duration: number } | null>(null);
   /** Playing or not, so one key can be the pause and the play both. */
   const running = useRef(false);
   /**
@@ -380,21 +403,27 @@ export function useYouTubePlayer({
         current.current = null;
       }
       if (id && !current.current) {
-        current.current = { id, sec: 0 };
+        current.current = { id, sec: 0, duration: 0 };
         // Where this one is starting from, which after a resume is the middle
         // of it: measuring the first stretch from zero would book twenty
         // minutes nobody watched today.
         from.current = { id, sec: typeof sec === 'number' ? sec : 0, at: Date.now() };
       }
       if (!current.current) return;
-      if (typeof sec === 'number') current.current.sec = sec;
+      // Kept for as long as this lecture is the one in the frame — see the
+      // `current` ref. Zero is what the frames between two lectures report, and
+      // it is a statement about there being no video rather than a length.
+      if (typeof duration === 'number' && duration > 0) current.current.duration = duration;
+      // The same frames say `currentTime: 0` while carrying no `videoData`, so
+      // taking them at their word rewinds the lecture that has just finished to
+      // the start and loses where it actually got to.
+      if (typeof sec === 'number' && info.playerState !== UNSTARTED) current.current.sec = sec;
 
       if (info.playerState !== undefined) running.current = info.playerState === PLAYING;
 
       const at = current.current;
       const finished = info.playerState === ENDED;
-      const enough =
-        typeof duration === 'number' && duration > 0 && at.sec / duration >= VIDEO_DONE_FRACTION;
+      const enough = at.duration > 0 && at.sec / at.duration >= VIDEO_DONE_FRACTION;
       if ((enough || finished) && !counted.current.has(at.id)) {
         counted.current.add(at.id);
         watched.current(at.id);
