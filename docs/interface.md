@@ -469,8 +469,15 @@ Opening a recording gives the player, the lectures under it with a tick each,
 and — on the right — the same numbers the rating was computed from, so a status
 can always be traced back to what produced it ([rating.md](rating.md)). The
 poster says «Продолжить с лекции N» rather than «Play», because after the first
-session that is the only offer worth making, and a part-watched lecture carries
-the second it stopped at where its length would otherwise be.
+session that is the only offer worth making.
+
+A part-watched lecture says where it stopped *beside* its length — «29:21 /
+1:05:14», the position in the accent colour — and the row is filled to that
+fraction behind the title, with the playhead marked where the fill ends. The
+position used to stand in the length's place, which made one column mean two
+different things depending on the row, and left a figure counting up on its own
+while the lecture played with nothing beside it to be read against. The length
+is the number that never moves, so it is the one that is always there.
 
 Three levels, and only the bottom one holds anything. A lecture is watched or it
 is not; a playlist and a course are arithmetic over that.

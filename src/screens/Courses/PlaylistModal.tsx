@@ -682,23 +682,68 @@ function LectureRow({
   const { t } = useT();
   const mark = useProfile((state) => state.profile.videos[video.id]);
   const done = sealed || (mark?.done ?? false);
-  const left = !done && isResumable(mark?.sec) ? mark.sec : 0;
+  /** Where the playhead was left, when that is a place worth coming back to. */
+  const at = !done && isResumable(mark?.sec) ? mark.sec : 0;
+  const part = at ? Math.min(100, (at / Math.max(1, video.seconds)) * 100) : 0;
 
+  /*
+   * The hover belongs to the row, not to the button inside it.
+   *
+   * It used to be on the title button alone, which stops short of the tick —
+   * so pointing at a lecture lit a box ending two thirds of the way across,
+   * with the tick left standing on the unlit strip beside it. The row is one
+   * thing to the reader and highlights as one, the same way a playlist row
+   * does; the tick keeps its own ink change to say which half is under the
+   * pointer.
+   */
   return (
-    <li className={`relative flex items-center ${playing ? 'bg-accent-soft' : ''}`}>
+    <li
+      className={`relative flex items-center transition-colors duration-fast ease-out
+                  ${playing ? 'bg-accent-soft' : 'hover:bg-surface-2'}`}
+    >
+      {/* How far into the lecture you are, drawn across the row it is about.
+          It was a two-pixel hairline along the bottom edge before, which is
+          where the divider between rows already is — and it was painted in
+          `bg-accent/60`, an opacity modifier Tailwind silently dropped, so
+          there was nothing there at all. See `themed` in tailwind.config.js. */}
+      {part ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 bg-accent/10"
+          style={{ width: `${part}%` }}
+        >
+          {/* The playhead itself: the wash says how much, this says exactly
+              where, and it is the one mark that stays legible on the row the
+              player is currently sitting on. */}
+          <span className="absolute inset-y-0 right-0 w-[2px] bg-accent/70" />
+        </span>
+      ) : null}
+
       <button
         type="button"
         onClick={onPlay}
-        className={`flex min-w-0 flex-1 items-center gap-3 py-2 pl-4 text-left text-sm
-                    transition-colors duration-fast ease-out hover:bg-surface-2
+        className={`relative flex min-w-0 flex-1 items-center gap-3 py-2 pl-4 text-left text-sm
+                    transition-colors duration-fast ease-out
                     ${playing ? 'text-ink' : done ? 'text-ink-faint' : 'text-ink-dim'}`}
       >
         <span className="num w-4 shrink-0 text-right text-xs text-ink-faint">{index + 1}.</span>
         <span className="min-w-0 flex-1 truncate">{video.title}</span>
-        {/* Where you stopped, in place of the length — the length of a lecture
-            you are part way through is the less useful of the two. */}
-        <span className={`num shrink-0 text-xs ${left ? 'text-accent' : 'text-ink-faint'}`}>
-          {left ? formatDuration(left) : formatDuration(video.seconds)}
+        {/*
+          Both numbers, always in that order: where you are, then how long it
+          is. The slot used to hold the position *instead* of the length, which
+          made one column mean two different things depending on the row — and
+          while the lecture played it was a figure counting up on its own with
+          nothing beside it to be counted against. Paired, it reads the way the
+          time under any player does.
+        */}
+        <span className="num shrink-0 text-xs text-ink-faint">
+          {at ? (
+            <>
+              <span className="text-accent">{formatDuration(at)}</span>
+              <span className="px-0.5">/</span>
+            </>
+          ) : null}
+          {formatDuration(video.seconds)}
         </span>
       </button>
 
@@ -708,7 +753,7 @@ function LectureRow({
         aria-checked={done}
         aria-label={`${t('ui.playlist.markWatched')}: ${video.title}`}
         onClick={(event) => onTick(!done, event.shiftKey)}
-        className="flex h-11 w-10 shrink-0 items-center justify-center text-ink-faint
+        className="relative flex h-11 w-10 shrink-0 items-center justify-center text-ink-faint
                    transition-colors duration-fast ease-out hover:text-ink"
       >
         <span
@@ -719,15 +764,6 @@ function LectureRow({
           {done ? <Icon name="check" size={12} /> : null}
         </span>
       </button>
-
-      {left ? (
-        <span className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] bg-transparent">
-          <span
-            className="block h-full bg-accent/60"
-            style={{ width: `${Math.min(100, (left / Math.max(1, video.seconds)) * 100)}%` }}
-          />
-        </span>
-      ) : null}
     </li>
   );
 }

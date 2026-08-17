@@ -56,6 +56,17 @@ and so on — for a card that is *in* something rather than *selected*. In light
 these are pale tints; in dark they are the accent at low alpha, because a mixed
 pastel over a near-black surface turns to mud.
 
+Any token also takes an opacity modifier: `bg-accent/10` for a fill that has to
+let the row under it through, `border-danger/40` for a rim that is a warning
+rather than an alarm. That works because every colour is declared through
+`themed()` in `tailwind.config.js`, which hands Tailwind a function and writes
+the alpha out as `color-mix`. It is worth knowing that this had to be arranged:
+a bare `var(--c-…)` is a value Tailwind cannot parse, and `bg-accent/60` used to
+compile to no declaration whatsoever — see
+[pitfalls](agents/pitfalls.md#interface-and-styling). The `-soft` tokens stay
+for what they are for, a wash whose weight differs by theme; the modifier is for
+one place needing one strength.
+
 Colour is never the only carrier. Quality is a coloured dot **and** a number,
 a continent is named by its heading, and a card in the selected chain has a
 border and a position in the path list as well as a wash.
@@ -209,10 +220,18 @@ import { Button, Chip, Field, IconButton, Plate, Segmented, Switch } from '@/com
 | `Segmented` | the same for labels of differing widths — the inlay stays put | `kind: group·tabs` |
 | `Field` / `Input` / `Textarea` / `Select` / `Kbd` | anything typed into, and the key that focuses it | `floating` — the one over the map |
 
-Two rules keep it honest. A control that navigates is an `<a>` — middle-click
+Three rules keep it honest. A control that navigates is an `<a>` — middle-click
 and «open in a new tab» are the difference, and on a link to YouTube they
-matter. And a chip with no click is a `<span>`, so a tag never lands in the tab
-order.
+matter. A chip with no click is a `<span>`, so a tag never lands in the tab
+order. And **a row that is one thing to the reader highlights as one**: the
+hover goes on the row, not on the button inside it. A row is rarely only its
+button — there is a tick at the end of a lecture, a delete on a history entry,
+a badge that has to stay hoverable — and a fill painted by the button alone
+stops short of them, lighting a box two thirds of the way across with the rest
+of the row left standing in the dark. Where the row needs a click of its own
+*and* holds other controls, the playlist row's shape is the one to copy: hover
+on the container, the opening click as an absolutely positioned button over it,
+and anything that must stay reachable raised back through with `relative`.
 
 Above the kit sit four app-level controls that know about the store:
 `ThemeToggle`, `ProfileButton`, `ProfileSummary` and `ViewSwitch`. The last pair

@@ -1,3 +1,32 @@
+/**
+ * A theme colour that survives an opacity modifier.
+ *
+ * Every colour in the palette is a bare `var(--c-…)`, which Tailwind cannot
+ * parse — so `bg-accent/60` compiled to **nothing at all**: not a weaker green,
+ * no declaration whatsoever, and no warning. Ten places in the product were
+ * painting invisible progress fills and scrims that way, and the floating
+ * search field grew a hand-written `.glass` class to get around it.
+ *
+ * Given a function, Tailwind asks the colour for its own value and hands over
+ * the alpha, so the mix can be written out with `color-mix` — the same device
+ * `.glass` used, done once for every colour instead of per class. Without a
+ * modifier Tailwind passes its own `--tw-*-opacity` variable, which is always
+ * `1` here: that case hands back the plain `var()`, so every rule already
+ * generated stays byte for byte what it was.
+ */
+const themed =
+  (name) =>
+  ({ opacityValue } = {}) => {
+    if (opacityValue === undefined || String(opacityValue).startsWith('var(')) {
+      return `var(${name})`;
+    }
+    const alpha = String(opacityValue).endsWith('%')
+      ? String(opacityValue)
+      : `${Number(opacityValue) * 100}%`;
+    if (alpha.includes('NaN')) return `var(${name})`;
+    return `color-mix(in srgb, var(${name}) ${alpha}, transparent)`;
+  };
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class', '[data-theme="dark"]'],
@@ -7,26 +36,27 @@ export default {
       colors: {
         // Every colour is a CSS variable so themes swap without a rebuild — and
         // so the map screen can repaint the whole palette for one route by
-        // overriding the variables rather than the classes.
-        canvas: 'var(--c-canvas)',
-        surface: 'var(--c-surface)',
-        'surface-2': 'var(--c-surface-2)',
-        overlay: 'var(--c-overlay)',
-        line: 'var(--c-line)',
-        'line-strong': 'var(--c-line-strong)',
-        ink: 'var(--c-ink)',
-        'ink-dim': 'var(--c-ink-dim)',
-        'ink-faint': 'var(--c-ink-faint)',
-        formal: 'var(--c-formal)',
-        'formal-soft': 'var(--c-formal-soft)',
-        social: 'var(--c-social)',
-        'social-soft': 'var(--c-social-soft)',
-        humanities: 'var(--c-humanities)',
-        'humanities-soft': 'var(--c-humanities-soft)',
-        accent: 'var(--c-accent)',
-        'accent-soft': 'var(--c-accent-soft)',
-        warning: 'var(--c-warning)',
-        danger: 'var(--c-danger)',
+        // overriding the variables rather than the classes. Through `themed`,
+        // so that `/40` on any of them means what it says — see above.
+        canvas: themed('--c-canvas'),
+        surface: themed('--c-surface'),
+        'surface-2': themed('--c-surface-2'),
+        overlay: themed('--c-overlay'),
+        line: themed('--c-line'),
+        'line-strong': themed('--c-line-strong'),
+        ink: themed('--c-ink'),
+        'ink-dim': themed('--c-ink-dim'),
+        'ink-faint': themed('--c-ink-faint'),
+        formal: themed('--c-formal'),
+        'formal-soft': themed('--c-formal-soft'),
+        social: themed('--c-social'),
+        'social-soft': themed('--c-social-soft'),
+        humanities: themed('--c-humanities'),
+        'humanities-soft': themed('--c-humanities-soft'),
+        accent: themed('--c-accent'),
+        'accent-soft': themed('--c-accent-soft'),
+        warning: themed('--c-warning'),
+        danger: themed('--c-danger'),
       },
       // Named by what they are put on, not by size: `rounded-card` cannot drift
       // from the card the way `rounded-xl` can.

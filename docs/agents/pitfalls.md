@@ -169,6 +169,43 @@ as verified.
 
 ---
 
+## Interface and styling
+
+### An opacity modifier on a theme colour compiled to nothing
+
+**Assumed:** `bg-accent/60` paints the accent at 60%, the way `text-white/80`
+paints white at 80%.
+**It was:** every colour in `tailwind.config.js` was a bare `var(--c-…)`, which
+Tailwind cannot parse — so it dropped the declaration entirely. Not a weaker
+green: no rule in the stylesheet at all, and no warning. Ten places were
+painting invisible progress fills and scrims that way, `VersionBanner` was a red
+banner with no red in it, and the floating search field had grown a hand-written
+`.glass` class to get round it without the cause ever being named.
+
+**How not to repeat it:** fixed at the source — the palette now goes through
+`themed()` in `tailwind.config.js`, which folds the alpha in with `color-mix`,
+so the modifier works on every token in both themes. The wider rule: **when a
+utility produces nothing on screen, ask the stylesheet before re-reading the
+markup.** Walking `document.styleSheets` in the console says in ten seconds
+whether the class was ever generated, and "generated but overridden" and "never
+generated" have nothing in common as bugs.
+
+### The dev server does not notice `tailwind.config.js`
+
+**Assumed:** a running dev server picks up a config change like any other edit.
+**It was:** Vite rebuilt the CSS from the *cached* config — the new utility
+classes in the edited component appeared, the new colour behaviour did not — so
+the change looked broken in the browser while being correct on disk.
+
+**How not to repeat it:** restart the dev server after touching
+`tailwind.config.js` or `postcss.config.js`, and confirm one generated rule
+(`getComputedStyle`, or the class in `document.styleSheets`) before believing
+what the screen shows. Port 5199 is usually another session's server, and
+`--strictPort` will not share it: add a second entry to `.claude/launch.json`
+with a free port for the length of the check, and take it out again.
+
+---
+
 ## Environment
 
 ### The quota ledger is keyed by the Pacific day
