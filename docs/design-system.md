@@ -411,6 +411,13 @@ courses on the panel. The class makes each `li` a stretch box of its own and
 hands the height straight down, so a card never has to be told `h-full` and the
 next list is right by construction.
 
+Its column is `minmax(0, 1fr)` and that zero is load-bearing: the implicit
+`auto` track would be sized by the widest line the card holds and only stretched
+from there, which pushed each cell wider than the cell it lives in and slid the
+two columns over each other. It is `min-w-0` in the other layout model — a box
+allowed to be narrower than its text, which is what every `truncate` inside the
+card rests on.
+
 ## Deliberate departures from the written spec
 
 Three, each for a reason that outlived the spec:

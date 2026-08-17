@@ -190,6 +190,25 @@ markup.** Walking `document.styleSheets` in the console says in ten seconds
 whether the class was ever generated, and "generated but overridden" and "never
 generated" have nothing in common as bugs.
 
+### A grid track with no width stated is as wide as its longest word
+
+**Assumed:** making a list item `display: grid` only changes how it hands its
+height to the card inside it — the width is the cell's, as it was.
+**It was:** the implicit column is `auto`, and an `auto` track is *sized by its
+content* and only ever stretched from there, never shrunk below it. So the card
+sized its own cell to the widest line it held — «Статистическая физика · 1 курс
+магистратуры» — the two columns of the panel slid over each other, and the list
+ran off the right edge. `grid-template-columns: minmax(0, 1fr)` is the fix: zero
+as the floor is what lets a track be narrower than its text, which every
+`truncate` and `line-clamp` inside the card depends on.
+
+**How not to repeat it:** the same zero floor `min-w-0` provides inside a flex
+row — a box that may be narrower than its content has to be told so, in both
+layout models. And the check that would have caught it: heights were measured
+and widths were not, on a fix about heights. **Measure the axis you did not
+touch too** — `ul.scrollWidth <= ul.clientWidth` in the console is one line and
+says whether anything has grown out of its container.
+
 ### The dev server does not notice `tailwind.config.js`
 
 **Assumed:** a running dev server picks up a config change like any other edit.

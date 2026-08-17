@@ -1102,12 +1102,20 @@
    * remembered at each call site, and it holds for the next list too: a grid
    * either holds its cards directly, or wraps them in list items, and both are
    * right by construction.
+   *
+   * The column is stated, and `minmax(0, 1fr)` rather than the implicit `auto`:
+   * an auto track is sized by its content and only ever stretched from there, so
+   * a card holding «Статистическая физика · 1 курс магистратуры» pushed its own
+   * cell wider than the cell it lives in and the two columns slid over each
+   * other. Zero as the floor is what lets the track be narrower than its text,
+   * which is the whole basis of the truncation inside the card.
    */
   .card-grid {
     display: grid;
   }
   .card-grid > li {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /*
