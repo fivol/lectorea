@@ -555,9 +555,10 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
        × outside the window. */
     /* Wider than the front page's, which is measured against the row of
        controls above it and has nothing to spare. Here the ceiling is the
-       columns, and the extra 24px is what keeps a heading naming a field and a
-       recording naming a term off the ellipsis. */
-    <div className="pointer-events-none absolute right-3 top-3 z-20 flex w-[21rem]
+       columns, and the extra 56px is what keeps a heading naming a field, the
+       arrows that leaf through the offers and a recording naming a term all off
+       the ellipsis at once. */
+    <div className="pointer-events-none absolute right-3 top-3 z-20 flex w-[23rem]
                     max-w-[calc(100%-1.5rem)] justify-end">
       <div className="plate pointer-events-auto w-full rounded-card p-3">
         <div className="mb-2.5 flex items-center gap-2">
@@ -569,6 +570,7 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
               ? t('ui.home.progressIn', { name: t(`domain.${field}.title`) })
               : t('ui.home.progress')}
           </span>
+          <ResumeStepper index={index} count={count} onPrev={prev} onNext={next} />
           <IconButton
             icon="close"
             iconSize={14}
@@ -593,7 +595,6 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
               }}
             />
           ) : null}
-          <ResumeStepper index={index} count={count} onPrev={prev} onNext={next} />
 
           {/* Two, not three. «Всего курсов» was the denominator the other two
               are shares of, and it was also the one number here that is about

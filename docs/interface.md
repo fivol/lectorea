@@ -120,14 +120,14 @@ the panel gives — and where there is more than one thing on the go, the arrows
 under the offer leaf through them, with «1/5» between them saying how many there
 are. Both wrap, and nothing is disabled at either end, because there are no
 ends: one arrow was enough to reach everything and not enough to use, since
-overshooting by one press meant four more to come back round. The row sits under
-the offer rather than up in the heading — three controls and a counter beside a
-heading leave the heading about ninety pixels wide, which is how «ПРОГРЕСС ·
-МАТЕМА…» came to truncate the one word saying what it counted — and takes the
-middle of that row rather than one edge, because pushed to the right it read as
-a third piece of corner chrome under the ×, when what it steers is the card
-above it. Twelve is as far as the ring goes; sixty openings is a history
-browser, and the profile panel is already that.
+overshooting by one press meant four more to come back round. They ride in the
+heading beside the ×, packed tight — a row of their own read well and cost the
+card a whole line, and on a plate holding an offer, a bar and two tiles the line
+spent on chrome is the one a reader notices. What pays for the space is the card
+being wide enough that the heading survives beside them: «ПРОГРЕСС ·
+МАТЕМАТИКА» whole, which is the part that must not be given up, since it names
+what the tiles are counting. Twelve is as far as the ring goes; sixty openings
+is a history browser, and the profile panel is already that.
 
 Almost nothing on it costs a download. The playlist that was open last, the
 lecture that was playing, the ticks and the days of study are all in the profile

@@ -126,12 +126,13 @@ export function useResumeCarousel(list: ResumePointer[]): {
  * round, and the reader who had just seen the thing they wanted had no way back
  * to it. Nothing is disabled at either end, because there are no ends.
  *
- * Its own row under the offer rather than up in the header. Three controls and a
- * counter beside a heading leave a heading about ninety pixels wide, and
- * «ПРОГРЕСС · МАТЕМА…» is a card that has truncated the one word saying what it
- * is counting. Down here the width is nobody else's — so the row takes the
- * middle of it rather than one edge: pushed right it read as a third piece of
- * corner chrome under the ×, when what it steers is the card above it.
+ * In the heading, beside the ×, and packed tight: no gaps of its own and the
+ * counter between the arrows rather than beside them. It had a row to itself for
+ * a while, which read well and cost the card a whole line — on a plate holding
+ * an offer, a bar and two tiles, a line spent on chrome is the line a reader
+ * notices. Tight, it is 108 pixels, and what pays for them is the card being
+ * wide enough that the heading still fits: «ПРОГРЕСС · МАТЕМАТИКА» whole, which
+ * is the thing that must not be given up, since it names what the tiles count.
  *
  * Absent below two, where an arrow would be a lie about there being more.
  */
@@ -150,13 +151,13 @@ export function ResumeStepper({
   if (count < 2) return null;
 
   return (
-    <div className="flex items-center justify-center gap-1">
+    <span className="flex shrink-0 items-center">
       <IconButton icon="chevron-left" iconSize={14} label={t('ui.home.prev')} onClick={onPrev} />
       <span className="num shrink-0 text-[11px] text-ink-faint">
         {index + 1}/{count}
       </span>
       <IconButton icon="chevron-right" iconSize={14} label={t('ui.home.next')} onClick={onNext} />
-    </div>
+    </span>
   );
 }
 

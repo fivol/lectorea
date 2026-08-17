@@ -135,6 +135,7 @@ function SummaryCard({
         {/* The title takes the slack, so the controls after it sit at the right
             edge whether or not the stepper is there to be one of them. */}
         <span className="mono-label min-w-0 flex-1 truncate text-ink-dim">{t('ui.home.title')}</span>
+        <ResumeStepper index={index} count={count} onPrev={prev} onNext={next} />
         {/* A × rather than a second «Профиль».
             The word was here and in the header at the same time, a thumb apart,
             and the door to the panel has always been the one in the corner —
@@ -153,12 +154,7 @@ function SummaryCard({
       </div>
 
       <div className={floating ? 'space-y-2.5' : 'flex flex-col gap-3 sm:flex-row sm:items-center'}>
-        {resume ? (
-          <div className={`space-y-1 ${floating ? '' : 'min-w-0 sm:flex-1'}`}>
-            <ResumeButton resume={resume} />
-            <ResumeStepper index={index} count={count} onPrev={prev} onNext={next} />
-          </div>
-        ) : null}
+        {resume ? <ResumeButton resume={resume} className={floating ? '' : 'sm:flex-1'} /> : null}
 
         <div className={`flex flex-col gap-2 ${floating ? '' : 'shrink-0'}`}>
           <div className="flex items-stretch gap-2">
