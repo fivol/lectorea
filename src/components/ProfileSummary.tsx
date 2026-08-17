@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useActivity, type Week } from '@/lib/activity';
@@ -9,7 +9,7 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from './Icon';
 import { CountTile } from './Facts';
-import { LectureThumb, ResumeCard } from './ResumeCard';
+import { LectureThumb, ResumeCard, ResumeStepper, useResumeCarousel } from './ResumeCard';
 import { WeekGoalBar } from './WeekGoal';
 import { IconButton } from './ui';
 
@@ -121,11 +121,7 @@ function SummaryCard({
   const { resumes, week, streak } = highlights;
   const hideSummary = useUi((state) => state.hideSummary);
   const floating = variant === 'card';
-  const [at, setAt] = useState(0);
-  /* Modulo rather than a clamp: the arrow wraps, and a list that shrinks under
-     a stored index — a playlist finished, the profile cleared — lands somewhere
-     valid instead of on nothing. */
-  const resume = resumes.length ? resumes[at % resumes.length] : null;
+  const { current: resume, index, count, prev, next } = useResumeCarousel(resumes);
 
   return (
     <div
@@ -139,7 +135,6 @@ function SummaryCard({
         {/* The title takes the slack, so the controls after it sit at the right
             edge whether or not the stepper is there to be one of them. */}
         <span className="mono-label min-w-0 flex-1 truncate text-ink-dim">{t('ui.home.title')}</span>
-        <ResumeStepper count={resumes.length} at={at} onNext={() => setAt(at + 1)} />
         {/* A × rather than a second «Профиль».
             The word was here and in the header at the same time, a thumb apart,
             and the door to the panel has always been the one in the corner —
@@ -158,7 +153,12 @@ function SummaryCard({
       </div>
 
       <div className={floating ? 'space-y-2.5' : 'flex flex-col gap-3 sm:flex-row sm:items-center'}>
-        {resume ? <ResumeButton resume={resume} className={floating ? '' : 'sm:flex-1'} /> : null}
+        {resume ? (
+          <div className={`space-y-1 ${floating ? '' : 'min-w-0 sm:flex-1'}`}>
+            <ResumeButton resume={resume} />
+            <ResumeStepper index={index} count={count} onPrev={prev} onNext={next} />
+          </div>
+        ) : null}
 
         <div className={`flex flex-col gap-2 ${floating ? '' : 'shrink-0'}`}>
           <div className="flex items-stretch gap-2">
@@ -287,43 +287,6 @@ function ResumeButton({ resume, className = '' }: { resume: ResumePointer; class
   );
 }
 
-/**
- * One arrow, and the count that explains why it is there.
- *
- * A reader with three courses on the go was being offered one of them and told
- * nothing about the other two — the card looked like a statement about their
- * study rather than the first of several. «2 / 3» says how many there are and
- * where in them you are, which is the whole of what the arrow needs to be
- * understood.
- *
- * One arrow rather than two, and it wraps. Two would be symmetrical and half
- * useless: this is a short ring being leafed through, not a document with a
- * beginning to get back to, and a disabled «previous» on the first of three is
- * a control that spends its life saying no.
- *
- * Absent below two, where the arrow would be a lie about there being more.
- */
-export function ResumeStepper({
-  count,
-  at,
-  onNext,
-}: {
-  count: number;
-  at: number;
-  onNext: () => void;
-}) {
-  const { t } = useT();
-  if (count < 2) return null;
-
-  return (
-    <>
-      <span className="num shrink-0 text-[11px] text-ink-faint">
-        {(at % count) + 1}/{count}
-      </span>
-      <IconButton icon="chevron-right" iconSize={14} label={t('ui.home.next')} onClick={onNext} />
-    </>
-  );
-}
 
 /** The week's time, in whatever unit it is actually in — minutes early on, hours later. */
 function WeekTime({ seconds }: { seconds: number }) {

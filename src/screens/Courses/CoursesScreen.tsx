@@ -19,10 +19,10 @@ import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/D
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ProfileButton from '@/components/ProfileButton';
-import { ResumeStepper } from '@/components/ProfileSummary';
+
 import Icon from '@/components/Icon';
 import { CountTile } from '@/components/Facts';
-import { ResumeCard } from '@/components/ResumeCard';
+import { ResumeCard, ResumeStepper, useResumeCarousel } from '@/components/ResumeCard';
 import { BottomSheet, Cap, Chip, IconButton, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
@@ -527,8 +527,7 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
   /* Everything started **in this field** — the arrow leafs through these and no
      further, which is the whole difference from the front page's card. */
   const resumes = useResumeList(within);
-  const [at, setAt] = useState(0);
-  const resume = resumes.length ? resumes[at % resumes.length] : null;
+  const { current: resume, index, count, prev, next } = useResumeCarousel(resumes);
   const progress = useResumeProgress(resume);
 
   /* Counted over the filter's own set: a stage or a university filter narrows
@@ -554,7 +553,11 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
     /* Held clear of the scrollbars on both edges, and never wider than the
        columns it lies on — a plate cropped by the viewport is a plate with the
        × outside the window. */
-    <div className="pointer-events-none absolute right-3 top-3 z-20 flex w-[19.5rem]
+    /* Wider than the front page's, which is measured against the row of
+       controls above it and has nothing to spare. Here the ceiling is the
+       columns, and the extra 24px is what keeps a heading naming a field and a
+       recording naming a term off the ellipsis. */
+    <div className="pointer-events-none absolute right-3 top-3 z-20 flex w-[21rem]
                     max-w-[calc(100%-1.5rem)] justify-end">
       <div className="plate pointer-events-auto w-full rounded-card p-3">
         <div className="mb-2.5 flex items-center gap-2">
@@ -566,7 +569,6 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
               ? t('ui.home.progressIn', { name: t(`domain.${field}.title`) })
               : t('ui.home.progress')}
           </span>
-          <ResumeStepper count={resumes.length} at={at} onNext={() => setAt(at + 1)} />
           <IconButton
             icon="close"
             iconSize={14}
@@ -591,6 +593,7 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
               }}
             />
           ) : null}
+          <ResumeStepper index={index} count={count} onPrev={prev} onNext={next} />
 
           {/* Two, not three. «Всего курсов» was the denominator the other two
               are shares of, and it was also the one number here that is about

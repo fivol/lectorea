@@ -344,6 +344,7 @@
   "ui.home.title": "Your learning",
   "ui.home.hide": "Hide until next visit",
   "ui.home.next": "Next in progress",
+  "ui.home.prev": "Previous in progress",
   "ui.home.progress": "Your progress",
   "ui.home.progressIn": "Progress · {name}",
   "ui.home.stats.done": "finished",

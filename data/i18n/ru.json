@@ -344,6 +344,7 @@
   "ui.home.title": "Ваше обучение",
   "ui.home.hide": "Скрыть до следующего захода",
   "ui.home.next": "Следующее начатое",
+  "ui.home.prev": "Предыдущее начатое",
   "ui.home.progress": "Ваш прогресс",
   "ui.home.progressIn": "Прогресс · {name}",
   "ui.home.stats.done": "пройдено",

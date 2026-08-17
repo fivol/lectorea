@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useT } from '@/i18n';
-import { percent, type PlaylistProgress } from '@/lib/progress';
+import { percent, type PlaylistProgress, type ResumePointer } from '@/lib/progress';
 import Icon from './Icon';
 import ProgressBar from './ProgressBar';
+import { IconButton } from './ui';
 
 /**
  * «Продолжить» — one object in the product for «where you stopped».
@@ -79,6 +80,81 @@ export function ResumeCard({
         />
       ) : null}
     </button>
+  );
+}
+
+/**
+ * Which of the started recordings the card is showing, and the two presses that
+ * change it.
+ *
+ * The index is held here rather than by the caller because it is nobody else's
+ * business, and it wraps in both directions: a list that shrinks underneath it —
+ * a playlist finished, a filter narrowed — lands somewhere valid instead of on
+ * nothing.
+ */
+export function useResumeCarousel(list: ResumePointer[]): {
+  current: ResumePointer | null;
+  index: number;
+  count: number;
+  prev: () => void;
+  next: () => void;
+} {
+  const [at, setAt] = useState(0);
+  const count = list.length;
+  const index = count ? ((at % count) + count) % count : 0;
+
+  return {
+    current: count ? list[index] : null,
+    index,
+    count,
+    prev: () => setAt(at - 1),
+    next: () => setAt(at + 1),
+  };
+}
+
+/**
+ * The two arrows, and the count that explains why they are there.
+ *
+ * A reader with three courses on the go was being offered one of them and told
+ * nothing about the other two — the card looked like a statement about their
+ * study rather than the first of several. «2 / 10» says how many there are and
+ * where in them you are, which is the whole of what the arrows need to be
+ * understood.
+ *
+ * Both directions, and both wrap. One arrow was enough to reach everything and
+ * not enough to *use*: overshooting by one press meant nine more to come back
+ * round, and the reader who had just seen the thing they wanted had no way back
+ * to it. Nothing is disabled at either end, because there are no ends.
+ *
+ * Its own row under the offer rather than up in the header. Three controls and a
+ * counter beside a heading leave a heading about ninety pixels wide, and
+ * «ПРОГРЕСС · МАТЕМА…» is a card that has truncated the one word saying what it
+ * is counting. Down here the width is nobody else's.
+ *
+ * Absent below two, where an arrow would be a lie about there being more.
+ */
+export function ResumeStepper({
+  index,
+  count,
+  onPrev,
+  onNext,
+}: {
+  index: number;
+  count: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const { t } = useT();
+  if (count < 2) return null;
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <IconButton icon="chevron-left" iconSize={14} label={t('ui.home.prev')} onClick={onPrev} />
+      <span className="num shrink-0 text-[11px] text-ink-faint">
+        {index + 1}/{count}
+      </span>
+      <IconButton icon="chevron-right" iconSize={14} label={t('ui.home.next')} onClick={onNext} />
+    </div>
   );
 }
 

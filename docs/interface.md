@@ -114,14 +114,18 @@ dismissal is held in the view state and never written to the profile: a setting
 nobody remembers making is a card gone for ever, with no way back that is any
 easier to find than the panel it was pointing at. A reload brings it back.
 
-The offer carries a bar, and the card an arrow. How far through the recording
+The offer carries a bar, and a pair of arrows. How far through the recording
 somebody is goes under it as a thin line with a percentage — the same reading
-the panel gives — and where there is more than one thing on the go, the arrow in
-the corner leafs through them, «1/4» beside it saying how many there are. One
-arrow rather than two, and it wraps: this is a short ring, not a document with a
-beginning to get back to, and a disabled «previous» on the first of four is a
-control that spends its life saying no. Twelve is as far as the ring goes; sixty
-openings is a history browser, and the profile panel is already that.
+the panel gives — and where there is more than one thing on the go, the arrows
+under the offer leaf through them, with «1/5» between them saying how many there
+are. Both wrap, and nothing is disabled at either end, because there are no
+ends: one arrow was enough to reach everything and not enough to use, since
+overshooting by one press meant four more to come back round. The row sits under
+the offer rather than up in the heading — three controls and a counter beside a
+heading leave the heading about ninety pixels wide, which is how «ПРОГРЕСС ·
+МАТЕМА…» came to truncate the one word saying what it counted. Twelve is as far
+as the ring goes; sixty openings is a history browser, and the profile panel is
+already that.
 
 Almost nothing on it costs a download. The playlist that was open last, the
 lecture that was playing, the ticks and the days of study are all in the profile
