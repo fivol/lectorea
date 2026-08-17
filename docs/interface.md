@@ -114,11 +114,21 @@ dismissal is held in the view state and never written to the profile: a setting
 nobody remembers making is a card gone for ever, with no way back that is any
 easier to find than the panel it was pointing at. A reload brings it back.
 
-Nothing on it costs a download. The playlist that was open last, the lecture
-that was playing, the ticks and the days of study are all in the profile
-already; the one thing it cannot know without the playlist shards is how far
-through that playlist somebody is, so it does not claim to. That number is in
-the panel, where the files are worth fetching.
+The offer carries a bar, and the card an arrow. How far through the recording
+somebody is goes under it as a thin line with a percentage — the same reading
+the panel gives — and where there is more than one thing on the go, the arrow in
+the corner leafs through them, «1/4» beside it saying how many there are. One
+arrow rather than two, and it wraps: this is a short ring, not a document with a
+beginning to get back to, and a disabled «previous» on the first of four is a
+control that spends its life saying no. Twelve is as far as the ring goes; sixty
+openings is a history browser, and the profile panel is already that.
+
+Almost nothing on it costs a download. The playlist that was open last, the
+lecture that was playing, the ticks and the days of study are all in the profile
+already. The bar is the exception — lecture lengths live in the shards and
+nowhere else — so it costs the shard of the course being offered, median 69 KB,
+fetched after the card is already on screen and for a file the press is about to
+need anyway. The card reads without it and the bar arrives when it lands.
 
 The drawing is not moved out of its way. Both shapes float over open water at
 the size the map opens at, and a card that made the continents shrink to avoid
@@ -198,21 +208,24 @@ In the corner over them, for a reader who has been here before, is **their own
 standing in the slice on screen** — the front page's card
 ([where you were](#where-you-were)), on the same plate, asked of this field
 instead of the catalogue. Both halves narrow with the filter: the recording
-offered is the last one opened *in this field*, and under it are three counts of
-*these* courses — «1 пройдено · 2 изучается · 7 всего курсов». A card that kept
-the global numbers under a heading naming the field would be the worst of the
-two, scoped-looking and not scoped.
+offered is the last one opened *in this field* — and so is everything the arrow
+leafs through — while under it are two counts of *these* courses, «1 пройдено ·
+2 изучается». A card that kept the global numbers under a heading naming the
+field would be the worst of the two, scoped-looking and not scoped.
 
-So the heading names what it counts: «ВАШ ПРОГРЕСС · ХИМИЯ», and «ВАШ ПРОГРЕСС»
-with no filter, where the slice really is everything. It does not try to decline
+So the heading names what it counts: «ПРОГРЕСС · ХИМИЯ», and «ВАШ ПРОГРЕСС» with
+no filter, where the slice really is everything. It does not try to decline
 the name into «в Химии» — the catalogue holds «Науки о Земле» and «Компьютерная
 лингвистика» too, and a product guessing at Russian cases gets one of them wrong
-in public. The counts cost nothing to work out: course status is in the profile
-and the denominator is the filter's own size. Lectures and hours in a field are
-not offered for the same reason the front page does not offer them — they live
-in the shards, and a card in a corner is not worth three quarters of a megabyte.
-Filter to a field nothing has been watched in and there is no card at all: three
-zeroes over somebody's first visit to химия is a scolding.
+in public. The counts cost nothing to work out — course status is in the profile
+— and there is deliberately no third one saying how many courses the field
+holds: that was the denominator the other two are shares of, and the one number
+on a card headed «ваш прогресс» that is about the catalogue rather than about
+the reader. It is on the map, on the filter row and in the columns being
+counted. Lectures and hours in a field are not offered either: they need every
+shard of the field, where the bar under the offer needs one. Filter to a field
+nothing has been watched in and there is no card at all — zeroes over somebody's
+first visit to химия is a scolding.
 
 It floats rather than sitting in the flow, and that was the second try. As a
 strip across the top it pushed every column down by its own height on every

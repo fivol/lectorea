@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { useT } from '@/i18n';
+import { percent, type PlaylistProgress } from '@/lib/progress';
 import Icon from './Icon';
+import ProgressBar from './ProgressBar';
 
 /**
  * «Продолжить» — one object in the product for «where you stopped».
@@ -20,6 +22,7 @@ export function ResumeCard({
   videoId,
   title,
   subtitle,
+  progress,
   onClick,
   className = '',
 }: {
@@ -27,6 +30,13 @@ export function ResumeCard({
   title: ReactNode;
   /** The course under the recording, the lecture's length — whatever the caller knows. */
   subtitle?: ReactNode;
+  /**
+   * How far through the recording is behind you, once somebody has paid for the
+   * shard that knows — see `useResumeProgress`. Absent where the caller draws
+   * its own bar underneath, as the course panel does, and absent until the file
+   * lands, which is why the card has to read without it.
+   */
+  progress?: PlaylistProgress | null;
   onClick: () => void;
   className?: string;
 }) {
@@ -41,17 +51,33 @@ export function ResumeCard({
         the width of the lecture's title and the truncation below never fires —
         which is exactly how the name ran off the edge of the card.
       */
-      className={`inlay-hover group flex w-full min-w-0 items-center gap-2.5 rounded-card p-1
+      className={`inlay-hover group flex w-full min-w-0 flex-col gap-1 rounded-card p-1
                   text-left ${className}`}
     >
-      <LectureThumb videoId={videoId} className="h-11 w-[4.5rem] shrink-0" iconSize={13} />
-      <span className="min-w-0 flex-1">
-        <span className="mono-label block text-accent">{t('ui.profile.continue')}</span>
-        <span className="mt-0.5 block truncate text-sm font-semibold text-ink">{title}</span>
-        {subtitle ? (
-          <span className="block truncate text-[11px] text-ink-faint">{subtitle}</span>
-        ) : null}
+      <span className="flex w-full min-w-0 items-center gap-2.5">
+        <LectureThumb videoId={videoId} className="h-11 w-[4.5rem] shrink-0" iconSize={13} />
+        <span className="min-w-0 flex-1">
+          <span className="mono-label block text-accent">{t('ui.profile.continue')}</span>
+          <span className="mt-0.5 block truncate text-sm font-semibold text-ink">{title}</span>
+          {subtitle ? (
+            <span className="block truncate text-[11px] text-ink-faint">{subtitle}</span>
+          ) : null}
+        </span>
       </span>
+      {/* Under the whole row rather than under the title: it measures the
+          recording, and a bar indented to clear the still would read as a
+          property of the words beside it. Only once there is something to
+          measure — a bar at zero on a recording opened and not started says
+          less than no bar. */}
+      {progress?.started ? (
+        <ProgressBar
+          className="w-full px-0.5 pb-0.5"
+          done={progress.done}
+          total={progress.total}
+          fill={progress.fraction}
+          label={`${percent(progress.fraction)}%`}
+        />
+      ) : null}
     </button>
   );
 }

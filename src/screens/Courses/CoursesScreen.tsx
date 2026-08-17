@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { chainAncestors, useCatalog, useFilteredCourses } from '@/lib/catalog';
-import { useResumePointer } from '@/lib/progress';
+import { useResumeList, useResumeProgress } from '@/lib/progress';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
@@ -19,6 +19,7 @@ import Dropdown, { ActionRow, Caption, CheckRow, RadioRow } from '@/components/D
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ProfileButton from '@/components/ProfileButton';
+import { ResumeStepper } from '@/components/ProfileSummary';
 import Icon from '@/components/Icon';
 import { CountTile } from '@/components/Facts';
 import { ResumeCard } from '@/components/ResumeCard';
@@ -523,12 +524,16 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
   const hidden = useUi((state) => state.summaryHidden);
   const hideSummary = useUi((state) => state.hideSummary);
   const courses = useProfile((state) => state.profile.courses);
-  const resume = useResumePointer(within);
+  /* Everything started **in this field** — the arrow leafs through these and no
+     further, which is the whole difference from the front page's card. */
+  const resumes = useResumeList(within);
+  const [at, setAt] = useState(0);
+  const resume = resumes.length ? resumes[at % resumes.length] : null;
+  const progress = useResumeProgress(resume);
 
-  /* Counted over the filter's own set, so «всего» is the number of cards on
-     screen and the two figures in front of it are shares of that. A stage or a
-     university filter narrows it too, which is right: the question the card
-     answers is «how am I doing with what I am looking at». */
+  /* Counted over the filter's own set: a stage or a university filter narrows
+     it too, which is right — the question the card answers is «how am I doing
+     with what I am looking at». */
   const stats = useMemo(() => {
     let done = 0;
     let going = 0;
@@ -537,11 +542,11 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
       if (status === 'done') done += 1;
       else if (status === 'in_progress') going += 1;
     }
-    return { done, going, total: within.size };
+    return { done, going };
   }, [within, courses]);
 
   // Nothing to continue and nothing behind you in this field: an empty card
-  // announcing three zeroes over somebody's first visit to химия is a scolding.
+  // announcing zeroes over somebody's first visit to химия is a scolding.
   if (hidden || (!resume && !stats.done && !stats.going)) return null;
   const course = resume ? catalog.courseById.get(resume.entry.courseId) : null;
 
@@ -556,16 +561,17 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
           <span className="profile-disc shrink-0">
             <Icon name="profile" size={14} />
           </span>
-          <span className="mono-label truncate text-ink-dim">
+          <span className="mono-label min-w-0 flex-1 truncate text-ink-dim">
             {field
               ? t('ui.home.progressIn', { name: t(`domain.${field}.title`) })
               : t('ui.home.progress')}
           </span>
+          <ResumeStepper count={resumes.length} at={at} onNext={() => setAt(at + 1)} />
           <IconButton
             icon="close"
             iconSize={14}
             label={t('ui.home.hide')}
-            className="ml-auto shrink-0"
+            className="shrink-0"
             onClick={hideSummary}
           />
         </div>
@@ -576,6 +582,7 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
               videoId={resume.lastVideoId}
               title={resume.entry.title}
               subtitle={course ? t(`course.${course.id}.title`) : resume.entry.courseId}
+              progress={progress}
               onClick={() => {
                 const query = new URLSearchParams(params.search);
                 query.set('playlist', resume.entry.id);
@@ -585,10 +592,15 @@ function FieldProgress({ within, field }: { within: ReadonlySet<string>; field: 
             />
           ) : null}
 
+          {/* Two, not three. «Всего курсов» was the denominator the other two
+              are shares of, and it was also the one number here that is about
+              the catalogue rather than about the reader — on a card headed
+              «ваш прогресс» that is the odd one out. How many courses the field
+              holds is on the map, on the filter row and in the columns being
+              counted. */}
           <div className="flex items-stretch gap-2">
             <CountTile value={stats.done} label={t('ui.home.stats.done')} />
             <CountTile value={stats.going} label={t('ui.home.stats.going')} />
-            <CountTile value={stats.total} label={t('ui.home.stats.courses')} />
           </div>
         </div>
       </div>

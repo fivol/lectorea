@@ -348,17 +348,81 @@ export type ResumePointer = { entry: RecentEntry; lastVideoId?: string };
  *   slice.
  */
 export function useResumePointer(within?: ReadonlySet<string> | null): ResumePointer | null {
+  return useResumeList(within, 1)[0] ?? null;
+}
+
+/**
+ * A dozen. `recent` holds sixty, and a card offering «продолжить» sixty times
+ * over is a history browser — which the profile panel already is, and better.
+ * Twelve is more than anybody is studying at once and short enough that the
+ * counter beside the arrow stays a number rather than a warning.
+ */
+const RESUME_LIST_LIMIT = 12;
+
+/**
+ * Everything there is to go back to, newest first — the same question as
+ * `useResumePointer`, asked of more than the first answer.
+ *
+ * It exists because a reader with three courses on the go was being offered one
+ * of them and told nothing about the other two. The arrow on the card leafs
+ * through this, and the set it is asked of decides what «all of them» means:
+ * the front page hands no filter and gets the catalogue, the columns hand their
+ * own filter and get the field.
+ *
+ * Deduplicated by playlist, because `recent` records openings and the same
+ * recording opened twice is one thing to continue.
+ */
+export function useResumeList(
+  within?: ReadonlySet<string> | null,
+  limit = RESUME_LIST_LIMIT
+): ResumePointer[] {
   const profile = useProfile((state) => state.profile);
 
   return useMemo(() => {
+    const out: ResumePointer[] = [];
+    const seen = new Set<string>();
     for (const entry of profile.recent) {
+      if (out.length >= limit) break;
+      if (seen.has(entry.id)) continue;
+      seen.add(entry.id);
       if (within && !within.has(entry.courseId)) continue;
       const saved = profile.playlists[entry.id];
       if (saved?.watched) continue;
-      return { entry, lastVideoId: saved?.lastVideoId };
+      out.push({ entry, lastVideoId: saved?.lastVideoId });
     }
-    return null;
-  }, [profile.recent, profile.playlists, within]);
+    return out;
+  }, [profile.recent, profile.playlists, within, limit]);
+}
+
+/**
+ * How far through the offered recording somebody actually is.
+ *
+ * This is the one thing `useResumePointer` deliberately cannot answer: lecture
+ * lengths and the list of lectures live in the shards, and the front page used
+ * to say nothing about progress rather than pay for one. It pays for exactly one
+ * now — the shard of the course being offered, median 69 KB — and only after the
+ * card is already on screen, so nothing waits for it. It is also the shard that
+ * pressing the card is about to need, which makes it a prefetch rather than a
+ * cost; `loadPlaylistsCached` and the service worker see to it that the second
+ * screen asking gets it for nothing.
+ *
+ * Null until it lands, and null for good if the playlist has since left the
+ * catalogue — the card is complete without the bar, which is why the bar may
+ * arrive late.
+ */
+export function useResumeProgress(resume: ResumePointer | null): PlaylistProgress | null {
+  const profile = useProfile((state) => state.profile);
+  const courseId = resume?.entry.courseId ?? null;
+  const courseIds = useMemo(() => (courseId ? [courseId] : []), [courseId]);
+  const shards = useCourseShards(courseIds);
+
+  return useMemo(() => {
+    if (!resume) return null;
+    const playlist = shards
+      .get(resume.entry.courseId)
+      ?.find((item) => item.id === resume.entry.id);
+    return playlist ? playlistProgress(profile, playlist) : null;
+  }, [resume, shards, profile]);
 }
 
 /** Hours and lectures behind you, across everything the profile knows about. */
