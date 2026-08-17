@@ -129,7 +129,9 @@ export function useResumeCarousel(list: ResumePointer[]): {
  * Its own row under the offer rather than up in the header. Three controls and a
  * counter beside a heading leave a heading about ninety pixels wide, and
  * «ПРОГРЕСС · МАТЕМА…» is a card that has truncated the one word saying what it
- * is counting. Down here the width is nobody else's.
+ * is counting. Down here the width is nobody else's — so the row takes the
+ * middle of it rather than one edge: pushed right it read as a third piece of
+ * corner chrome under the ×, when what it steers is the card above it.
  *
  * Absent below two, where an arrow would be a lie about there being more.
  */
@@ -148,7 +150,7 @@ export function ResumeStepper({
   if (count < 2) return null;
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-center gap-1">
       <IconButton icon="chevron-left" iconSize={14} label={t('ui.home.prev')} onClick={onPrev} />
       <span className="num shrink-0 text-[11px] text-ink-faint">
         {index + 1}/{count}

@@ -123,9 +123,11 @@ ends: one arrow was enough to reach everything and not enough to use, since
 overshooting by one press meant four more to come back round. The row sits under
 the offer rather than up in the heading — three controls and a counter beside a
 heading leave the heading about ninety pixels wide, which is how «ПРОГРЕСС ·
-МАТЕМА…» came to truncate the one word saying what it counted. Twelve is as far
-as the ring goes; sixty openings is a history browser, and the profile panel is
-already that.
+МАТЕМА…» came to truncate the one word saying what it counted — and takes the
+middle of that row rather than one edge, because pushed to the right it read as
+a third piece of corner chrome under the ×, when what it steers is the card
+above it. Twelve is as far as the ring goes; sixty openings is a history
+browser, and the profile panel is already that.
 
 Almost nothing on it costs a download. The playlist that was open last, the
 lecture that was playing, the ticks and the days of study are all in the profile
