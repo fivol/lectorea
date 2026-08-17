@@ -23,6 +23,31 @@ const repo = process.env.VITE_REPO ?? 'fivol/lectorea';
  */
 const basePath = process.env.BASE_PATH || `/${repo.split('/')[1]}/`;
 
+/**
+ * Restart the dev server when the styling config changes.
+ *
+ * Vite reloads its own config on the spot, but PostCSS reads
+ * `tailwind.config.js` once and the running server then rebuilds CSS from the
+ * copy it started with. What that looks like is worse than a change not
+ * arriving: new utility classes written in a component *do* appear, so the page
+ * updates — while the palette behaves by the old rules, and a class the new
+ * config would have generated is silently absent from the stylesheet. A whole
+ * afternoon can go into a component that was correct on disk the entire time.
+ *
+ * `server.restart()` is what the same edit to `vite.config.ts` already gets.
+ * Dev only — a build reads both files once anyway.
+ */
+const restartOnStyleConfig = {
+  name: 'restart-on-style-config',
+  configureServer(server: import('vite').ViteDevServer) {
+    const watched = ['tailwind.config.js', 'postcss.config.js'];
+    server.watcher.add(watched.map((file) => fileURLToPath(new URL(`./${file}`, import.meta.url))));
+    server.watcher.on('change', (file) => {
+      if (watched.some((name) => file.endsWith(name))) void server.restart();
+    });
+  },
+};
+
 // Keyed on mode rather than command so that `vite preview` — which serves a
 // production build but still counts as `serve` — shows the site exactly as
 // Pages will. Only the dev server stays at the root.
@@ -37,6 +62,7 @@ export default defineConfig(({ mode }) => ({
 
   plugins: [
     react(),
+    restartOnStyleConfig,
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['map.svg', 'images/**/*', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],

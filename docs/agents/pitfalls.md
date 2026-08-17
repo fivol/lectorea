@@ -197,12 +197,16 @@ generated" have nothing in common as bugs.
 classes in the edited component appeared, the new colour behaviour did not — so
 the change looked broken in the browser while being correct on disk.
 
-**How not to repeat it:** restart the dev server after touching
-`tailwind.config.js` or `postcss.config.js`, and confirm one generated rule
-(`getComputedStyle`, or the class in `document.styleSheets`) before believing
-what the screen shows. Port 5199 is usually another session's server, and
-`--strictPort` will not share it: add a second entry to `.claude/launch.json`
-with a free port for the length of the check, and take it out again.
+**How not to repeat it:** fixed where it happens — `restartOnStyleConfig` in
+`vite.config.ts` watches both files and calls `server.restart()`, which is what
+an edit to `vite.config.ts` itself already gets. A server started *before* that
+plugin existed will not have it, so an old process still shows the old palette;
+the check that settles it in one line is
+`curl -s 'http://localhost:<port>/src/index.css?direct' | grep color-mix`,
+which asks the server rather than the browser and skips every cache in between.
+Port 5199 is usually another session's server and `--strictPort` will not share
+it: add a second entry to `.claude/launch.json` on a free port for the length of
+the check, and take it out again.
 
 ---
 

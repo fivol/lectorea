@@ -736,13 +736,13 @@ function LectureRow({
       {part ? (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 bg-accent/10"
+          className="pointer-events-none absolute inset-y-0 left-0 bg-accent/15"
           style={{ width: `${part}%` }}
         >
           {/* The playhead itself: the wash says how much, this says exactly
               where, and it is the one mark that stays legible on the row the
               player is currently sitting on. */}
-          <span className="absolute inset-y-0 right-0 w-[2px] bg-accent/70" />
+          <span className="absolute inset-y-0 right-0 w-[2px] bg-accent" />
         </span>
       ) : null}
 
