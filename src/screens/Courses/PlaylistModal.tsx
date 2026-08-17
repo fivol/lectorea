@@ -26,7 +26,6 @@ import TodayLine from '@/components/game/TodayLine';
 import WeekPlan from '@/components/game/WeekPlan';
 import { Button, ButtonLink, Chip, IconButton, cx } from '@/components/ui';
 import LectureList from './LectureList';
-import NowPlaying from './NowPlaying';
 import PlayerSpeed from './PlayerSpeed';
 import { FilterName, StatusBadge } from './PlaylistRow';
 import type { FilterFacet } from './playlist-filters';
@@ -62,10 +61,11 @@ type Playing = { id: string; start: number };
  * and everything the catalogue knows about it beside them — what somebody
  * reads while deciding whether to take this recording on.
  *
- * `watch` is the screen it is studied on: the frame takes the room, the
- * lectures become a queue beside it, and what is playing gets said in words
- * under the picture. The fact sheet is still there, under the queue, because a
- * question about the recording does not stop being asked once it is running.
+ * `watch` is the screen it is studied on: the frame takes the room and the
+ * lectures become a queue beside it, where the row in the frame is lit, carries
+ * its own playhead and holds the tick that marks it off. The fact sheet is
+ * still there, under the queue, because a question about the recording does not
+ * stop being asked once it is running.
  */
 export type PlayerView = 'list' | 'watch';
 
@@ -126,9 +126,9 @@ export default function PlaylistModal({
    * Kept apart from `playing`, which is what the frame was *asked* to load and
    * is therefore the iframe's key: writing the lecture YouTube walked on to
    * into that state would rebuild the frame and start the lecture again from
-   * the top. Everything the reader is shown — the row lit in the queue, the
-   * title under the picture, which lecture the tick marks off — follows this
-   * one instead, so it stays true through an autoplay the app never ordered.
+   * the top. Everything the reader is shown — which row is lit in the queue and
+   * where its playhead stands — follows this one instead, so it stays true
+   * through an autoplay the app never ordered.
    */
   const [at, setAt] = useState<{ id: string; sec: number } | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
@@ -310,22 +310,15 @@ export default function PlaylistModal({
   };
 
   /*
-   * The lecture on screen, and the two beside it.
+   * The lecture on screen.
    *
    * `at` first and `playing` only as the opening frame's stand-in: what the
    * reader is looking at is whatever the player last named, which after an
    * autoplay is not what the app asked for. A lecture the shard does not carry
    * — a private entry YouTube walked into — is simply not one of these rows,
-   * and the strip under the frame stands down rather than naming it wrongly.
+   * and nothing in the queue lights up rather than the wrong row doing so.
    */
   const shownId = at?.id ?? playing?.id ?? null;
-  const shownIndex = shownId ? playlist.videos.findIndex((video) => video.id === shownId) : -1;
-  const shown = shownIndex === -1 ? null : playlist.videos[shownIndex];
-  const shownDone = shown ? progress.complete || (profile.videos[shown.id]?.done ?? false) : false;
-  const step = (delta: number) => {
-    const video = playlist.videos[shownIndex + delta];
-    return video ? () => play(video) : null;
-  };
 
   /*
    * Where this sits in the run, and the way out of it in either direction. A
@@ -553,23 +546,6 @@ export default function PlaylistModal({
               </div>
             ) : null}
 
-            {/* Which lecture this is, how far into it, and the three controls
-                that belong to the one being watched rather than to the
-                recording as a whole. Only where the frame is on something the
-                shard knows about — see `shown`. */}
-            {watching && shown ? (
-              <NowPlaying
-                video={shown}
-                index={shownIndex}
-                total={playlist.videos.length}
-                at={at?.id === shown.id ? at.sec : 0}
-                done={shownDone}
-                onPrev={step(-1)}
-                onNext={step(1)}
-                onToggleDone={() => tick(shownIndex, !shownDone, false)}
-              />
-            ) : null}
-
             {/* The lecture list comes from the shard, not from the API. It
                 stands under the frame while the recording is being read about
                 and moves into the sidebar while it is being watched — one list
@@ -577,8 +553,9 @@ export default function PlaylistModal({
             {watching ? null : (
               <LectureList
                 videos={playlist.videos}
-              audience={playlist.audience}
+                audience={playlist.audience}
                 playingId={shownId}
+                at={at}
                 complete={progress.complete}
                 onPlay={play}
                 onTick={tick}
@@ -649,8 +626,9 @@ export default function PlaylistModal({
 
                 <LectureList
                   videos={playlist.videos}
-              audience={playlist.audience}
+                  audience={playlist.audience}
                   playingId={shownId}
+                  at={at}
                   complete={progress.complete}
                   follow
                   onPlay={play}

@@ -582,6 +582,45 @@ code *computes* is a key it cannot see. Template keys are the one exception it
 handles (`t(\`course.${id}.title\`)` becomes a wildcard) — everything else has
 to appear as a literal directly inside the call.
 
+## A strip that narrates the current row is a second copy of it
+
+The watching screen said the lecture in the frame twice. Under the picture stood
+«Лекция 11 из 25», the title, a bar reading «6:13 / 11:40», arrows to the
+lecture before and after and a button marking this one off; a centimetre to the
+right the queue had that same lecture as a lit row, filled to the same playhead,
+carrying the same two figures, opening on a click and ticking off with the
+checkbox at its end. Every line of the strip was a restatement and every control
+on it a second door to what the row already answered.
+
+The strip went, and the queue kept the job whole. What settles it is not taste
+but a question asked of each line: **what does this say that the row cannot?**
+The honest answers were two — the title was truncated in the row, and the strip
+sat under the picture where the eye already is. The first is a `line-clamp-2` on
+the playing row; the second is not worth a panel.
+
+The move has a cost that has to be paid deliberately, and it is the general
+part. **A fact moved to a new home inherits that home's data source, and the new
+source may have less right to speak than the old one.** The strip read the
+position out of the player's own frames; the row read it out of the profile,
+which is *allowed to be silent* — «Место остановки» switches the stored position
+off, a ticked lecture keeps none, and anything under the fifteen-second resume
+floor is not a place worth returning to. Three deliberate silences, all correct
+about a lecture somebody left, all wrong about the one playing. So the live
+figure is passed down to the row it belongs to and the stored mark is left to
+every other row, which is one prop and the difference between a queue that
+follows the player and one that shrugs three times a session.
+
+Rejected: keeping the strip and quieting it — smaller type, no bar. It answers
+«перетягивает внимание» and not «избыточность», and a muted second copy still
+has to be kept in step with the first.
+
+**Generally:** before adding a panel that narrates the selected item of a list
+on the same screen, go line by line and ask what it says the row cannot. What
+survives usually belongs *in the row*; what does not is state kept in two places
+and two sets of controls that must agree. And when the panel goes, check what
+its numbers were read from — the row's usual source is often the profile, and a
+profile is entitled to silences an on-screen reading is not.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

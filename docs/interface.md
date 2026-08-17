@@ -621,19 +621,28 @@ the screen for the hour somebody actually spends here, and it is deliberately
 not fullscreen: fullscreen is YouTube's own and takes the ticks, the queue and
 the progress away with it.
 
+**The queue is also where the lecture in the frame is described.** Its row is
+the one that does not truncate its title, it fills to where the playhead
+actually is with the position beside the length — «15:08 / 29:30» — and the
+tick at its end is what marks the lecture off. There used to be a strip under
+the picture saying all three again, with a pair of arrows for the lecture
+before and after; every word of it was a second copy of the row a centimetre to
+the right, and every control on it a second way to press what that row already
+answers ([the practice](agents/practices.md#a-strip-that-narrates-the-current-row-is-a-second-copy-of-it)).
+
 The queue is a **stated width** and the picture takes everything the dialog
 grows by. A column of numbered titles and a length needs about twenty
 characters; every pixel past that comes out of the one thing the reader is here
 for, and a share of the width would hand the queue a third of a large display.
 
-Under the picture is what the frame cannot say. A YouTube embed names the
-lecture and its place in the playlist only while its chrome is up, and the
-chrome goes away a second after the pointer does — so «Лекция 2 из 26», the
-title, how far into it the playhead is, the way to the lecture before and after,
-and a button that marks this one off are written out below the frame and stay
-written. On a phone the frame stops scrolling with the page and the queue
-scrolls under it, which is the one thing a phone owes a screen somebody watches
-an hour of video on.
+Under the picture is one strip and nothing else: the speed on the left, the way
+back out of the watching shape on the right. What a YouTube embed will not say
+for itself — which lecture this is of how many, how far into it the playhead is,
+whether it is behind you — the queue says, permanently, about the row it is
+about; the embed says it only while its chrome is up, and the chrome goes away a
+second after the pointer does. On a phone the frame and that strip stop
+scrolling with the page and the queue scrolls under them, which is the one thing
+a phone owes a screen somebody watches an hour of video on.
 
 The fact sheet does not go away, it goes under the queue behind a «О ЗАПИСИ»
 line: how good a recording is gets asked as often on the third lecture as on the
@@ -646,8 +655,8 @@ Two things do not travel: **«В избранное» and «Отметить в�
 decisions about the recording as a whole and neither is a thing anybody does
 while a lecture is running — on the watching screen they would be two full-width
 buttons of nothing to do, one of which wipes the ticks of a course in progress.
-Marking off here is one lecture at a time, under the picture and down the queue,
-and the sheet somebody reads before starting still has both.
+Marking off here is one lecture at a time, down the queue, and the sheet
+somebody reads before starting still has both.
 
 Which shape a recording opens in is **not** remembered, and that is the one
 setting in this dialog that is not. It would buy nothing: watching starts with a
@@ -670,6 +679,15 @@ position used to stand in the length's place, which made one column mean two
 different things depending on the row, and left a figure counting up on its own
 while the lecture played with nothing beside it to be read against. The length
 is the number that never moves, so it is the one that is always there.
+
+The row the frame is on takes that figure **from the player** rather than from
+the profile, and the difference is not freshness but what the profile is allowed
+to hold: «Место остановки» switches the stored position off altogether, a
+lecture already ticked keeps none, and anything under fifteen seconds is not a
+place worth coming back to. All three silences are right about a lecture
+somebody left and wrong about the one running beside the list — and the fill
+stays put once the lecture passes 90% and counts as watched, because the tick
+says whether it is behind you and the fill says where you are.
 
 Three levels, and only the bottom one holds anything. A lecture is watched or it
 is not; a playlist and a course are arithmetic over that.
@@ -794,10 +812,12 @@ reader could press to win: the seal «Отметить все» credits the day 
 the lectures under it are worth and no more, for the same reason the streak
 cannot be kept alive by pressing the light switch.
 
-**The strip under the frame** carries the two things the embed cannot: on the
-left what the player is doing — the speed — and on the right what shape it is
-in, under the corner of the picture and directly beside the fullscreen button
-inside the frame, because that is the corner a hand already goes to.
+**The strip under the frame** is the whole of what stands between the picture
+and the queue, and it carries the two things the embed cannot: on the left what
+the player is doing — the speed — and on the right what shape it is in, under
+the corner of the picture and directly beside the fullscreen button inside the
+frame, because that is the corner a hand already goes to. Everything about the
+lecture itself is in the queue, which is where it is chosen.
 
 **Speed** is a row of rates — «0,5× … 2×» — plus `Shift + .` and `Shift + ,`,
 and the choice is remembered: it belongs to the reader rather than to the

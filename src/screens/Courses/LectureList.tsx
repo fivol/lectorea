@@ -21,6 +21,17 @@ type Props = {
    * asked for: with `list=` YouTube walks to the next one by itself.
    */
   playingId: string | null;
+  /**
+   * Where the player says its playhead is, as the screen's own copy of it.
+   *
+   * The row it names draws from this rather than from the profile, and that is
+   * not a matter of freshness but of what the profile is allowed to hold:
+   * «Место остановки» switches the stored position off entirely, a lecture
+   * already ticked keeps none, and anything under the resume floor is not a
+   * place worth coming back to. All three are right about a lecture somebody
+   * left and wrong about the one running in the frame beside the list.
+   */
+  at?: { id: string; sec: number } | null;
   /** Every row counts as watched — the playlist was sealed or fully ticked. */
   complete: boolean;
   /**
@@ -44,11 +55,17 @@ type Props = {
  * recording is being read about, beside it while it is being watched — because
  * it is the same list and a second copy would be a second set of ticks to keep
  * in step.
+ *
+ * While it is the queue it is also the only place the lecture in the frame is
+ * described: which one it is, how far into it the reader is, and the tick that
+ * marks it off. There used to be a strip under the picture saying all three
+ * again — see [the practice](../../../docs/agents/practices.md).
  */
 export default function LectureList({
   videos,
   audience,
   playingId,
+  at = null,
   complete,
   follow = false,
   onPlay,
@@ -97,6 +114,7 @@ export default function LectureList({
               index={index}
               share={audience?.[index] ?? null}
               playing={playingId === video.id}
+              live={at?.id === video.id ? at.sec : null}
               sealed={complete}
               onPlay={() => onPlay(video)}
               onTick={(next, extend) => onTick(index, next, extend)}
@@ -133,6 +151,7 @@ function LectureRow({
   index,
   share,
   playing,
+  live,
   sealed,
   onPlay,
   onTick,
@@ -142,6 +161,8 @@ function LectureRow({
   /** [game:audience] The share of the audience still here, 0..100, or nothing. */
   share: number | null;
   playing: boolean;
+  /** Where the player says it is, for the one row the frame is on. */
+  live: number | null;
   /** Counted watched by the playlist's seal rather than by a tick of its own. */
   sealed: boolean;
   onPlay: () => void;
@@ -150,8 +171,16 @@ function LectureRow({
   const { t } = useT();
   const mark = useProfile((state) => state.profile.videos[video.id]);
   const done = sealed || (mark?.done ?? false);
-  /** Where the playhead was left, when that is a place worth coming back to. */
-  const at = !done && isResumable(mark?.sec) ? mark.sec : 0;
+  /**
+   * Where the playhead is: the player's word for the row it is on, and the
+   * stored mark for every other one.
+   *
+   * The live figure is kept even once the lecture counts as watched. It crosses
+   * 90% with minutes still to play, and a row that emptied its fill at that
+   * moment would look like the player had lost its place — the tick is the
+   * statement about *whether* it is behind you, the fill about where you are.
+   */
+  const at = live ?? (!done && isResumable(mark?.sec) ? mark.sec : 0);
   const part = at ? Math.min(100, (at / Math.max(1, video.seconds)) * 100) : 0;
 
   /*
@@ -202,7 +231,14 @@ function LectureRow({
           <span className="num block text-right text-xs text-ink-faint">{index + 1}.</span>
           <AudienceMark share={share} />
         </span>
-        <span className="min-w-0 flex-1 truncate">{video.title}</span>
+        {/* The playing row is the one place the lecture's own name is written
+            now that nothing stands under the picture saying it, and «Электро…»
+            is not a name. Two lines there and one everywhere else: the rest of
+            the list is being scanned rather than read, and a queue of unwrapped
+            titles is a wall. */}
+        <span title={video.title} className={`min-w-0 flex-1 ${playing ? 'line-clamp-2' : 'truncate'}`}>
+          {video.title}
+        </span>
         {/*
           Both numbers, always in that order: where you are, then how long it
           is. The slot used to hold the position *instead* of the length, which
