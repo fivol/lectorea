@@ -10,6 +10,7 @@ import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
+import Tooltip from '@/components/Tooltip';
 import { StatusMark } from './CourseMarks';
 
 type Props = {
@@ -82,13 +83,19 @@ export default function PathBlock({
                       ${open ? 'rotate-90' : ''}`}
         />
         <span className="shrink-0 font-medium">{t('ui.path.title')}:</span>
-        <span className="num min-w-0 text-ink-dim">
-          {t('ui.path.summary', {
-            courses: count(steps.length, 'course'),
-            hours: formatHours(totalHours),
-            done: doneCount,
-          })}
-        </span>
+        {/* The hours in this line are a sum of estimates, and each estimate is a
+            median over recordings — two rules deep, and neither of them
+            guessable from «≈78 ч». The bubble sits on the figure rather than on
+            the row: the row is the fold, and it has its own job. */}
+        <Tooltip content={t('ui.legend.pathHours')}>
+          <span className="num min-w-0 cursor-help text-ink-dim">
+            {t('ui.path.summary', {
+              courses: count(steps.length, 'course'),
+              hours: formatHours(totalHours),
+              done: doneCount,
+            })}
+          </span>
+        </Tooltip>
       </button>
 
       {/* Outside the fold, and only once there is progress to show: how much of
@@ -110,9 +117,15 @@ export default function PathBlock({
               total: steps.length,
             })}`}
           />
-          <p className="num mt-1 text-[11px] text-ink-faint">
-            {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
-          </p>
+          {/* What «осталось» leaves out is the course in hand: three weeks into
+              a forty-hour prerequisite it is still charging forty, because the
+              hours come from the catalogue and the ticks are in the bar above.
+              The bubble is the only place that can say so. */}
+          <Tooltip content={t('ui.legend.remaining')} tap>
+            <p className="num mt-1 w-fit cursor-help text-[11px] text-ink-faint">
+              {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
+            </p>
+          </Tooltip>
         </div>
       ) : null}
 

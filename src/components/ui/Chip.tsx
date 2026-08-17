@@ -62,8 +62,19 @@ export default function Chip({
   // The tooltip goes around the finished element rather than inside each branch:
   // it clones whatever it is given, and a link, a button and a span all take the
   // handlers the same way.
-  const explained = (chip: ReactElement) =>
-    hint ? <Tooltip content={hint}>{chip}</Tooltip> : chip;
+  //
+  // `tap` follows the same split the markup does. A label answers nothing when
+  // it is pressed, so on a phone the press is free and it is the only way the
+  // sentence can be read at all; a chip that leads somewhere or does something
+  // has a press of its own, and the bubble does not get to take it.
+  const explained = (chip: ReactElement, tap = false) =>
+    hint ? (
+      <Tooltip content={hint} tap={tap}>
+        {chip}
+      </Tooltip>
+    ) : (
+      chip
+    );
 
   if (to) {
     return explained(
@@ -75,9 +86,10 @@ export default function Chip({
 
   if (!onClick) {
     return explained(
-      <span className={classes} title={title} style={style}>
+      <span className={cx(classes, hint ? 'cursor-help' : undefined)} title={title} style={style}>
         {inner}
-      </span>
+      </span>,
+      true
     );
   }
 

@@ -395,6 +395,19 @@ inside it; here the shard is in hand, so the offer is the lecture itself.
 
   ![The path, expanded](images/path.webp)
 
+  **Where the hours come from, said where they are printed.** A course's «≈33 ч»
+  is the *median* of the recordings found for it, not their sum: a course carries
+  thirteen and they are alternatives, so the honest length of it is the length of
+  one ([data.md](data.md#fields-computed-at-build-time)). The path's «≈71 ч» is
+  those medians added along the chain, the finished courses included, and
+  «осталось ≈43 ч» is the same sum with the ticked-off ones dropped — a course
+  under way still counts whole, because the lectures inside it move the bar and
+  not the estimate. Each of the three figures carries that sentence itself, in
+  the tooltip: a number arrived at by a rule nobody can see is a number nobody
+  believes, and the reader who wonders is looking at the figure, not at this
+  page. On a phone, where there is no hover, the label chips and the quiet
+  captions open their bubble on a tap.
+
 - **Playlists** — the concrete recordings of that course, sorted by a bayesian
   rating rather than raw views.
 
@@ -718,6 +731,13 @@ So it reads top to bottom as the routine it describes:
   whole path to it. The cards under «сейчас изучаю» count lectures instead: the
   path to a course you are already watching is ancient history, and what is left
   of the recording is the useful number.
+
+  The hours on a goal card are the catalogue's estimates for the courses of its
+  path not yet marked done, and the line under the heading says so in the open
+  rather than in a tooltip — the whole card is one press that opens the course,
+  so there is nothing on it left to hover. The «Путь к избранному» bar above
+  counts every goal at once, and a prerequisite two goals share is paid for
+  once: adding the paths up would charge twice for the same maths.
 
 ![The shelves: saved playlists, what was open lately, what is done](images/profile-shelves.webp)
 

@@ -22,6 +22,16 @@ type Props = {
    */
   children: ReactElement;
   side?: 'top' | 'bottom';
+  /**
+   * Answer a tap as well as a hover.
+   *
+   * Only for anchors that do nothing else when they are pressed — a caption, a
+   * number, a tile. On a button or a link the tap that would open the bubble is
+   * the tap that presses the thing, and one of the two has to lose; on a line of
+   * text nothing is competing for it, and without this the sentence explaining a
+   * figure is readable on a desktop and simply absent on a phone.
+   */
+  tap?: boolean;
 };
 
 /** Long enough that it never fires while the pointer is only passing over. */
@@ -43,7 +53,7 @@ const GAP = 8;
  * need explaining sit inside scroll containers and clipped strips, and a
  * tooltip cropped by its own parent is worse than none.
  */
-export default function Tooltip({ content, children, side = 'top' }: Props) {
+export default function Tooltip({ content, children, side = 'top', tap = false }: Props) {
   const id = useId();
   const anchorRef = useRef<HTMLElement | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -129,6 +139,19 @@ export default function Tooltip({ content, children, side = 'top' }: Props) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, hide]);
 
+  // A bubble opened by a tap has no pointer to leave, so the next touch anywhere
+  // else is what closes it — the same way every other layer on this site behaves.
+  useEffect(() => {
+    if (!open || !tap) return;
+    const onDown = (event: PointerEvent): void => {
+      if (event.pointerType !== 'touch') return;
+      if (anchorRef.current?.contains(event.target as Node)) return;
+      hide();
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, [open, tap, hide]);
+
   if (!content) return children;
 
   // Anchors are plain DOM elements throughout, so the ref can simply be taken —
@@ -140,12 +163,18 @@ export default function Tooltip({ content, children, side = 'top' }: Props) {
     'aria-describedby': open ? id : undefined,
     onPointerEnter: (event: React.PointerEvent) => {
       children.props.onPointerEnter?.(event);
-      // Touch already has no hover; opening on a tap would fight the tap.
+      // Touch has no hover: on an anchor that answers a press it is left alone,
+      // because opening the bubble would fight the press; on one that answers
+      // nothing the tap is free, and it toggles rather than opens — the finger
+      // that opened it is the one thing certain to be in reach again.
       if (event.pointerType !== 'touch') show();
+      else if (tap) setOpen((shown) => !shown);
     },
     onPointerLeave: (event: React.PointerEvent) => {
       children.props.onPointerLeave?.(event);
-      hide();
+      // A touch pointer leaves the moment the finger lifts, which would close a
+      // bubble half a frame after the tap that asked for it.
+      if (event.pointerType !== 'touch' || !tap) hide();
     },
     onFocus: (event: React.FocusEvent) => {
       children.props.onFocus?.(event);

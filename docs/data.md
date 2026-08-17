@@ -118,8 +118,24 @@ On a course:
 | `level` | length of the longest `deps` chain ending here, globally — the column |
 | `row` | position inside the column, from the barycentric ordering |
 | `playlistCount` | number of live playlists |
-| `hours` | median `totalSeconds` across the course's playlists |
+| `hours` | median `totalSeconds` across the course's playlists — see below |
 | `hidden` | present and `true` when the course is kept but not shown — below |
+
+`hours` is a **median, not a sum**, and the difference is the whole meaning of
+the number. A course carries thirteen recordings on average and they are
+alternatives, not parts: nobody watches MIT's semester and then the MSU one to
+finish the course. So the honest answer to "how long is this course" is how long
+one recording of it runs, and the median is that answer with the two-hour
+fragment and the three-hundred-hour shelf unable to drag it. It is taken over
+every published playlist of the shard, whatever its `kind` or `completeness` —
+the same set `playlistCount` counts. No playlists, no estimate: `hours` is 0 and
+the interface prints nothing rather than «≈0 ч».
+
+Everything downstream inherits that reading. A domain's `hours` is the sum of
+its courses' medians — one recording of each, not the whole shelf; a path costs
+the sum along its chain; and «осталось» in the profile is the same sum over the
+courses not yet marked done. What the interface makes of it — and where it says
+so — is in [interface.md](interface.md#the-course-panel).
 
 Transitive closures are **not** shipped. `level(dep) < level(course)` holds by
 construction, so the client walks `deps` and sorts by level to get a valid study

@@ -332,6 +332,47 @@ everything that points into it, not whether this particular sender has its cards
 drawing that can only cover what survived a filter is worse than none: it
 answers with a subset and does not say that it is one.
 
+## A derived number carries the rule that produced it, at every place it is printed
+
+«Примерная длительность курса в часах» was a caption that named the number and
+said nothing about it. The number is a **median** over the recordings of a
+course, and a reader who assumes a sum — the obvious assumption, since a course
+is a list of playlists — reads «≈33 ч» as a tenth of what they think it is. Same
+for «осталось ≈43 ч»: it drops the courses marked done and counts the one in
+hand whole, so it can sit unmoved for a fortnight above a bar that is visibly
+filling.
+
+The fix is not one better caption. Each figure gets **one** sentence stating the
+rule, kept in `ui.legend.*`, and that same key is attached everywhere the figure
+appears — the chip on the panel, the path line, the profile. Two facts never
+share a key, however alike the words: «осталось» over a path is the catalogue's
+estimate for what is unticked, «осталось» over a recording is its unwatched
+seconds, and one sentence covering both would be false in one of the two places.
+
+Three things fell out of it that are the general part:
+
+- **The seam is where the shapes already differ.** `Chip` renders a link, a
+  button or a `span`, and only the `span` — a label, which answers nothing when
+  pressed — takes the new tap-to-explain. Sorting by "does this element already
+  own its press" is what keeps the bubble from stealing one.
+- **Hover-only is desktop-only.** `Tooltip` refused touch outright, so every
+  sentence in the product was unreadable on a phone; the `tap` prop opens the
+  same bubble on a tap and the next touch elsewhere closes it. Before adding one
+  more `title=` or hint, check the reader can reach it on the device they are on.
+- **Where hover cannot reach, say it in the open.** A goal card in the profile
+  is one press with an overlay across the whole card — nothing under it can be
+  hovered. Wrapping the line in a tooltip there would have been dead markup, so
+  the rule went into the visible line under the section heading instead.
+
+Rejected: explaining it once in a legend popover and leaving the figures bare.
+The legend is three screens away by the time the question comes up, and the
+question comes up *at the number*.
+
+**Generally:** a figure computed by a rule the reader cannot re-derive is
+incomplete until the rule travels with it. Write the sentence once, key it to
+the fact rather than to the screen, and attach it at every site — then check the
+site can actually show it.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

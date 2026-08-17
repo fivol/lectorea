@@ -8,6 +8,7 @@ import { percent, useWatchedTotals } from '@/lib/progress';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
+import Tooltip from '@/components/Tooltip';
 import { WeekGoalRow } from '@/components/WeekGoal';
 
 /**
@@ -87,10 +88,17 @@ export default function ProfileStats() {
         <div className="surface p-3">
           <div className="mb-2 flex items-baseline gap-2">
             <h4 className="text-sm font-medium">{t('ui.profile.stats.goalPath')}</h4>
+            {/* The one figure on this screen that is arrived at rather than
+                counted: it is the catalogue's estimates for the courses of every
+                goal, added up over what is not ticked off, with a prerequisite
+                two goals share paid for once. None of that is legible in «≈78 ч»,
+                and a number nobody can reproduce is a number nobody believes. */}
             {goals.remainingHours > 0 ? (
-              <span className="num ml-auto text-xs text-ink-faint">
-                {t('ui.profile.remaining', { hours: formatHours(goals.remainingHours) })}
-              </span>
+              <Tooltip content={t('ui.legend.remainingGoals')} tap>
+                <span className="num ml-auto cursor-help text-xs text-ink-faint">
+                  {t('ui.profile.remaining', { hours: formatHours(goals.remainingHours) })}
+                </span>
+              </Tooltip>
             ) : null}
           </div>
           <ProgressBar
