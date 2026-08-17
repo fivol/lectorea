@@ -11,6 +11,7 @@ import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import Tooltip from '@/components/Tooltip';
+import Forecast from '@/components/game/Forecast';
 import { StatusMark } from './CourseMarks';
 
 type Props = {
@@ -121,11 +122,16 @@ export default function PathBlock({
               a forty-hour prerequisite it is still charging forty, because the
               hours come from the catalogue and the ticks are in the bar above.
               The bubble is the only place that can say so. */}
-          <Tooltip content={t('ui.legend.remaining')} tap>
-            <p className="num mt-1 w-fit cursor-help text-[11px] text-ink-faint">
-              {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
-            </p>
-          </Tooltip>
+          <p className="num mt-1 flex flex-wrap items-baseline gap-x-1.5 text-[11px] text-ink-faint">
+            <Tooltip content={t('ui.legend.remaining')} tap>
+              <span className="w-fit cursor-help">
+                {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
+              </span>
+            </Tooltip>
+            {/* [game:weeks] The same figure in the reader's own weeks — hours
+                are what is left, and this is when. */}
+            <Forecast seconds={remainingHours * 3600} className="before:pr-1.5 before:content-['·']" />
+          </p>
         </div>
       ) : null}
 

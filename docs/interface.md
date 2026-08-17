@@ -776,6 +776,16 @@ at every site.
   [the rule about derived figures](agents/practices.md#a-derived-number-carries-the-rule-that-produced-it-at-every-place-it-is-printed).
   Nothing under two weeks, and no date past a year.
 
+  **And the same division follows «осталось» wherever it is printed** — the
+  path in the panel, the goals bar in the profile, a goal card, a course being
+  studied: «осталось ≈37 ч · ≈2 месяца». Hours are the one unit in which "how
+  much is left" is not an answer, since forty of them are a fortnight for one
+  reader and most of a year for another. The unit follows the size of the
+  answer — study days up to a fortnight, then weeks, then months, and «больше
+  двух лет» past the point where a number stops being information. Study days
+  rather than days, and only where a day's goal exists to divide by: a rest day
+  is not a day this counts.
+
 What is deliberately **not** here: badges, points, levels and a shelf of
 trophies. The catalogue cannot honestly certify anything, and a monument says
 nothing about whether anybody is still studying — which is the same argument

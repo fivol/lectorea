@@ -187,8 +187,16 @@ export function WeekGoalRow() {
 
   return (
     <div className="mt-2 space-y-2 border-t border-line pt-2">
+      {/*
+        With no goal set the heading names what the ladder under it offers, and
+        that is a **study day** — the row is «15 м … 120 м», and «Цель на
+        неделю» over tens of minutes reads as a target nobody could take
+        seriously. It is the study day rather than the day because the goal is
+        only ever measured against the days somebody actually studies: a rest
+        day does not fail it, it is simply not one of the five.
+      */}
       <div className="flex items-baseline gap-2 text-xs text-ink-faint">
-        {goal ? <GoalName goal={goal} size={12} detail /> : <span>{t('ui.profile.goal.week')}</span>}
+        {goal ? <GoalName goal={goal} size={12} detail /> : <span>{t('ui.profile.goal.day')}</span>}
         <Button
           variant="ghost"
           small
@@ -220,7 +228,7 @@ export function WeekGoalRow() {
         <div className="space-y-1.5">
           <Segmented
             value={String(day?.minutes ?? 0)}
-            label={t('ui.profile.goal.perDay')}
+            label={t('ui.profile.goal.day')}
             options={[
               { value: '0', label: t('ui.profile.goal.off') },
               // Short forms — «45 м» — because seven full ones do not fit a

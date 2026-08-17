@@ -8,6 +8,7 @@ import { percent, useCourseProgress } from '@/lib/progress';
 import CourseArt from '@/components/CourseArt';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
+import Forecast from '@/components/game/Forecast';
 import { useProfileNavigation } from './navigate';
 
 /**
@@ -121,8 +122,10 @@ function PathMetrics({ course, steps }: { course: BuiltCourse; steps?: string[] 
           with a full bar reading «3 из 3», and «осталось ≈0 ч» under it is
           a line that exists to be ignored. */}
       {remainingHours > 0 ? (
-        <p className="num mt-1 text-xs text-ink-faint">
+        <p className="num mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xs text-ink-faint">
           {t('ui.profile.remaining', { hours: formatHours(remainingHours) })}
+          {/* [game:weeks] */}
+          <Forecast seconds={remainingHours * 3600} className="before:pr-1.5 before:content-['·']" />
         </p>
       ) : null}
     </>
@@ -160,9 +163,13 @@ function CourseMetrics({ course }: { course: BuiltCourse }) {
         })}`}
       />
       {left > 60 ? (
-        <p className="num mt-1 truncate text-xs text-ink-faint">
-          {t('ui.profile.remaining', { hours: formatHours(hoursFromSeconds(left)) })} ·{' '}
-          {progress.playlist.title}
+        <p className="num mt-1 flex items-baseline gap-x-1.5 truncate text-xs text-ink-faint">
+          {t('ui.profile.remaining', { hours: formatHours(hoursFromSeconds(left)) })}
+          {/* [game:weeks] Before the recording's name rather than after it: the
+              name is what truncates on a narrow card, and a horizon cut in half
+              by an ellipsis is worse than one that pushed the title. */}
+          <Forecast seconds={left} className="shrink-0 before:pr-1.5 before:content-['·']" />
+          <span className="min-w-0 truncate">· {progress.playlist.title}</span>
         </p>
       ) : null}
     </>

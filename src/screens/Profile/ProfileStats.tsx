@@ -16,6 +16,7 @@ import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import Tooltip from '@/components/Tooltip';
+import Forecast from '@/components/game/Forecast';
 import { WeekGoalRow } from '@/components/WeekGoal';
 
 /**
@@ -101,11 +102,18 @@ export default function ProfileStats() {
                 two goals share paid for once. None of that is legible in «≈78 ч»,
                 and a number nobody can reproduce is a number nobody believes. */}
             {goals.remainingHours > 0 ? (
-              <Tooltip content={t('ui.legend.remainingGoals')} tap>
-                <span className="num ml-auto cursor-help text-xs text-ink-faint">
-                  {t('ui.profile.remaining', { hours: formatHours(goals.remainingHours) })}
-                </span>
-              </Tooltip>
+              <span className="num ml-auto flex items-baseline gap-x-1.5 text-xs text-ink-faint">
+                <Tooltip content={t('ui.legend.remainingGoals')} tap>
+                  <span className="cursor-help">
+                    {t('ui.profile.remaining', { hours: formatHours(goals.remainingHours) })}
+                  </span>
+                </Tooltip>
+                {/* [game:weeks] */}
+                <Forecast
+                  seconds={goals.remainingHours * 3600}
+                  className="before:pr-1.5 before:content-['·']"
+                />
+              </span>
             ) : null}
           </div>
           <ProgressBar

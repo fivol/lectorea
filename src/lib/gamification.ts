@@ -420,6 +420,51 @@ export type Plan = {
 const PLAN_MAX_WEEKS = 52;
 
 /**
+ * The same division, said in whichever unit the answer is actually in.
+ *
+ * «осталось ≈119 ч» is printed in four places — the path in the panel, the
+ * goals bar, a goal card, a course being studied — and hours are the one unit
+ * in which none of those is an answer: nobody knows whether 119 hours is a
+ * fortnight or a year without knowing how they study. Divided by the reader's
+ * own pace it becomes a horizon, and the unit follows the size of it, because
+ * «≈159 учебных дней» and «≈0,2 месяца» are both arithmetically correct and
+ * neither is something a person says.
+ *
+ * Study days rather than days, and only where a day's goal exists to divide
+ * by: a rest day is not a day this counts, which is the whole reason the goal
+ * is stored as a day and a number of days.
+ */
+export type Horizon =
+  | { unit: 'day' | 'week' | 'month'; value: number }
+  /** Past the point where a number is worth printing — see `HORIZON_MAX_MONTHS`. */
+  | { unit: 'over' };
+
+/** A fortnight of weeks is where days stop being countable. */
+const HORIZON_DAY_WEEKS = 2;
+/** And where weeks do. Ten of them is «два с половиной месяца» said the long way. */
+const HORIZON_WEEK_LIMIT = 8;
+const WEEKS_IN_MONTH = 4.345;
+/** Beyond two years the figure says «not soon» and nothing else, so it says that. */
+const HORIZON_MAX_MONTHS = 24;
+
+export function horizonFor(
+  remainingSeconds: number,
+  pace: Pace | null,
+  dayGoalSeconds: number | null
+): Horizon | null {
+  if (!pace || remainingSeconds <= 0 || pace.secondsPerWeek <= 0) return null;
+  const weeks = remainingSeconds / pace.secondsPerWeek;
+
+  if (dayGoalSeconds && weeks <= HORIZON_DAY_WEEKS) {
+    return { unit: 'day', value: Math.max(1, Math.ceil(remainingSeconds / dayGoalSeconds)) };
+  }
+  if (weeks <= HORIZON_WEEK_LIMIT) return { unit: 'week', value: Math.max(1, Math.ceil(weeks)) };
+
+  const months = Math.round(weeks / WEEKS_IN_MONTH);
+  return months > HORIZON_MAX_MONTHS ? { unit: 'over' } : { unit: 'month', value: months };
+}
+
+/**
  * What is left of a recording, in weeks of the reader's own pace.
  *
  * Null under two weeks: «≈1 неделя» over a recording somebody is halfway
