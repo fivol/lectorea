@@ -306,6 +306,32 @@ colour; a component that lives in one place may name one. And when a reader
 reports two or three ugly things in the same corner of the screen, look for the
 single assumption underneath before fixing them one at a time.
 
+## A pointer that names a card must have a card to point at
+
+The course panel names neighbours from wherever they are filed, and hovering one
+lifts its card in the columns. Under a field filter «Открывает путь к» almost
+never had a card to lift — what a course opens is usually somebody else's
+subject — so the echo landed on nothing, silently, which is what made it a bug
+rather than a limit.
+
+The narrow fix is to teach that one list to borrow its courses in. The one taken
+makes the **echo the canvas's claim**: whatever the panel points at gets a seat
+for as long as it is pointed at (`preview` in `CoursesScreen`). «Также полезно»,
+«Рядом» and the path steps come right with the same three lines, and a list added
+later is fixed before it is written.
+
+The same reading settled the forward curves, which went at the same time. They
+could only ever be drawn to the descendants the filter happened to keep, while
+the prerequisites behind a course are borrowed in whole — so one half of the
+picture was complete and the other half looked it. Now the relation is drawn
+when the course is opened, from the end where it is a prerequisite.
+
+**Generally:** when one view signals another, ask what the *receiving* view owes
+everything that points into it, not whether this particular sender has its cards
+— fixed at the joint, one class of list stops needing its own version. And a
+drawing that can only cover what survived a filter is worse than none: it
+answers with a subset and does not say that it is one.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

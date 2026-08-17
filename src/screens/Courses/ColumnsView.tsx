@@ -33,10 +33,13 @@ type Props = {
  * order things must be studied in. That is the whole claim of the screen, and
  * it survives without a single line being drawn.
  *
- * Lines are drawn for one thing only: the chain of the course in hand. Over two
- * hundred cards they were noise, crossing each other far more than they
- * explained; over the six or seven cards of one path they answer the question
- * the columns cannot — *which* of the cards on the left this one needs.
+ * Lines are drawn for one thing only: the chain *behind* the course in hand.
+ * Over two hundred cards they were noise, crossing each other far more than
+ * they explained; over the six or seven cards of one path they answer the
+ * question the columns cannot — *which* of the cards on the left this one
+ * needs. What the course opens up is the same question asked from the other
+ * end, and it is answered by opening that course, not by a second bundle of
+ * lines going the other way — see `links`.
  *
  * Rows line up across columns because `row` is the card's index inside its
  * column and every card is the same height — so the build's ordering, which
@@ -130,6 +133,10 @@ export default function ColumnsView({
         if (upstream.has(dep)) edges.push({ from: dep, to: id });
       }
     }
+    // What the selection opens up is not drawn any more — see `links` — but it
+    // still decides where those cards stand: without the edge, a course pulled
+    // onto the canvas from another field keeps its catalogue row and lands as
+    // far from the course that opened it as its home band happens to be.
     for (const id of opened) edges.push({ from: focus, to: id });
 
     return { focus, upstream, opened, edges };
@@ -168,13 +175,24 @@ export default function ColumnsView({
    * A selection's, and nothing else's — pointing at a card asks a question of
    * the cards, not of the curves already on screen.
    *
-   * Two sides, and only two: the tree of prerequisites that leads to the
-   * selection, and one hop out to what it opens. Every edge therefore touches
-   * the selected course or something on the way to it. Drawing *every* edge
-   * between lit cards also caught the links among the courses it opens to each
-   * other — biochemistry into molecular biology while cell biology was the one
-   * selected — and those are both the longest sweeps on screen and the ones
-   * that answer a question nobody asked.
+   * One side, not two: the tree of prerequisites that leads to the selection.
+   * Every edge therefore touches the selected course or something on the way to
+   * it. Drawing *every* edge between lit cards also caught the links among the
+   * courses it opens to each other — biochemistry into molecular biology while
+   * cell biology was the one selected — and those are both the longest sweeps
+   * on screen and the ones that answer a question nobody asked.
+   *
+   * The fan forward — one line out of the selection into each course it opens —
+   * went the same way, and for a harder reason: it could only ever be drawn
+   * over what the filter had left standing. Prerequisites are borrowed back
+   * onto the canvas in full, so the tree behind a course is complete or it is
+   * not drawn at all; the courses ahead are not borrowed, so the fan showed
+   * whichever of them the current field happened to contain and read as the
+   * whole answer. «Открывает путь к» in the panel is the whole answer, and it
+   * costs a click to make it drawn as well: the course opened becomes the
+   * selection, and the same relation is then a prerequisite of it — drawn the
+   * one way this screen draws anything, right to left, with everything it
+   * stands on brought in behind it.
    *
    * How many of them are drawn is the reader's, and `fullGraph` is the switch.
    * Off, the chain is cut back to a tree rooted at the selected course: every
@@ -231,13 +249,8 @@ export default function ColumnsView({
 
     const out: Link[] = [];
     for (const edge of edges) {
-      if (opened.has(edge.to)) {
-        // Downstream is a fan, not a graph: the selection is a prerequisite of
-        // each of these by definition, and nothing further is drawn. A fan is
-        // already a tree, so the switch has nothing to say about it.
-        out.push({ from: edge.from, to: edge.to, depth: 0 });
-        continue;
-      }
+      // Forward edges carry the placement and nothing else.
+      if (opened.has(edge.to)) continue;
       // A card whose every dependant is off the canvas has no parent to be
       // hung under, so it keeps what it has rather than being cut adrift.
       if (!fullGraph && parentOf.has(edge.from) && parentOf.get(edge.from) !== edge.to) continue;

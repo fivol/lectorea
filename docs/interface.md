@@ -290,7 +290,7 @@ dropped the moment the selection changes. With nothing selected the field still
 decides what the columns hold.
 
 The third is the lightest of the three and the only one no click pays for.
-Pointing at any course the panel names — «Открывает путь к», «Рекомендуется»,
+Pointing at any course the panel names — «Открывает путь к», «Также полезно»,
 «Рядом», a step of the path — lifts its card in the columns, and where the
 filter is not showing that card, it fades one in where the course belongs and
 takes it away again on mouse-out. «Открывает путь к» is where it matters most:
@@ -362,7 +362,11 @@ inside it; here the shard is in hand, so the offer is the lecture itself.
   direction, so they use the same card and sit next to each other, whichever
   field the neighbour comes from, with the full chain below the pair. On the
   panel each list caps its height and scrolls inside itself: a course that opens
-  eight others must not push its own recordings off the screen.
+  eight others must not push its own recordings off the screen. Pointing at any
+  of these cards shows the course where it stands in the columns, borrowing it
+  in if the filter is not showing it
+  ([the columns](#filters)); pressing it opens that course, and what was
+  «открывает путь к» is drawn as «опирается на» from the other end.
 
   On a phone the three of them fold into one line — **Связи и путь**, and under
   it which course to start with (the first step still unmarked, never one that

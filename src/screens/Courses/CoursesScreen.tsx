@@ -144,20 +144,47 @@ export default function CoursesScreen() {
     return chainAncestors(catalog, selected.id, canvas);
   }, [catalog, selected, visible, guestIds]);
 
-  const onCanvas = useMemo(() => {
+  /** What the filter and the selection put on the canvas, before any pointer. */
+  const settled = useMemo(() => {
     if (!guestIds.size && !borrowed.size) return visible;
     return new Set([...visible, ...guestIds, ...borrowed]);
   }, [visible, guestIds, borrowed]);
 
   /**
-   * Every card standing in a column the filter did not put it in — the trail
-   * and the borrowed prerequisites alike. Both are foreign to the filter, so
-   * both name the field they came from.
+   * The course the panel is pointing at, given a seat for as long as the
+   * pointer is on it.
+   *
+   * Hovering a name in the panel lifts the card it means — and where the filter
+   * is not showing that card, it used to lift nothing at all, silently. Every
+   * list in the panel names courses from wherever they happen to be filed:
+   * «Открывает путь к» is the one that leaves the field almost every time,
+   * since what a course opens is usually somebody else's subject, and «Также
+   * полезно» and «Рядом» do it too.
+   *
+   * So the echo is the canvas's business and not only the card's: whatever the
+   * panel points at stands in its column while it is being pointed at, faded in
+   * where it belongs, tagged with the field it came from, and gone again on
+   * mouse-out. One card, not a chain — this answers «where does that one
+   * stand», and the chain behind it is what clicking it is for.
+   */
+  const echoId = useUi((state) => state.echoCourseId);
+  const preview = selected && echoId && !settled.has(echoId) ? echoId : null;
+
+  const onCanvas = useMemo(
+    () => (preview ? new Set([...settled, preview]) : settled),
+    [settled, preview]
+  );
+
+  /**
+   * Every card standing in a column the filter did not put it in — the trail,
+   * the borrowed prerequisites and the previewed course alike. All are foreign
+   * to the filter, so all name the field they came from.
    */
   const outsiders = useMemo(() => {
-    if (!borrowed.size) return guestIds;
-    return new Set([...guestIds, ...borrowed]);
-  }, [guestIds, borrowed]);
+    const foreign = borrowed.size ? new Set([...guestIds, ...borrowed]) : guestIds;
+    if (!preview) return foreign;
+    return new Set([...foreign, preview]);
+  }, [guestIds, borrowed, preview]);
 
   const onSelect = useCallback(
     (id: string) => {
