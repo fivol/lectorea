@@ -13,8 +13,9 @@ import { formatDuration, formatHours, formatMinutes, hoursFromSeconds } from '@/
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
 import { percent, playlistProgress } from '@/lib/progress';
 import { courseHref, useCatalogParams } from '@/lib/url';
-import { embedSrc, isResumable, useYouTubeTracking, watchUrl } from '@/lib/youtube';
+import { embedSrc, isResumable, useYouTubePlayer, watchUrl } from '@/lib/youtube';
 import { useProfile, type WatchContext } from '@/store/profile';
+import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import { FactTile, FactTiles, Meter } from '@/components/Facts';
@@ -108,6 +109,19 @@ export default function PlaylistModal({
   useEffect(() => setPlaying(null), [playlist.id]);
 
   /**
+   * While a lecture runs, the keyboard is the player's.
+   *
+   * The app's single letters are safe on a page being read and not on one being
+   * watched: `m` swaps map and columns, which closes the player mid-lecture,
+   * and it sits one key away from the `k` and `l` the player answers.
+   */
+  const holdKeyboard = useUi((state) => state.holdKeyboard);
+  useEffect(() => {
+    if (playing === null) return;
+    return holdKeyboard();
+  }, [playing, holdKeyboard]);
+
+  /**
    * The playlist to hand the player, or nothing.
    *
    * A few perfectly public playlists are met with «This video is unavailable»
@@ -124,9 +138,12 @@ export default function PlaylistModal({
    * on to by itself can finish the playlist, and finishing the playlist is what
    * finishes the course.
    */
-  const { onLoad, rate, rates, setRate } = useYouTubeTracking({
+  const { onLoad, rate, rates, setRate } = useYouTubePlayer({
     enabled: playing !== null,
     iframe: frame,
+    // Where the keyboard goes back to when a click hands it to YouTube: the
+    // dialog itself, which is where it was when the player opened.
+    home: trapRef,
     // The speed is the reader's, not the lecture's: it is picked once and
     // every frame after it — the next part, the dialog reopened — starts there.
     rate: savedRate,

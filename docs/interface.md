@@ -518,18 +518,38 @@ the milestone.
 
 **Speed.** A strip of buttons under the frame — «0,5× … 2×» — plus `Shift + .`
 and `Shift + ,`, and the choice is remembered: it belongs to the reader, not to
-the lecture, so the next part and the next session open at it. It has to be
-ours, and that is the whole reason it exists: the embed is a frame on another
-origin, which only sees a key press while it holds focus, so YouTube's own
-speed shortcut goes nowhere the moment the reader touches anything of this
-page's — including right after the player opens, when nothing has been clicked
-inside it at all.
+the lecture, so the next part and the next session open at it.
 
 The rates are the ones the player says it has, not a list of our own. **2× is
 its ceiling**, and it does not refuse anything above it — `setPlaybackRate(3)`
 is answered with a frame reporting 2 — so a button offering 3× would be a
-button that lies. Reading the player's list also means the strip grows by
-itself on the day the ceiling moves.
+button that lies. (A browser extension can go past it because it runs *inside*
+`youtube.com` and sets `playbackRate` on the `<video>` element directly. A page
+embedding the player cannot reach across origins to that element, and the only
+door it has — the player's own API — is the one that rounds down.) Reading the
+player's list also means the strip grows by itself on the day the ceiling moves.
+
+**The keyboard is the page's, not the frame's.** A click on the video hands
+focus to another origin, and from that moment every key press is delivered
+inside it: `Shift + .` at a playing lecture did nothing at all, because nothing
+on this side ever saw the key. So focus is taken back the moment it crosses
+over — the click still lands, since play, pause, the seek bar and the settings
+menu need the pointer and not the keyboard — and everything the player would
+have answered is answered here instead, over the same command channel:
+
+| | |
+|---|---|
+| `Space`, `K` | pause and play |
+| `←` `→` | ∓5 seconds |
+| `J` `L` | ∓10 seconds |
+| `F` | fullscreen |
+| `Shift + .` `Shift + ,` | faster, slower |
+
+Tabbing into the player is left alone: somebody who arrived there with `Tab`
+means to work YouTube's own controls from the keyboard, and bouncing them back
+out is how a page stops being usable without a mouse. While a lecture is
+playing the app's own single letters stand down, so `m` cannot close the player
+from one key away from the `k` and `l` it answers.
 
 **Coming back.** The embedded player is followed through the `postMessage`
 handshake that a YouTube embed answers when it is loaded with `enablejsapi=1` —
@@ -716,9 +736,13 @@ for the next, so it lives in memory for the length of the visit.
 | `/` | search |
 | `t` | theme |
 | `m` | swap map and columns |
-| `Shift + .` / `Shift + ,` | faster / slower, in an open player |
+| `Space` `K` · `←` `→` · `J` `L` · `F` | in a playing lecture: pause, ∓5 s, ∓10 s, fullscreen |
+| `Shift + .` / `Shift + ,` | faster / slower, in a playing lecture |
 | `Esc` | close the top layer |
 | `?` | list all of them |
 
 The letters are matched in both alphabets and the speed pair by the physical
-key, so nothing here depends on which layout is switched on.
+key, so nothing here depends on which layout is switched on. A playing lecture
+takes the keyboard: `t` and `m` stand down until it is closed, and the player's
+own keys work whether or not the reader has clicked inside the frame — see
+[the player](#progress-down-to-the-lecture).

@@ -35,8 +35,22 @@ export type UiStore = {
    * visit is what lets the way back from the columns land where it was left.
    */
   mapView: MapView;
+  /**
+   * How many layers are up that the keyboard belongs to — in practice, whether
+   * a lecture is playing.
+   *
+   * The app's single-letter shortcuts are safe on a page being read and not on
+   * one being watched: `m` swaps map and columns, which closes the player and
+   * loses the lecture, and it is one key away from `k` and `l`, which the
+   * player answers. A layer that owns the keyboard says so, and they stand
+   * down for as long as it is up. A count rather than a flag, because two of
+   * them can overlap and the second one closing must not speak for the first.
+   */
+  keyboardHeld: number;
 
   setEcho: (id: string | null) => void;
+  /** Claim the keyboard for a layer; the returned function gives it back. */
+  holdKeyboard: () => () => void;
   openProfile: () => void;
   closeProfile: () => void;
   requestFocus: (courseId: string) => void;
@@ -48,8 +62,18 @@ export const useUi = create<UiStore>((set, get) => ({
   profileOpen: false,
   focusRequest: null,
   mapView: 'map',
+  keyboardHeld: 0,
 
   setEcho: (id) => set({ echoCourseId: id }),
+  holdKeyboard: () => {
+    set({ keyboardHeld: get().keyboardHeld + 1 });
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      set({ keyboardHeld: Math.max(0, get().keyboardHeld - 1) });
+    };
+  },
   openProfile: () => set({ profileOpen: true }),
   closeProfile: () => set({ profileOpen: false }),
   requestFocus: (courseId) =>

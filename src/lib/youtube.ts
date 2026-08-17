@@ -45,6 +45,22 @@ const WRITE_EVERY_MS = 5000;
  */
 export const FALLBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
+/**
+ * Slower than this is a different activity from watching a lecture, and four
+ * buttons nobody presses push the useful ones off the side of a phone.
+ */
+const RATE_FLOOR = 0.5;
+
+/**
+ * The speeds worth offering, in one place because two things offer them: the
+ * strip draws a button per rate and the keyboard steps along the same list.
+ * Whatever is playing stays in it even when it is below the floor — a control
+ * that hides the state it is in is worse than a long strip.
+ */
+export function offeredRates(rates: number[], current: number): number[] {
+  return rates.filter((value) => value >= RATE_FLOOR || value === current);
+}
+
 /** Below this there is nothing to come back to — it is the start. */
 const RESUME_FLOOR_SEC = 15;
 
@@ -148,9 +164,15 @@ type Options = {
   /** A speed the reader picked, worth remembering past this lecture. */
   onRate?: (rate: number) => void;
   /**
+   * Where the keyboard belongs when the frame takes it — the dialog's own
+   * container. See the focus effect: a click on the video hands focus to
+   * another origin, and everything typed after it disappears in there.
+   */
+  home?: React.RefObject<HTMLElement>;
+  /**
    * Throttled, plus a final one whenever the lecture or the tab changes.
    * `played` is how much of the lecture actually went past since the last
-   * report — the seek-proof measure of time spent, see `MAX_RATE`.
+   * report — the seek-proof measure of time spent, see `peak`.
    */
   onPosition: (videoId: string, sec: number, played: number) => void;
   /** Once per lecture, when enough of it is behind the reader. */
@@ -165,17 +187,18 @@ type Options = {
 };
 
 /**
- * Follows the player, reports what it sees, and carries the reader's speed back.
+ * Follows the player, reports what it sees, and owns its keyboard.
  *
  * Returns the handler for the iframe's `load` — the handshake has to go out
  * after the frame exists, and React knows when that is — alongside the playback
  * speed: what it is now, what the player will accept, and how to change it.
  */
-export function useYouTubeTracking({
+export function useYouTubePlayer({
   enabled,
   iframe,
   rate = 1,
   onRate,
+  home,
   onPosition,
   onWatched,
   onEnded,
@@ -210,6 +233,8 @@ export function useYouTubeTracking({
   const peak = useRef(rate);
 
   const current = useRef<{ id: string; sec: number } | null>(null);
+  /** Playing or not, so one key can be the pause and the play both. */
+  const running = useRef(false);
   /**
    * Where the playhead was, and when — the two ends of the last stretch of
    * watching. Reset whenever the lecture changes, so a jump to another one is
@@ -260,6 +285,25 @@ export function useYouTubeTracking({
       command(iframe, 'setPlaybackRate', [next]);
     },
     [iframe]
+  );
+
+  /**
+   * One notch along the strip, from where the player actually is — which after
+   * a rate it refused is not where the last press left us.
+   */
+  const step = useCallback(
+    (direction: 1 | -1): void => {
+      const offered = offeredRates(rates, speed.current);
+      if (!offered.length) return;
+      const nearest = offered.reduce(
+        (best, value, index) =>
+          Math.abs(value - speed.current) < Math.abs(offered[best] - speed.current) ? index : best,
+        0
+      );
+      const next = offered[Math.min(offered.length - 1, Math.max(0, nearest + direction))];
+      if (next !== undefined && next !== speed.current) setRate(next);
+    },
+    [rates, setRate]
   );
 
   /** The frame is new: the handshake goes out again, and so does the speed. */
@@ -332,6 +376,8 @@ export function useYouTubeTracking({
       if (!current.current) return;
       if (typeof sec === 'number') current.current.sec = sec;
 
+      if (info.playerState !== undefined) running.current = info.playerState === PLAYING;
+
       const at = current.current;
       const finished = info.playerState === ENDED;
       const enough =
@@ -380,6 +426,118 @@ export function useYouTubeTracking({
       from.current = null;
     };
   }, [enabled, flush, handshake, iframe]);
+
+  /**
+   * The keyboard comes back out of the frame.
+   *
+   * A click on the video hands focus to `youtube-nocookie.com`, and from that
+   * moment every key press is delivered inside it: not to a handler here — a
+   * cross-origin frame shares nothing — and not usefully to YouTube either,
+   * whose embed answers a shortcut list of its own that stops at 2×. The
+   * symptom is a reader pressing `Shift + .` at a playing lecture and nothing
+   * happening at all, which is what this is for.
+   *
+   * So the frame is allowed the click and not the keyboard: `blur` fires here
+   * the moment focus crosses over, and focus goes back to the dialog. The click
+   * has already been delivered by then — play, pause, the seek bar, the
+   * settings menu all still work, because none of them needs focus, only the
+   * pointer.
+   *
+   * It stands down for a few hundred milliseconds after `Tab`: somebody who
+   * tabbed into the player went there on purpose, to work YouTube's own
+   * controls from the keyboard, and bouncing them straight back out is how a
+   * page becomes unusable without a mouse. Switching to another window while
+   * the frame holds focus takes the same path and is harmless — the focus moves
+   * inside a page nobody is looking at, and `preventScroll` keeps even that
+   * from being visible on the way back.
+   */
+  useEffect(() => {
+    if (!enabled) return;
+    let tabbedAt = 0;
+
+    const onTab = (event: KeyboardEvent): void => {
+      if (event.key === 'Tab') tabbedAt = Date.now();
+    };
+    const onBlur = (): void => {
+      if (document.activeElement !== iframe.current) return;
+      if (Date.now() - tabbedAt < 400) return;
+      // After the current task, so the frame is done with the click first.
+      window.setTimeout(() => {
+        if (document.activeElement !== iframe.current) return;
+        home?.current?.focus({ preventScroll: true });
+      }, 0);
+    };
+
+    window.addEventListener('keydown', onTab, true);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onTab, true);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, [enabled, iframe, home]);
+
+  /**
+   * Everything the player would have answered, answered here.
+   *
+   * Taking the keyboard back (above) means taking YouTube's own shortcuts away
+   * with it, so they are given back through the command channel — the same
+   * keys, doing the same things, and now they work whether or not the reader
+   * has clicked inside the frame. `Space` steps aside for whatever control is
+   * focused: on a button it is that button's key, not the player's.
+   */
+  useEffect(() => {
+    if (!enabled) return;
+
+    const seek = (delta: number): void => {
+      const sec = current.current?.sec;
+      if (typeof sec !== 'number') return;
+      command(iframe, 'seekTo', [Math.max(0, sec + delta), true]);
+    };
+
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable)
+        return;
+
+      const key = event.key.toLowerCase();
+      // Both alphabets, the same way the app's own letter shortcuts are matched:
+      // a lecture is watched with whatever layout was left switched on.
+      const is = (latin: string, cyrillic: string): boolean => key === latin || key === cyrillic;
+
+      if (event.shiftKey) {
+        const faster = event.code === 'Period' || event.key === '>' || event.key === '.';
+        const slower = event.code === 'Comma' || event.key === '<' || event.key === ',';
+        if (!faster && !slower) return;
+        event.preventDefault();
+        step(faster ? 1 : -1);
+        return;
+      }
+
+      if (event.key === ' ' || is('k', 'л')) {
+        const focused = document.activeElement;
+        const control =
+          focused instanceof HTMLElement &&
+          ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(focused.tagName);
+        if (event.key === ' ' && control) return;
+        event.preventDefault();
+        command(iframe, running.current ? 'pauseVideo' : 'playVideo');
+        return;
+      }
+      if (event.key === 'ArrowLeft') return void (event.preventDefault(), seek(-5));
+      if (event.key === 'ArrowRight') return void (event.preventDefault(), seek(5));
+      if (is('j', 'о')) return void (event.preventDefault(), seek(-10));
+      if (is('l', 'д')) return void (event.preventDefault(), seek(10));
+      if (is('f', 'а')) {
+        event.preventDefault();
+        if (document.fullscreenElement) void document.exitFullscreen();
+        else void iframe.current?.requestFullscreen?.();
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [enabled, iframe, step]);
 
   return { onLoad, rate: shownRate, rates, setRate };
 }

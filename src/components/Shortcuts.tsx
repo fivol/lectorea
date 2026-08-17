@@ -9,11 +9,14 @@ import { IconButton, Kbd } from './ui';
 /**
  * Every shortcut in one list, so the handler and the help cannot drift apart.
  *
- * `speed` is the one whose handler is not here: it belongs to the player, which
- * is the only place it means anything, and it lives in `PlayerSpeed`. It is
- * listed here because this sheet is where a reader looks for it.
+ * `player` and `speed` are the two whose handler is not here: they belong to
+ * the player, which is the only place they mean anything, and they live in
+ * `useYouTubePlayer` — which is also what takes the keyboard off this handler
+ * while a lecture runs, so that `m` cannot close the lecture from one key away
+ * from `k` and `l`. They are listed here because this sheet is where a reader
+ * looks for them.
  */
-const KEYS = ['slash', 't', 'm', 'speed', 'question', 'escape'] as const;
+const KEYS = ['slash', 't', 'm', 'player', 'speed', 'question', 'escape'] as const;
 
 /**
  * The keyboard, for people who use one.
@@ -34,6 +37,7 @@ export default function Shortcuts() {
   const setSetting = useProfile((state) => state.setSetting);
   const prefersLight = useMediaQuery('(prefers-color-scheme: light)');
   const profileOpen = useUi((state) => state.profileOpen);
+  const held = useUi((state) => state.keyboardHeld);
 
   const [helpOpen, setHelpOpen] = useState(false);
 
@@ -47,7 +51,8 @@ export default function Shortcuts() {
       if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
 
       // A modal owns the keyboard while it is up; only `?` and Escape reach past it.
-      const layered = profileOpen || helpOpen;
+      // So does a playing lecture — see `keyboardHeld`.
+      const layered = profileOpen || helpOpen || held > 0;
 
       if (event.key === '?') {
         event.preventDefault();
@@ -68,7 +73,7 @@ export default function Shortcuts() {
 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [navigate, location.pathname, theme, prefersLight, setSetting, profileOpen, helpOpen]);
+  }, [navigate, location.pathname, theme, prefersLight, setSetting, profileOpen, helpOpen, held]);
 
   if (!helpOpen) return null;
   return <HelpSheet onClose={() => setHelpOpen(false)} label={t('ui.shortcuts.title')} />;

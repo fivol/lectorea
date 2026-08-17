@@ -266,6 +266,26 @@ laid out identically is the usual reason a screen feels like a database dump,
 and no amount of typography fixes it — the layout has to stop treating a word
 and a view count as the same thing.
 
+## Take the keyboard back, and hand every key back with it
+
+A cross-origin iframe that has been clicked owns the keyboard: the page it sits
+in receives no `keydown` at all, so the speed control worked until the reader
+touched the video and then stopped, with nothing in the console to show for it.
+The fix is two halves, and one half alone is worse than neither. Focus is
+returned to the dialog the moment it crosses into the frame — and because that
+takes YouTube's own shortcuts away with it, every one of them is given back
+through the command channel: pause, ∓5 and ∓10 seconds, fullscreen, speed.
+
+The same move then makes the app's own shortcuts dangerous, because they now
+always arrive: `m` swaps map and columns and sits one key from the `k` and `l`
+the player answers. So a layer that owns the keyboard says so (`keyboardHeld`),
+and the global letters stand down while it is up.
+
+**Generally:** when something on the page can take an input channel away from
+you, taking it back is a three-part job — take it, replace everything it was
+answering, and re-check what your own handlers now receive that they never used
+to. A partial version of this is a regression wearing a feature's clothes.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by
