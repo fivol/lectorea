@@ -184,17 +184,27 @@ is what makes the 3 mean anything, so it is `.ink-soft`.
 a surface — a lecture in the player, a playlist in the list. It is the ones that
 travel that need the mix.
 
-Keyboard focus is `2px solid var(--c-accent)` with a 2px offset, on everything
-interactive including cards. It is set once, on `:focus-visible` in the base
-layer, so nothing has to remember it.
+**There is no focus ring.** `:focus-visible` is set to `outline: none` in the
+base layer, and that is a deliberate departure from the usual advice.
 
-The one exception is `tabindex="-1"`, and it is in the base layer too. Every
-layer that traps focus — the player, the profile, the shortcut sheet, the phone
-sheet — opens by focusing its own container, and the ring then runs around the
-whole dialog: a green line down all four edges that reads as a selected object
-and cannot be dismissed. Nothing is hidden by taking it off, because `-1` means
-the element is out of the tab order: Tab never lands there, and every control
-that Tab does land on keeps its ring.
+It used to be `2px solid var(--c-accent)` at a 2px offset on everything
+interactive, cards included. What settled it is that the browser, not the
+design, decides when `:focus-visible` matches: a press with the mouse leaves
+nothing, but the next key stroke of any kind — a space to scroll the panel is
+enough — lights up whatever was pressed last and leaves it lit, with no gesture
+that puts it away. A reader who has never touched Tab ends up with a green
+rectangle around a fold they opened a minute ago.
+
+What is given up with it is real: somebody working the keyboard now has to read
+their position off the hover styling, and not every control has one. Restoring
+it is one rule in `src/index.css` — the block is still there, with `none` where
+the outline was.
+
+Two focus signals are kept, because neither is a rectangle drawn round a
+control. A text field takes the accent on `:focus-within`, which belongs to the
+capsule and marks where typing goes; a map territory takes the accent on its own
+outline (`.map-territory:focus-visible .territory-edge`), because its shape is
+not a box and a bounding rectangle would point at open sea.
 
 ## Motion
 
@@ -305,6 +315,11 @@ thing carrying it. The eight glyphs this needed (`eye`, `like`, `comment`,
 - **`Tooltip`** — the explained state. Portalled, 400ms in and nothing on the
   way out, opens on keyboard focus, closes on Escape. Use it instead of `title`
   for anything a reader has to *understand* rather than merely identify.
+  `tap` adds the touch half: a tap opens it and the next touch elsewhere closes
+  it, which is the only way the sentence exists at all on a phone. It goes on
+  anchors that answer no press of their own — a caption, a number, a label chip
+  (`Chip` turns it on for its `span` branch and leaves the link and button
+  branches alone), never on something whose press the bubble would steal.
 - **`EmptyState`** — icon, one line, and the click that would fill it. An empty
   panel is indistinguishable from a broken one.
 - **`ProgressBar`** — grows from zero the first time it is on screen.

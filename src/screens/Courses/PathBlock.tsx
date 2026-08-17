@@ -187,18 +187,43 @@ export default function PathBlock({
                           ← {t('ui.path.goal')}
                         </span>
                       ) : (
-                        <span
-                          className="num shrink-0 text-[11px]"
-                          // Text, so the field's hue is taken at reading strength:
-                          // a biome ramp runs from basalt to chalk and both ends
-                          // vanish into one scheme or the other.
-                          style={{ color: domain ? inkOn(domain.color, scheme) : undefined }}
-                          title={new Intl.NumberFormat(lang).format(step.hours)}
+                        /* The row's own estimate, and the same sentence the chip
+                           on the panel carries — the summary line above explains
+                           the total, and the reader asking what «22 ч» is has
+                           their pointer here, not up there. The exact figure
+                           leads it: the row is rounded to «22 ч» and the bubble
+                           is the only place the 21,9 behind it can be read. It
+                           used to be a bare `title`, which is the browser's
+                           unstyled tooltip and says a number with no sentence. */
+                        <Tooltip
+                          // A course with no recordings prints nothing here, and
+                          // a bubble explaining an empty space is worse than
+                          // none — falsy content switches the tooltip off.
+                          content={
+                            step.hours ? (
+                              <>
+                                <span className="num">
+                                  {t('ui.playlist.hours', {
+                                    n: new Intl.NumberFormat(lang).format(step.hours),
+                                  })}
+                                </span>
+                                <span className="mt-1 block">{t('ui.legend.hours')}</span>
+                              </>
+                            ) : null
+                          }
                         >
-                          {step.hours
-                            ? t('ui.playlist.hours', { n: formatHours(step.hours) })
-                            : ''}
-                        </span>
+                          <span
+                            className="num shrink-0 cursor-help text-[11px]"
+                            // Text, so the field's hue is taken at reading strength:
+                            // a biome ramp runs from basalt to chalk and both ends
+                            // vanish into one scheme or the other.
+                            style={{ color: domain ? inkOn(domain.color, scheme) : undefined }}
+                          >
+                            {step.hours
+                              ? t('ui.playlist.hours', { n: formatHours(step.hours) })
+                              : ''}
+                          </span>
+                        </Tooltip>
                       )}
                     </Link>
                     {/* How far into this one step, along the foot of its row.

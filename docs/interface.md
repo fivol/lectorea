@@ -409,10 +409,12 @@ inside it; here the shard is in hand, so the offer is the lecture itself.
   those medians added along the chain, the finished courses included, and
   «осталось ≈43 ч» is the same sum with the ticked-off ones dropped — a course
   under way still counts whole, because the lectures inside it move the bar and
-  not the estimate. Each of the three figures carries that sentence itself, in
-  the tooltip: a number arrived at by a rule nobody can see is a number nobody
-  believes, and the reader who wonders is looking at the figure, not at this
-  page. On a phone, where there is no hover, the label chips and the quiet
+  not the estimate. Every one of those figures carries the sentence itself, in
+  the tooltip — the chip, the summary line, «осталось», and each step's own
+  hours down the list, where the bubble also holds the unrounded number the row
+  is rounded from. A number arrived at by a rule nobody can see is a number
+  nobody believes, and the reader who wonders is looking at the figure, not at
+  this page. On a phone, where there is no hover, the label chips and the quiet
   captions open their bubble on a tap.
 
 - **Playlists** — the concrete recordings of that course, sorted by a bayesian
