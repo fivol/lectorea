@@ -229,6 +229,25 @@
     border-radius: 4px;
   }
 
+  /*
+   * …except on the boxes that are only focusable so that something can put
+   * focus in them.
+   *
+   * Every layer that traps focus — the player, the profile, the shortcut sheet,
+   * the phone sheet — starts by focusing its own container, which carries
+   * `tabindex="-1"` for exactly that reason and nothing else. The rule above
+   * then draws a two-pixel accent line around the whole dialog, which reads as
+   * a selected object rather than as "the keyboard is in here", and there is
+   * nothing the reader can do to make it go away.
+   *
+   * Nothing is lost by it: `-1` means the element is out of the tab order, so
+   * this can never hide where Tab actually went — that is a control, and
+   * controls keep their ring.
+   */
+  [tabindex='-1']:focus-visible {
+    outline: none;
+  }
+
   ::selection {
     background: var(--c-accent);
     color: var(--c-canvas);

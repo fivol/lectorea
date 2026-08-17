@@ -224,6 +224,29 @@ a dangling reference.
 Reconcile it against what you sent, and never let a free-text field become a key
 without checking it resolves.
 
+## A third party is asked what it can do, on a page built to ask it
+
+The speed control needed to know two things about the YouTube embed, and
+neither is in its documentation in a form worth believing: which rates it
+accepts, and what it does with one it does not. Twenty lines of `postMessage`
+in a throwaway page under `public/` answered both in five minutes —
+`availablePlaybackRates` is `[0.25 … 2]`, and `setPlaybackRate(3)` **is not
+refused**: the player answers with a frame reporting 2. A control built on the
+assumption that asking for 3× fails loudly would have shipped a button that
+quietly does something else.
+
+The probe is worth more than reading about the API because it also settles the
+shape of the answers — which event carries the rate, whether it repeats — and
+those are what the code has to be written against. It is deleted before the
+commit; what it found goes into the comments, and the list it read goes into
+the code as the source of the buttons rather than as a constant.
+
+**Generally:** when a third party's limit decides what an interface may offer,
+measure the limit before drawing the interface, and then let the interface be
+built from what the thing reports rather than from what was measured. A tool
+that silently rounds is worse than one that errors, and only a probe tells the
+two apart.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

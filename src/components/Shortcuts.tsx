@@ -6,8 +6,14 @@ import { resolveTheme, useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import { IconButton, Kbd } from './ui';
 
-/** Every shortcut in one list, so the handler and the help cannot drift apart. */
-const KEYS = ['slash', 't', 'm', 'question', 'escape'] as const;
+/**
+ * Every shortcut in one list, so the handler and the help cannot drift apart.
+ *
+ * `speed` is the one whose handler is not here: it belongs to the player, which
+ * is the only place it means anything, and it lives in `PlayerSpeed`. It is
+ * listed here because this sheet is where a reader looks for it.
+ */
+const KEYS = ['slash', 't', 'm', 'speed', 'question', 'escape'] as const;
 
 /**
  * The keyboard, for people who use one.

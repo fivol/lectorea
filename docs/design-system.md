@@ -148,6 +148,14 @@ Keyboard focus is `2px solid var(--c-accent)` with a 2px offset, on everything
 interactive including cards. It is set once, on `:focus-visible` in the base
 layer, so nothing has to remember it.
 
+The one exception is `tabindex="-1"`, and it is in the base layer too. Every
+layer that traps focus — the player, the profile, the shortcut sheet, the phone
+sheet — opens by focusing its own container, and the ring then runs around the
+whole dialog: a green line down all four edges that reads as a selected object
+and cannot be dismissed. Nothing is hidden by taking it off, because `-1` means
+the element is out of the tab order: Tab never lands there, and every control
+that Tab does land on keeps its ring.
+
 ## Motion
 
 Two durations do most of the work, three easings shape them.

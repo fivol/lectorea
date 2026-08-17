@@ -19,6 +19,7 @@ import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
 import { Button, ButtonLink, IconButton } from '@/components/ui';
 import Tooltip from '@/components/Tooltip';
+import PlayerSpeed from './PlayerSpeed';
 import { FilterName, StatusBadge } from './PlaylistRow';
 import type { FilterFacet } from './playlist-filters';
 import { neighbours, partLabel } from './series';
@@ -69,6 +70,8 @@ export default function PlaylistModal({
   const recordPosition = useProfile((state) => state.recordPosition);
   const setCourseStatus = useProfile((state) => state.setCourseStatus);
   const recordRecent = useProfile((state) => state.recordRecent);
+  const setSetting = useProfile((state) => state.setSetting);
+  const savedRate = useProfile((state) => state.profile.settings.playbackRate);
 
   const progress = playlistProgress(profile, playlist);
   /** Null for a shelf entered from search, whose ratio is not about staying. */
@@ -121,9 +124,13 @@ export default function PlaylistModal({
    * on to by itself can finish the playlist, and finishing the playlist is what
    * finishes the course.
    */
-  const { onLoad } = useYouTubeTracking({
+  const { onLoad, rate, rates, setRate } = useYouTubeTracking({
     enabled: playing !== null,
     iframe: frame,
+    // The speed is the reader's, not the lecture's: it is picked once and
+    // every frame after it — the next part, the dialog reopened — starts there.
+    rate: savedRate,
+    onRate: (next) => setSetting('playbackRate', next),
     onPosition: (videoId, sec, played) => recordPosition(videoId, sec, context, played),
     // «player», so the day is not charged for the lecture's whole length on top
     // of the time the frame has already reported watching it.
@@ -336,6 +343,12 @@ export default function PlaylistModal({
                 />
               )}
             </div>
+
+            {/* Under the frame rather than over it: an overlay would sit on
+                YouTube's own chrome, and the strip is pressed while the lecture
+                runs. Only once there is a player to talk to — before that it is
+                a control for nothing. */}
+            {playing ? <PlayerSpeed rate={rate} rates={rates} onPick={setRate} /> : null}
 
             {/* The lecture list comes from the shard, not from the API. */}
             <ol className="divide-y divide-line lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">

@@ -503,6 +503,21 @@ hand. Counting only milestones leaves the bar still for a fortnight while
 somebody works through a forty-hour prerequisite; counting only fractions loses
 the milestone.
 
+**Speed.** A strip of buttons under the frame — «0,5× … 2×» — plus `Shift + .`
+and `Shift + ,`, and the choice is remembered: it belongs to the reader, not to
+the lecture, so the next part and the next session open at it. It has to be
+ours, and that is the whole reason it exists: the embed is a frame on another
+origin, which only sees a key press while it holds focus, so YouTube's own
+speed shortcut goes nowhere the moment the reader touches anything of this
+page's — including right after the player opens, when nothing has been clicked
+inside it at all.
+
+The rates are the ones the player says it has, not a list of our own. **2× is
+its ceiling**, and it does not refuse anything above it — `setPlaybackRate(3)`
+is answered with a frame reporting 2 — so a button offering 3× would be a
+button that lies. Reading the player's list also means the strip grows by
+itself on the day the ceiling moves.
+
 **Coming back.** The embedded player is followed through the `postMessage`
 handshake that a YouTube embed answers when it is loaded with `enablejsapi=1` —
 no script from `youtube.com`, so the only third-party origin on the page stays
@@ -688,5 +703,9 @@ for the next, so it lives in memory for the length of the visit.
 | `/` | search |
 | `t` | theme |
 | `m` | swap map and columns |
+| `Shift + .` / `Shift + ,` | faster / slower, in an open player |
 | `Esc` | close the top layer |
 | `?` | list all of them |
+
+The letters are matched in both alphabets and the speed pair by the physical
+key, so nothing here depends on which layout is switched on.

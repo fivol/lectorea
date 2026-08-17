@@ -682,6 +682,16 @@ export const ProfileSchema = z.object({
        */
       resume: z.boolean().catch(true),
       /**
+       * The speed the player opens at.
+       *
+       * A setting rather than a per-lecture choice: somebody who watches
+       * lectures at 1.5× watches every lecture at 1.5×, and re-picking it on
+       * each of thirty videos is the kind of small tax that makes a control not
+       * worth having. Held loosely — the range is the player's, and the player
+       * rounds anything outside its own list down to 2× without complaining.
+       */
+      playbackRate: z.number().min(0.25).max(4).catch(1),
+      /**
        * Hours of study to aim for in a week, or null for no goal.
        *
        * A setting rather than a number derived from anything: how much somebody
