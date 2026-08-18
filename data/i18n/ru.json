@@ -304,6 +304,8 @@
   "ui.pomodoro.name": "Помодоро",
   "ui.pomodoro.start": "Запустить",
   "ui.pomodoro.stop": "Остановить",
+  "ui.pomodoro.toBreak": "Перейти к перерыву",
+  "ui.pomodoro.toStudy": "Перейти к учёбе",
   "ui.pomodoro.session": "Сессия {n}",
   "ui.pomodoro.break": "Перерыв",
   "ui.pomodoro.longBreak": "Долгий перерыв",

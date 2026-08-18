@@ -838,10 +838,26 @@ the foot offers to stop.
 **Starting puts the panel away**, because somebody who has pressed it is
 finished with it by definition: they came to set the lengths and did, and what
 they want in front of them now is the lecture with a clock ticking beside it.
-Stopping does not, since the panel is then showing what stopping did. And the
-panel is sized to its content rather than scrolled — the ceiling that turns a
-long *list* into a scrolling menu is wrong for a fixed set of controls, where a
-row hidden below the fold is a setting nobody finds.
+Nothing else there does, since every other press *changes what the panel says*.
+And the panel is sized to its content rather than scrolled — the ceiling that
+turns a long *list* into a scrolling menu is wrong for a fixed set of controls,
+where a row hidden below the fold is a setting nobody finds.
+
+**The clock can also be moved on by hand.** While a session runs the panel
+offers «Перейти к перерыву», and while a rest runs, «Перейти к учёбе». They are
+not shortcuts that land somewhere similar — they are *the same two functions the
+deadline calls*, so a session ended by hand counts towards the long rest exactly
+as one that ran out does, and a rest ended by hand rings the chime and waits for
+the play button exactly as one that ran out does. There is nothing that can
+drift between what the clock does and what a press does.
+
+They are there because a timer is a plan and an evening is not: somebody who has
+already been at it an hour wants their rest now rather than in eleven minutes,
+and the only way to say so used to be stop, re-set the length and start again —
+which throws the session count away to make a point about tonight. The other
+half of why they exist is duller and just as real: they are the only way to walk
+a whole cycle without sitting through one, which is what checking this feature
+otherwise costs.
 
 When the session runs out **the lecture is paused and the picture is covered**:
 the rest, its own countdown, which session it was, and two ways out — take the

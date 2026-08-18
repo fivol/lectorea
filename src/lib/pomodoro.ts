@@ -68,6 +68,26 @@ export type Pomodoro = {
   stop: () => void;
   /** End a rest early, or take up the next session after the chime. */
   resume: () => void;
+  /**
+   * The two transitions the clock makes on its own, available by hand.
+   *
+   * **They are the same code the deadline runs**, not a shortcut that lands
+   * somewhere similar: `toBreak` counts the session, decides whether this rest
+   * is the long one and pauses the lecture exactly as running out would, and
+   * `toStudy` rings the chime and leaves the run waiting on a press exactly as
+   * a rest running out would. Two calls in a `setInterval` and two buttons ask
+   * the same functions, so there is nothing that can drift between what the
+   * clock does and what a press does.
+   *
+   * They exist because a timer is a plan and an evening is not: somebody who
+   * has been at it for an hour already wants their rest now rather than in
+   * eleven minutes, and the alternative — stop, change the length, start again
+   * — throws the session count away to say so. They are also the only way to
+   * see a whole cycle without sitting through one, which is what they were
+   * first written for.
+   */
+  toBreak: () => void;
+  toStudy: () => void;
 };
 
 type Run = Pick<Pomodoro, 'phase' | 'endsAt' | 'done' | 'long'>;
@@ -100,6 +120,17 @@ export function usePomodoro(): Pomodoro {
   );
 
   const [run, setRun] = useState<Run>(OFF);
+  /**
+   * The run as the transitions see it.
+   *
+   * They are handed out as stable callbacks — a button and a `setInterval` hold
+   * the same two functions — so they cannot close over `run` without being
+   * rebuilt on every tick. The ref is what lets them refuse a transition that
+   * does not apply (a rest asked for while resting) without depending on the
+   * state that would rebuild them.
+   */
+  const at = useRef(run);
+  at.current = run;
 
   /**
    * The settings as the ticker sees them.
@@ -150,6 +181,33 @@ export function usePomodoro(): Pomodoro {
 
   const stop = useCallback((): void => setRun(OFF), []);
 
+  /** A session is behind us: count it, and open the rest it has earned. */
+  const toBreak = useCallback((): void => {
+    const was = at.current;
+    if (was.phase !== 'focus') return;
+    const done = was.done + 1;
+    const settings = current.current;
+    // The long rest belongs to the session that completes the count, so it is
+    // the *new* total that decides — four sessions of «каждые 4» end on the
+    // long one, and the fifth starts the count again.
+    const longNow = done % settings.every === 0;
+    setRun({
+      phase: 'break',
+      endsAt: Date.now() + (longNow ? settings.long : settings.break) * MINUTE,
+      done,
+      long: longNow,
+    });
+  }, []);
+
+  /** The rest is over: ring, and wait to be taken up. */
+  const toStudy = useCallback((): void => {
+    if (at.current.phase !== 'break') return;
+    // Outside the state updater on purpose — React runs an updater twice in
+    // development, and a chime is a side effect rather than a new state.
+    chime.current?.play().catch(() => {});
+    setRun((was) => ({ ...was, phase: 'over', endsAt: 0 }));
+  }, []);
+
   const resume = useCallback((): void => {
     setRun((was) =>
       was.phase === 'off'
@@ -166,27 +224,14 @@ export function usePomodoro(): Pomodoro {
   useEffect(() => {
     if (run.phase !== 'focus' && run.phase !== 'break') return;
 
+    // The deadline knows *when*, and nothing else: what a stretch running out
+    // actually does is the same two functions the buttons press, so a session
+    // that ran out and a session ended by hand cannot come to mean different
+    // things.
     const due = (): void => {
       if (Date.now() < run.endsAt) return;
-      if (run.phase === 'focus') {
-        const done = run.done + 1;
-        const settings = current.current;
-        // The long rest belongs to the session that completes the count, so it
-        // is the *new* total that decides — four sessions of «каждые 4» end on
-        // the long one, and the fifth starts the count again.
-        const longNow = done % settings.every === 0;
-        setRun({
-          phase: 'break',
-          endsAt: Date.now() + (longNow ? settings.long : settings.break) * MINUTE,
-          done,
-          long: longNow,
-        });
-        return;
-      }
-      // The rest is over: the chime is the whole point of the feature, since
-      // this is the one transition the reader is not at the screen for.
-      chime.current?.play().catch(() => {});
-      setRun((was) => ({ ...was, phase: 'over', endsAt: 0 }));
+      if (run.phase === 'focus') toBreak();
+      else toStudy();
     };
 
     const timer = window.setInterval(due, TICK_MS);
@@ -199,11 +244,11 @@ export function usePomodoro(): Pomodoro {
       window.clearInterval(timer);
       document.removeEventListener('visibilitychange', due);
     };
-  }, [run]);
+  }, [run, toBreak, toStudy]);
 
   return useMemo(
-    () => ({ ...run, settings, start, stop, resume }),
-    [run, settings, start, stop, resume]
+    () => ({ ...run, settings, start, stop, resume, toBreak, toStudy }),
+    [run, settings, start, stop, resume, toBreak, toStudy]
   );
 }
 

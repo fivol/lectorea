@@ -110,6 +110,14 @@ export function PomodoroPill({ pomodoro }: { pomodoro: Pomodoro }) {
  * ladders to begin with, which put the answer before the question and left the
  * hand travelling back up the panel after setting the last of them.
  *
+ * **Starting puts the panel away and nothing else does.** Somebody who presses
+ * «Запустить» has finished with this panel by definition — they came to set the
+ * lengths and did, and what they want in front of them now is the lecture with
+ * a clock beside it; that is the rule the kit's single-choice rows follow. The
+ * other three presses stay, because each of them *changes what this panel
+ * says*: stopping shows it stopped, and moving the clock on hands the next
+ * transition to the same button under the hand that just pressed it.
+ *
  * Its own component because `useCloseDropdown` only reaches the tree the
  * popover renders: the hook is read where the rows are, not where the
  * `Dropdown` is written.
@@ -180,19 +188,36 @@ function Panel({ pomodoro }: { pomodoro: Pomodoro }) {
       />
 
       {running ? (
-        <Button icon="close" iconSize={14} className="w-full justify-center" onClick={pomodoro.stop}>
-          {t('ui.pomodoro.stop')}
-        </Button>
+        <>
+          {/*
+            The clock, moved on by hand — the same two transitions the deadline
+            makes, asked for early (`toBreak` / `toStudy` in the hook).
+
+            A timer is a plan and an evening is not: somebody who has already
+            been at it an hour wants the rest now rather than in eleven minutes,
+            and the only way to say so used to be stop, re-set the length,
+            start again — which throws the session count away to make a point
+            about tonight. It is also the one way to watch a whole cycle
+            without sitting through one.
+
+            Absent while the rest is over, where there is nothing left to bring
+            forward: the run is already waiting on the press the cover offers.
+          */}
+          {phase === 'focus' || phase === 'break' ? (
+            <Button
+              icon="chevron-right"
+              iconSize={14}
+              className="w-full justify-center"
+              onClick={() => (phase === 'focus' ? pomodoro.toBreak() : pomodoro.toStudy())}
+            >
+              {phase === 'focus' ? t('ui.pomodoro.toBreak') : t('ui.pomodoro.toStudy')}
+            </Button>
+          ) : null}
+          <Button icon="close" iconSize={14} className="w-full justify-center" onClick={pomodoro.stop}>
+            {t('ui.pomodoro.stop')}
+          </Button>
+        </>
       ) : (
-        /*
-          Starting puts the panel away. Somebody who presses it has finished
-          with this panel by definition — they came to set the lengths and did,
-          and what they want to look at now is the lecture with a clock ticking
-          beside it. The same rule the kit's single-choice rows follow, for the
-          same reason: a control that is finished with should not have to be
-          dismissed by hand. Stopping does not, because the panel then shows
-          what stopping did.
-        */
         <Button
           variant="primary"
           icon="clock"
