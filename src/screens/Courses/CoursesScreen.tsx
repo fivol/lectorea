@@ -149,48 +149,45 @@ export default function CoursesScreen() {
     return chainAncestors(catalog, selected.id, canvas);
   }, [catalog, selected, visible, guestIds]);
 
-  /** What the filter and the selection put on the canvas, before any pointer. */
+  /** Everything on the canvas: the filter, the trail, and the chain behind. */
   const settled = useMemo(() => {
     if (!guestIds.size && !borrowed.size) return visible;
     return new Set([...visible, ...guestIds, ...borrowed]);
   }, [visible, guestIds, borrowed]);
 
   /**
-   * The course the panel is pointing at, given a seat for as long as the
-   * pointer is on it.
+   * What stands on the canvas is decided by the filter and the selection, and
+   * by nothing a pointer does.
    *
-   * Hovering a name in the panel lifts the card it means — and where the filter
-   * is not showing that card, it used to lift nothing at all, silently. Every
-   * list in the panel names courses from wherever they happen to be filed:
-   * «Открывает путь к» is the one that leaves the field almost every time,
-   * since what a course opens is usually somebody else's subject, and «Также
-   * полезно» and «Рядом» do it too.
+   * Pointing at a name in the panel used to give the course it names a seat in
+   * its column for as long as the pointer was on it. «Открывает путь к» leaves
+   * the field almost every time — what a course opens is usually somebody
+   * else's subject — so the card was one the filter is not showing, and it was
+   * borrowed in, faded into place, and taken out again on mouse-out. As a
+   * description of one card that reads well; as a screen it is the columns
+   * re-laying themselves out under a pointer that is only crossing the panel on
+   * its way somewhere else. A list of eight names is sixteen arrivals and
+   * departures, each pushing the column below it up or down, none of them on
+   * screen long enough to be read — and each one measured at a 60–115 ms task,
+   * which is a stutter under the hand that caused it.
    *
-   * So the echo is the canvas's business and not only the card's: whatever the
-   * panel points at stands in its column while it is being pointed at, faded in
-   * where it belongs, tagged with the field it came from, and gone again on
-   * mouse-out, with the edge to the course being read drawn alongside it — see
-   * `links` in `ColumnsView`. One card, not a chain: this answers «where does
-   * that one stand», and the chain behind it is what clicking it is for.
+   * So the pointer paints and never moves anything: a card already on the
+   * canvas still lifts when its name is pointed at, and the edge to it is still
+   * drawn — both are paint over a layout that does not change — and a course
+   * the filter is hiding waits for the click that selects it, which brings it
+   * in with the whole chain behind it, in one move.
    */
-  const echoId = useUi((state) => state.echo?.id ?? null);
-  const preview = selected && echoId && !settled.has(echoId) ? echoId : null;
-
-  const onCanvas = useMemo(
-    () => (preview ? new Set([...settled, preview]) : settled),
-    [settled, preview]
-  );
+  const onCanvas = settled;
 
   /**
-   * Every card standing in a column the filter did not put it in — the trail,
-   * the borrowed prerequisites and the previewed course alike. All are foreign
-   * to the filter, so all name the field they came from.
+   * Every card standing in a column the filter did not put it in — the trail
+   * and the borrowed prerequisites. Both are foreign to the filter, so both
+   * name the field they came from.
    */
-  const outsiders = useMemo(() => {
-    const foreign = borrowed.size ? new Set([...guestIds, ...borrowed]) : guestIds;
-    if (!preview) return foreign;
-    return new Set([...foreign, preview]);
-  }, [guestIds, borrowed, preview]);
+  const outsiders = useMemo(
+    () => (borrowed.size ? new Set([...guestIds, ...borrowed]) : guestIds),
+    [guestIds, borrowed]
+  );
 
   const onSelect = useCallback(
     (id: string) => {

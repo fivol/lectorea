@@ -331,10 +331,9 @@ A domain filter shows that field and nothing else — not even a prerequisite fr
 elsewhere, which as a faded card several columns away read as part of the field
 you asked for. Those live in the panel instead.
 
-Three kinds of card are borrowed back, and only while a course is selected: the
-selected course itself when the filter does not cover it, every prerequisite its
-chain runs through, however far back, and — for as long as the pointer is on it
-— whatever course the panel is being asked about. Game theory needs probability,
+Two kinds of card are borrowed back, and only while a course is selected: the
+selected course itself when the filter does not cover it, and every prerequisite
+its chain runs through, however far back. Game theory needs probability,
 probability needs combinatorics — with probability filed under another field the
 card lit up with nothing drawn behind it, and «Опирается на» in the panel named
 a course the columns refused to show.
@@ -348,23 +347,26 @@ analysis genuinely stands on — it is spent on an explicit click, and it is
 dropped the moment the selection changes. With nothing selected the field still
 decides what the columns hold.
 
-The third is the lightest of the three and the only one no click pays for.
-Pointing at any course the panel names — «Открывает путь к», «Также полезно»,
-«Рядом», a step of the path — lifts its card in the columns, and where the
-filter is not showing that card, it fades one in where the course belongs and
-takes it away again on mouse-out. «Открывает путь к» is where it matters most:
-what a course opens is usually somebody else's subject, so under a field filter
-that list used to be a set of names pointing at nothing. One card, not a chain —
-this answers where that course stands, and what it stands on is what clicking it
-is for.
+Both are paid for by a click, and a click is the only thing that moves the
+columns. Pointing at a course the panel names — «Открывает путь к», «Также
+полезно», «Рядом», a step of the path — lifts its card where it is already
+standing and draws the edge between it and the course being read, in whichever
+direction the catalogue has it: so the courses ahead, which the canvas otherwise
+leaves undrawn, are drawn one at a time by the reader asking for them, and so is
+the second prerequisite that **Все связи** hides while it is off. Only where the
+relation really is a prerequisite — a line here says «this has to come first»
+and nothing else, so «Также полезно» and «Рядом» light their card and draw
+nothing.
 
-The line comes with the card. Pointing at a name draws the edge between it and
-the course being read, in whichever direction the catalogue has it — so the
-courses ahead, which the canvas otherwise leaves undrawn, are drawn one at a
-time by the reader asking for them, and so is the second prerequisite that
-**Все связи** hides while it is off. Only where the relation really is a
-prerequisite: a line here says «this has to come first» and nothing else, so
-«Также полезно» and «Рядом» borrow their card in and draw nothing.
+A name whose card the filter is not showing lights nothing, and that is
+deliberate. It used to fade the card into its column for as long as the pointer
+was on it — «Открывает путь к» is usually somebody else's subject, so under a
+field filter that is most of the list — which meant the columns re-laid
+themselves out under a pointer that was only crossing the panel on its way
+somewhere else: eight names is sixteen cards arriving and leaving, each one
+shifting the column below it, none on screen long enough to read. Pointing
+paints; opening the course is what brings it in, with everything behind it, in
+one move.
 
 A borrowed card carries a tag naming the field it came from, and pressing it
 moves the columns to that field with the course still selected.

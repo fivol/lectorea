@@ -67,6 +67,11 @@ export default function ColumnsView({
    * lifts that card and draws the one edge being pointed at, and does nothing
    * else: the reading of the screen belongs to the selection, and a glance at a
    * list on the right is not a new selection.
+   *
+   * Nothing else, and in particular nothing that moves: a name whose card the
+   * filter is not showing is answered by the click that selects it, not by a
+   * card dropped into a column under the pointer and taken out again a moment
+   * later — see `onCanvas` in `CoursesScreen`.
    */
   const echo = useUi((state) => state.echo);
   const echoId = echo?.id ?? null;
@@ -275,7 +280,13 @@ export default function ColumnsView({
    * happened to name it. A line on this canvas says «this has to come first» and
    * that is the whole of what it says; «Также полезно» and «Рядом» are ties of
    * another kind, and drawing them the same way would make the picture claim
-   * something the catalogue does not. Those still borrow their card in.
+   * something the catalogue does not.
+   *
+   * And only between two cards that are already standing: pointing does not put
+   * cards on the canvas, so an edge to one that is not there has nothing to
+   * join. Checked here rather than left to the router, which would measure
+   * every card on screen first and drop the curve afterwards — on every name
+   * the pointer crosses.
    *
    * `deps` decides the direction, not the two seats: a prerequisite's level is
    * strictly lower than its dependant's, so the edge always runs left to right,
@@ -283,6 +294,7 @@ export default function ColumnsView({
    */
   const drawn = useMemo<Link[]>(() => {
     if (!echo?.from || echo.from === echo.id) return links;
+    if (!visible.has(echo.id) || !visible.has(echo.from)) return links;
 
     const there = catalog.courseById.get(echo.id);
     const here = catalog.courseById.get(echo.from);
@@ -297,7 +309,7 @@ export default function ColumnsView({
     // Last, so it is painted over the chain rather than under it. Off-canvas
     // ends are dropped by the router, which measures before it draws.
     return [...links, { ...edge, depth: 0 }];
-  }, [links, echo, catalog]);
+  }, [links, echo, catalog, visible]);
 
   /**
    * Bring a course into view when the path list or the search box asks for it,
@@ -336,10 +348,14 @@ export default function ColumnsView({
   const readEdges = useCallback(() => {
     const node = scrollRef.current;
     if (!node) return;
-    setEdges({
-      start: node.scrollLeft <= 1,
-      end: node.scrollLeft + node.clientWidth >= node.scrollWidth - 1,
-    });
+    const start = node.scrollLeft <= 1;
+    const end = node.scrollLeft + node.clientWidth >= node.scrollWidth - 1;
+    // Both answers are the same for most of a scroll and for every resize that
+    // did not reach an end, and a fresh object each time is a re-render of the
+    // whole canvas per scroll event with nothing to show for it.
+    setEdges((current) =>
+      current.start === start && current.end === end ? current : { start, end }
+    );
   }, []);
 
   /**

@@ -328,6 +328,36 @@ window.addEventListener('message', (e) => {
 });
 ```
 
+### A pointer was given the power to lay the page out
+
+**Assumed:** a name in the panel that points at a card the filter is hiding
+should bring that card in while it is pointed at — one card, faded in where it
+belongs, gone again on mouse-out. It answers «where does that one stand» for
+free, and the mouse-out puts everything back.
+
+**It was:** the columns re-laying themselves out under a pointer that was only
+crossing the panel on its way to the playlists. «Открывает путь к» is usually
+somebody else's subject, so under a field filter almost every name in it is a
+card to be borrowed: a list of eight is sixteen arrivals and departures, each
+one inserting into a column and pushing the rest of it down, each one running
+the FLIP over every card on the canvas and re-measuring every curve — and none
+of them on screen long enough to be read. What it looks like from the other
+side of the screen is the report that found it: «ничего не нажимаю, иногда
+фризы, что-то появляется и исчезает… меньше чем на секунду, не успеваю
+увидеть». Measured in the running page, one hover in and out was a 115
+ms task and a 60 ms one; two `longtask` entries per name crossed.
+
+**How not to repeat it:** **hover paints, selection lays out.** A pointer may
+change colour, opacity, shadow, a transform, a z-order — anything the compositor
+can do without asking layout a question — and it may not change what is on the
+canvas or where. Anything that adds, removes or moves a box waits for a click,
+where the reader is asking for the change and expects the page to move. The
+smell is a `useState`/store write on `onMouseEnter` feeding something a layout
+memo reads; the check is a `MutationObserver` on the container plus a
+`PerformanceObserver` for `longtask` while the pointer crosses the list —
+`childList` mutations or long tasks on a mouse move are the bug, and both are
+one console paste away.
+
 ---
 
 ## Migrations
