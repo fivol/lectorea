@@ -511,10 +511,24 @@ const MIRROR_SHARE = 0.6;
  *                  only somebody's watch list.
  */
 async function classifyOwnership(
+  db: Db,
   api: YoutubeClient,
   candidates: Candidate[]
 ): Promise<{ probed: number; own: number; mirrors: number; collections: number }> {
   const counts = { probed: 0, own: 0, mirrors: 0, collections: 0 };
+  // The same row `data:authors` writes, from the same call. Without it the unit
+  // this hunt spends buys an answer that lives in a JSON report and nowhere the
+  // pipeline can see, so the nightly authors pass re-buys it the first night any
+  // of these playlists publishes — 8913 of them on 2026-08-18. The answer does
+  // not change: a playlist does not stop being somebody's bookmarks.
+  const remember = db.prepare(
+    `INSERT INTO ownership (playlist_id, sampled, own_share, kind, owner_id, owner_title, checked_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(playlist_id) DO UPDATE SET
+       sampled = excluded.sampled, own_share = excluded.own_share, kind = excluded.kind,
+       owner_id = excluded.owner_id, owner_title = excluded.owner_title,
+       checked_at = excluded.checked_at`
+  );
 
   for (const candidate of candidates) {
     let ownership;
@@ -532,14 +546,26 @@ async function classifyOwnership(
 
     const share = ownership.own / ownership.sampled;
     candidate.ownShare = share;
-    if (share >= OWN_SHARE) {
+    const [top] = ownership.foreign;
+    const topShare = top ? top.count / ownership.sampled : 0;
+    const kind =
+      share >= OWN_SHARE ? 'own' : top && topShare >= MIRROR_SHARE ? 'mirror' : 'collection';
+    const owner = kind === 'mirror' && top ? top : null;
+    remember.run(
+      candidate.id,
+      ownership.sampled,
+      share,
+      kind,
+      owner?.id ?? null,
+      owner?.title ?? null,
+      new Date().toISOString()
+    );
+
+    if (kind === 'own') {
       counts.own += 1;
       continue;
     }
-
-    const [top] = ownership.foreign;
-    const topShare = top ? top.count / ownership.sampled : 0;
-    if (top && topShare >= MIRROR_SHARE) {
+    if (kind === 'mirror' && top) {
       candidate.accept = 'mirror';
       candidate.realOwner = { id: top.id, title: top.title, share: topShare };
       counts.mirrors += 1;
@@ -731,7 +757,7 @@ async function main(): Promise<void> {
     (candidate) => candidate.accept === 'yes' && candidate.ownShare === undefined
   );
   console.log(`\n· ownership: ${worthProbing.length} probes, 1 unit each`);
-  const ownership = await classifyOwnership(api, worthProbing);
+  const ownership = await classifyOwnership(db, api, worthProbing);
   console.log(
     `· ${ownership.own} are their channel's own material, ` +
       `${ownership.mirrors} mirror somebody else's, ${ownership.collections} are collections`

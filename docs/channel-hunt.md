@@ -498,6 +498,14 @@ all: `--variant=all` walks «лекции», «курс» and «видеолек
 next hunt starts from whatever this one did not reach rather than from the top of
 the same list.
 
+The same day turned up the mirror image of that hole and closed it: the hunt's
+ownership probes — 1 unit each, 8913 of them — were kept in the JSON report and
+never written to the `ownership` table, so the nightly `data:authors` pass would
+have re-bought every one of them the first night these playlists published.
+`_hunt.ts` now writes the row `data:authors` writes, from the same call, and
+today's answers were backfilled out of the reports. A unit buys a fact; the fact
+belongs in the table the pipeline reads, not in a file on somebody's disk.
+
 ### The channels it turned up, and the refusals that held
 
 One real find, from the run that asked in Russian:
