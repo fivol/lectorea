@@ -154,6 +154,20 @@ export function watchUrl(playlistId: string | null, videoId?: string | null): st
   return `https://www.youtube.com/watch?v=${videoId ?? ''}`;
 }
 
+/**
+ * The same lecture, at the second somebody is looking at.
+ *
+ * `watchUrl` answers «where is this on YouTube»; this answers «where is *this
+ * bit*», which is the only question worth asking about a lecture two hours
+ * long. `t` is YouTube's own parameter, so the link lands where it says it
+ * does — and whoever is handed it, a person or an assistant, starts at the
+ * moment the question is about instead of at the title card.
+ */
+export function momentUrl(videoId: string, sec: number): string {
+  const at = Math.max(0, Math.floor(sec));
+  return `https://www.youtube.com/watch?v=${videoId}${at ? `&t=${at}s` : ''}`;
+}
+
 /** A saved position worth offering. Anything less is the beginning of the video. */
 export function isResumable(sec: number | undefined): sec is number {
   return typeof sec === 'number' && sec >= RESUME_FLOOR_SEC;

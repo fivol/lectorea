@@ -813,11 +813,13 @@ the lectures under it are worth and no more, for the same reason the streak
 cannot be kept alive by pressing the light switch.
 
 **The strip under the frame** is the whole of what stands between the picture
-and the queue, and it carries the two things the embed cannot: on the left what
-the player is doing — the speed — and on the right what shape it is in, under
-the corner of the picture and directly beside the fullscreen button inside the
-frame, because that is the corner a hand already goes to. Everything about the
-lecture itself is in the queue, which is where it is chosen.
+and the queue, and it carries what the embed cannot: on the left what the
+player is doing — the speed — and on the right what shape it is in, under the
+corner of the picture and directly beside the fullscreen button inside the
+frame, because that is the corner a hand already goes to. Between them stands
+the one thing that is about neither the player nor the recording but about the
+lecture being followed — the question. Everything else about the recording is
+in the queue, which is where it is chosen.
 
 **Speed** is a row of rates — «0,5× … 2×» — plus `Shift + .` and `Shift + ,`,
 and the choice is remembered: it belongs to the reader rather than to the
@@ -841,6 +843,28 @@ button that lies. (A browser extension can go past it because it runs *inside*
 embedding the player cannot reach across origins to that element, and the only
 door it has — the player's own API — is the one that rounds down.) Reading the
 player's list also means the strip grows by itself on the day the ceiling moves.
+
+**«Спросить»** is the question somebody has in the middle of a lecture, put on
+the clipboard with enough around it to be answerable. The press stops the
+lecture first — whoever has just said they have a question is about to go and
+write one, and a player left running answers it four minutes further on — and
+copies the course and what it stands on in the graph, the recording and who
+reads it, the lecture and its number in the queue, and the second the playhead
+is at, as a link that opens there. The last line is left empty: the question
+itself is typed wherever the prompt is pasted. It is the same move as «Скопировать
+промпт» in the profile — the site knows things an assistant cannot guess, and
+the clipboard is the only channel to an assistant this site does not host.
+
+**What it deliberately does not carry is the subtitles**, because a page cannot
+have them. YouTube's `timedtext` answers a browser with an empty `200`, and so
+does the signed URL out of the watch page — both want a proof-of-origin token
+that neither has. What *can* have them is the assistant on the other end, if it
+has a terminal, so the prompt carries the `yt-dlp` line that works instead of
+the text that line would produce ([data-traps.md](agents/data-traps.md#youtubes-subtitles-three-dead-paths-and-one-live-one)
+for why that line is not the obvious one). And because most assistants cannot
+run anything at all, the prompt ends by telling it what to do then: say the
+transcript could not be had, and answer from the context above rather than
+inventing what the lecture says.
 
 **The keyboard is the page's, not the frame's.** A click on the video hands
 focus to another origin, and from that moment every key press is delivered

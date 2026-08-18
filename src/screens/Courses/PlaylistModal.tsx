@@ -13,7 +13,8 @@ import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
 import { percent, playlistProgress } from '@/lib/progress';
 import { courseHref, useCatalogParams } from '@/lib/url';
-import { embedSrc, isResumable, useYouTubePlayer, watchUrl } from '@/lib/youtube';
+import { lecturePrompt } from '@/lib/lecture-prompt';
+import { command, embedSrc, isResumable, useYouTubePlayer, watchUrl } from '@/lib/youtube';
 import { useProfile, type WatchContext } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
@@ -24,7 +25,7 @@ import FinishCard from '@/components/game/FinishCard';
 import MilestoneLine from '@/components/game/Milestone';
 import TodayLine from '@/components/game/TodayLine';
 import WeekPlan from '@/components/game/WeekPlan';
-import { Button, ButtonLink, Chip, IconButton, cx } from '@/components/ui';
+import { Button, ButtonLink, Chip, CopyButton, IconButton, cx } from '@/components/ui';
 import LectureList from './LectureList';
 import PlayerSpeed from './PlayerSpeed';
 import { FilterName, StatusBadge } from './PlaylistRow';
@@ -77,7 +78,8 @@ export default function PlaylistModal({
   filter,
   onClose,
 }: Props) {
-  const { t, count, lang } = useT();
+  const translator = useT();
+  const { t, count, lang } = translator;
   const { prev, next } = neighbours(playlist, run);
   /** Courses this recording also teaches, minus the one we are reading it in. */
   const alsoCovers = [playlist.courseId, ...playlist.alsoCourses].filter((id) => id !== courseId);
@@ -319,6 +321,13 @@ export default function PlaylistModal({
    * and nothing in the queue lights up rather than the wrong row doing so.
    */
   const shownId = at?.id ?? playing?.id ?? null;
+  /**
+   * The same lecture as a row of the queue — which is what anything naming it
+   * needs. `-1` for a lecture the shard does not carry, exactly as the queue
+   * lights nothing rather than the wrong row.
+   */
+  const shownIndex = shownId ? playlist.videos.findIndex((video) => video.id === shownId) : -1;
+  const shownVideo = shownIndex === -1 ? null : playlist.videos[shownIndex];
 
   /*
    * Where this sits in the run, and the way out of it in either direction. A
@@ -536,8 +545,42 @@ export default function PlaylistModal({
             {playing ? (
               <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-1.5">
                 <PlayerSpeed rate={rate} rates={rates} onPick={setRate} />
+                {/* The question, taken away with everything needed to answer it
+                    — see `lecturePrompt`. A ghost and not a plate, for the same
+                    reason the speeds are bare numerals: this strip sits under a
+                    running lecture, and a capsule here shouts over it.
+
+                    It stops the lecture on the way out. Somebody who has just
+                    said they have a question is about to go and write one, and
+                    a player left running answers it four minutes further on. */}
+                {shownVideo ? (
+                  <CopyButton
+                    variant="ghost"
+                    className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full
+                               px-2 py-1 text-[11px] leading-none"
+                    idleIcon="help"
+                    iconSize={13}
+                    title={t('ui.player.askHint')}
+                    onPress={() => command(frame, 'pauseVideo')}
+                    text={() =>
+                      lecturePrompt({
+                        playlist,
+                        video: shownVideo,
+                        index: shownIndex,
+                        // The playhead is written down every few seconds rather
+                        // than on every frame, so this is a moment ago at worst
+                        // — well inside the window the prompt asks about.
+                        sec: at?.id === shownVideo.id ? at.sec : 0,
+                        catalog,
+                        t: translator,
+                      })
+                    }
+                  >
+                    {t('ui.player.ask')}
+                  </CopyButton>
+                ) : null}
                 <IconButton
-                  className="ml-auto"
+                  className={shownVideo ? '' : 'ml-auto'}
                   icon={watching ? 'collapse' : 'fit'}
                   label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
                   aria-pressed={watching}

@@ -432,3 +432,60 @@ most ninety lectures, so refuse above some number. It was measured on
 A ceiling would cost as much real material as it removed rubbish, and the
 vetted side has the larger maximum. **Size is not the signal; authorship is** —
 which is why the answer is `data:authors` and a unit, not a constant.
+
+## YouTube's subtitles: three dead paths and one live one
+
+Measured 2026-08-18, on `YeyrH-Oc2p4` (MIT 18.06SC, manual English captions)
+and `Z0sqQzeWzig` (an 87-minute Russian lecture, automatic ones).
+
+| Path | What it does now |
+|---|---|
+| `api/timedtext?v=…&lang=en` | `200`, and **zero bytes** |
+| the signed `baseUrl` out of `captionTracks` on the watch page | the URL is there; fetching it is **zero bytes** — `xml`, `json3` and `vtt` alike |
+| `yt-dlp` with its defaults | `has no subtitles`, and says why: *a PO token was not provided* |
+| `yt-dlp --extractor-args "youtube:player_client=android"` | **works**, about 4 seconds a video |
+
+The middle row is the one worth remembering: the signed URL *out of the page
+itself* is as empty as the naive one, so no amount of scraping gets a browser
+the text. Nothing client-side will ever have it, which is why «Спросить» ships
+the command rather than the transcript ([interface.md](../interface.md)).
+
+The live path, whole:
+
+```bash
+yt-dlp --skip-download --write-auto-subs --write-subs --sub-langs "ru" --sub-format vtt --extractor-args "youtube:player_client=android" -o "%(id)s.%(ext)s" "https://youtu.be/VIDEO_ID"
+```
+
+`ios` works as well; `mweb`, `tv_embedded` and `web_embedded` are all refused
+outright. **Treat the flag as a moving target** — a year ago bare `timedtext`
+worked, and today the *signed* one does not. The fallback not taken is
+`--cookies-from-browser`, which reads the developer's own browser session.
+
+### `captions: []` does not mean there is no transcript
+
+The field is filled from `contentDetails.caption`, and the API counts only
+tracks **a human uploaded**. `Z0sqQzeWzig` is `captions: []` in the catalogue
+and has a complete Russian automatic transcript. So anything asking for
+subtitles asks for the recording's own language whatever the field says, and
+leans on `--write-auto-subs`; the field is good for the «с субтитрами» filter,
+which is about quality, and for nothing else.
+
+### The raw file is several times the text in it
+
+Automatic captions come as a rolling two-line window — each cue repeats the
+tail of the one before — with per-word timing tags inside every line:
+
+| | raw VTT | one line per cue, deduped |
+|---|---|---|
+| 10-minute lecture | 43 KB | 5.7 KB |
+| 87-minute lecture | **780 KB** | 144 KB, 2000 lines |
+
+A ±2 minute window around a timecode is about **7 KB**, which is the size worth
+handing anybody. Never pass a raw VTT of a long lecture to a model.
+
+### Why this is not in the pipeline
+
+5800 videos at 144 KB of cleaned text is not a static catalogue any more, and
+the extractor flag above would put a nightly cron on a footing that breaks
+without anybody noticing. The prompt hands the command to the reader's own
+assistant instead, which costs nothing to ship and ages better.
