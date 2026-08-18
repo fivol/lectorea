@@ -151,8 +151,10 @@ cards only, and moves nothing but the guests:
    lowers the number of crossings, for up to six rounds. This is not garnish —
    barycentre alone stops at 37 of the 74, and the swaps take it to 15.
 
-The order is settled against every edge of the chain, not against the ones the
-tree keeps, so pressing «Все связи» redraws lines without moving cards.
+The order is settled against every edge of the chain, the forward ones included:
+what the selection opens up is not drawn, but it still decides where those cards
+stand, or a course pulled in from another field lands as far from the one that
+opened it as its home band happens to be.
 
 Reordering the natives too would reach 6 crossings. It is not worth it: the
 columns are meant to be a map, and a map that reshuffles under every question is

@@ -4,11 +4,10 @@
  * One drawing: right angles down the gaps — see `routeSteps`. It needs to know
  * the whole board, because where the gaps between columns and between rows are
  * is a fact about every card on screen rather than about the two being joined.
- * `routeCurves` is what the screen used before, kept only as the answer when
- * there is no board to read: one cubic from edge to edge, needing nothing but
- * the two boxes. It was offered as a choice for a while and was not one — the
- * merge into a shared lane is what makes a fork legible, and a picture that
- * says something different depending on a switch is two pictures.
+ * A single cubic from edge to edge was the other answer and was offered beside
+ * this one for a while; it went because the merge into a shared lane is what
+ * makes a fork legible, and a picture that says something different depending
+ * on a switch is two pictures.
  *
  * Geometry in, path strings out. Nothing here touches the DOM — `ChainLinks`
  * measures, this decides — which is what makes it possible to reason about a
@@ -35,32 +34,6 @@ const LANE_SPACING = 24;
 /** Two runs sharing a row channel keep at least this much clear of each other. */
 const CLEARANCE = 24;
 
-function routeCurves(legs: Leg[], boxes: Map<string, Rect>): Path[] {
-  const out: Path[] = [];
-  for (const leg of legs) {
-    const from = boxes.get(leg.from);
-    const to = boxes.get(leg.to);
-    if (!from || !to) continue;
-
-    const x1 = from.right;
-    const y1 = mid(from);
-    const x2 = to.left;
-    const y2 = mid(to);
-    // A horizontal pull proportional to the gap: short hops stay gentle, long
-    // ones bow out far enough not to run along the cards in between.
-    const pull = Math.max(24, (x2 - x1) * 0.5);
-    out.push({
-      key: `${leg.from}->${leg.to}`,
-      d:
-        `M${p(x1)} ${p(y1)} C${p(x1 + pull)} ${p(y1)}, ` +
-        `${p(x2 - pull)} ${p(y2)}, ${p(x2)} ${p(y2)}`,
-      length: Math.hypot(x2 - x1, y2 - y1) + pull,
-      depth: leg.depth,
-    });
-  }
-  return out;
-}
-
 /**
  * Every line at right angles, and none of them over a card.
  *
@@ -86,7 +59,8 @@ function routeCurves(legs: Leg[], boxes: Map<string, Rect>): Path[] {
  * adds one it did not have to.
  */
 export function routeSteps(legs: Leg[], boxes: Map<string, Rect>, cards: Rect[]): Path[] {
-  if (!cards.length) return routeCurves(legs, boxes);
+  // No card measured means no box either, so there is nothing to join.
+  if (!cards.length) return [];
 
   const columns = spread(cards.map((card) => card.left));
   const width = cards[0].right - cards[0].left;

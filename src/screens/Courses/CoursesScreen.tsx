@@ -24,7 +24,7 @@ import ProfileButton from '@/components/ProfileButton';
 import Icon from '@/components/Icon';
 import { CountTile } from '@/components/Facts';
 import { ResumeCard, ResumeStepper, useResumeCarousel } from '@/components/ResumeCard';
-import { BottomSheet, Cap, Chip, IconButton, Plate, PlateDivider } from '@/components/ui';
+import { BottomSheet, Cap, IconButton, Plate, PlateDivider } from '@/components/ui';
 import DomainIcon from '@/components/DomainIcon';
 import ColumnsView from './ColumnsView';
 import CoursePanel from './CoursePanel';
@@ -95,8 +95,6 @@ export default function CoursesScreen() {
   }, [selected]);
 
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
-  /** Whether the columns draw the whole chain or the tree it cuts back to. */
-  const fullGraph = useProfile((state) => state.profile.settings.fullGraph);
   const visible = useFilteredCourses(params.domains, params.providers, params.lecturers, maxStage);
 
   /**
@@ -438,20 +436,6 @@ export default function CoursesScreen() {
                     ? t('ui.column.legendSelected', { course: t(`course.${selected.id}.title`) })
                     : t('ui.column.legend')}
                 </span>
-                {/* Only with a course selected: the lines it governs exist only
-                    then, and a switch for something not on screen is a puzzle.
-                    It sits here rather than in the panel because it is about the
-                    columns — the panel is about the one course in them. */}
-                {selected ? (
-                  <Chip
-                    on={fullGraph}
-                    icon={fullGraph ? 'check' : undefined}
-                    onClick={() => setSetting('fullGraph', !fullGraph)}
-                    hint={t('ui.column.fullGraphHint')}
-                  >
-                    {t('ui.column.fullGraph')}
-                  </Chip>
-                ) : null}
                 <LegendPopover />
               </div>
               <div className="relative min-h-0 flex-1">

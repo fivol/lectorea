@@ -1080,16 +1080,27 @@ What that bought:
   switch was two pictures making different claims, and the second one was worse.
   Removed; steps are the drawing, and `COLUMN_GAP` is the 48px corridor they
   need rather than a number that changed under a setting.
-- **Every link against the tree**: a real trade with numbers on both sides. The
-  two drawings differ on 87 of the 197 chains, +191 lines over the catalogue,
-  and crossings 13 → 42 — against 184 cards drawn with fewer prerequisites than
-  they have. Worth deciding on the numbers, which is what the script is for.
+- **Every link against the tree**: a real trade, and the numbers decided it the
+  other way from how it looked. The two drawings differ on 87 of the 197 chains
+  — +191 lines and crossings 13 → 42 over the whole catalogue, against 184 cards
+  drawn with fewer prerequisites than they have. 174 of the 197 screens have no
+  crossing either way, so the cost was three busy physics chains and the loss
+  was everywhere. Removed; every edge is drawn.
 
 The measurement was cheap only because the deciding is in pure functions —
 `placeGuests` in `lib/order.ts`, `routeSteps` in `lib/route.ts` — and not in the
 components. **Layout logic that lives outside the component can be replayed over
 the whole catalogue; layout logic inside one cannot be measured at all**, and
 then every option is settled by whichever screen was open at the time.
+
+And the tie-breaker in both cases was the same, which is the part worth carrying
+to the next switch: **a reader cannot press a switch for a loss they cannot
+see.** One line into a card reads as «this is its only prerequisite» and nothing
+contradicts it; a curve reads as a connection and never says «two of these
+arrive at the same place». An option is honest when both settings state their
+own claim on screen. When one of them silently states less, it is not an option,
+it is a default that has to be right — and then the only question left is which
+one, which is the question the script answers.
 
 ## Commit an explicit list of files
 

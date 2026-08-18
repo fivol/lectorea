@@ -78,8 +78,6 @@ export default function ColumnsView({
   const focusRequest = useUi((state) => state.focusRequest);
 
   const profile = useProfile((state) => state.profile);
-  /** Every edge of the chain, or the tree it cuts back to — see `links`. */
-  const fullGraph = profile.settings.fullGraph;
   const highlight = useHighlight(selectedId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -108,10 +106,9 @@ export default function ColumnsView({
   /**
    * Which cards the chain covers, and every edge inside it.
    *
-   * Separate from `links` because both the ordering below and the drawn lines
-   * need this, and because it is the *graph* rather than what is drawn of it:
-   * the columns must not rearrange themselves when «Все связи» is pressed, so
-   * the order is settled against every edge whether or not the tree keeps it.
+   * Separate from `links` because it is the *graph* rather than what is drawn
+   * of it: the ordering below is settled against every edge, the forward ones
+   * included, while only the edges behind the selection are drawn.
    */
   const chain = useMemo(() => {
     const focus = highlight.focusId;
@@ -191,80 +188,49 @@ export default function ColumnsView({
    * one way this screen draws anything, right to left, with everything it
    * stands on brought in behind it.
    *
-   * How many of them are drawn is the reader's, and `fullGraph` is the switch.
-   * Off, the chain is cut back to a tree rooted at the selected course: every
-   * other card keeps one of the edges leading out of it — towards the course
-   * that needs it — and drops the rest, so following a line from any card still
-   * arrives at the selection and no card is left with nothing drawn to it. That
-   * is a real loss and not a tidying: `deps` is already a transitive reduction,
-   * the build warns on any edge the graph implies, so of the 1085 edges drawn
-   * across every chain in the catalogue exactly none are redundant. The 177 a
-   * tree drops, a sixth of them, are the second prerequisites of the 70 courses
+   * Every edge of it, and that was a switch until it was measured. The quieter
+   * drawing cut the chain back to a tree rooted at the selection — each card
+   * keeping one edge out of it, towards the nearest course that needs it — and
+   * it is a real loss rather than a tidying: `deps` is already a transitive
+   * reduction, the build warns on any edge the graph implies, so of the 1188
+   * lines drawn across every chain in the catalogue not one is redundant. The
+   * 191 a tree dropped were exactly the second prerequisites of the courses
    * that have more than one — biochemistry needs organic chemistry *and* cell
-   * biology, and with the switch off only one of those is drawn. Which is why
-   * it is a switch and not a decision made here: «Опирается на» in the panel
-   * goes on naming every one of them either way.
+   * biology, and the tree drew one of them.
    *
-   * The parent kept is the nearest course that needs this one — fewest columns
-   * to the right, then nearest row — because a tree drawn with short edges is
-   * the whole reason for asking for a tree. Nearest by the row it is *standing*
-   * in, not by the catalogue's: a guest has just been moved to wherever it read
-   * best, and picking its parent by the row it no longer occupies would hand
-   * the tree the long edge the move was made to avoid.
+   * `_columns.ts` priced the two over all 197 chains and the trade was not
+   * close: the tree drew 184 cards with fewer prerequisites than they have, and
+   * bought that with 29 crossings across the whole catalogue — 174 of the 197
+   * screens have none either way. What settled it is that the loss cannot be
+   * noticed: one line into a card reads as «this is its only prerequisite», and
+   * nothing on screen says otherwise, so nobody could know there was a switch
+   * worth pressing. The one thing the tree never hid is the selected card's own
+   * prerequisites, and that is structural rather than lucky — an edge into the
+   * selection can only be dropped in favour of another course in the chain,
+   * which would make the edge transitively implied and the build would have
+   * refused it.
    */
   const links = useMemo<Link[]>(() => {
-    const { focus, upstream, opened, edges } = chain;
+    const { focus, opened, edges } = chain;
     if (!focus) return [];
-
-    const seat = new Map<string, { column: number; row: number }>();
-    columns.forEach((column, index) =>
-      column.courses.forEach((course, row) => seat.set(course.id, { column: index, row }))
-    );
-
-    /** The one course each card is hung under when the graph is cut to a tree. */
-    const parentOf = new Map<string, string>();
-    if (!fullGraph) {
-      const needs = new Map<string, string[]>();
-      for (const edge of edges) {
-        if (!upstream.has(edge.from) || !upstream.has(edge.to)) continue;
-        needs.set(edge.from, [...(needs.get(edge.from) ?? []), edge.to]);
-      }
-      for (const [dep, dependants] of needs) {
-        const here = seat.get(dep);
-        const nearest = dependants.reduce((best, id) => {
-          const one = seat.get(id);
-          const other = seat.get(best);
-          if (!one || !other) return best;
-          if (one.column !== other.column) return one.column < other.column ? id : best;
-          const reach = Math.abs(one.row - (here?.row ?? 0));
-          const bestReach = Math.abs(other.row - (here?.row ?? 0));
-          return reach < bestReach ? id : best;
-        });
-        parentOf.set(dep, nearest);
-      }
-    }
 
     const out: Link[] = [];
     for (const edge of edges) {
       // Forward edges carry the placement and nothing else.
       if (opened.has(edge.to)) continue;
-      // A card whose every dependant is off the canvas has no parent to be
-      // hung under, so it keeps what it has rather than being cut adrift.
-      if (!fullGraph && parentOf.has(edge.from) && parentOf.get(edge.from) !== edge.to) continue;
       out.push({ from: edge.from, to: edge.to, depth: highlight.depthOf(edge.from) });
     }
 
     return out.sort((a, b) => a.depth - b.depth);
-  }, [chain, columns, highlight, fullGraph]);
+  }, [chain, highlight]);
 
   /**
    * The chain's lines, plus the one the pointer is asking about.
    *
    * A name in the panel is one end of a relation and the panel it stands in is
    * the other, so pointing at it can be answered with the line itself rather
-   * than only with the card lighting up — including for edges the canvas is not
-   * otherwise drawing: what a course opens up, and the second prerequisite the
-   * tree dropped when «Все связи» is off.
+   * than only with the card lighting up — including for the edges the canvas is
+   * not otherwise drawing, which is what a course opens up.
    *
    * Only where the relation is a prerequisite, in whichever direction the panel
    * happened to name it. A line on this canvas says «this has to come first» and

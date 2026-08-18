@@ -336,21 +336,27 @@ it. That course becomes the selection, the relation is a prerequisite of it, and
 it is drawn right to left like everything else on this screen, with the whole
 chain behind it brought in.
 
-By default the chain is drawn as a tree: one line out of each card, to the
-nearest course that needs it. Following any line still arrives at the selection
-and nothing is left unconnected, but a course standing on two prerequisites has
-only one of them drawn — sequence analysis goes from 22 lines to 18, molecular
-biology from 8 to 6. **Все связи** beside the legend draws the rest.
+Every edge of the chain is drawn, and for a while only some of them were. The
+quieter drawing cut the chain back to a tree — one line out of each card, to the
+nearest course that needs it — so that following any line still arrived at the
+selection and nothing was left unconnected, but a course standing on two
+prerequisites had one of them drawn: biochemistry needs organic chemistry *and*
+cell biology, and the tree drew one. Sequence analysis went from 22 lines to 18,
+molecular biology from 8 to 6.
 
-That the switch exists rather than a decision is the point. `deps` is already a
-transitive reduction — the build warns on any edge the graph implies — so of the
-1085 lines drawn across every chain in the catalogue not one is redundant, and
-the 177 the tree drops, a sixth of them, are exactly the second prerequisites of
-the 70 courses that have more than one: biochemistry needs organic chemistry
-*and* cell biology. What makes the quieter default honest is that «Опирается на»
-in the panel names every direct prerequisite either way, so the fact is never
-hidden — only the line is. The setting is remembered, like the stage filter: it
-says something about how somebody reads rather than about what they are reading.
+`deps` is already a transitive reduction — the build warns on any edge the graph
+implies — so of the 1188 lines drawn across every chain in the catalogue not one
+is redundant, and the 191 the tree dropped were exactly the second prerequisites
+of the courses that have more than one. It was offered as a switch until it was
+counted over all 197 chains: the tree drew 184 cards with fewer prerequisites
+than they have, and bought that with 29 crossings across the whole catalogue —
+174 of the 197 screens have none either way. The switch went because the loss
+cannot be noticed. One line into a card reads as «this is its only
+prerequisite», nothing on screen says otherwise, and nobody could know there was
+anything to press. The one thing the tree never hid is the selected card's own
+prerequisites, and that is structural rather than lucky: an edge into the
+selection could only be dropped in favour of another course in the chain, which
+would make it transitively implied, and the build refuses those.
 
 Every line is drawn at right angles: out of the card, along to a lane in the gap
 between columns, down the lane, into the next card, corners rounded. Everything
@@ -418,9 +424,8 @@ columns. Pointing at a course the panel names — «Открывает путь 
 полезно», «Рядом», a step of the path — lifts its card where it is already
 standing and draws the edge between it and the course being read, in whichever
 direction the catalogue has it: so the courses ahead, which the canvas otherwise
-leaves undrawn, are drawn one at a time by the reader asking for them, and so is
-the second prerequisite that **Все связи** hides while it is off. Only where the
-relation really is a prerequisite — a line here says «this has to come first»
+leaves undrawn, are drawn one at a time by the reader asking for them. Only where
+the relation really is a prerequisite — a line here says «this has to come first»
 and nothing else, so «Также полезно» and «Рядом» light their card and draw
 nothing.
 

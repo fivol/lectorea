@@ -1,20 +1,21 @@
 /**
- * Scratch: what «Все связи» actually changes, over the whole catalogue.
+ * Scratch: what a drawing option on the columns screen costs, over all of it.
  *
- * The columns screen draws the chain behind the selected course as a tree by
- * default — one line out of each card, to the nearest course that needs it —
- * and the switch draws every edge instead. Which of the two should be the only
- * drawing is a question about 225 screens, not about the one on screen, so it
- * is answered by replaying all of them: the field's own cards, the
- * prerequisites borrowed in behind the selection, `placeGuests` for where the
- * guests stand, and then the same cut `links` makes in `ColumnsView`.
+ * Written to settle «Все связи», which drew every edge of the selected course's
+ * chain against a default that cut it back to a tree — one line out of each
+ * card, to the nearest course that needs it. That switch is gone and the whole
+ * chain is drawn; the tree is reconstructed here and nowhere else, because the
+ * question it answers is about 197 screens rather than the one on screen, and
+ * the next option on this screen will want the same replay: the field's own
+ * cards, the prerequisites borrowed in behind the selection, `placeGuests` for
+ * where the guests stand, then two candidate drawings counted side by side.
  *
  * The crossing count is the project's own test — `cross` in `lib/order.ts`,
  * two lines in card coordinates, edges sharing an end never counting — so the
  * number here is comparable with the 87 → 15 that ordering pass is measured by.
  * It is a count of the *graph*, not of the painted picture: under the stepped
  * drawing everything arriving at one card shares a lane, so some of these never
- * appear as ink. That is why the lane columns below are printed beside it.
+ * appear as ink. That is why the lane counts are printed beside it.
  *
  *   pnpm tsx scripts/_columns.ts          # the counts
  *   pnpm tsx scripts/_columns.ts worst    # and the courses that pay for it
@@ -98,8 +99,8 @@ for (const selected of courses) {
     })
   );
 
-  // The cut to a tree, as `links` makes it: the nearest course that needs this
-  // one, fewest columns to the right and then nearest row.
+  // The cut to a tree the screen used to make: the nearest course that needs
+  // this one, fewest columns to the right and then nearest row.
   const seat = (id: string) => ({ column: columnOf.get(id) ?? 0, row: rowOf.get(id) ?? 0 });
   const needs = new Map<string, string[]>();
   for (const edge of edges) needs.set(edge.from, [...(needs.get(edge.from) ?? []), edge.to]);
