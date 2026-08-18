@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { track } from './analytics';
 import { useCatalog } from './catalog';
 
@@ -7,6 +7,20 @@ import { useCatalog } from './catalog';
  * Everything shareable lives in the URL: the domain filter, the global provider
  * filter and the open playlist. That is what makes the browser back button work
  * and a pasted link land on the same view.
+ *
+ * The domain filter is the one of the three that also decides the **address**.
+ * One field of knowledge and nothing else selected is a place — `/fields/math`
+ * — and every other combination is a way of looking at the columns, which is a
+ * query string on `/courses`. The distinction is not cosmetic: a static host
+ * serves one file per path and cannot vary on a query string, so while a field
+ * was `/courses?domain=math` all thirty-nine of them were the same bytes with
+ * the same title until the bundle had run, and a crawler that indexes what it
+ * is served had thirty-nine copies of one page. `scripts/prerender.ts` writes a
+ * real page per field, and this is the module that points at it.
+ *
+ * `?domain=` keeps working — it is what every link shared so far says — and
+ * the canonical link of the view it opens names the `/fields/…` form, so the
+ * two never compete.
  */
 
 function parseList(value: string | null): string[] {
@@ -36,8 +50,18 @@ export type CatalogParams = {
 
 export function useCatalogParams(): CatalogParams {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  /**
+   * Which of the two shapes the current address is in. `domainId` is set by the
+   * `/fields/:domainId` route and `courseId` by `/courses/:courseId`; on the map
+   * and on the bare columns both are absent.
+   */
+  const { courseId, domainId } = useParams<{ courseId?: string; domainId?: string }>();
 
-  const domains = useMemo(() => parseList(params.get('domain')), [params]);
+  const domains = useMemo(
+    () => (domainId ? [domainId] : parseList(params.get('domain'))),
+    [domainId, params]
+  );
   const providers = useMemo(() => parseList(params.get('provider')), [params]);
   const lecturers = useMemo(() => parseList(params.get('lecturer')), [params]);
   const playlistId = params.get('playlist');
@@ -57,15 +81,47 @@ export function useCatalogParams(): CatalogParams {
     (key: string, current: string[], id: string) => {
       const on = !current.includes(id);
       const next = on ? [...current, id] : current.filter((item) => item !== id);
-      // The three filters that live above both screens, counted here because
-      // this is the one function all of them are toggled through — the map, the
-      // columns, the search panel and the playlist rows all end up in it. Only
-      // `domain` reaches the canonical path and so only `domain` is visible in
-      // a page view; the other two would be invisible without this.
+      // The filters that live above both screens, counted here because this is
+      // the one function they are toggled through — the columns, the search
+      // panel and the playlist rows all end up in it. Neither of them shows up
+      // in a page view on its own, so without this they would be invisible;
+      // `domain` is counted in `writeDomains`, which is where it is written now
+      // that it moves the address rather than the query string.
       track('filter_apply', { facet: key, value: on ? id : '', on });
       write(key, next);
     },
     [write]
+  );
+
+  /**
+   * The domain filter, written wherever it belongs for the result.
+   *
+   * A course keeps its own address and carries the filter in the query, as it
+   * always did. Otherwise the columns are the page and the filter is what the
+   * page *is*: exactly one field is `/fields/<id>`, none or several is
+   * `/courses`. Which means no screen has to know about the split — this is
+   * the only function that writes `domain`.
+   */
+  const writeDomains = useCallback(
+    (next: string[]) => {
+      if (courseId) {
+        write('domain', next);
+        return;
+      }
+      const query = new URLSearchParams(params);
+      query.delete('domain');
+      // Stale on the columns: a playlist is opened over a course, and there is
+      // no course here to open it over.
+      query.delete('playlist');
+      if (next.length === 1) {
+        navigate(`/fields/${encodeURIComponent(next[0])}${queryTail(query)}`);
+        return;
+      }
+      if (next.length) query.set('domain', next.join(','));
+      const tail = queryTail(query);
+      navigate(tail ? `/courses${tail}` : '/');
+    },
+    [courseId, navigate, params, write]
   );
 
   const clearGlobalFilters = useCallback(() => {
@@ -80,8 +136,14 @@ export function useCatalogParams(): CatalogParams {
     providers,
     lecturers,
     playlistId,
-    setDomains: (next) => write('domain', next),
-    toggleDomain: (id) => toggle('domain', domains, id),
+    setDomains: writeDomains,
+    toggleDomain: (id) => {
+      const on = !domains.includes(id);
+      // Counted here rather than in `toggle`, which the other two facets still
+      // share: `domain` is the one that moves the address instead of the query.
+      track('filter_apply', { facet: 'domain', value: on ? id : '', on });
+      writeDomains(on ? [...domains, id] : domains.filter((item) => item !== id));
+    },
     setProviders: (next) => write('provider', next),
     toggleProvider: (id) => toggle('provider', providers, id),
     toggleLecturer: (name) => toggle('lecturer', lecturers, name),
@@ -89,8 +151,29 @@ export function useCatalogParams(): CatalogParams {
     // The modal is a view of the current page, not a place — replace the entry
     // so closing it does not require two presses of the back button.
     setPlaylist: (id) => write('playlist', id, true),
-    search: params.toString() ? `?${params.toString()}` : '',
+    /*
+     * One string, whatever shape the address is in: a field of knowledge read
+     * off the path comes back as `domain=…` here, because that is how every
+     * other screen carries a filter across a navigation — a course opened from
+     * `/fields/math` is `/courses/<id>?domain=math`, exactly as it was before
+     * the field had a page of its own.
+     */
+    search: queryTail(withDomainParam(params, domains)),
   };
+}
+
+/** `?a=1&b=2`, or nothing at all — never a bare `?`. */
+function queryTail(query: URLSearchParams): string {
+  const serialised = query.toString();
+  return serialised ? `?${serialised}` : '';
+}
+
+/** The query as it is, with the domain filter spelled out in it. */
+function withDomainParam(params: URLSearchParams, domains: string[]): URLSearchParams {
+  const query = new URLSearchParams(params);
+  if (domains.length) query.set('domain', domains.join(','));
+  else query.delete('domain');
+  return query;
 }
 
 /** Builds `/courses/:id` while carrying the current filters along. */
@@ -130,10 +213,35 @@ export function withDomains(search: string, domainIds: string[]): string {
  * entered with nothing selected in it.
  */
 export function fieldHref(search: string, domainId: string): string {
-  const query = new URLSearchParams(withDomains(search, [domainId]));
+  const query = new URLSearchParams(search);
+  // The field is the address now, so it must not also be in the query — one
+  // page, one way of naming it.
+  query.delete('domain');
   query.delete('playlist');
-  const serialised = query.toString();
-  return coursesHref(serialised ? `?${serialised}` : '');
+  return `/fields/${encodeURIComponent(domainId)}${queryTail(query)}`;
+}
+
+/**
+ * The columns as a place to come back to — closing a course, pressing escape,
+ * the chip that names the field a course belongs to.
+ *
+ * The same rule the domain filter is written by, read the other way round: a
+ * query string that holds exactly one field is that field's page, and anything
+ * else is the columns with a filter on them. Without it, leaving a course
+ * landed on `/courses?domain=math` — the view is right, but it is the address
+ * the field page exists to replace, and the site would go on producing it.
+ */
+export function columnsHref(search: string): string {
+  const query = new URLSearchParams(search);
+  const domains = parseList(query.get('domain'));
+  if (domains.length === 1) {
+    query.delete('domain');
+    return `/fields/${encodeURIComponent(domains[0])}${queryTail(query)}`;
+  }
+  const tail = queryTail(query);
+  // Nothing left to look at the columns *through*: that is the map, not a
+  // screen with every card in the catalogue on it. See `CoursesScreen`.
+  return tail ? `/courses${tail}` : '/';
 }
 
 /**

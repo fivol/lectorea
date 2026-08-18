@@ -7,7 +7,7 @@ import { useResumeList, useResumeProgress } from '@/lib/progress';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
-import { courseHref, useCatalogParams } from '@/lib/url';
+import { columnsHref, courseHref, useCatalogParams, withDomains } from '@/lib/url';
 import { useDocumentMeta } from '@/lib/meta';
 import { useIsDesktop, useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp, inkOn } from '@/lib/format';
@@ -35,7 +35,7 @@ import MobileCourseList from './MobileCourseList';
 const NO_BRIDGES: Set<string> = new Set();
 
 export default function CoursesScreen() {
-  const { courseId } = useParams<{ courseId: string }>();
+  const { courseId, domainId } = useParams<{ courseId?: string; domainId?: string }>();
   const catalog = useCatalog();
   const navigate = useNavigate();
   const params = useCatalogParams();
@@ -50,6 +50,47 @@ export default function CoursesScreen() {
   const [query, setQuery] = useState('');
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
+
+  /**
+   * Whether anything at all narrows what the columns are showing. The three
+   * filters are equal here: «все курсы МИТ» is a slice somebody asked for, and
+   * only a screen with none of them set is the one nobody asked for.
+   */
+  const unfiltered = !params.domains.length && !params.providers.length && !params.lecturers.length;
+
+  /*
+   * The columns are always looking at something. Two ways in break that, and
+   * both arrive from outside the app — a link somebody shared, a search result:
+   *
+   * — `/courses` with nothing set draws all 225 cards across nine columns of
+   *   every subject at once. It is the one view of the catalogue that answers
+   *   no question: too wide to read, and the map exists precisely to choose a
+   *   field before the columns are worth opening. It goes back to the map.
+   * — `/courses/inorganic-chemistry` opens the right course inside that same
+   *   wall. Reached from the search box or the profile the course brings its
+   *   own fields along with it (`useCourseSlice`), so the address is the only
+   *   way to land on the wide one — and it gets the same treatment, its own
+   *   fields rather than the primary one alone, for the reason written there.
+   *
+   * A field of knowledge that does not exist is the third: `prerender.ts`
+   * writes a page per real field and nothing links to any other, so it is a
+   * stale link, and the map is a better answer than a screen filtered down to
+   * nothing.
+   */
+  useEffect(() => {
+    if (domainId && !catalog.domainById.has(domainId)) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if (!unfiltered) return;
+    if (!selected) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if (selected.domains.length) {
+      navigate(courseHref(selected.id, withDomains('', selected.domains)), { replace: true });
+    }
+  }, [catalog, domainId, navigate, selected, unfiltered]);
 
   /*
    * A course opened, with the facts a report needs about it beside the id.
@@ -94,10 +135,24 @@ export default function CoursesScreen() {
     : field
       ? t('seo.domain.title', { title: t(`domain.${field}.title`) })
       : t('seo.courses.title');
+  /*
+   * The same three cases as the tab's name, without the site on the end of it.
+   * A tab says which site it belongs to because it stands next to eleven other
+   * tabs; a heading is inside the site already, and «Математика — курсы и
+   * видеолекции | Lectorea» is not what this page is called.
+   */
+  const heading = selected
+    ? courseName
+    : field
+      ? t(`domain.${field}.title`)
+      : t('seo.heading.courses');
   useDocumentMeta(
     pageTitle,
     selected ? t(`course.${selected.id}.desc`) : field ? t(`domain.${field}.desc`) : t('app.tagline'),
-    selected ? `courses/${selected.id}` : field ? `courses?domain=${field}` : 'courses'
+    // A field of knowledge names itself `/fields/<id>` whichever way it was
+    // reached, so the older `/courses?domain=<id>` links point at it rather
+    // than competing with it — see `useCatalogParams`.
+    selected ? `courses/${selected.id}` : field ? `fields/${field}` : 'courses'
   );
 
   /*
@@ -221,7 +276,7 @@ export default function CoursesScreen() {
 
   /** Clearing the selection is a navigation, so back still walks the history. */
   const onDeselect = useCallback(
-    () => navigate(`/courses${params.search}`),
+    () => navigate(columnsHref(params.search)),
     [navigate, params.search]
   );
 
@@ -234,7 +289,7 @@ export default function CoursesScreen() {
   const drawer = Boolean(selected) && !isMobile && !isDesktop;
 
   // Escape backs out of the panel at every width, not only on the phone.
-  useEscape(Boolean(selected), () => navigate(`/courses${params.search}`));
+  useEscape(Boolean(selected), () => navigate(columnsHref(params.search)));
 
   /* ─────────────────────────────  Splitter  ───────────────────────────── */
 
@@ -264,6 +319,17 @@ export default function CoursesScreen() {
 
   return (
     <div className="flex h-full flex-col">
+      {/*
+        The name of the page, once, for whoever cannot see the screen — a
+        screen reader arriving at the columns, and a crawler that runs the
+        bundle and then looks for what this page is about. It is not drawn:
+        the columns say what they are by being columns, and the open course
+        already carries its own title in the panel beside them. Without it
+        every one of the 264 addresses below `/courses` and `/fields` rendered
+        without a single first-level heading, and the only copy of it was in
+        the `<noscript>` block that running the bundle throws away.
+      */}
+      <h1 className="sr-only">{heading}</h1>
       {/*
         Two rows until the whole toolbar genuinely fits on one — and the two are
         decided rather than left to the wrap: chrome above, filters below.

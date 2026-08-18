@@ -67,7 +67,11 @@ export default function Shortcuts() {
       }
       if (event.key === 'm' || event.key === 'ь') {
         event.preventDefault();
-        navigate(location.pathname === '/' ? '/courses' : '/');
+        // One way now, because the other one has no destination: the columns
+        // are always looking at a field of knowledge, and from the map there is
+        // no field chosen yet to open them on — that is the choice the map is
+        // there to make. See `CoursesScreen`.
+        if (location.pathname !== '/') navigate('/');
       }
     };
 

@@ -794,6 +794,56 @@ schema has to be declared to it in advance, and the declaration has to be the
 same artefact the code is written against. Two lists that must agree, and no
 check that they do, is one list that is wrong.
 
+## A view a static host cannot serve a file for is not a page
+
+Found on 2026-08-18, auditing the site for search engines.
+
+A field of knowledge was `/courses?domain=math`. Every screen of the app can be
+reached that way and the app names each of them correctly once it has booted, so
+nothing looked wrong. What was wrong is invisible from inside the app: Pages
+serves one file per **path**, so all thirty-nine fields were `courses.html` —
+the same bytes, the same title, the same list of all 225 courses — and thirty-
+nine entries in the sitemap pointed at it. A crawler that indexes what it is
+served had thirty-nine copies of one page.
+
+The fix is not a canonical link and not a better title. It is that **a view
+worth indexing has to have a path of its own**, because a path is the unit a
+static host can answer differently. `/fields/<id>` is a route, a prerendered
+file and a sitemap entry; `?domain=` keeps working and canonicalises onto it.
+
+The seam that made it cheap: one function decides the address from the filter
+(`writeDomains` in `src/lib/url.ts`) and one reads it back (`columnsHref`), so
+no screen knows there are two shapes. `params.search` still hands everything
+downstream `domain=…` whichever shape the address is in, which is why the change
+touched no screen except for the canonical link it declares.
+
+**Generally:** before adding a query parameter that selects *what the page is
+about* rather than how it is sorted, ask what file a static host would serve for
+it. If the answer is "the same one as for everything else", it is not a page
+yet, and no amount of head-rewriting after boot will make search treat it as
+one.
+
+**Rejected, with reasons:**
+
+- *Leave `?domain=` and drop the thirty-nine URLs from the sitemap.* One line,
+  and it does remove the duplicate signal — but it also gives up thirty-nine
+  landing pages for the shape of question people actually type («курсы по
+  математике»), whose titles and descriptions were already written in
+  `data/i18n/*.json`. Cheaper than the fix and worth less than nothing.
+- *Serve the trailing-slash form as a small redirect stub.* `/courses/x/` was a
+  404, and a stub is 600 bytes against a whole page copied. Rejected because
+  which of `courses.html` and `courses/index.html` a static host prefers for the
+  bare `/courses` is not documented anywhere we control — if it prefers the
+  directory, the stub is the file *both* addresses resolve to and the page
+  redirects to itself. The full copy cannot fail that way, carries the canonical
+  link naming the slashless address, and costs 2 MB against a 35 MB `dist`.
+- *Promote the course panel's `<h2>` to the page's `<h1>`.* It is the visible
+  title of the open course, so it reads like the right heading. But `CoursePanel`
+  is mounted up to three times in `CoursesScreen` — desktop panel, mobile sheet,
+  list — and only the breakpoint decides which is showing, so the promotion
+  risks a page with three `<h1>`s. One `sr-only` heading in the screen itself is
+  always exactly one, in every state.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

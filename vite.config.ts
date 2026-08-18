@@ -84,6 +84,12 @@ export default defineConfig(({ mode }) => ({
         name: 'Lectorea',
         short_name: 'Lectorea',
         description: 'Каталог образовательных плейлистов в порядке изучения',
+        // The plugin defaults this to `en`, which is neither the catalogue's
+        // language nor the language of the two lines above it — an installed
+        // app then announces itself in the wrong one to everything that asks.
+        lang: 'ru',
+        dir: 'ltr',
+        categories: ['education', 'books'],
         // The canvas colour from src/index.css, so the shell around an
         // installed window is the page's own background rather than a near
         // miss of it.

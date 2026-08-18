@@ -5,10 +5,11 @@ import { useCatalog } from '@/lib/catalog';
 import { formatDuration, formatHours, hoursFromSeconds, inkOn, withAlpha } from '@/lib/format';
 import { percent, useCourseProgress } from '@/lib/progress';
 import { fixDataUrl, suggestPlaylistUrl } from '@/lib/repo';
-import { useCatalogParams } from '@/lib/url';
+import { fieldHref, useCatalogParams } from '@/lib/url';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import ProgressBar from '@/components/ProgressBar';
+import TodayLine from '@/components/game/TodayLine';
 import { ResumeCard } from '@/components/ResumeCard';
 import { Button, Chip, IconButton } from '@/components/ui';
 import LinksBlock from './LinksBlock';
@@ -69,7 +70,9 @@ export default function CoursePanel({
           {domains.map((domain) => (
             <Chip
               key={domain.id}
-              to={`/courses?domain=${encodeURIComponent(domain.id)}`}
+              // The field, as its own page — and the filters that live above
+              // both screens come along, exactly as they do from the map.
+              to={fieldHref(params.search, domain.id)}
               hint={t('ui.legend.domain')}
               style={{ color: inkOn(domain.color, scheme), borderColor: withAlpha(domain.color, 0.4) }}
             >
@@ -192,6 +195,19 @@ export default function CoursePanel({
             </p>
           </div>
         ) : null}
+
+        {/*
+          And under the block, the day. [game:today]
+
+          Everything inside the inlay above is about the recording — the
+          lecture, the bar, the hours of it — and the day is about the reader,
+          so it stands outside rather than as a fourth grey line in the group.
+          It is here at all because this is a press that answers it: the same
+          rule that put it under «Продолжить» on the front page. Only where
+          there is something to continue, since an ask with no press beside it
+          belongs on the screen that has one.
+        */}
+        {progress ? <TodayLine className="mt-2" /> : null}
       </header>
 
       <section className="px-4 pb-4">

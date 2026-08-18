@@ -36,6 +36,12 @@ it is given rather than trusting its caller. Three rules do the work:
   parameters. A parameter added to the app next year cannot start leaving the
   browser without somebody adding it to that list.
 
+  One consequence worth knowing before reading a report across 2026-08-18: a
+  field of knowledge is `/fields/<id>` from that build on, where it used to be
+  `/courses?domain=<id>` ([hosting.md](hosting.md#a-field-is-a-page-not-a-query-string)).
+  Both are the same screen and both are counted, but they are two rows in a
+  page-path report, so a trend over that date has to sum them.
+
 Nothing identifies a person. There is no user id, no advertising storage, no
 Google signals — `allow_google_signals: false` is set before the first event, so
 the half of GA4 that infers age and interests from a signed-in Google account is

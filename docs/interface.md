@@ -245,11 +245,20 @@ on the drawing, and the wordmark leads back to it from anywhere. The way back
 from the columns is the other half of that pair — it returns to the view you
 left, the list included, and says which one it is.
 
-## The columns — `/courses`
+## The columns — `/fields/<id>`
 
 ![The columns with a course selected](images/courses.webp)
 
-The catalogue proper. A column is «сложность N» — the length of the longest
+The catalogue proper, and always seen through something. One field of knowledge
+is the address itself — `/fields/chemistry` — and any other combination of
+filters is a query string on `/courses`; the whole catalogue with nothing set is
+not a screen at all, because 225 cards across nine columns of every subject
+answers no question, and a reader who lands there is sent back to the map.
+A course opened by its bare address brings its own fields along with it, which
+is what makes a search result land in a slice rather than in the wall
+([hosting.md](hosting.md#a-field-is-a-page-not-a-query-string)).
+
+A column is «сложность N» — the length of the longest
 chain of prerequisites ending at that course — so reading left to right is
 reading how much has to come first, and a line above the columns says exactly
 that.

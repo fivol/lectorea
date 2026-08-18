@@ -27,6 +27,14 @@ export default function App() {
         <Route path="/" element={<MapScreen />} />
         <Route path="/courses" element={<CoursesScreen />} />
         <Route path="/courses/:courseId" element={<CoursesScreen />} />
+        {/*
+          One field of knowledge, as a place of its own. The same screen as
+          `/courses?domain=…` and deliberately so — what it buys is an address a
+          static host can serve a page for, which is the only way thirty-nine
+          fields are thirty-nine pages to a crawler rather than one file with a
+          query string on it. See `useCatalogParams` and `scripts/prerender.ts`.
+        */}
+        <Route path="/fields/:domainId" element={<CoursesScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ProfilePanel />

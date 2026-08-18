@@ -55,19 +55,76 @@ Nothing below `/` could be indexed while that was true.
 [`scripts/prerender.ts`](../scripts/prerender.ts) runs after `vite build` (it is
 part of `pnpm build`) and writes a real file for every URL the catalogue offers:
 
-- `courses/<id>.html` — one per course, plus `courses.html` and `index.html`.
-  Each is the bundle's own `index.html` with its head rewritten: the title, the
-  description and the card of *that* course, a canonical link, and JSON-LD
-  (`Course`, `BreadcrumbList`). Same hashed script, so the app boots exactly as
-  it does anywhere else.
+- `courses/<id>.html` — one per course, plus `index.html`. Each is the bundle's
+  own `index.html` with its head rewritten: the title, the description and the
+  card of *that* course, a canonical link, and JSON-LD (`Course`,
+  `BreadcrumbList`). Same hashed script, so the app boots exactly as it does
+  anywhere else.
+- `fields/<id>.html` — one per field of knowledge, with its own title,
+  description and an `ItemList` of the courses in it, in the order they are
+  meant to be taken. See [a field is a page](#a-field-is-a-page-not-a-query-string).
 - A `<noscript>` copy of what the page says — the description, what the course
   needs, what it opens up, links to both — for whatever does not run JavaScript.
+- `<path>/index.html` beside every page, byte for byte the same. A link that
+  picked up a trailing slash somewhere — `/courses/calculus-1/` — is otherwise
+  a path this site has no file for, and Pages answers it with `404.html` and
+  the 404 status to match. The twin carries a canonical link naming the
+  slashless address, which is what a crawler consolidates the pair on. Written
+  as the whole page rather than as a redirect on purpose: which of
+  `courses.html` and `courses/index.html` a static host prefers for the bare
+  `/courses` is undocumented, and a redirect that turned out to be the file
+  *both* addresses resolve to would be a page redirecting to itself.
 - `sitemap.xml`, every course and field of knowledge, dated from the build.
-- `robots.txt`, pointing at the sitemap.
-- `404.html`, the only page marked `noindex`.
+- `robots.txt`, pointing at the sitemap. It also `Allow`s `/data/` out loud:
+  every screen is drawn from those JSON files, so a crawler that runs the
+  bundle has to be able to fetch them, and blocking them would leave it
+  rendering an empty page and reporting a site with nothing on it. The
+  `Clean-param` line is Yandex's, and is intersectional — it needs no section
+  of its own.
+- `llms.txt` — what the catalogue is and which of its addresses are worth
+  reading, for whatever reads a site as an answer rather than as a result to
+  rank. Fields rather than courses: 225 lines would be the sitemap written
+  twice, and each field page carries its own courses anyway. Not written for a
+  fork, which asks to be left out of search by every other route as well.
+- `404.html` and `courses.html`, the two pages marked `noindex`.
 
 Pages resolves `/courses/calculus-1` to `courses/calculus-1.html` on its own, so
 the URLs do not change and neither does the router.
+
+`/courses` with no filter on it is the second of those two for a reason worth
+writing down. It draws all 225 cards across nine columns of every subject at
+once — the one view of the catalogue that answers no question — so the app
+sends a reader who lands on it back to the map. An address that redirects must
+not also be offered as a search result, hence `noindex`; `follow`, because the
+list on it is still 225 links; and the file stays, because it is also what
+serves `/courses?provider=…`, which is a slice somebody asked for.
+
+## A field is a page, not a query string
+
+A field of knowledge used to be `/courses?domain=math`. Pages serves one file
+per **path** and cannot vary on a query string, so all thirty-nine of them were
+`courses.html`: the same bytes, the same title, the same list of every course
+in the catalogue, until the bundle had run and rewritten the head. A crawler
+that indexes what it is served had thirty-nine copies of one page and no reason
+to keep any of them — and «курсы по математике» is the shape of the question
+people actually ask.
+
+So a single field of knowledge is `/fields/<id>`, a route of its own, and every
+other combination stays a query string on `/courses`. The rule lives in
+`useCatalogParams` in [src/lib/url.ts](../src/lib/url.ts) and nothing else needs
+to know it: `fieldHref` builds the address, `columnsHref` reads it back, and
+`params.search` still hands every other screen the filter as `domain=…`, so a
+course opened from a field is `/courses/<id>?domain=math` exactly as before.
+
+`?domain=` keeps working — it is what every link shared so far says — and the
+canonical link of the view it opens names the `/fields/…` form, so the two
+never compete.
+
+**The columns always look at something.** A course opened by its bare address —
+`/courses/inorganic-chemistry`, which is what a search result is — brings its
+own fields of knowledge along with it, the same slice the search box and the
+profile already opened it in. Without that, a result from search landed the
+reader inside the wall of all 225 cards with one of them selected.
 
 The picture in those cards is `public/og.png` — the real map at 1200×630, drawn
 by [scripts/og-image.ts](../scripts/og-image.ts) from `map.svg` and the domain
@@ -86,8 +143,9 @@ this and does not need to.
 
 Once the app has booted it takes the head over itself — `useDocumentMeta` in
 [src/lib/meta.ts](../src/lib/meta.ts). Two reasons: navigation inside the app
-never reloads the document, and `/courses?domain=math` is one file serving every
-field of knowledge, so only the running app can say which one this is. Both use
+never reloads the document, and one file still serves several views — the older
+`/courses?domain=math`, and `/courses?provider=…` — so only the running app can
+say which one this is and which address it should name as canonical. Both use
 the same `seo.*` dictionary keys, so the static page and the rendered one agree.
 
 **A fork is kept out of search** — `Disallow: /` and `noindex` on every page.
