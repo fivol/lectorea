@@ -752,6 +752,23 @@ export const ProfileSchema = z.object({
        * day's goal is a bar that cannot be filled by anybody keeping to it.
        */
       goalDays: z.number().int().min(1).max(7).catch(5),
+      /**
+       * Whether this browser is counted in the site's own statistics.
+       *
+       * On by default and stated plainly in the settings, which is the trade
+       * this site can honestly offer: nothing about a reader is collected —
+       * no account, no identifier of ours, no advertising signals — and what
+       * is counted is what the catalogue itself needs to know, chiefly which
+       * courses are opened and which searches find nothing. The last of those
+       * is the one that pays for the switch being here rather than absent:
+       * a search that returns nothing is a course the catalogue is missing,
+       * and there is no other way for the site to hear about it.
+       *
+       * `catch` like the rest, so a value this build does not understand
+       * cannot fail the parse and cost somebody every mark in their profile.
+       * What the switch actually does is in `src/lib/analytics.ts`.
+       */
+      analytics: z.boolean().catch(true),
     })
     .default({
       lang: 'ru',
@@ -762,6 +779,7 @@ export const ProfileSchema = z.object({
       resume: true,
       dayGoal: null,
       goalDays: 5,
+      analytics: true,
     }),
 });
 export type Profile = z.infer<typeof ProfileSchema>;

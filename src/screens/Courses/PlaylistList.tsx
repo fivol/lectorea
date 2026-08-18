@@ -19,6 +19,7 @@ import {
   facetActive,
   langLabel,
   languageLabel,
+  reportFilters,
   sortPlaylists,
   toggleFacet,
   type FilterFacet,
@@ -45,6 +46,20 @@ export default function PlaylistList({ course }: Props) {
    */
   const [grouped, setGrouped] = useState(true);
   const lastFocused = useRef<HTMLElement | null>(null);
+
+  /*
+   * The filters, counted once they have settled rather than as they are set.
+   *
+   * In an effect keyed on the state instead of inside `setFilters`, because
+   * `setFilters` is also called with an updater function and React runs those
+   * twice under StrictMode — an event sent from inside one would be sent twice
+   * in development and once in production, which is the worst of the two.
+   */
+  const filtersBefore = useRef(filters);
+  useEffect(() => {
+    reportFilters(filtersBefore.current, filters);
+    filtersBefore.current = filters;
+  }, [filters]);
 
   // The interface language is the starting point, not a leash: opening another
   // course starts from it again, but switching the header toggle leaves an open

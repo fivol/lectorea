@@ -141,6 +141,15 @@ further-along status on a conflict, and taking the union of the days you
 studied. That is today's whole sync story; the [roadmap](docs/roadmap.md) is
 about making it less manual.
 
+The site does count how it is used — which courses get opened, and above all
+which searches come back empty, because a search with no results is a course
+the catalogue is missing and there is no other way to hear about one. It counts
+nothing about *you*: no account, no identifier, no advertising data, and nothing
+you typed beyond a search term that has been through a filter. Your profile is
+never sent anywhere. **Профиль → Настройки** has a switch that turns the whole
+of it off, and the rules are written out in full in
+[docs/analytics.md](docs/analytics.md).
+
 ## On a phone
 
 ![The map, a course sheet and the profile on a phone](docs/images/phone.webp)

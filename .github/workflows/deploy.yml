@@ -89,10 +89,16 @@ jobs:
       # BASE_PATH is passed only for this repository, which has a domain and is
       # therefore served from its root; a fork gets an empty value and falls
       # back to the /<repo>/ subdirectory github.io gives it.
+      # The analytics stream is this site's and this site's only: a fork gets an
+      # empty value and sends nothing at all, which is the right default for
+      # somebody else's copy of the catalogue. Written here rather than kept as
+      # a secret because a measurement id is public by construction — it ships
+      # inside the bundle, and hiding it would only hide it from us.
       - run: pnpm build
         env:
           VITE_REPO: ${{ github.repository }}
           BASE_PATH: ${{ github.repository == 'fivol/lectorea' && '/' || '' }}
+          VITE_GA4_ID: ${{ github.repository == 'fivol/lectorea' && 'G-5N7EE7KHVS' || '' }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

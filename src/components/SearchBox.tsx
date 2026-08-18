@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { SearchEntry } from '@shared/schema';
 import { matchedAlias, SEARCH_SECTION_ORDER } from '@shared/search';
 import { useT } from '@/i18n';
+import { searchTerm, track } from '@/lib/analytics';
 import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { EDGE, placeBy, samePlace, type Placement } from '@/lib/popover';
@@ -32,6 +33,20 @@ type Props = {
 
 /** The dropdown is at least this wide — a name has to fit on one line. */
 const PANEL_WIDTH = 340;
+
+/**
+ * The kinds of row, named for a report rather than by the one-letter tag the
+ * index stores. Read alongside `search`: the term is what was asked and this is
+ * what answered, and «искали курс, а выбрали вуз» is a fact about how the
+ * catalogue is named that neither event says on its own.
+ */
+const ROW_KIND: Record<SearchEntry['t'], string> = {
+  d: 'domain',
+  c: 'course',
+  p: 'playlist',
+  v: 'provider',
+  l: 'lecturer',
+};
 
 export default function SearchBox({
   query,
@@ -168,6 +183,14 @@ export default function SearchBox({
 
   const select = useCallback(
     (entry: SearchEntry) => {
+      track('search_select', {
+        kind: ROW_KIND[entry.t],
+        // An id out of the catalogue, never the row's name: a lecturer row is
+        // keyed by the name itself, and that is the one id worth withholding.
+        item_id: entry.t === 'l' ? '' : entry.id,
+        search_term: searchTerm(results.query),
+        suggested: results.suggested,
+      });
       switch (entry.t) {
         case 'd':
           // The same address a territory on the map leads to — see `fieldHref`.
@@ -208,7 +231,7 @@ export default function SearchBox({
       if (sheet) closeSheet();
       else setSheet(false);
     },
-    [navigate, onQueryChange, params, sliceAround, sheet, closeSheet]
+    [navigate, onQueryChange, params, sliceAround, sheet, closeSheet, results]
   );
 
   /** ↑/↓/Enter over the list. Escape is the caller's, because backing out of a

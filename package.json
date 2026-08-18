@@ -45,6 +45,7 @@
     "course:new": "tsx scripts/course-new.ts",
     "playlist:add": "tsx scripts/playlist-add.ts",
     "check:i18n": "tsx scripts/check-i18n.ts",
+    "ga4:setup": "tsx scripts/ga4-setup.ts",
     "map:portrait": "tsx scripts/map-portrait.ts"
   },
   "pnpm": {

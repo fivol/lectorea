@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { SearchEntry } from '@shared/schema';
 import { groupBySection, searchEntries, type Scored } from '@shared/search';
+import { searchTerm, track } from './analytics';
 import { useCatalog } from './catalog';
 import type { Catalog } from './data';
 
@@ -160,5 +161,44 @@ export function useSearchResults(
     };
   }, [catalog, query]);
 
+  useSearchReport(found);
   return found ?? suggested;
+}
+
+/** Long enough that «теорв» is not counted on the way to «теорвер». */
+const SETTLE_MS = 900;
+
+/**
+ * A search, counted once it has stopped being typed.
+ *
+ * Both screens search through `useSearchResults`, so this is the one place it
+ * can be reported from — and the one place the rule about free text has to
+ * hold. What goes is the query as a *subject*, put through `searchTerm`, which
+ * lower-cases it, refuses anything of a length nobody asks a catalogue, and
+ * refuses anything shaped like an address or a phone number; a search whose
+ * words are dropped is still counted, so the totals stay true.
+ *
+ * The zero-result case gets an event of its own because it is the one signal
+ * the catalogue cannot get any other way. A refusal in the pipeline says a
+ * playlist did not match a course we have; this says somebody wanted a course
+ * we do not — which is exactly the question `_gaps.ts` is run to answer, and
+ * the only version of it that comes from readers rather than from the crawl.
+ */
+function useSearchReport(found: SearchResults | null): void {
+  const last = useRef('');
+  const query = found?.query ?? '';
+  const hits = found?.hits.length ?? 0;
+
+  useEffect(() => {
+    const term = query.trim();
+    // Two characters is a prefix on the way to a word, not a question.
+    if (term.length < 2 || term === last.current) return;
+    const timer = setTimeout(() => {
+      last.current = term;
+      const safe = searchTerm(term);
+      track('search', { search_term: safe, results: hits });
+      if (hits === 0) track('search_no_results', { search_term: safe });
+    }, SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [query, hits]);
 }

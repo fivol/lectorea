@@ -146,6 +146,8 @@ What each one does and why in that order:
   motion), the plate every control is cut from, and the UI kit
 - [roadmap.md](roadmap.md) — what is being worked towards, in what order, and
   what is deliberately not planned
+- [analytics.md](analytics.md) — the one thing that leaves the browser: what is
+  counted, what is refused, and the switch that stops it
 
 **The data**
 

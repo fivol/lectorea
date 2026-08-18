@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { track } from './analytics';
 import { useCatalog } from './catalog';
 
 /**
@@ -54,9 +55,14 @@ export function useCatalogParams(): CatalogParams {
 
   const toggle = useCallback(
     (key: string, current: string[], id: string) => {
-      const next = current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id];
+      const on = !current.includes(id);
+      const next = on ? [...current, id] : current.filter((item) => item !== id);
+      // The three filters that live above both screens, counted here because
+      // this is the one function all of them are toggled through — the map, the
+      // columns, the search panel and the playlist rows all end up in it. Only
+      // `domain` reaches the canonical path and so only `domain` is visible in
+      // a page view; the other two would be invisible without this.
+      track('filter_apply', { facet: key, value: on ? id : '', on });
       write(key, next);
     },
     [write]

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { useT } from '@/i18n';
 import type { IconName } from '@/components/Icon';
+import { track } from '@/lib/analytics';
 import { copyText } from '@/lib/clipboard';
 import Button from './Button';
 
@@ -23,6 +24,13 @@ type Props = Omit<ComponentProps<typeof Button>, 'icon' | 'onClick'> & {
    * twice.
    */
   onPress?: () => void;
+  /**
+   * What is being copied, for the count — «profile», «prompt», «lecture». Never
+   * the text itself: two of the three things this button copies are a whole
+   * profile and a question somebody is about to ask a model, and neither has
+   * any business leaving the browser.
+   */
+  what?: string;
 };
 
 /** How long the button stays saying it worked. */
@@ -38,7 +46,14 @@ const HOLD = 2000;
  * for the same reason: a browser that refuses the clipboard must not look
  * exactly like one that agreed.
  */
-export default function CopyButton({ text, idleIcon = 'copy', onPress, children, ...rest }: Props) {
+export default function CopyButton({
+  text,
+  idleIcon = 'copy',
+  onPress,
+  what,
+  children,
+  ...rest
+}: Props) {
   const { t } = useT();
   const [state, setState] = useState<'idle' | 'done' | 'failed'>('idle');
   const timer = useRef<number>();
@@ -48,6 +63,9 @@ export default function CopyButton({ text, idleIcon = 'copy', onPress, children,
   const copy = async (): Promise<void> => {
     onPress?.();
     const ok = await copyText(typeof text === 'function' ? text() : text);
+    // Failures go too. A browser that refuses the clipboard is the kind of
+    // thing that is only ever discovered from somebody else's machine.
+    if (what) track('copy', { what, ok });
     setState(ok ? 'done' : 'failed');
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setState('idle'), HOLD);

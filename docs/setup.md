@@ -50,6 +50,31 @@ evening. Two keys of the *same* project share one budget: the crawler will find
 the second already empty and say so. Nothing needs configuring beyond the
 variable — the ledger in `cache.db` counts each key's day separately.
 
+## Google Analytics
+
+Optional, and only for a deployment that wants the counting described in
+[analytics.md](analytics.md). Without it the site is silent — no script is
+loaded and no request is made — which is what a fork and every local checkout
+get by default.
+
+```
+VITE_GA4_ID=G-XXXXXXXXXX
+```
+
+That is the whole of what the *site* needs, and it is public by construction:
+the id ships inside the bundle, so it is written into
+[deploy.yml](../.github/workflows/deploy.yml) for this repository rather than
+kept as a secret. `VITE_GA4_DEBUG=1` additionally reports from `pnpm dev`,
+marked as debug traffic; leave it off, or an afternoon of work lands in the same
+reports as the readers.
+
+The *property* needs its custom dimensions registered, or the parameters are
+collected and then missing from every report — `pnpm ga4:setup --apply`, which
+needs a service account key at `keys/ga4-admin.json` and administrator rights
+granted to it by hand. Both steps are in
+[analytics.md](analytics.md#setting-the-property-up). `keys/` is in
+`.gitignore`; neither the site nor CI ever reads it.
+
 ## OpenAI
 
 Optional, and only for LLM matching (`pnpm data:match --llm`) and domain images

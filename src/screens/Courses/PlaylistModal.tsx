@@ -8,6 +8,7 @@ import {
   type Video,
 } from '@shared/schema';
 import { formatCompact, useT } from '@/i18n';
+import { track, watchProgress } from '@/lib/analytics';
 import { useCatalog } from '@/lib/catalog';
 import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
@@ -101,6 +102,21 @@ export default function PlaylistModal({
   const progress = playlistProgress(profile, playlist);
   /** Null for a shelf entered from search, whose ratio is not about staying. */
   const retention = measuredRetention(playlist);
+
+  /**
+   * How far into each lecture anybody got, at the four points worth reporting.
+   *
+   * One reporter per open playlist, held across renders: it is what remembers
+   * which milestones a lecture has already passed, and a fresh one on every
+   * position frame would report the same quarter four times a second. The
+   * profile's own copy of the position is a different record with a different
+   * rule — it is per lecture and the reader can switch it off — so the two are
+   * not merged.
+   */
+  const reachedIn = useMemo(() => watchProgress(), []);
+  const lengthOf = (videoId: string): number =>
+    playlist.videos.find((video) => video.id === videoId)?.seconds ?? 0;
+  const watched = { playlist_id: playlist.id, course_id: playlist.courseId };
 
   /** What the store needs in order to know what a tick is part of, and what it is worth. */
   const context: WatchContext = useMemo(
@@ -196,10 +212,14 @@ export default function PlaylistModal({
       // being *shown* how far into the lecture they are.
       setAt({ id: videoId, sec });
       recordPosition(videoId, sec, context, played);
+      reachedIn(videoId, sec, lengthOf(videoId), watched);
     },
     // «player», so the day is not charged for the lecture's whole length on top
     // of the time the frame has already reported watching it.
-    onWatched: (videoId) => setVideosDone([videoId], true, context, 'player'),
+    onWatched: (videoId) => {
+      setVideosDone([videoId], true, context, 'player');
+      track('video_complete', { video_id: videoId, video_provider: 'youtube', ...watched });
+    },
     // Without `list=` there is no rail behind the frame to walk along, so the
     // walking is done here. With one, YouTube is already doing it and a second
     // mover would fight it.
@@ -563,6 +583,7 @@ export default function PlaylistModal({
                                    px-2 py-1 text-[11px] leading-none"
                         idleIcon="help"
                         iconSize={13}
+                        what="lecture-prompt"
                         onPress={() => command(frame, 'pauseVideo')}
                         text={() =>
                           lecturePrompt({

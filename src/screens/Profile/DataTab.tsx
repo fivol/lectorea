@@ -52,10 +52,12 @@ export default function DataTab() {
           </Button>
           {/* The same bytes without a file: a phone with nowhere to put a download,
               or a note the profile is being pasted into. */}
-          <CopyButton text={() => profileJson(profile)}>
+          <CopyButton what="profile" text={() => profileJson(profile)}>
             {t('ui.profile.data.copy')}
           </CopyButton>
-          <CopyButton text={prompt}>{t('ui.profile.data.copyPrompt')}</CopyButton>
+          <CopyButton what="profile-prompt" text={prompt}>
+            {t('ui.profile.data.copyPrompt')}
+          </CopyButton>
         </div>
         <p className="mt-2 text-xs text-ink-faint">{t('ui.profile.data.promptHint')}</p>
       </section>

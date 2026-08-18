@@ -31,6 +31,32 @@ hour after the search has to reach the candidates the search already paid for.
 able to replay the second over a saved first. Asking the same question twice is
 the one thing quota must never buy.
 
+## A question that cost money is written down before its answer is judged
+
+`--from` made a hunt's *answers* replayable; it did nothing about asking the same
+question twice, because a second run with the same brief is a different process
+with an empty memory. The only guard was the person running it passing
+`--variant=1` because they remembered what the last one covered — which lasted
+exactly as long as the memory did.
+
+The `searches` table is the fix and the shape is general: **one row per paid
+question, keyed by the question and not by what it was asked for.** `_hunt.ts`
+now drops any query already in it before spending a unit, so two hunts a month
+apart divide the catalogue between them instead of overlapping on it, and
+`--variant=all` can walk every phrasing until the day's quota is gone. The row is
+written on the answer rather than on the charge: a query billed and then failed
+leaves nothing behind, because a question nobody holds the answer to is worth
+asking again.
+
+It is merged and never replaced on a restore, for the reason `verdicts` and
+`ownership` are — the shape to copy for the next table like it is a single-column
+key plus a `checked_at`
+([pitfalls.md](pitfalls.md#a-restore-was-read-as-take-what-is-newer-and-it-is-replace-what-is-there)).
+
+**Generally:** if an answer is worth caching, the *question* is worth recording
+separately — they expire on different clocks, and only one of them is what the
+money bought.
+
 ## Nothing is written without `--apply`
 
 The scratch scripts (`_hunt`, `_vet`, `_probe`, `_refusals`) look and print by
@@ -724,6 +750,49 @@ that prints a pair.
 **Generally:** a formatter that is right about one value can still be wrong
 about two. Where values are printed to be compared, the unit belongs to the
 pair, and the cheapest place to hold that is the formatter's own signature.
+
+## An event is taken where the state settles, not where the button is
+
+Wiring analytics by putting a `track()` next to every control is a rule that has
+to be remembered thirty times, and it is wrong on the thirty-first — the control
+somebody adds next month, and the two changes no control makes at all (a filter
+panel reset, the language filter re-seeding itself when another course opens).
+
+Everything on this site already passes through four places, so that is where the
+counting went: `useDocumentMeta` for a page view, since it is the one function
+that knows the canonical path of every screen there is *and every screen there
+will be*; the profile store for every progress write; `useSearchResults` for
+every search, since both screens search through it; and one document-level click
+listener for every link that leaves the site.
+
+For the store the mechanism is `reporting()` in `src/lib/analytics.ts` — it
+wraps an object of actions and asks a table what happened, with the state from
+**both sides** of the call. That second half is what makes the table describe
+*outcomes*: `cycleCourseStatus` takes an id and no status, and which of the
+three it landed on is only knowable afterwards. The same shape covers the twelve
+playlist filters as a diff of the panel's state.
+
+**Generally:** count where the state settles. A chokepoint that already has to
+be correct for another reason — the canonical URL, the persisted profile — is a
+chokepoint that cannot silently stop being called.
+
+## A collector that stores everything and reports nothing is the expensive kind of wrong
+
+GA4 accepts any parameter on any event, keeps it, and then offers **none of
+them** in a report unless a custom dimension was registered for that exact name
+beforehand. Events arrive, totals go up, and the breakdown the event was added
+for is not in the menu — found a month later, when that month is unrecoverable.
+
+So the list of events and parameters lives in `shared/analytics.ts`, read by two
+sides: `scripts/ga4-setup.ts` provisions the property from it, and `track()`
+warns in development about any event or parameter that is not in it. The rule is
+one line — **an event is added to the registry first** — and the check is where
+somebody is actually watching.
+
+**Generally:** where a system silently accepts input it will not give back, the
+schema has to be declared to it in advance, and the declaration has to be the
+same artefact the code is written against. Two lists that must agree, and no
+check that they do, is one list that is wrong.
 
 ## Commit an explicit list of files
 

@@ -60,6 +60,28 @@ export default function SettingsTab() {
         <p className="mt-1 text-xs text-ink-faint">{t('ui.profile.settings.resumeHint')}</p>
       </div>
 
+      {/* Counted by default, and said so plainly rather than buried in a
+          policy nobody opens. The switch belongs next to «Место остановки»
+          because it answers the same kind of question — what the site is
+          allowed to know — and the hint has to name what the counting buys,
+          since a reader turning it off is not being difficult: they are
+          answering a question they were never told the point of. What is
+          actually sent, and what is refused, is in `src/lib/analytics.ts`. */}
+      <div>
+        <Row label={t('ui.profile.settings.analytics')}>
+          <Segmented
+            value={settings.analytics ? 'on' : 'off'}
+            options={(['on', 'off'] as const).map((value) => ({
+              value,
+              label: t(`ui.profile.settings.analytics.${value}`),
+            }))}
+            onChange={(value) => setSetting('analytics', value === 'on')}
+            label={t('ui.profile.settings.analytics')}
+          />
+        </Row>
+        <p className="mt-1 text-xs text-ink-faint">{t('ui.profile.settings.analyticsHint')}</p>
+      </div>
+
       {/* Map or blocks is not here any more: the map is the front door and
           every visit opens on it, so the choice holds for the visit and lives
           in the switch on the map's own header, where the two views are. */}

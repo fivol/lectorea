@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { reporting, type Report } from '@/lib/analytics';
 import { useMediaQuery } from '@/lib/hooks';
 import {
   DAYS_LIMIT,
@@ -249,6 +250,141 @@ export type ProfileStore = {
   resetProfile: () => void;
 };
 
+/**
+ * Settings worth a line in a report, and the one that is not.
+ *
+ * `splitRatio` is the drag handle between the columns and the panel: it is
+ * written continuously while somebody is dragging it, and a hundred events
+ * saying the same thing is not a fact about anything. Everything else here is
+ * a deliberate press, and each one answers a question that has come up —
+ * whether the light theme is used at all, whether anybody turns the stored
+ * position off, what speed lectures are actually watched at.
+ */
+const TRACKED_SETTINGS = new Set([
+  'lang',
+  'theme',
+  'maxStage',
+  'fullGraph',
+  'steppedLines',
+  'panelLinks',
+  'resume',
+  'playbackRate',
+  'dayGoal',
+  'goalDays',
+  'analytics',
+]);
+
+/**
+ * What each write to the profile is worth saying out loud.
+ *
+ * Everything a reader does that the site keeps — a course moved on, a lecture
+ * ticked, a playlist opened, a setting pressed — already passes through the
+ * actions below, so this is the whole of the progress side of the analytics in
+ * one table rather than a `track()` scattered through twenty components. The
+ * rule for adding to it is the rule for the events themselves: an id out of the
+ * catalogue is a fact about the catalogue and may travel; anything a reader
+ * typed may not.
+ *
+ * Each entry is handed the profile from **both** sides of the call, which is
+ * what lets an event be described by its outcome — `cycleCourseStatus` is given
+ * an id and no status, and which of the three it landed on is only knowable
+ * afterwards. Returning `null` sends nothing, which is how a write that changed
+ * nothing stays out of the count.
+ *
+ * `recordPosition` is deliberately absent. It is the player reporting where the
+ * playhead is, every five seconds for as long as a lecture runs; the shape of
+ * that is `video_progress`, which is sent at four points and not four hundred.
+ */
+const PROFILE_EVENTS: Partial<Record<keyof ProfileStore, Report<Profile>>> = {
+  cycleCourseStatus: ({ args, after }) => {
+    const id = args[0] as string;
+    return ['course_status', { course_id: id, status: after.courses[id]?.status ?? 'none', by: 'cycle' }];
+  },
+
+  setCourseStatus: ({ args, after }) => {
+    const id = args[0] as string;
+    return ['course_status', { course_id: id, status: after.courses[id]?.status ?? 'none', by: 'set' }];
+  },
+
+  // A favourite course is a goal — see `docs/interface.md` — so that is what
+  // the event is called, rather than repeating an implementation detail.
+  toggleCourseFavorite: ({ args, after }) => {
+    const id = args[0] as string;
+    return ['course_goal', { course_id: id, on: after.courses[id]?.favorite ?? false }];
+  },
+
+  togglePlaylistWatched: ({ args, after }) => {
+    const id = args[0] as string;
+    const ctx = args[1] as WatchContext | undefined;
+    return [
+      'playlist_sealed',
+      {
+        playlist_id: id,
+        course_id: ctx?.courseId ?? after.playlists[id]?.courseId,
+        lectures: ctx?.videos.length,
+        on: after.playlists[id]?.watched ?? false,
+      },
+    ];
+  },
+
+  togglePlaylistFavorite: ({ args, after }) => {
+    const id = args[0] as string;
+    return ['playlist_saved', { playlist_id: id, on: after.playlists[id]?.favorite ?? false }];
+  },
+
+  setVideosDone: ({ args, before, after }) => {
+    const ids = args[0] as string[];
+    const ctx = args[2] as WatchContext;
+    // What the press was worth rather than what it asked for: a shift-click
+    // over a run half of which was already ticked is not twelve lectures, and
+    // sealing a playlist by unticking one of them is not three hundred.
+    const changed = ids.filter(
+      (id) => Boolean(before.videos[id]?.done) !== Boolean(after.videos[id]?.done)
+    ).length;
+    if (!changed) return null;
+    return [
+      'lectures_marked',
+      {
+        count: changed,
+        done: args[1] as boolean,
+        by: (args[3] as string) ?? 'hand',
+        playlist_id: ctx.playlistId,
+        course_id: ctx.courseId,
+      },
+    ];
+  },
+
+  // Opening is opening, however it happened: this is written from the modal
+  // itself rather than from the click, so a pasted `?playlist=` link counts.
+  recordRecent: ({ args }) => {
+    const entry = args[0] as { id: string; courseId: string };
+    return ['playlist_open', { playlist_id: entry.id, course_id: entry.courseId }];
+  },
+
+  setSetting: ({ args, before, after }) => {
+    const key = args[0] as keyof Profile['settings'];
+    if (!TRACKED_SETTINGS.has(key)) return null;
+    const value = after.settings[key];
+    if (value === before.settings[key]) return null;
+    return [
+      'setting_change',
+      { setting: key, value: typeof value === 'boolean' ? (value ? 'on' : 'off') : String(value ?? 'none') },
+    ];
+  },
+
+  replaceProfile: ({ after }) => ['profile_import', imported('replace', after)],
+  mergeProfile: ({ after }) => ['profile_import', imported('merge', after)],
+  resetProfile: () => ['profile_reset', {}],
+};
+
+function imported(mode: 'replace' | 'merge', profile: Profile) {
+  return {
+    mode,
+    courses: Object.keys(profile.courses).length,
+    playlists: Object.keys(profile.playlists).length,
+  };
+}
+
 const initial = readProfile();
 
 export const useProfile = create<ProfileStore>((set, get) => {
@@ -290,7 +426,7 @@ export const useProfile = create<ProfileStore>((set, get) => {
       };
     }, true);
 
-  return {
+  const store: ProfileStore = {
     profile: initial.profile,
     outcome: initial.outcome,
     locked: initial.outcome === 'unsupported-version',
@@ -549,6 +685,12 @@ export const useProfile = create<ProfileStore>((set, get) => {
       set({ profile: emptyProfile(), locked: false, outcome: 'empty' });
     },
   };
+
+  // Every action named in the table above reports itself after it has run. The
+  // wrapping is done here, in one place, rather than by a `track()` inside each
+  // action: an action that forgets the call is invisible, and an action that
+  // makes it twice is a fact counted twice.
+  return reporting(store, () => get().profile, PROFILE_EVENTS);
 });
 
 export type Theme = Profile['settings']['theme'];

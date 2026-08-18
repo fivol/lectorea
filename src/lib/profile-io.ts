@@ -1,4 +1,5 @@
 import { migrateProfile, ProfileSchema, type Profile } from '@shared/schema';
+import { track } from './analytics';
 import { todayStamp } from './format';
 
 /** Export and import of the profile file. */
@@ -9,6 +10,13 @@ export function profileJson(profile: Profile): string {
 }
 
 export function downloadProfile(profile: Profile): void {
+  // The count, not the contents: how many people ever move a profile between
+  // machines is the whole question behind the sync line on the roadmap, and
+  // the file itself is the one thing on this site that must never be sent.
+  track('profile_export', {
+    courses: Object.keys(profile.courses).length,
+    playlists: Object.keys(profile.playlists).length,
+  });
   const blob = new Blob([profileJson(profile)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

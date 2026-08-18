@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '@/i18n';
+import { track } from '@/lib/analytics';
 import { chainAncestors, useCatalog, useFilteredCourses } from '@/lib/catalog';
 import { useResumeList, useResumeProgress } from '@/lib/progress';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
@@ -49,6 +50,27 @@ export default function CoursesScreen() {
   const [query, setQuery] = useState('');
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
+
+  /*
+   * A course opened, with the facts a report needs about it beside the id.
+   *
+   * `page_view` already counts the address; this counts the *course*, and the
+   * four extra fields are what make the count answerable: how deep into a
+   * subject people actually go, whether an empty course is opened as often as
+   * a full one, which fields of knowledge carry the traffic. None of it can be
+   * joined up afterwards, because the catalogue a report is read against is a
+   * month newer than the day it was collected.
+   */
+  useEffect(() => {
+    if (!selected) return;
+    track('course_open', {
+      course_id: selected.id,
+      domain: selected.domains[0],
+      level: selected.level,
+      stage: selected.stage,
+      playlists: selected.playlistCount,
+    });
+  }, [selected]);
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
   /** Whether the columns draw the whole chain or the tree it cuts back to. */
   const fullGraph = useProfile((state) => state.profile.settings.fullGraph);

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { pageView } from './analytics';
 
 /**
  * The head of the page for the view that is on screen: the tab's name, the
@@ -32,6 +33,23 @@ export function useDocumentMeta(title: string, description: string, canonical: s
     });
     link.href = new URL(canonical, `${location.origin}${import.meta.env.BASE_URL}`).href;
   }, [title, description, canonical]);
+
+  /*
+   * And the same fact, counted.
+   *
+   * A single-page app has to say when a page changed, because nothing reloads
+   * — and this is the one function that already knows, for every screen there
+   * is and every screen there will be. Wiring it to the router instead would
+   * have counted a view before the title had been decided, and wiring it into
+   * each screen would have been a line somebody eventually forgets to add.
+   *
+   * Keyed on the canonical path alone, so a title arriving a beat later — the
+   * catalogue finishing its load, the language changing — does not count the
+   * same page twice.
+   */
+  useEffect(() => {
+    pageView(canonical, document.title);
+  }, [canonical]);
 }
 
 /** The tag if the document has one — the pages written at build time do. */

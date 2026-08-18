@@ -24,6 +24,18 @@ const repo = process.env.VITE_REPO ?? 'fivol/lectorea';
 const basePath = process.env.BASE_PATH || `/${repo.split('/')[1]}/`;
 
 /**
+ * The GA4 stream this build reports to, and whether a development build is
+ * allowed to report at all.
+ *
+ * Empty is the meaningful default rather than an oversight: a fork, a checkout
+ * and every `pnpm dev` then send nothing at all, and only the deploy that is
+ * handed the id in its environment counts anything. Passed the same way
+ * `VITE_REPO` is, so CI needs no file on disk — docs/analytics.md.
+ */
+const ga4Id = process.env.VITE_GA4_ID ?? '';
+const ga4Debug = process.env.VITE_GA4_DEBUG ?? '';
+
+/**
  * Restart the dev server when the styling config changes.
  *
  * Vite reloads its own config on the spot, but PostCSS reads
@@ -58,6 +70,8 @@ export default defineConfig(({ mode }) => ({
   // the environment is enough and CI needs no file on disk.
   define: {
     'import.meta.env.VITE_REPO': JSON.stringify(repo),
+    'import.meta.env.VITE_GA4_ID': JSON.stringify(ga4Id),
+    'import.meta.env.VITE_GA4_DEBUG': JSON.stringify(ga4Debug),
   },
 
   plugins: [

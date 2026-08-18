@@ -36,6 +36,26 @@ anchor was found exactly once, rather than parsing and re-serialising. The wider
 rule: **a hand-maintained file has an order, and the order is content.** The
 same goes for YAML in `data/`.
 
+**And it happened again, on the same two files** — this entry was already here
+and was read before the work started. The second time the round trip preserved
+the order perfectly and ate the **blank lines** that group the course strings
+into sections: a 36-line deletion diff for a four-line addition. So "the order
+is content" was too narrow a reading of it. **The whitespace is content too**,
+and the only safe edit to one of these files is a text insertion:
+
+```python
+head = subprocess.run(['git','show',f'HEAD:{p}'], …).stdout
+out = []
+for line in head.split('\n'):
+    out.append(line)
+    if line.startswith('  "ui.profile.settings.resumeHint"'):
+        out.extend(new_lines)
+json.loads('\n'.join(out))   # it still has to be a dictionary
+```
+
+Then `git diff --stat` before believing it: four lines added and nothing
+removed, or the edit is not the edit that was intended.
+
 ### A channel id exists in two forms
 
 **Assumed:** the set "channels in `channels.yaml`" and the set "channels from the
@@ -94,6 +114,31 @@ guesses which is which is wrong in the direction that overruns it.
 **How not to repeat it:** read the spend from the ledger — `api.spent()` before
 and after — rather than reconstructing it from what came back. The ledger knows
 the fact; the caller only knows the intent.
+
+### Two processes wrote to `cache.db`, and the crawl was the one that died
+
+**Assumed:** WAL means readers and writers do not block each other, and
+better-sqlite3 waits out a busy database anyway — so a scratch script may be run
+while a crawl is going, as long as it mostly reads.
+
+**It was:** `SQLITE_BUSY_SNAPSHOT`, immediately, with no waiting at all. The
+queue's `claim()` is a transaction that *starts as a reader and then writes*, and
+when another connection has committed in between, SQLite cannot upgrade the
+snapshot it is holding — the busy timeout does not cover that case, because
+waiting cannot fix it, only restarting the transaction can. `data:refresh` had
+just queued 3910 playlists, and it died on the first job it tried to claim: the
+step ran for eight seconds, spent nothing on videos, and `make pipeline` carried
+on through the free steps as designed. The other process was a hunt that had
+been started deliberately in parallel to spend the same day's quota faster.
+
+**How not to repeat it:** **one writer on `cache.db` at a time.** A crawl step,
+`_hunt.ts`, `_vet.ts`, `data:match`, the seeder — any of them can be the one, and
+the rest wait. Reading is safe (`openDb({ readonly: true })`, `data:build`,
+`pnpm stats`), so watching a crawl from another window is fine and always was.
+When the day has more quota than one process can spend before the reset, spend it
+in the *expensive* currency instead — a `search.list` burns 100 units a call
+against a video walk's 2.3, so one hunt beats two crawls and does not race
+anything for the database.
 
 ### An expensive call with no retry
 
@@ -389,6 +434,26 @@ when a value has to agree in two files, one of them reads the other.
 ---
 
 ## Environment
+
+### A production build was checked, and it was another session's
+
+**Assumed:** `pnpm build && vite preview` shows the bundle just built.
+**It was:** the worktree is shared, another session rebuilt `dist/` in between,
+and the preview served theirs — with a different base path and no analytics id
+in it. Twenty minutes went into "why does the script not load" against a bundle
+that had never been asked to load it.
+
+Then the fix made it worse: building to a private `--outDir` kept the other
+session out, but **`vite preview` re-reads `vite.config.ts` without the build's
+environment**, so a bundle built with `BASE_PATH=/` was served from `/lectorea/`
+and answered 404 for every asset — while `index.html` still loaded, so the page
+was blank rather than obviously broken.
+
+**How not to repeat it:** check the identity of what is being served before
+diagnosing it — the asset hash in `document.scripts` against the file on disk,
+and one `fetch()` of that asset to see whether it is really 200. Where a build
+takes variables, give the preview the same ones. And in a shared worktree,
+`dist/` belongs to whoever built it last.
 
 ### The quota ledger is keyed by the Pacific day
 

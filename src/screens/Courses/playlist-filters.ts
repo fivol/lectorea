@@ -8,6 +8,7 @@ import {
   type Profile,
   type ProviderType,
 } from '@shared/schema';
+import { track } from '@/lib/analytics';
 import { playlistProgress } from '@/lib/progress';
 
 /** Filter and sort state for the playlist list. Lives in the panel, not the URL. */
@@ -285,4 +286,32 @@ export function facetsOf(playlists: BuiltPlaylist[]) {
     countRange: Number.isFinite(minCount) ? ([minCount, maxCount] as [number, number]) : null,
     yearRange: Number.isFinite(minYear) ? ([minYear, maxYear] as [number, number]) : null,
   };
+}
+
+/**
+ * What changed between two states of the filter panel, as events.
+ *
+ * A diff rather than a call in each of the twelve controls: they are checkbox
+ * rows, radio rows, two range sliders and three switches, written in one long
+ * component, and a rule that has to be repeated at every one of them is a rule
+ * that will be missing from the thirteenth. This also gets the two changes no
+ * control makes — the reset button, and the language filter being re-seeded
+ * when another course is opened — for nothing, and it gets them right, since a
+ * facet that ends up where it started sends nothing at all.
+ *
+ * Every value here is a fact about the catalogue: a language code, a provider
+ * id, a lecturer as the catalogue spells them, a range of numbers. Nothing a
+ * reader typed reaches it — the two text boxes in that panel search the lists
+ * of universities and lecturers and are not part of the state at all.
+ */
+export function reportFilters(before: PlaylistFilterState, after: PlaylistFilterState): void {
+  for (const facet of Object.keys(after) as Array<keyof PlaylistFilterState>) {
+    const to = after[facet];
+    if (JSON.stringify(before[facet]) === JSON.stringify(to)) continue;
+    track('filter_apply', {
+      facet,
+      value: Array.isArray(to) ? to.join(',') : String(to ?? 'any'),
+      on: Array.isArray(to) ? to.length > 0 : Boolean(to),
+    });
+  }
 }

@@ -37,6 +37,14 @@ only for this repository; a fork gets an empty value and falls back to its
 subdirectory. Everything downstream follows it: Vite's `base`, the PWA manifest,
 and the absolute URLs in the pages below.
 
+`VITE_GA4_ID` is passed the same way and for the same reason — the analytics
+stream is this site's and this site's only, so a fork sends nothing at all
+([analytics.md](analytics.md)). **`vite preview` re-reads the config without
+those variables**, so a build made with `BASE_PATH=/` is served from
+`/lectorea/` by the preview and answers 404 for every asset. Give the preview
+the same environment as the build, or build without `BASE_PATH` when the point
+is to look at the result locally.
+
 ## Pages for the crawlers
 
 Pages serves files, and a single-page app is one file. A path it has never heard

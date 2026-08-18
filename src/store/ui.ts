@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { reporting, type Report } from '@/lib/analytics';
 
 /**
  * Transient view state. Anything that belongs in a shared link — selected
@@ -80,7 +81,23 @@ export type UiStore = {
   setMapView: (next: MapView) => void;
 };
 
-export const useUi = create<UiStore>((set, get) => ({
+/**
+ * The three presses on this store worth counting.
+ *
+ * Everything else it holds is hover, focus and the keyboard — state that
+ * changes several times a second and says nothing about what anybody chose.
+ * The map/blocks switch is here because it is the one open question about the
+ * front page: two drawings of the same catalogue were built, neither is
+ * obviously right, and which one people actually read it in is not knowable
+ * from the code.
+ */
+const UI_EVENTS: Partial<Record<keyof UiStore, Report<UiStore>>> = {
+  setMapView: ({ after }) => ['map_view', { view: after.mapView }],
+  openProfile: () => ['profile_open', {}],
+  hideSummary: () => ['summary_hidden', {}],
+};
+
+export const useUi = create<UiStore>((set, get) => reporting({
   echo: null,
   profileOpen: false,
   focusRequest: null,
@@ -104,7 +121,7 @@ export const useUi = create<UiStore>((set, get) => ({
   requestFocus: (courseId) =>
     set({ focusRequest: { courseId, nonce: (get().focusRequest?.nonce ?? 0) + 1 } }),
   setMapView: (next) => set({ mapView: next }),
-}));
+}, get, UI_EVENTS));
 
 /**
  * The view on screen.

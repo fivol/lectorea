@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useT } from '@/i18n';
+import { track } from '@/lib/analytics';
 import { percent, type PlaylistProgress, type ResumePointer } from '@/lib/progress';
 import Icon from './Icon';
 import ProgressBar from './ProgressBar';
@@ -45,7 +46,17 @@ export function ResumeCard({
   return (
     <button
       type="button"
-      onClick={onClick}
+      /*
+       * «Продолжить» is the one affordance on the site that claims to know what
+       * somebody wants next, and it is drawn on the front page, in the profile
+       * and under the columns. Whether it is ever pressed is the whole question
+       * about it — the playlist that opens is counted anyway, and says nothing
+       * about which of the ways in was taken.
+       */
+      onClick={() => {
+        track('resume_continue', { video_id: videoId });
+        onClick();
+      }}
       /*
         `w-full` is not decoration: a button sizes itself to its content even
         when it is a block-level flex container, so without it the row grows to

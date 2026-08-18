@@ -130,8 +130,15 @@ Saying no to these once is cheaper than reconsidering them every few months.
   links to free lectures; charging for a view of it would be charging for
   somebody else's work.
 - **No account required to read.** Sync, if it lands, is a setting.
-- **No analytics that follow a reader.** There is no tracking on the site now and
-  none is planned; what pages are popular is not worth what it costs to know.
+- **No analytics that follow a reader.** The site does count what happens on it
+  — which courses are opened, and above all which searches find nothing, since a
+  search with no results is a course the catalogue is missing and there is no
+  other way to hear about one. What it does not do is follow anybody: no
+  account, no identifier of ours, no advertising signals, nothing a reader
+  typed except a search term that has been through a filter, and a switch in
+  the settings that turns the whole of it off. The rules are written out in
+  [analytics.md](analytics.md), and the line they draw is not moving: the
+  profile stays in the browser.
 - **No comments, ratings or forum.** The rating is computed from what YouTube
   already measures ([rating.md](rating.md)), and a comment section is a
   moderation commitment this project cannot honour.
