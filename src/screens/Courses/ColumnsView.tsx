@@ -429,7 +429,12 @@ export default function ColumnsView({
           <ChainLinks
             scrollRef={scrollRef}
             links={drawn}
-            revision={`${selectedId}:${columns.length}:${total}:${gap}`}
+            // The arrangement is the layout: the same string the shuffle
+            // animates on, and the only thing that moves a card. Counting
+            // columns and cards missed a card that had merely changed
+            // places, which mattered less while every change of what is
+            // drawn re-measured the canvas anyway — see `ChainLinks`.
+            revision={arrangement}
             animate={!reducedMotion}
             stepped={stepped}
           />

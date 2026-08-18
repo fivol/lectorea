@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { routeCurves, routeSteps, type Path, type Rect } from '@/lib/route';
 
 /** `depth` is the source's distance from the selected course — the cascade order. */
 export type Link = { from: string; to: string; depth: number };
+
+/** Where every card on the canvas stands, in the coordinates the curves use. */
+type Geometry = { boxes: Map<string, Rect>; cards: Rect[] };
 
 type Props = {
   /** The scroll container the cards live in; also the SVG's coordinate space. */
@@ -65,15 +68,27 @@ function layoutBox(node: HTMLElement, container: HTMLElement): Rect {
   return { left, top, right: left + node.offsetWidth, bottom: top + node.offsetHeight };
 }
 
+/**
+ * Measured when the layout moves, routed when the drawing changes — the two are
+ * not the same event and the expensive one is the first.
+ *
+ * Walking every card for its offsets is two hundred reads of the layout tree,
+ * and it used to run whenever `links` changed identity. But `links` changes on
+ * a pointer — the panel names an edge and it is drawn while pointed at — and
+ * the cards have not moved a pixel for it: a hover on the whole catalogue was
+ * an 80–96 ms task spent measuring a layout that was about to be measured the
+ * same way again. So the geometry is kept and re-read only when the columns
+ * really may have changed under it (`revision`, a resize of the scroller, a
+ * resize of the window), and drawing a different set of curves over the same
+ * cards is arithmetic over a map that is already in hand.
+ */
 export default function ChainLinks({ scrollRef, links, revision, animate, stepped }: Props) {
-  const [curves, setCurves] = useState<Path[]>([]);
+  const [geometry, setGeometry] = useState<Geometry | null>(null);
+  const drawing = links.length > 0;
 
   const measure = useCallback(() => {
     const container = scrollRef.current;
-    if (!container || !links.length) {
-      setCurves([]);
-      return;
-    }
+    if (!container) return;
 
     const boxes = new Map<string, Rect>();
     const cards: Rect[] = [];
@@ -85,12 +100,19 @@ export default function ChainLinks({ scrollRef, links, revision, animate, steppe
       cards.push(rect);
     }
 
-    setCurves(stepped ? routeSteps(links, boxes, cards) : routeCurves(links, boxes));
-  }, [scrollRef, links, stepped]);
+    setGeometry({ boxes, cards });
+  }, [scrollRef]);
 
   useEffect(() => {
     const container = scrollRef.current;
-    if (!container) return;
+    // Nothing to draw is the usual state of this screen — no selection, no
+    // curves — and it must not cost a measurement. The geometry is dropped
+    // rather than kept, so the next selection reads the columns as they are by
+    // then rather than as they were when the last one was let go.
+    if (!container || !drawing) {
+      setGeometry(null);
+      return;
+    }
 
     let frame = 0;
     const schedule = (): void => {
@@ -107,7 +129,14 @@ export default function ChainLinks({ scrollRef, links, revision, animate, steppe
       observer.disconnect();
       window.removeEventListener('resize', schedule);
     };
-  }, [measure, scrollRef, revision]);
+  }, [measure, scrollRef, revision, drawing]);
+
+  const curves = useMemo<Path[]>(() => {
+    if (!geometry || !links.length) return [];
+    return stepped
+      ? routeSteps(links, geometry.boxes, geometry.cards)
+      : routeCurves(links, geometry.boxes);
+  }, [geometry, links, stepped]);
 
   if (!curves.length) return null;
 

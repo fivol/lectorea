@@ -391,26 +391,41 @@ colour; a component that lives in one place may name one. And when a reader
 reports two or three ugly things in the same corner of the screen, look for the
 single assumption underneath before fixing them one at a time.
 
-## A pointer that names a card must have a card to point at
+## A pointer answers with what is drawn; only a selection draws something new
 
 The course panel names neighbours from wherever they are filed, and hovering one
 lifts its card in the columns. Under a field filter «Открывает путь к» almost
-never had a card to lift — what a course opens is usually somebody else's
-subject — so the echo landed on nothing, silently, which is what made it a bug
-rather than a limit.
+never has a card to lift — what a course opens is usually somebody else's
+subject — so the echo lands on nothing.
 
-The narrow fix is to teach that one list to borrow its courses in. The one taken
-makes the **echo the canvas's claim**: whatever the panel points at gets a seat
-for as long as it is pointed at (`preview` in `CoursesScreen`). «Также полезно»,
-«Рядом» and the path steps come right with the same three lines, and a list added
-later is fixed before it is written.
+The first answer made the **echo the canvas's claim**: whatever the panel
+pointed at got a seat for as long as it was pointed at. It fixed every list in
+the panel at the joint rather than one at a time, which is why it was taken over
+the narrow fix — and it was withdrawn, because a pointer crossing eight names
+then inserted and removed eight cards, shuffled the column under each of them
+and stuttered 60–115 ms a time
+([pitfalls.md](pitfalls.md#a-pointer-was-given-the-power-to-lay-the-page-out)).
+What stands now is the honest limit: a name whose card is not on the canvas
+lights nothing, and the click that selects it brings the course in with the
+whole chain behind it, in one move.
 
-The signal then had to carry both ends. `echo` is `{ id, from }` rather than an
+**Generally:** «fix it at the joint, for every sender at once» is still the right
+instinct — but what the receiving view owes a pointer is *paint*, and layout is
+the selection's to spend. A fix at the joint that turns out to be a layout
+change is the wrong fix in the right place.
+
+The signal still carries both ends. `echo` is `{ id, from }` rather than an
 id, because a name in a panel *is* one end of a relation and the panel it stands
 in is the other — with both, pointing can be answered with the edge itself and
 not only with the card lighting up, which is what «наведи и проведи связь» asked
 for. A signal that carries only what the sender was looking at can answer «which
 one»; one that carries the relation can answer «why».
+
+That is also why the edge is skipped outright when either end is off the canvas
+rather than left to the router to drop after it has measured: a check the caller
+can make from a set it already holds costs nothing, and the same answer arrived
+at by measuring costs a pass over every card on screen, on every name the
+pointer crosses.
 
 The same reading settled the forward curves, which went at the same time. They
 could only ever be drawn to the descendants the filter happened to keep, while
@@ -423,6 +438,31 @@ everything that points into it, not whether this particular sender has its cards
 — fixed at the joint, one class of list stops needing its own version. And a
 drawing that can only cover what survived a filter is worse than none: it
 answers with a subset and does not say that it is one.
+
+## Measurement is keyed to the layout, not to what is drawn
+
+`ChainLinks` walks every card on the canvas for its offsets and then routes the
+curves through what it found. Both halves used to run together, on any change of
+`links` — and `links` changes on a *pointer*, because a name in the panel draws
+its edge while it is pointed at. So hovering a name re-read the position of 225
+cards that had not moved a pixel: an 80–96 ms task for a curve that arithmetic
+over the previous measurement would have produced.
+
+Now the geometry is state of its own, re-read when the columns may have moved —
+the arrangement, a resize of the scroller, a resize of the window — and drawing
+a different set of curves over the same cards is a `useMemo` over a map already
+in hand. The revision it is keyed to is the same string the shuffle animates on
+(`arrangement` in `ColumnsView`): everything on the canvas, in the order it
+stands in, which is the definition of "the layout may have changed" and was
+already being computed. Counting columns and cards, which is what it used to be,
+misses a card that merely changed places — harmless only while every change of
+what is drawn re-measured anyway.
+
+**Generally:** when a step reads the world and a step decides what to show, they
+answer to different events; keying both to the noisier one pays the price of the
+expensive half at the rate of the cheap one. And when a cache like this is
+introduced, the key has to be tightened at the same time — the sloppy key was
+being covered by the very re-measuring that is going away.
 
 ## A derived number carries the rule that produced it, at every place it is printed
 
