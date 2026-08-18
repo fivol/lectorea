@@ -265,7 +265,6 @@ const TRACKED_SETTINGS = new Set([
   'theme',
   'maxStage',
   'fullGraph',
-  'steppedLines',
   'panelLinks',
   'resume',
   'playbackRate',

@@ -1,11 +1,14 @@
 /**
  * Turning a pair of cards into a line on the canvas.
  *
- * Two drawings, and the reader picks between them — see `steppedLines`. Curves
- * are one cubic from edge to edge and need nothing but the two boxes. Steps need
- * to know the whole board: a right-angled line runs down the gaps between
- * columns and across the gaps between rows, and where those gaps are is a fact
- * about every card on screen rather than about the two being joined.
+ * One drawing: right angles down the gaps — see `routeSteps`. It needs to know
+ * the whole board, because where the gaps between columns and between rows are
+ * is a fact about every card on screen rather than about the two being joined.
+ * `routeCurves` is what the screen used before, kept only as the answer when
+ * there is no board to read: one cubic from edge to edge, needing nothing but
+ * the two boxes. It was offered as a choice for a while and was not one — the
+ * merge into a shared lane is what makes a fork legible, and a picture that
+ * says something different depending on a switch is two pictures.
  *
  * Geometry in, path strings out. Nothing here touches the DOM — `ChainLinks`
  * measures, this decides — which is what makes it possible to reason about a
@@ -32,7 +35,7 @@ const LANE_SPACING = 24;
 /** Two runs sharing a row channel keep at least this much clear of each other. */
 const CLEARANCE = 24;
 
-export function routeCurves(legs: Leg[], boxes: Map<string, Rect>): Path[] {
+function routeCurves(legs: Leg[], boxes: Map<string, Rect>): Path[] {
   const out: Path[] = [];
   for (const leg of legs) {
     const from = boxes.get(leg.from);

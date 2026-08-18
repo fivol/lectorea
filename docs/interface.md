@@ -352,9 +352,7 @@ in the panel names every direct prerequisite either way, so the fact is never
 hidden — only the line is. The setting is remembered, like the stage filter: it
 says something about how somebody reads rather than about what they are reading.
 
-**Ступеньки** beside it changes how a line is drawn rather than how many there
-are. Off, each is a single curve from one card's edge to the next. On, every line
-is routed at right angles instead: out of the card, along to a lane in the gap
+Every line is drawn at right angles: out of the card, along to a lane in the gap
 between columns, down the lane, into the next card, corners rounded. Everything
 leading into one course shares its lane and arrives together, which is the fork a
 chain actually has.
@@ -363,12 +361,14 @@ A line that skips a column gets two lanes and a row channel — down the gap to 
 right of the card it leaves, across the horizontal gap *between* two rows, then
 down the gap to the left of the card it enters. Rows line up across columns, so a
 channel clear in one column is clear in all of them, and the line passes between
-the cards rather than over them. That is the case the curve drew worst: a long
+the cards rather than over them. That is the case a curve drew worst: a long
 diagonal sweeping across whatever stood in the way.
 
-The columns stand twice as far apart in that mode, because a lane needs a
-corridor and 24px is not one. Neither drawing is more correct than the other;
-both are remembered.
+The columns stand 48px apart rather than 24 to pay for it, because a lane needs a
+corridor. Curves were offered as a second drawing beside this one for a while and
+the choice was withdrawn: the merge into a shared lane is what makes a fork
+legible, and a screen that says something different depending on a switch is two
+screens to explain instead of one.
 
 Cards of one field stay together vertically, so switching on a domain filter
 lights a stripe rather than a spray. The columns scroll sideways and say so: the

@@ -1062,6 +1062,35 @@ view and the other view is being served a copy with the interesting parts cut
 out. Move it whole rather than deepening the holes, and check afterwards that
 the branch that lost it is not now missing something the holes were hiding.
 
+## An option on a screen is priced over every screen, not the one in front of you
+
+`steppedLines` and `fullGraph` were both offered as switches because each looked
+like a matter of taste on the screen they were tried on. They are not the same
+kind of question, and the way to tell them apart was to stop looking at one
+screen: `scripts/_columns.ts` replays all 225 of them headlessly — the field's
+own cards, the prerequisites borrowed in, `placeGuests` for where the guests
+stand, the same cut to a tree that `links` makes — and counts what each option
+changes.
+
+What that bought:
+
+- **Steps against curves**: not a taste at all. Lanes are keyed by the card at
+  the end of a run, so everything arriving at one course merges into its edge —
+  which is the fork a chain actually has, and the thing a curve cannot say. The
+  switch was two pictures making different claims, and the second one was worse.
+  Removed; steps are the drawing, and `COLUMN_GAP` is the 48px corridor they
+  need rather than a number that changed under a setting.
+- **Every link against the tree**: a real trade with numbers on both sides. The
+  two drawings differ on 87 of the 197 chains, +191 lines over the catalogue,
+  and crossings 13 → 42 — against 184 cards drawn with fewer prerequisites than
+  they have. Worth deciding on the numbers, which is what the script is for.
+
+The measurement was cheap only because the deciding is in pure functions —
+`placeGuests` in `lib/order.ts`, `routeSteps` in `lib/route.ts` — and not in the
+components. **Layout logic that lives outside the component can be replayed over
+the whole catalogue; layout logic inside one cannot be measured at all**, and
+then every option is settled by whichever screen was open at the time.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

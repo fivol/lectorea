@@ -329,6 +329,7 @@ that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
 | `_sweep.ts [--write]` | free | rows no rule can ever reach: impossible ids, playlists deferred with no title |
 | `_winners.ts` | free | which keyword won each confident binding, and what it dragged in |
 | `_markers.ts [word]` | free | how much of the queue a refusal word would clear, and how much of the catalogue it would cost |
+| `_columns.ts [worst]` | free | what an option on the columns screen costs over all 225 chains — replays every screen headlessly |
 
 None are wired into `pnpm`: they are read once or twice a year and the useful
 half of the work is the judgement, not the script. Reach for them in price

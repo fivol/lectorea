@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { routeCurves, routeSteps, type Path, type Rect } from '@/lib/route';
+import { routeSteps, type Path, type Rect } from '@/lib/route';
 
 /** `depth` is the source's distance from the selected course — the cascade order. */
 export type Link = { from: string; to: string; depth: number };
@@ -14,8 +14,6 @@ type Props = {
   /** Bumped by the caller when the layout may have changed under the curves. */
   revision: unknown;
   animate: boolean;
-  /** Right angles down the gaps, rather than one curve from card to card. */
-  stepped: boolean;
 };
 
 /**
@@ -28,10 +26,9 @@ type Props = {
  * the whole catalogue they were two hundred crossing lines, which is why they
  * were taken out in the first place.
  *
- * How a line is drawn is the reader's — see `routeSteps` and `routeCurves` for
- * the two answers and what each is good at. This measures and paints; the
- * shape of a route is decided there, where it can be reasoned about without a
- * browser in the way.
+ * How a line is drawn is `routeSteps`. This measures and paints; the shape of a
+ * route is decided there, where it can be reasoned about without a browser in
+ * the way.
  *
  * Geometry comes from the DOM rather than from the layout code, because the
  * layout is the browser's: cards are flex children, and their real positions
@@ -82,7 +79,7 @@ function layoutBox(node: HTMLElement, container: HTMLElement): Rect {
  * resize of the window), and drawing a different set of curves over the same
  * cards is arithmetic over a map that is already in hand.
  */
-export default function ChainLinks({ scrollRef, links, revision, animate, stepped }: Props) {
+export default function ChainLinks({ scrollRef, links, revision, animate }: Props) {
   const [geometry, setGeometry] = useState<Geometry | null>(null);
   const drawing = links.length > 0;
 
@@ -133,10 +130,8 @@ export default function ChainLinks({ scrollRef, links, revision, animate, steppe
 
   const curves = useMemo<Path[]>(() => {
     if (!geometry || !links.length) return [];
-    return stepped
-      ? routeSteps(links, geometry.boxes, geometry.cards)
-      : routeCurves(links, geometry.boxes);
-  }, [geometry, links, stepped]);
+    return routeSteps(links, geometry.boxes, geometry.cards);
+  }, [geometry, links]);
 
   if (!curves.length) return null;
 

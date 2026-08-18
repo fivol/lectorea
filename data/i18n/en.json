@@ -168,8 +168,6 @@
   "ui.column.legend": "Columns go by difficulty: the further right a course sits, the longer the chain you have to work through to reach it",
   "ui.column.legendSelected": "“{course}” is selected — its chain of prerequisites and what it opens up next are lit; everything else is dimmed",
   "ui.column.fullGraph": "Every link",
-  "ui.column.stepped": "Steps",
-  "ui.column.steppedHint": "Lines run at right angles down the gap between columns: everything leading into one course merges into a single lane and arrives together. The columns stand further apart to make room. Turn it off for smooth curves from card to card",
   "ui.column.fullGraphHint": "The chain is normally drawn as a tree: one line out of each course, to the nearest one that needs it. Turn this on to see the links whole, including the second prerequisites of the courses where two branches meet. “Builds on” in the panel names them either way",
   "ui.column.scrollLeft": "Column to the left",
   "ui.column.scrollRight": "Column to the right",

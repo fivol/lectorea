@@ -4,7 +4,7 @@ import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useIsDesktop, useReducedMotion } from '@/lib/hooks';
 import { useHighlight } from '@/lib/highlight';
-import { CARD_WIDTH, COLUMN_GAP, COLUMN_GAP_STEPPED } from '@/lib/layout';
+import { CARD_WIDTH, COLUMN_GAP } from '@/lib/layout';
 import { placeGuests, type Edge } from '@/lib/order';
 import { useShuffle } from '@/lib/shuffle';
 import { useUi } from '@/store/ui';
@@ -80,10 +80,6 @@ export default function ColumnsView({
   const profile = useProfile((state) => state.profile);
   /** Every edge of the chain, or the tree it cuts back to — see `links`. */
   const fullGraph = profile.settings.fullGraph;
-  /** Steps down a lane in the gap, or one curve from card to card. */
-  const stepped = profile.settings.steppedLines;
-  /** Steps need a corridor to run down; a curve does not — see `COLUMN_GAP`. */
-  const gap = stepped ? COLUMN_GAP_STEPPED : COLUMN_GAP;
   const highlight = useHighlight(selectedId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -162,16 +158,10 @@ export default function ColumnsView({
 
   const total = columns.reduce((sum, column) => sum + column.courses.length, 0);
 
-  /**
-   * Everything on the canvas, in the order it stands in — the FLIP's cue. The
-   * gap is in it because switching drawing mode moves every column sideways,
-   * which is a card changing places like any other.
-   */
+  /** Everything on the canvas, in the order it stands in — the FLIP's cue. */
   const arrangement = useMemo(
-    () =>
-      `${gap}:` +
-      columns.map((column) => column.courses.map((course) => course.id).join(',')).join('|'),
-    [columns, gap]
+    () => columns.map((column) => column.courses.map((course) => course.id).join(',')).join('|'),
+    [columns]
   );
 
   useShuffle(scrollRef, arrangement, !reducedMotion);
@@ -388,10 +378,9 @@ export default function ColumnsView({
 
   const nudge = (direction: -1 | 1): void =>
     scrollRef.current?.scrollBy({
-      // One arrow press travels a column plus the gap between columns, which
-      // the drawing mode decides — the two drifting apart lands the scroll
-      // somewhere that is not a column edge.
-      left: direction * (CARD_WIDTH + gap),
+      // One arrow press travels a column plus the gap between columns; the two
+      // drifting apart lands the scroll somewhere that is not a column edge.
+      left: direction * (CARD_WIDTH + COLUMN_GAP),
       behavior: reducedMotion ? 'auto' : 'smooth',
     });
 
@@ -425,7 +414,7 @@ export default function ColumnsView({
           onDeselect();
         }}
       >
-        <div className="relative flex min-w-max items-start p-5" style={{ gap }}>
+        <div className="relative flex min-w-max items-start p-5" style={{ gap: COLUMN_GAP }}>
           <ChainLinks
             scrollRef={scrollRef}
             links={drawn}
@@ -436,7 +425,6 @@ export default function ColumnsView({
             // drawn re-measured the canvas anyway — see `ChainLinks`.
             revision={arrangement}
             animate={!reducedMotion}
-            stepped={stepped}
           />
 
           {columns.map((column) => (
