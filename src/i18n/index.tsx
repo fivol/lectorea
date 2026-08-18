@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
+import { pluralForm } from '@shared/plural';
 
 /**
  * Localisation in thirty lines instead of i18next.
@@ -38,18 +39,9 @@ function interpolate(template: string, params?: Params): string {
   );
 }
 
-/** Russian plural categories. Other languages get the `many` form until they need better. */
-export type PluralForm = 'one' | 'few' | 'many';
-
-export function pluralForm(n: number, lang: string): PluralForm {
-  const value = Math.abs(Math.trunc(n));
-  if (lang !== 'ru') return value === 1 ? 'one' : 'many';
-  const mod10 = value % 10;
-  const mod100 = value % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'one';
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'few';
-  return 'many';
-}
+// The rule itself lives in `shared/`, because the pages written at build time
+// have to count in the same words the interface does — see shared/plural.ts.
+export { pluralForm, type PluralForm } from '@shared/plural';
 
 export type Translator = {
   t: (key: string, params?: Params) => string;

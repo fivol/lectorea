@@ -1,10 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { BuiltCourse, BuiltDomain, Meta } from '../shared/schema.js';
+import { UI_LANGS, type UiLang } from '../shared/schema.js';
+import { pluralForm } from '../shared/plural.js';
 import { ensureDir, env, ROOT } from './lib/config.js';
 
 /**
- * A static page per course, made after the bundle.
+ * A static page per course, per field of knowledge and per language, made
+ * after the bundle.
  *
  * Everything here exists because Pages serves files and the catalogue is one
  * file. A path it has never heard of — `/courses/calculus-1` — is answered with
@@ -17,8 +20,12 @@ import { ensureDir, env, ROOT } from './lib/config.js';
  * boots exactly as it does anywhere else. What differs is the head: the title,
  * the description and the card of *that* course rather than of the catalogue,
  * and a `<noscript>` copy of what the page says, which is what a crawler that
- * runs no JavaScript is left with. The sitemap and robots.txt come from the
- * same pass, since the list of URLs is already in hand.
+ * runs no JavaScript is left with. The sitemap, robots.txt and llms.txt come
+ * from the same pass, since the list of URLs is already in hand.
+ *
+ * Twice over, because the interface speaks two languages and a language needs
+ * an address: Russian at the root, English under `/en/`, each declaring the
+ * other with `hreflang`. See docs/hosting.md.
  */
 
 const DIST = path.join(ROOT, 'dist');
@@ -49,15 +56,38 @@ const origin =
  */
 const isMirror = base !== '/';
 
-/** An absolute URL for a path inside the site: `href('courses')`. */
-function href(pathname = ''): string {
-  return `${origin}${base}${pathname}`;
+/* ────────────────────────────  The languages  ──────────────────────────── */
+
+/**
+ * The catalogue's own language, served from the root, and every other one
+ * served from a directory named after it. Which way round matters: the root is
+ * the address people already link to and the one a search engine has already
+ * seen, and moving it would throw that away for a language most of the material
+ * is not in.
+ */
+const DEFAULT_LANG = env.defaultLang as UiLang;
+const LANGS: UiLang[] = [
+  DEFAULT_LANG,
+  ...UI_LANGS.map((entry) => entry.id).filter((id) => id !== DEFAULT_LANG),
+];
+
+/** `''` for the language at the root, `en/` for the one in a directory. */
+function langBase(lang: UiLang): string {
+  return lang === DEFAULT_LANG ? '' : `${lang}/`;
+}
+
+/** An absolute URL for a path inside the site: `href('en', 'courses')`. */
+function href(lang: UiLang, pathname = ''): string {
+  return `${origin}${base}${langBase(lang)}${pathname}`;
 }
 
 /** The same, as a link the page itself can carry — no host, so a fork works. */
-function local(pathname = ''): string {
-  return `${base}${pathname}`;
+function local(lang: UiLang, pathname = ''): string {
+  return `${base}${langBase(lang)}${pathname}`;
 }
+
+/** What `og:locale` calls each of them. */
+const LOCALE: Record<string, string> = { ru: 'ru_RU', en: 'en_US' };
 
 /* ───────────────────────────────  Sources  ─────────────────────────────── */
 
@@ -75,7 +105,9 @@ function read<T>(file: string): T {
 const { courses: allCourses } = read<{ courses: BuiltCourse[] }>('courses.json');
 const domains = read<BuiltDomain[]>('domains.json');
 const meta = read<Meta>('meta.json');
-const dict = read<Record<string, string>>(`i18n/${env.defaultLang}.json`);
+const dicts = new Map<UiLang, Record<string, string>>(
+  LANGS.map((lang) => [lang, read<Record<string, string>>(`i18n/${lang}.json`)])
+);
 
 /** Hidden courses are dropped before the app draws anything — so is their page. */
 const courses = allCourses.filter((course) => !course.hidden);
@@ -97,41 +129,45 @@ for (const course of courses) {
  */
 const fieldsWithCourses = domains.filter((domain) => domain.courseCount);
 
-const courseTitle = (id: string): string => dict[`course.${id}.title`] ?? id;
-const domainTitle = (id: string): string => dict[`domain.${id}.title`] ?? id;
 const lastmod = meta.builtAt.slice(0, 10);
 
 /**
- * A string from the dictionary, filled in — the same keys the app names a page
- * with once it has booted. Two wordings for one page would be two answers to
- * "what is this", and the one a crawler keeps is not the one it read first.
+ * A build can legitimately have no catalogue in it — a checkout with no
+ * `cache.db`, documented as enough to work on the interface — and it can have
+ * none by accident, as when CI restores a crawl cache that a failed run left
+ * empty. Either way the prose must not count out loud: «0 курсов в 39 областях
+ * знаний» is a sentence nobody should be able to publish by not noticing.
  */
-function tr(key: string, params: Record<string, string> = {}, fallback = ''): string {
-  const template = dict[key];
-  if (!template) return fallback;
-  return template.replace(/\{(\w+)\}/g, (whole, name: string) => params[name] ?? whole);
-}
+const empty = courses.length === 0;
 
 /* ──────────────────────────────  Rendering  ────────────────────────────── */
 
 type Page = {
+  /** Which language it is written in — the head and every link follow it. */
+  lang: UiLang;
   /** Where the file goes inside dist — and, minus `.html`, what Pages serves it at. */
   file: string;
-  /** The path it is reached by, empty for the front page. */
+  /**
+   * The path it is reached by inside its own language, empty for the front
+   * page. Language-free on purpose: it is also the key that pairs a page with
+   * its translation, which is what `hreflang` and the sitemap are built from.
+   */
   pathname: string;
   title: string;
   description: string;
   /**
    * Whether the page may name itself the canonical one. A file that serves many
-   * views — `/courses` also answers `?domain=math` — must not, or every field
-   * of knowledge is declared a duplicate of the bare column screen before the
-   * app has had a chance to say otherwise. Those set it from the browser.
+   * views — `/courses` also answers `?provider=…` — must not, or every filtered
+   * view is declared a duplicate of the bare column screen before the app has
+   * had a chance to say otherwise. Those set it from the browser.
    */
   canonical: boolean;
   jsonLd?: unknown[];
   /** What a crawler that runs no JavaScript is given in place of the app. */
   body?: string;
   noindex?: boolean;
+  /** A page that exists in one language only — the 404, which Pages serves once. */
+  untranslated?: boolean;
 };
 
 const template = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
@@ -155,7 +191,7 @@ function jsonLdScript(value: unknown): string {
 }
 
 function render(page: Page): string {
-  const url = href(page.pathname);
+  const url = href(page.lang, page.pathname);
   const head = [
     `<title>${escapeHtml(page.title)}</title>`,
     `<meta name="description" content="${escapeHtml(page.description)}" />`,
@@ -164,11 +200,30 @@ function render(page: Page): string {
     // Absolute by requirement: a card is fetched by a scraper that has only the
     // tag to go on, and a path relative to the site means nothing to it. The
     // size and the alt text stay in the template — one picture, every page.
-    `<meta property="og:image" content="${href('og.png')}" />`,
+    `<meta property="og:image" content="${href(DEFAULT_LANG, 'og.png')}" />`,
     `<meta property="og:url" content="${url}" />`,
-    `<meta property="og:locale" content="${env.defaultLang === 'ru' ? 'ru_RU' : 'en_US'}" />`,
+    `<meta property="og:locale" content="${LOCALE[page.lang] ?? page.lang}" />`,
   ];
   if (page.canonical) head.push(`<link rel="canonical" href="${url}" />`);
+
+  /*
+   * The same page in the other language, named in both directions.
+   *
+   * Without this the two trees are two sites saying the same thing, which is
+   * the duplicate every catalogue with a translation trips over: search picks
+   * one of them per query and the other never appears. `x-default` is the one
+   * to serve somebody whose language we do not have — the catalogue's own, and
+   * the address people already link to.
+   */
+  if (!page.untranslated) {
+    for (const lang of LANGS) {
+      head.push(`<link rel="alternate" hreflang="${lang}" href="${href(lang, page.pathname)}" />`);
+    }
+    head.push(
+      `<link rel="alternate" hreflang="x-default" href="${href(DEFAULT_LANG, page.pathname)}" />`
+    );
+  }
+
   if (page.noindex || isMirror) head.push('<meta name="robots" content="noindex, follow" />');
   for (const entry of page.jsonLd ?? []) head.push(jsonLdScript(entry));
 
@@ -181,6 +236,9 @@ function render(page: Page): string {
     .replace(/[ \t]*<meta\s+property="og:title"[\s\S]*?\/>\n/, '')
     .replace(/[ \t]*<meta\s+property="og:description"[\s\S]*?\/>\n/, '')
     .replace(/[ \t]*<meta\s+property="og:image"[\s\S]*?\/>\n/, '')
+    // The one attribute outside the head that says what language this is, and
+    // the first thing a screen reader and a translation prompt both read.
+    .replace(/<html lang="[^"]*"/, `<html lang="${page.lang}"`)
     .replace('</head>', `\n    ${head.join('\n    ')}\n  </head>`);
 
   if (!page.body) return html;
@@ -210,7 +268,7 @@ function writeSlashVariant(page: Page): void {
   // The front page and 404 have no path of their own: `/` is already the slash
   // form, and nothing should be reachable at `404.html/`.
   if (!page.pathname) return;
-  const file = path.join(DIST, page.pathname, 'index.html');
+  const file = path.join(DIST, page.file.replace(/\.html$/, '/index.html'));
   ensureDir(path.dirname(file));
   // `canonical` is forced on even where the page itself declines it: the
   // slashed twin exists to point at the other one, which is the one thing it
@@ -225,30 +283,7 @@ function write(page: Page): void {
   writeSlashVariant(page);
 }
 
-/* ────────────────────────────────  Text  ───────────────────────────────── */
-
-/**
- * A build can legitimately have no catalogue in it — a checkout with no
- * `cache.db`, documented as enough to work on the interface — and it can have
- * none by accident, as when CI restores a crawl cache that a failed run left
- * empty. Either way the prose must not count out loud: «0 курсов в 39 областях
- * знаний» is a sentence nobody should be able to publish by not noticing.
- */
-const empty = courses.length === 0;
-
-/** «180 курсов», «22 курса», «1 курс» — the count and its noun, in agreement. */
-function plural(n: number, one: string, few: string, many: string): string {
-  const ten = n % 10;
-  const hundred = n % 100;
-  if (ten === 1 && hundred !== 11) return `${n} ${one}`;
-  if (ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14)) return `${n} ${few}`;
-  return `${n} ${many}`;
-}
-
-/** «в 39 областях знаний» — the same, for the one other noun that is counted. */
-function inFields(n: number): string {
-  return `${n} ${n === 1 ? 'области' : 'областях'} знаний`;
-}
+/* ────────────────────────  One language's pages  ───────────────────────── */
 
 /** Search results cut a description at about 160 characters — so cut it here. */
 function clip(text: string, limit = 160): string {
@@ -258,379 +293,431 @@ function clip(text: string, limit = 160): string {
   return `${(space > limit * 0.6 ? cut.slice(0, space) : cut).replace(/[,.;:—-]$/, '')}…`;
 }
 
-function list(ids: string[], limit = 3): string {
-  const names = ids.slice(0, limit).map(courseTitle);
-  return names.join(', ');
-}
-
 function hoursOf(course: BuiltCourse): number {
   return Math.max(1, Math.round(course.hours));
 }
 
-function linksTo(ids: string[]): string {
-  return ids
-    .map((id) => `        <li><a href="${local(`courses/${id}`)}">${escapeHtml(courseTitle(id))}</a></li>`)
-    .join('\n');
-}
-
-/* ──────────────────────────────  The pages  ────────────────────────────── */
-
-function coursePage(course: BuiltCourse): Page {
-  const title = courseTitle(course.id);
-  const own = dict[`course.${course.id}.desc`] ?? '';
-  const deps = course.deps.filter((id) => byId.has(id));
-  const next = opens.get(course.id) ?? [];
-  const fields = course.domains.filter((id) => domainById.has(id));
-
-  const facts = [
-    course.playlistCount
-      ? `${plural(course.playlistCount, 'запись', 'записи', 'записей')} лекций, около ${hoursOf(course)} ч`
-      : '',
-    deps.length ? `Что нужно знать заранее: ${list(deps)}` : '',
-  ].filter(Boolean);
-
-  const description = clip(
-    [
-      own || `Курс «${title}» в каталоге Lectorea: видеозаписи лекций и порядок изучения`,
-      ...facts,
-    ].join('. ')
-  );
-
-  const jsonLd: unknown[] = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Course',
-      name: title,
-      description: own || description,
-      url: href(`courses/${course.id}`),
-      inLanguage: env.defaultLang,
-      isAccessibleForFree: true,
-      // The catalogue, not the university: one entry gathers the recordings of
-      // several, and naming any one of them the provider of the course would be
-      // a claim about the other twenty.
-      provider: { '@type': 'Organization', name: 'Lectorea', url: href() },
-      ...(deps.length ? { coursePrerequisites: deps.map(courseTitle) } : {}),
-      ...(fields.length ? { about: fields.map((id) => domainTitle(id)) } : {}),
-      ...(dict[`ui.stage.${course.stage}`]
-        ? { educationalLevel: dict[`ui.stage.${course.stage}`] }
-        : {}),
-      ...(course.playlistCount
-        ? {
-            timeRequired: `PT${hoursOf(course)}H`,
-            hasCourseInstance: {
-              '@type': 'CourseInstance',
-              courseMode: 'online',
-              courseWorkload: `PT${hoursOf(course)}H`,
-            },
-            offers: {
-              '@type': 'Offer',
-              price: 0,
-              priceCurrency: 'RUB',
-              category: 'Free',
-              availability: 'https://schema.org/InStock',
-            },
-          }
-        : {}),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Каталог', item: href() },
-        ...(fields.length
-          ? [
-              {
-                '@type': 'ListItem',
-                position: 2,
-                name: domainTitle(fields[0]),
-                item: href(`fields/${fields[0]}`),
-              },
-            ]
-          : []),
-        {
-          '@type': 'ListItem',
-          position: fields.length ? 3 : 2,
-          name: title,
-          item: href(`courses/${course.id}`),
-        },
-      ],
-    },
-  ];
-
-  const sections = [
-    `      <h1>${escapeHtml(title)}</h1>`,
-    own ? `      <p>${escapeHtml(own)}</p>` : '',
-    course.playlistCount
-      ? `      <p>Записей лекций: ${course.playlistCount}. Примерная длительность курса: ${hoursOf(course)} ч.</p>`
-      : '      <p>Записей лекций пока нет — их можно предложить.</p>',
-    deps.length
-      ? `      <h2>Что нужно знать заранее</h2>\n      <ul>\n${linksTo(deps)}\n      </ul>`
-      : '',
-    next.length
-      ? `      <h2>Что открывает дальше</h2>\n      <ul>\n${linksTo(next)}\n      </ul>`
-      : '',
-    fields.length
-      ? `      <h2>Область знаний</h2>\n      <ul>\n${fields
-          .map(
-            (id) =>
-              `        <li><a href="${local(`fields/${id}`)}">${escapeHtml(domainTitle(id))}</a></li>`
-          )
-          .join('\n')}\n      </ul>`
-      : '',
-    `      <p><a href="${local()}">Карта знаний</a></p>`,
-  ].filter(Boolean);
-
-  return {
-    file: `courses/${course.id}.html`,
-    pathname: `courses/${course.id}`,
-    title: tr(
-      course.playlistCount ? 'seo.course.title' : 'seo.course.titlePlain',
-      { title },
-      `${title} | Lectorea`
-    ),
-    description,
-    canonical: true,
-    jsonLd,
-    body: `      <article>\n${sections.join('\n')}\n      </article>`,
-  };
-}
-
 /**
- * One field of knowledge, as a page rather than as a filter.
+ * Every page of the catalogue, written in one language.
  *
- * The catalogue has always been able to show a field — `/courses?domain=math`
- * — but a static host serves one file per *path* and cannot vary on a query
- * string, so all thirty-nine of them were `courses.html`: the same bytes, the
- * same title, the same list of every course in the catalogue, until the bundle
- * had run and rewritten the head. A crawler that indexes what it is served had
- * thirty-nine copies of one page and no reason to keep any of them.
- *
- * A field is also the shape of the question people actually ask — «курсы по
- * математике», «видеолекции по физике» — and the texts to answer it with are
- * already written, in `domain.<id>.title` and `domain.<id>.desc`.
+ * A closure rather than a pile of functions each taking a `lang`: the
+ * dictionary, the titles and the counting words are all the same argument, and
+ * threading it through fourteen call sites is how one of them ends up in the
+ * wrong language on a page nobody who works here ever opens.
  */
-function fieldPage(domain: BuiltDomain): Page {
-  const title = domainTitle(domain.id);
-  const own = dict[`domain.${domain.id}.desc`] ?? '';
-  const items = courses.filter((course) => course.domains.includes(domain.id));
-  // The columns, kept as columns: a field is read left to right, and the list a
-  // crawler is given should say the same thing the screen does.
-  const ordered = [...items].sort((a, b) => a.level - b.level || courseTitle(a.id).localeCompare(courseTitle(b.id), 'ru'));
+function pagesIn(lang: UiLang) {
+  const dict = dicts.get(lang) ?? {};
 
-  const description = clip(
-    [
-      own || `Курсы и видеолекции по теме «${title}» в каталоге Lectorea`,
-      items.length ? `${plural(items.length, 'курс', 'курса', 'курсов')} в порядке изучения` : '',
-    ]
-      .filter(Boolean)
-      .join('. ')
-  );
+  /**
+   * A string from the dictionary, filled in — the same keys the app names a
+   * page with once it has booted. Two wordings for one page would be two
+   * answers to "what is this", and the one a crawler keeps is not the one it
+   * read first.
+   */
+  const tr = (key: string, params: Record<string, string> = {}, fallback = ''): string => {
+    const t = dict[key];
+    if (!t) return fallback;
+    return t.replace(/\{(\w+)\}/g, (whole, name: string) => params[name] ?? whole);
+  };
 
-  return {
-    file: `fields/${domain.id}.html`,
-    pathname: `fields/${domain.id}`,
-    title: tr('seo.domain.title', { title }, `${title} | Lectorea`),
-    description,
-    canonical: true,
-    jsonLd: [
+  /** «225 курсов», «22 курса», «1 курс» — the count and its noun, in agreement. */
+  const count = (n: number, noun: string): string =>
+    `${n} ${tr(`ui.plural.${noun}.${pluralForm(n, lang)}`, {}, noun)}`;
+
+  const courseTitle = (id: string): string => dict[`course.${id}.title`] ?? id;
+  const domainTitle = (id: string): string => dict[`domain.${id}.title`] ?? id;
+
+  const linksTo = (ids: string[]): string =>
+    ids
+      .map(
+        (id) =>
+          `        <li><a href="${local(lang, `courses/${id}`)}">${escapeHtml(courseTitle(id))}</a></li>`
+      )
+      .join('\n');
+
+  const mapLink = `<p><a href="${local(lang)}">${escapeHtml(tr('seo.link.map', {}, 'Lectorea'))}</a></p>`;
+
+  function coursePage(course: BuiltCourse): Page {
+    const title = courseTitle(course.id);
+    const own = dict[`course.${course.id}.desc`] ?? '';
+    const deps = course.deps.filter((id) => byId.has(id));
+    const next = opens.get(course.id) ?? [];
+    const fields = course.domains.filter((id) => domainById.has(id));
+    const facts = course.playlistCount
+      ? tr('seo.course.facts', {
+          recordings: count(course.playlistCount, 'recording'),
+          hours: count(hoursOf(course), 'hour'),
+        })
+      : '';
+
+    const description = clip(
+      [own || tr('seo.course.descFallback', { title }), facts,
+        deps.length ? tr('seo.course.needs', { list: deps.slice(0, 3).map(courseTitle).join(', ') }) : '',
+      ]
+        .filter(Boolean)
+        .join('. ')
+    );
+
+    const jsonLd: unknown[] = [
       {
         '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
+        '@type': 'Course',
         name: title,
         description: own || description,
-        url: href(`fields/${domain.id}`),
-        inLanguage: env.defaultLang,
-        isPartOf: { '@type': 'WebSite', name: 'Lectorea', url: href() },
-        // The courses themselves, in the order they are meant to be taken. An
-        // `ItemList` is the one way a list page can say what is *on* it rather
-        // than only what it is called.
-        mainEntity: {
-          '@type': 'ItemList',
-          numberOfItems: ordered.length,
-          itemListElement: ordered.map((course, index) => ({
-            '@type': 'ListItem',
-            position: index + 1,
-            name: courseTitle(course.id),
-            url: href(`courses/${course.id}`),
-          })),
-        },
+        url: href(lang, `courses/${course.id}`),
+        inLanguage: lang,
+        isAccessibleForFree: true,
+        // The catalogue, not the university: one entry gathers the recordings of
+        // several, and naming any one of them the provider of the course would be
+        // a claim about the other twenty.
+        provider: { '@type': 'Organization', name: 'Lectorea', url: href(lang) },
+        ...(deps.length ? { coursePrerequisites: deps.map(courseTitle) } : {}),
+        ...(fields.length ? { about: fields.map((id) => domainTitle(id)) } : {}),
+        ...(dict[`ui.stage.${course.stage}`]
+          ? { educationalLevel: dict[`ui.stage.${course.stage}`] }
+          : {}),
+        ...(course.playlistCount
+          ? {
+              timeRequired: `PT${hoursOf(course)}H`,
+              hasCourseInstance: {
+                '@type': 'CourseInstance',
+                courseMode: 'online',
+                courseWorkload: `PT${hoursOf(course)}H`,
+              },
+              offers: {
+                '@type': 'Offer',
+                price: 0,
+                priceCurrency: 'RUB',
+                category: 'Free',
+                availability: 'https://schema.org/InStock',
+              },
+            }
+          : {}),
       },
       {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Каталог', item: href() },
-          { '@type': 'ListItem', position: 2, name: title, item: href(`fields/${domain.id}`) },
+          { '@type': 'ListItem', position: 1, name: tr('seo.breadcrumb.root'), item: href(lang) },
+          ...(fields.length
+            ? [
+                {
+                  '@type': 'ListItem',
+                  position: 2,
+                  name: domainTitle(fields[0]),
+                  item: href(lang, `fields/${fields[0]}`),
+                },
+              ]
+            : []),
+          {
+            '@type': 'ListItem',
+            position: fields.length ? 3 : 2,
+            name: title,
+            item: href(lang, `courses/${course.id}`),
+          },
         ],
       },
-    ],
-    body: `      <article>\n${[
-      `        <h1>${escapeHtml(title)}</h1>`,
-      own ? `        <p>${escapeHtml(own)}</p>` : '',
-      items.length
-        ? `        <p>${plural(items.length, 'курс', 'курса', 'курсов')}, ${plural(domain.playlistCount, 'запись', 'записи', 'записей')} лекций, около ${Math.max(1, Math.round(domain.hours))} ч.</p>`
-        : '        <p>Курсы этой области ещё готовятся.</p>',
-      ordered.length
-        ? `        <h2>Курсы в порядке изучения</h2>\n        <ul>\n${linksTo(ordered.map((course) => course.id))}\n        </ul>`
+    ];
+
+    const sections = [
+      `      <h1>${escapeHtml(title)}</h1>`,
+      own ? `      <p>${escapeHtml(own)}</p>` : '',
+      `      <p>${escapeHtml(facts || tr('seo.course.empty'))}</p>`,
+      deps.length
+        ? `      <h2>${escapeHtml(tr('seo.heading.needs'))}</h2>\n      <ul>\n${linksTo(deps)}\n      </ul>`
         : '',
-      `        <p><a href="${local()}">Карта знаний</a></p>`,
-    ]
-      .filter(Boolean)
-      .join('\n')}\n      </article>`,
-  };
-}
+      next.length
+        ? `      <h2>${escapeHtml(tr('seo.heading.opens'))}</h2>\n      <ul>\n${linksTo(next)}\n      </ul>`
+        : '',
+      fields.length
+        ? `      <h2>${escapeHtml(tr('seo.heading.field'))}</h2>\n      <ul>\n${fields
+            .map(
+              (id) =>
+                `        <li><a href="${local(lang, `fields/${id}`)}">${escapeHtml(domainTitle(id))}</a></li>`
+            )
+            .join('\n')}\n      </ul>`
+        : '',
+      `      ${mapLink}`,
+    ].filter(Boolean);
 
-function coursesPage(): Page {
-  const byDomain = domains.map((domain) => ({
-    domain,
-    items: courses.filter((course) => course.domains.includes(domain.id)),
-  }));
-
-  const body = [
-    '      <h1>Все курсы каталога</h1>',
-    `      <p>${
-      empty ? 'Курсы' : `${plural(courses.length, 'курс', 'курса', 'курсов')} в ${inFields(domains.length)}`
-    }, выстроенные в порядке изучения: у каждого видно, что нужно знать до него и что он открывает после.</p>`,
-    ...byDomain
-      .filter((group) => group.items.length)
-      .map(
-        (group) =>
-          `      <h2><a href="${local(`fields/${group.domain.id}`)}">${escapeHtml(
-            domainTitle(group.domain.id)
-          )}</a></h2>\n      <ul>\n${linksTo(group.items.map((course) => course.id))}\n      </ul>`
+    return {
+      lang,
+      file: `${langBase(lang)}courses/${course.id}.html`,
+      pathname: `courses/${course.id}`,
+      title: tr(
+        course.playlistCount ? 'seo.course.title' : 'seo.course.titlePlain',
+        { title },
+        `${title} | Lectorea`
       ),
-  ];
+      description,
+      canonical: true,
+      jsonLd,
+      body: `      <article>\n${sections.join('\n')}\n      </article>`,
+    };
+  }
 
-  return {
-    file: 'courses.html',
-    pathname: 'courses',
-    title: tr('seo.courses.title', {}, 'Lectorea'),
-    description: clip(
-      empty
-        ? 'Университетские курсы по областям знаний: видеозаписи лекций, порядок изучения и связи между курсами.'
-        : `${plural(courses.length, 'университетский курс', 'университетских курса', 'университетских курсов')} в ${inFields(domains.length)}: видеозаписи лекций, порядок изучения и связи между курсами.`
-    ),
-    // One file answers `/courses` and every filtered view of it.
-    canonical: false,
-    /*
-     * Kept as a file and out of search, which is not a contradiction.
-     *
-     * `/courses` with nothing set is the one view of the catalogue that answers
-     * no question — 225 cards across nine columns of every subject at once —
-     * and the app sends a reader who lands on it back to the map. An address
-     * that redirects must not also be offered as a result: that is a search
-     * result which does not go where it said. `follow` because the list below
-     * is still 225 links, and this file is also what serves the filtered views
-     * — `/courses?provider=…` is a slice somebody asked for and stays.
-     */
-    noindex: true,
-    jsonLd: [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        name: 'Курсы Lectorea',
-        url: href('courses'),
-        inLanguage: env.defaultLang,
-        isPartOf: { '@type': 'WebSite', name: 'Lectorea', url: href() },
-        // The fields rather than the courses: 225 entries would be the sitemap
-        // written twice, and each field page lists its own.
-        mainEntity: {
-          '@type': 'ItemList',
-          numberOfItems: fieldsWithCourses.length,
-          itemListElement: fieldsWithCourses.map((domain, index) => ({
-            '@type': 'ListItem',
-            position: index + 1,
-            name: domainTitle(domain.id),
-            url: href(`fields/${domain.id}`),
-          })),
+  /**
+   * One field of knowledge, as a page rather than as a filter.
+   *
+   * The catalogue has always been able to show a field — `/courses?domain=math`
+   * — but a static host serves one file per *path* and cannot vary on a query
+   * string, so all thirty-nine of them were `courses.html`: the same bytes, the
+   * same title, the same list of every course in the catalogue, until the
+   * bundle had run and rewritten the head. A crawler that indexes what it is
+   * served had thirty-nine copies of one page and no reason to keep any of them.
+   *
+   * A field is also the shape of the question people actually ask — «курсы по
+   * математике», «видеолекции по физике» — and the texts to answer it with are
+   * already written, in `domain.<id>.title` and `domain.<id>.desc`.
+   */
+  function fieldPage(domain: BuiltDomain): Page {
+    const title = domainTitle(domain.id);
+    const own = dict[`domain.${domain.id}.desc`] ?? '';
+    const items = courses.filter((course) => course.domains.includes(domain.id));
+    // The columns, kept as columns: a field is read left to right, and the list
+    // a crawler is given should say the same thing the screen does.
+    const ordered = [...items].sort(
+      (a, b) => a.level - b.level || courseTitle(a.id).localeCompare(courseTitle(b.id), lang)
+    );
+    const courseCount = count(items.length, 'course');
+
+    const description = clip(
+      [own || tr('seo.field.descFallback', { title }),
+        items.length ? tr('seo.field.order', { courses: courseCount }) : '',
+      ]
+        .filter(Boolean)
+        .join('. ')
+    );
+
+    return {
+      lang,
+      file: `${langBase(lang)}fields/${domain.id}.html`,
+      pathname: `fields/${domain.id}`,
+      title: tr('seo.domain.title', { title }, `${title} | Lectorea`),
+      description,
+      canonical: true,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: title,
+          description: own || description,
+          url: href(lang, `fields/${domain.id}`),
+          inLanguage: lang,
+          isPartOf: { '@type': 'WebSite', name: 'Lectorea', url: href(lang) },
+          // The courses themselves, in the order they are meant to be taken. An
+          // `ItemList` is the one way a list page can say what is *on* it rather
+          // than only what it is called.
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: ordered.length,
+            itemListElement: ordered.map((course, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              name: courseTitle(course.id),
+              url: href(lang, `courses/${course.id}`),
+            })),
+          },
         },
-      },
-    ],
-    body: `      <article>\n${body.join('\n')}\n      </article>`,
-  };
-}
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: tr('seo.breadcrumb.root'), item: href(lang) },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: title,
+              item: href(lang, `fields/${domain.id}`),
+            },
+          ],
+        },
+      ],
+      body: `      <article>\n${[
+        `        <h1>${escapeHtml(title)}</h1>`,
+        own ? `        <p>${escapeHtml(own)}</p>` : '',
+        items.length
+          ? `        <p>${escapeHtml(
+              tr('seo.field.facts', {
+                courses: courseCount,
+                recordings: count(domain.playlistCount, 'recording'),
+                hours: count(Math.max(1, Math.round(domain.hours)), 'hour'),
+              })
+            )}</p>`
+          : `        <p>${escapeHtml(tr('seo.field.empty'))}</p>`,
+        ordered.length
+          ? `        <h2>${escapeHtml(tr('seo.heading.fieldCourses'))}</h2>\n        <ul>\n${linksTo(
+              ordered.map((course) => course.id)
+            )}\n        </ul>`
+          : '',
+        `        ${mapLink}`,
+      ]
+        .filter(Boolean)
+        .join('\n')}\n      </article>`,
+    };
+  }
 
-function homePage(): Page {
-  const fields = fieldsWithCourses
-    .map(
-      (domain) =>
-        `        <li><a href="${local(`fields/${domain.id}`)}">${escapeHtml(
-          domainTitle(domain.id)
-        )}</a> — ${domain.courseCount}</li>`
-    )
-    .join('\n');
-
-  return {
-    file: 'index.html',
-    pathname: '',
-    title: dict['app.documentTitle'] ?? 'Lectorea',
-    description: clip(
+  function coursesPage(): Page {
+    const description = clip(
       empty
-        ? 'Бесплатный каталог университетских видеолекций в порядке изучения: что нужно знать до курса и что он открывает дальше.'
-        : `Бесплатный каталог университетских видеолекций: ${plural(courses.length, 'курс', 'курса', 'курсов')} в ${inFields(domains.length)} в порядке изучения — что нужно знать до курса и что он открывает.`
-    ),
-    canonical: true,
-    jsonLd: [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: 'Lectorea',
-        alternateName: 'Лекторея',
-        url: href(),
-        inLanguage: env.defaultLang,
-        description: dict['app.tagline'] ?? '',
-      },
-      // Named separately from the site because a course page already claims it
-      // as its provider: without this the name is repeated on 225 pages and
-      // defined on none of them.
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'Lectorea',
-        url: href(),
-        logo: href('pwa-512.png'),
-        description: dict['app.tagline'] ?? '',
-        sameAs: [`https://github.com/${repo}`],
-      },
-    ],
-    body: [
-      '      <article>',
-      `        <h1>${escapeHtml(dict['app.title'] ?? 'Lectorea')}</h1>`,
-      `        <p>${escapeHtml(dict['app.tagline'] ?? '')}</p>`,
-      '        <h2>Области знаний</h2>',
-      '        <ul>',
-      fields,
-      '        </ul>',
-      '      </article>',
-    ].join('\n'),
-  };
+        ? tr('seo.courses.descEmpty')
+        : tr('seo.courses.desc', {
+            courses: count(courses.length, 'course'),
+            fields: count(fieldsWithCourses.length, 'field'),
+          })
+    );
+
+    const body = [
+      `      <h1>${escapeHtml(tr('seo.heading.courses', {}, 'Lectorea'))}</h1>`,
+      `      <p>${escapeHtml(description)}</p>`,
+      ...fieldsWithCourses.map((domain) => {
+        const items = courses.filter((course) => course.domains.includes(domain.id));
+        return `      <h2><a href="${local(lang, `fields/${domain.id}`)}">${escapeHtml(
+          domainTitle(domain.id)
+        )}</a></h2>\n      <ul>\n${linksTo(items.map((course) => course.id))}\n      </ul>`;
+      }),
+    ];
+
+    return {
+      lang,
+      file: `${langBase(lang)}courses.html`,
+      pathname: 'courses',
+      title: tr('seo.courses.title', {}, 'Lectorea'),
+      description,
+      // One file answers `/courses` and every filtered view of it.
+      canonical: false,
+      /*
+       * Kept as a file and out of search, which is not a contradiction.
+       *
+       * `/courses` with nothing set is the one view of the catalogue that
+       * answers no question — 225 cards across nine columns of every subject at
+       * once — and the app sends a reader who lands on it back to the map. An
+       * address that redirects must not also be offered as a result: that is a
+       * search result which does not go where it said. `follow` because the
+       * list below is still 225 links, and this file is also what serves the
+       * filtered views — `/courses?provider=…` is a slice somebody asked for
+       * and stays.
+       */
+      noindex: true,
+      body: `      <article>\n${body.join('\n')}\n      </article>`,
+    };
+  }
+
+  function homePage(): Page {
+    const description = clip(
+      empty
+        ? tr('seo.home.descEmpty')
+        : tr('seo.home.desc', {
+            courses: count(courses.length, 'course'),
+            fields: count(fieldsWithCourses.length, 'field'),
+          })
+    );
+
+    return {
+      lang,
+      file: `${langBase(lang)}index.html`,
+      pathname: '',
+      title: dict['app.documentTitle'] ?? 'Lectorea',
+      description,
+      canonical: true,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Lectorea',
+          alternateName: 'Лекторея',
+          url: href(lang),
+          inLanguage: lang,
+          description: dict['app.tagline'] ?? '',
+        },
+        // Named separately from the site because a course page already claims it
+        // as its provider: without this the name is repeated on 225 pages and
+        // defined on none of them.
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'Lectorea',
+          url: href(DEFAULT_LANG),
+          logo: href(DEFAULT_LANG, 'pwa-512.png'),
+          description: dict['app.tagline'] ?? '',
+          sameAs: [`https://github.com/${repo}`],
+        },
+      ],
+      body: [
+        '      <article>',
+        `        <h1>${escapeHtml(dict['app.title'] ?? 'Lectorea')}</h1>`,
+        `        <p>${escapeHtml(dict['app.tagline'] ?? '')}</p>`,
+        `        <h2>${escapeHtml(tr('seo.heading.fields'))}</h2>`,
+        '        <ul>',
+        fieldsWithCourses
+          .map(
+            (domain) =>
+              `        <li><a href="${local(lang, `fields/${domain.id}`)}">${escapeHtml(
+                domainTitle(domain.id)
+              )}</a> — ${domain.courseCount}</li>`
+          )
+          .join('\n'),
+        '        </ul>',
+        '      </article>',
+      ].join('\n'),
+    };
+  }
+
+  return { coursePage, fieldPage, coursesPage, homePage, tr, count, domainTitle };
 }
 
 /** Every path the site never claimed — served by Pages with the status to match. */
 function notFoundPage(): Page {
+  const { tr } = pagesIn(DEFAULT_LANG);
   return {
+    lang: DEFAULT_LANG,
     file: '404.html',
     pathname: '',
-    title: 'Страница не найдена | Lectorea',
-    description: 'Такой страницы в каталоге нет — откройте карту знаний или список курсов.',
+    title: tr('seo.notFound.title', {}, 'Lectorea'),
+    description: tr('seo.notFound.desc'),
     canonical: false,
     noindex: true,
-    body: `      <p><a href="${local()}">Карта знаний</a></p>`,
+    // Pages answers every unknown path with this one file, whichever language
+    // the path was in, so it has no translation to name.
+    untranslated: true,
+    body: `      <p><a href="${local(DEFAULT_LANG)}">${escapeHtml(tr('seo.link.map', {}, 'Lectorea'))}</a></p>`,
   };
 }
 
 /* ─────────────────────────────  Sitemap etc.  ──────────────────────────── */
 
-type Entry = { loc: string; priority: string };
+type Entry = { pathname: string; priority: string };
 
+/**
+ * Every address, in every language, each naming its translations.
+ *
+ * The `xhtml:link` rows are the sitemap half of `hreflang` and say the same
+ * thing the pages do. Both halves are wanted: a crawler that starts from the
+ * sitemap learns the pair before fetching either, and one that arrives by a
+ * link learns it from the page.
+ */
 function sitemap(entries: Entry[]): string {
-  const urls = entries
-    .map(
-      ({ loc, priority }) =>
-        `  <url>\n    <loc>${loc.replace(/&/g, '&amp;')}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`
-    )
-    .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  const urls: string[] = [];
+  for (const { pathname, priority } of entries) {
+    for (const lang of LANGS) {
+      const alternates = [...LANGS, DEFAULT_LANG]
+        .map((other, index) =>
+          `    <xhtml:link rel="alternate" hreflang="${
+            index === LANGS.length ? 'x-default' : other
+          }" href="${href(other, pathname)}" />`
+        )
+        .join('\n');
+      urls.push(
+        `  <url>\n    <loc>${href(lang, pathname)}</loc>\n${alternates}\n` +
+          `    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`
+      );
+    }
+  }
+  return (
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' +
+    `${urls.join('\n')}\n</urlset>\n`
+  );
 }
 
 function robots(): string {
@@ -657,7 +744,7 @@ function robots(): string {
     '# page, and each one otherwise makes a second address for it.',
     'Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&yclid&gclid&fbclid&from&ref',
     '',
-    `Sitemap: ${href('sitemap.xml')}`,
+    `Sitemap: ${href(DEFAULT_LANG, 'sitemap.xml')}`,
     '',
   ].join('\n');
 }
@@ -671,43 +758,58 @@ function robots(): string {
  * single-page app is what the catalogue *is* and which of its addresses are
  * worth reading. Fields rather than courses — 225 course lines would be a
  * database dump, and each field page carries its own courses anyway.
+ *
+ * One file, in the catalogue's own language, with the other tree named in it:
+ * `/llms.txt` is a single address and cannot be two documents.
  */
 function llms(): string {
-  const lines = [
+  const { tr, count, domainTitle } = pagesIn(DEFAULT_LANG);
+  const dict = dicts.get(DEFAULT_LANG) ?? {};
+  const summary = empty
+    ? tr('seo.llms.summary')
+    : `${count(courses.length, 'course')}, ${count(fieldsWithCourses.length, 'field')}, ${count(
+        meta.playlists,
+        'playlist'
+      )}. ${tr('seo.llms.summary')}`;
+
+  return [
     '# Lectorea',
     '',
-    `> ${dict['app.tagline'] ?? 'Каталог университетских видеолекций в порядке изучения.'}`,
+    `> ${dict['app.tagline'] ?? ''}`,
     '',
-    empty
-      ? 'Бесплатный каталог записей университетских лекций с YouTube, выстроенных по зависимостям: у каждого курса видно, что нужно знать до него и что он открывает после. Без регистрации и рекламы.'
-      : `Бесплатный каталог записей университетских лекций с YouTube: ${plural(courses.length, 'курс', 'курса', 'курсов')} в ${inFields(fieldsWithCourses.length)}, ${plural(meta.playlists, 'плейлист', 'плейлиста', 'плейлистов')} лекций. Курсы связаны зависимостями: у каждого видно, что нужно знать до него и что он открывает после. Без регистрации и рекламы.`,
+    summary,
     '',
-    '## Основные страницы',
+    `## ${tr('seo.llms.pages')}`,
     '',
-    `- [Карта знаний](${href()}): области знаний как материки, вход в каталог.`,
+    `- [${dict['app.title'] ?? 'Lectorea'}](${href(DEFAULT_LANG)}): ${tr('seo.llms.pageMap')}.`,
     ...(courses[0]
       ? [
-          `- [Страница курса](${href(`courses/${courses[0].id}`)}): описание, что нужно знать заранее, что курс открывает дальше, записи лекций. Адрес любого курса — \`/courses/<id>\`.`,
+          `- [${courses[0] ? dict[`course.${courses[0].id}.title`] ?? courses[0].id : ''}](${href(
+            DEFAULT_LANG,
+            `courses/${courses[0].id}`
+          )}): ${tr('seo.llms.pageCourse')}.`,
         ]
       : []),
-    `- [Sitemap](${href('sitemap.xml')}): все адреса каталога.`,
+    `- [sitemap.xml](${href(DEFAULT_LANG, 'sitemap.xml')}): ${tr('seo.llms.pageSitemap')}.`,
+    ...LANGS.filter((lang) => lang !== DEFAULT_LANG).map(
+      (lang) => `- [${lang}](${href(lang)}): ${tr('seo.llms.pageEnglish')}.`
+    ),
     '',
-    '## Области знаний',
+    `## ${tr('seo.heading.fields')}`,
     '',
     ...fieldsWithCourses.map(
       (domain) =>
-        `- [${domainTitle(domain.id)}](${href(`fields/${domain.id}`)}): ${
-          dict[`domain.${domain.id}.desc`] ?? `курсы по теме «${domainTitle(domain.id)}»`
-        } (${plural(domain.courseCount, 'курс', 'курса', 'курсов')}).`
+        `- [${domainTitle(domain.id)}](${href(DEFAULT_LANG, `fields/${domain.id}`)}): ${
+          dict[`domain.${domain.id}.desc`] ?? domainTitle(domain.id)
+        } (${count(domain.courseCount, 'course')}).`
     ),
     '',
-    '## Условия',
+    `## ${tr('seo.llms.terms')}`,
     '',
-    '- Разметка курсов и зависимостей открыта: https://github.com/' + repo,
-    '- Сами лекции размещены на YouTube и принадлежат своим авторам; каталог только ссылается на них.',
+    `- ${tr('seo.llms.markup', { url: `https://github.com/${repo}` })}`,
+    `- ${tr('seo.llms.videos')}`,
     '',
-  ];
-  return lines.join('\n');
+  ].join('\n');
 }
 
 /* ────────────────────────────────  Main  ───────────────────────────────── */
@@ -718,16 +820,19 @@ function main(): void {
     process.exit(1);
   }
 
-  write(homePage());
   write(notFoundPage());
-  write(coursesPage());
-  for (const domain of fieldsWithCourses) write(fieldPage(domain));
-  for (const course of courses) write(coursePage(course));
+  for (const lang of LANGS) {
+    const pages = pagesIn(lang);
+    write(pages.homePage());
+    write(pages.coursesPage());
+    for (const domain of fieldsWithCourses) write(pages.fieldPage(domain));
+    for (const course of courses) write(pages.coursePage(course));
+  }
 
   const entries: Entry[] = [
-    { loc: href(), priority: '1.0' },
-    ...courses.map((course) => ({ loc: href(`courses/${course.id}`), priority: '0.8' })),
-    ...fieldsWithCourses.map((domain) => ({ loc: href(`fields/${domain.id}`), priority: '0.7' })),
+    { pathname: '', priority: '1.0' },
+    ...courses.map((course) => ({ pathname: `courses/${course.id}`, priority: '0.8' })),
+    ...fieldsWithCourses.map((domain) => ({ pathname: `fields/${domain.id}`, priority: '0.7' })),
   ];
 
   fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap(entries), 'utf8');
@@ -737,7 +842,8 @@ function main(): void {
   if (!isMirror) fs.writeFileSync(path.join(DIST, 'llms.txt'), llms(), 'utf8');
 
   console.log(
-    `✓ ${courses.length} course pages, ${fieldsWithCourses.length} field pages, sitemap with ${entries.length} URLs, robots.txt` +
+    `✓ ${courses.length} course pages and ${fieldsWithCourses.length} field pages in ${LANGS.length} languages, ` +
+      `sitemap with ${entries.length * LANGS.length} URLs, robots.txt` +
       (isMirror ? ' (fork — kept out of search)' : ` for ${origin}`)
   );
 

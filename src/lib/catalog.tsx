@@ -11,7 +11,7 @@ import { stageRank, type BuiltCourse, type BuiltDomain, type Stage } from '@shar
 import { upstreamOf } from '@shared/graph';
 import { loadCatalog, loadLanguage, type Catalog, type Language } from './data';
 import { I18nProvider, useT } from '@/i18n';
-import { useProfile } from '@/store/profile';
+import { UI_LANG } from '@/lib/lang';
 import { Button } from '@/components/ui';
 
 const CatalogContext = createContext<Catalog | null>(null);
@@ -23,7 +23,15 @@ export function useCatalog(): Catalog {
 }
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
-  const lang = useProfile((state) => state.profile.settings.lang);
+  /*
+   * The address decides, not the profile. A page in `/en/` is English for
+   * whoever opens it — the reader who shared the link, a crawler, somebody on a
+   * machine that has never been here — which is the whole point of the language
+   * having an address at all (src/lib/lang.ts). The profile still records the
+   * choice, and the header switch writes it there on its way to the other tree,
+   * so an export carries it; nothing renders from it.
+   */
+  const lang = UI_LANG;
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [language, setLanguage] = useState<Language | null>(null);
   const [error, setError] = useState<Error | null>(null);

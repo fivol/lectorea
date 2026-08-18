@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { pageView } from './analytics';
+import { APP_BASE } from './lang';
 
 /**
  * The head of the page for the view that is on screen: the tab's name, the
@@ -31,7 +32,10 @@ export function useDocumentMeta(title: string, description: string, canonical: s
       element.rel = 'canonical';
       return element;
     });
-    link.href = new URL(canonical, `${location.origin}${import.meta.env.BASE_URL}`).href;
+    // Against the app's own base, which carries the language segment: the
+    // canonical address of an English page is the English one, and naming the
+    // Russian page instead would ask search to drop half the site.
+    link.href = new URL(canonical, `${location.origin}${APP_BASE}`).href;
   }, [title, description, canonical]);
 
   /*

@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import { APP_BASE } from '@/lib/lang';
 import { initAnalytics, setAnalyticsConsent } from '@/lib/analytics';
 import { useProfile } from '@/store/profile';
 import './index.css';
@@ -25,11 +26,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     {/* Opt in to the v7 behaviours now, so the console stays free of warnings
         and the upgrade is not a separate piece of work later. */}
-    {/* The site is served from a subdirectory on GitHub Pages; BASE_URL is
-        '/' in dev and the subdirectory in a build, so routes stay relative
-        to wherever the app is mounted. */}
+    {/* The site is served from a subdirectory on GitHub Pages, and English is
+        served from `/en/` under it; `APP_BASE` is both of those together, so
+        every route in the app stays relative to wherever it is mounted and no
+        screen has to know which language it is in — see src/lib/lang.ts. */}
     <BrowserRouter
-      basename={import.meta.env.BASE_URL}
+      basename={APP_BASE}
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <App />

@@ -86,7 +86,14 @@ part of `pnpm build`) and writes a real file for every URL the catalogue offers:
   rank. Fields rather than courses: 225 lines would be the sitemap written
   twice, and each field page carries its own courses anyway. Not written for a
   fork, which asks to be left out of search by every other route as well.
-- `404.html` and `courses.html`, the two pages marked `noindex`.
+- `404.html` and `courses.html`, the two pages marked `noindex`. The 404 is
+  written once, in the catalogue's language: Pages answers every unknown path
+  with that one file whatever language the path was in, so it has no
+  translation to name.
+- All of the above twice, once per language — see
+  [a language is an address](#a-language-is-an-address). The sitemap carries
+  both, each `<url>` naming its translations with `xhtml:link`, so a crawler
+  that starts from the sitemap learns the pair before fetching either page.
 
 Pages resolves `/courses/calculus-1` to `courses/calculus-1.html` on its own, so
 the URLs do not change and neither does the router.
@@ -161,6 +168,45 @@ the same `seo.*` dictionary keys, so the static page and the rendered one agree.
 Two addresses with one catalogue between them only split the results, and the
 original is the one with the domain. Set `SITE_ORIGIN` if a fork is meant to be
 a site of its own.
+
+## A language is an address
+
+Russian lives at the root and English under `/en/`: `/courses/calculus-1` and
+`/en/courses/calculus-1` are two pages, each declaring the other with
+`hreflang`, and `x-default` points at the Russian one — the catalogue's own
+language and the address people already link to.
+
+The language used to live in `localStorage`, which is fine for a reader and
+useless for everything else. One address served both, so a search engine had
+one URL and no way to be told which language was on it; a link pasted into a
+chat carried the language of whoever pasted it rather than of whoever opened
+it; and a page that is two languages can declare neither.
+
+The seam is [src/lib/lang.ts](../src/lib/lang.ts) and it is deliberately one
+line of consequence: the language is read from the path **before React mounts**
+and becomes the router's `basename`. Every `to=` and `navigate()` in the app
+resolves against it, so no screen, no `href` builder and no route knows there is
+a prefix at all — `/courses/calculus-1` is what the code says in both trees.
+The two things that do know are the canonical link, which has to name the
+address of the page it is actually on, and the header switch, which is a real
+`<a href>` to the other tree: a link can be copied, opened in a new tab, and
+followed by a crawler that would otherwise never learn the second tree exists.
+
+Switching language reloads the document rather than re-routing. The `basename`
+is fixed when the router mounts and so is the dictionary the page was rendered
+from, and a language is changed rarely enough that the honest reload is worth
+more than the machinery to avoid it. It also lands on the file search already
+has in that language.
+
+The profile still records the choice — an export carries it, and the switch
+writes it on its way out — but nothing renders from it, and **nothing redirects
+on it**. A reader who opens a Russian link gets the Russian page, and a crawler
+gets what any reader would.
+
+`scripts/prerender.ts` writes both trees, and `check:i18n` gates them: the
+prose in those pages is in `data/i18n/*.json` like everything else, and the
+checker reads `prerender.ts` alongside `src/` so a key only the pages use is
+not mistaken for an orphan.
 
 ## The typefaces are ours to serve
 
