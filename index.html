@@ -52,12 +52,13 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <!--
+      No stylesheet from fonts.googleapis.com. The three typefaces are served
+      from this origin, declared in src/fonts.css and bundled with the rest of
+      the CSS: a link here would have put a DNS lookup and a TLS handshake to
+      one third party, then the same again to another for the files it names,
+      in front of the first letter drawn. See scripts/fonts.ts.
+    -->
     <script>
       // Applied before first paint so the page never flashes the wrong theme.
       try {

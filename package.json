@@ -34,6 +34,7 @@
     "cache:publish": "tsx scripts/cache-snapshot.ts publish",
     "cache:restore": "tsx scripts/cache-snapshot.ts restore",
     "og:build": "tsx scripts/og-image.ts",
+    "fonts:build": "tsx scripts/fonts.ts",
     "map:preview": "tsx scripts/map-poc.ts",
     "map:import": "tsx scripts/map-import.ts",
     "map:landforms": "tsx scripts/map-landforms.ts",

@@ -162,6 +162,33 @@ Two addresses with one catalogue between them only split the results, and the
 original is the one with the domain. Set `SITE_ORIGIN` if a fork is meant to be
 a site of its own.
 
+## The typefaces are ours to serve
+
+Unbounded, Onest and JetBrains Mono live in [src/fonts/](../src/fonts/) and are
+bundled with the CSS. They used to be a `<link>` to `fonts.googleapis.com`,
+which puts four things in front of the first letter drawn: a DNS lookup and a
+TLS handshake to `googleapis` for a stylesheet, then the same again to
+`gstatic` for the files that stylesheet names. Self-hosted they are one more
+request to a host the browser is already connected to — and Core Web Vitals is
+the one thing about this site a search engine measures directly.
+
+`pnpm fonts:build` ([scripts/fonts.ts](../scripts/fonts.ts)) is what refetches
+them when a weight is added; it rewrites every file and `src/fonts.css` with
+them, and CI never runs it. Two things it does that are worth knowing:
+
+- **Four subsets of six.** Google splits each face by alphabet; `greek` and
+  `vietnamese` would be a third of the bytes for glyphs no page has asked for.
+  Each rule keeps its `unicode-range` exactly as served, so a browser still
+  downloads only the alphabet it is about to draw — 28 files, 688 KB on disk,
+  and about 90 KB actually fetched by a Russian page.
+- **Relative URLs in the stylesheet.** Vite hashes each file and rewrites the
+  reference against `base`, so a fork served from `/<repo>/` gets working
+  fonts. An absolute `/fonts/…` would be a 404 there, and one nobody sees until
+  somebody forks.
+
+All three are under the SIL Open Font License 1.1, whose text and notice travel
+with them in [src/fonts/README.md](../src/fonts/README.md).
+
 ## When the site moves
 
 The order matters, because the bundle is built for one base path:
