@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { BuiltCourse, BuiltDomain, Meta } from '../shared/schema.js';
+import type { BuiltCourse, BuiltDomain, BuiltPlaylist, Meta } from '../shared/schema.js';
 import { UI_LANGS, type UiLang } from '../shared/schema.js';
 import { pluralForm } from '../shared/plural.js';
 import { ensureDir, env, ROOT } from './lib/config.js';
@@ -102,6 +102,21 @@ function local(lang: UiLang, pathname = ''): string {
   return `${base}${langBase(lang)}${pathname}`;
 }
 
+/**
+ * What every page says to a crawler, in the two versions there are.
+ *
+ * `max-image-preview:large` is the half worth explaining. Google shows a
+ * thumbnail the size of a favicon next to a result unless the page says
+ * otherwise, and this catalogue draws a 1200×630 card for every course and
+ * every field of knowledge — the one thing a result of ours has that a list of
+ * YouTube links does not. Without this line those cards are never shown at
+ * their size, and a page is not eligible for Discover at all.
+ */
+const ROBOTS = {
+  in: 'index, follow, max-image-preview:large',
+  out: 'noindex, follow',
+};
+
 /** What `og:locale` calls each of them. */
 const LOCALE: Record<string, string> = { ru: 'ru_RU', en: 'en_US' };
 
@@ -144,6 +159,26 @@ for (const course of courses) {
  * it and nothing to rank for — it would be a title, a sentence and no list.
  */
 const fieldsWithCourses = domains.filter((domain) => domain.courseCount);
+
+/** Universities by id — what «msu» is called when it has to be read out. */
+const providers = read<Record<string, { title?: string }>>('providers.json');
+
+/**
+ * The recordings of one course, in the order the build ranked them.
+ *
+ * Opened per course rather than all at once: the whole set is some six thousand
+ * entries across 225 files and a page uses six of them. A course whose file is
+ * missing — a checkout with no crawl cache, which is a supported way to build
+ * the site — is a page without that section, not a build that stops.
+ */
+function recordingsOf(id: string): BuiltPlaylist[] {
+  const file = path.join(DATA, 'playlists', `${id}.json`);
+  if (!fs.existsSync(file)) return [];
+  return JSON.parse(fs.readFileSync(file, 'utf8')) as BuiltPlaylist[];
+}
+
+/** How many of them a page names. Enough to show the range, short of a listing. */
+const RECORDINGS_SHOWN = 6;
 
 const lastmod = meta.builtAt.slice(0, 10);
 
@@ -215,7 +250,11 @@ function jsonLdScript(value: unknown): string {
  * rather than assumed, and a page with no card of its own falls back to the
  * card for the site. Nothing announces a picture that is not there.
  */
-function card(page: Page): { url: string; type: string; alt: string } | null {
+function card(page: Pick<Page, 'lang' | 'pathname' | 'title'>): {
+  url: string;
+  type: string;
+  alt: string;
+} | null {
   if (!page.pathname) return null;
   const file = `og/${page.lang}/${page.pathname}.jpg`;
   if (!fs.existsSync(path.join(DIST, file))) return null;
@@ -258,7 +297,7 @@ function render(page: Page): string {
     head.push(`<link rel="alternate" hreflang="x-default" href="${rootHref(page.pathname)}" />`);
   }
 
-  if (page.noindex || isMirror) head.push('<meta name="robots" content="noindex, follow" />');
+  head.push(`<meta name="robots" content="${ROBOTS[page.noindex || isMirror ? 'out' : 'in']}" />`);
   for (const entry of page.jsonLd ?? []) head.push(jsonLdScript(entry));
 
   /*
@@ -386,12 +425,60 @@ function pagesIn(lang: UiLang) {
 
   const mapLink = `<p><a href="${local(lang)}">${escapeHtml(tr('seo.link.map', {}, 'Lectorea'))}</a></p>`;
 
+  /**
+   * The names a course is known by besides its own.
+   *
+   * The build already writes them into the dictionary for the card — «ТФКП»,
+   * «теорвер», «линал» — and they are the exact words a student types into a
+   * search box, because they are what the subject is called on a timetable
+   * rather than in a syllabus. Nothing else on the page carries them, so a
+   * search for the name half the country uses reaches a catalogue that has the
+   * course under a different one.
+   */
+  const aliasesOf = (id: string): string[] =>
+    (dict[`course.${id}.aliases`] ?? '')
+      .split('·')
+      .map((name) => name.trim())
+      .filter(Boolean);
+
   function coursePage(course: BuiltCourse): Page {
     const title = courseTitle(course.id);
     const own = dict[`course.${course.id}.desc`] ?? '';
     const deps = course.deps.filter((id) => byId.has(id));
     const next = opens.get(course.id) ?? [];
     const fields = course.domains.filter((id) => domainById.has(id));
+    const aliases = aliasesOf(course.id);
+
+    /*
+     * The recordings, which are the half of this page nothing outside the app
+     * could see. Everything above them is the catalogue's own prose — the same
+     * three sentences in the same shape on 225 pages — while this is what the
+     * page is actually for and the only part of it that is unlike every other:
+     * which universities lecture on the subject, under what titles, at what
+     * length. It is also the shape of the question people ask, which is never
+     * «математический анализ» on its own but «матанализ МГУ лекции».
+     *
+     * Named by the university rather than by the channel where one is known:
+     * «Teach-in» is a fact about YouTube, «МГУ» is the fact somebody searched
+     * for. Six of them, and only the ones that know whose they are — a row that
+     * says «— , 12 лекций» is worse than a row that is not there.
+     *
+     * This page's own language first, and the catalogue's ranking within it.
+     * Rating alone put six English playlists on the Russian page of half the
+     * mathematics in the catalogue, which is the one language in which naming
+     * them buys nothing: the page exists to be found by «ТФКП лекции МГУ», and
+     * a reader who wanted the English ones is already on the English page.
+     */
+    const recordings = recordingsOf(course.id)
+      .slice()
+      .sort((a, b) => Number(b.lang === lang) - Number(a.lang === lang))
+      .map((playlist) => ({
+        by: providers[playlist.providerId ?? '']?.title ?? playlist.channelTitle ?? '',
+        title: playlist.title ?? '',
+        lectures: playlist.videoCount ?? 0,
+      }))
+      .filter((entry) => entry.by && entry.title)
+      .slice(0, RECORDINGS_SHOWN);
     const facts = course.playlistCount
       ? tr('seo.course.facts', {
           recordings: count(course.playlistCount, 'recording'),
@@ -412,6 +499,7 @@ function pagesIn(lang: UiLang) {
         '@context': 'https://schema.org',
         '@type': 'Course',
         name: title,
+        ...(aliases.length ? { alternateName: aliases } : {}),
         description: own || description,
         url: href(lang, `courses/${course.id}`),
         inLanguage: lang,
@@ -471,7 +559,20 @@ function pagesIn(lang: UiLang) {
     const sections = [
       `      <h1>${escapeHtml(title)}</h1>`,
       own ? `      <p>${escapeHtml(own)}</p>` : '',
+      aliases.length
+        ? `      <p>${escapeHtml(tr('seo.course.aliases', { list: aliases.join(', ') }))}</p>`
+        : '',
       `      <p>${escapeHtml(facts || tr('seo.course.empty'))}</p>`,
+      recordings.length
+        ? `      <h2>${escapeHtml(tr('seo.heading.recordings'))}</h2>\n      <ul>\n${recordings
+            .map(
+              (entry) =>
+                `        <li>${escapeHtml(entry.by)} — ${escapeHtml(entry.title)}${
+                  entry.lectures ? `, ${escapeHtml(count(entry.lectures, 'lecture'))}` : ''
+                }</li>`
+            )
+            .join('\n')}\n      </ul>`
+        : '',
       deps.length
         ? `      <h2>${escapeHtml(tr('seo.heading.needs'))}</h2>\n      <ul>\n${linksTo(deps)}\n      </ul>`
         : '',
@@ -790,23 +891,63 @@ function chooseLanguage(): string {
  * what `x-default` names, what every link shared before the languages had
  * addresses still points at, and what somebody typing the site's name lands on.
  *
- * Small on purpose: it carries no content, because content here would be a
- * third copy of a page that already exists in two languages. What it carries is
- * the choice, the `hreflang` pair for a crawler that will not run the script,
- * and a `<noscript>` refresh to the catalogue's own language for a reader whose
- * browser will not either.
+ * It carries no *body*, because a third copy of prose that already exists in
+ * two languages is exactly the duplicate `hreflang` is there to prevent. Its
+ * head is another matter, and used to be nearly empty — a title and the
+ * language links. That was wrong twice over, because this is the address people
+ * actually pass around: `lectorea.org` is what goes into a chat, a post or a
+ * README, and a link with no `og:` tags unfolds into a grey rectangle with a
+ * hostname in it. Everything a scraper reads is therefore stated here — the
+ * description, the card, the canonical address — in the catalogue's own
+ * language, which is also the one this page sends an unknown reader to.
+ *
+ * The card is *this address's* card, not the site's: a door in front of a
+ * course names the course's picture, so a shared `/courses/calculus-1` unfolds
+ * into the same thing `/ru/courses/calculus-1` does.
  */
-function redirectPage(pathname: string, title: string): string {
+function redirectPage(pathname: string, title: string, description: string): string {
   const fallback = href(DEFAULT_LANG, pathname);
+  const self = rootHref(pathname);
+  const picture = card({ lang: DEFAULT_LANG, pathname, title });
   const alternates = LANGS.map(
     (lang) => `    <link rel="alternate" hreflang="${lang}" href="${href(lang, pathname)}" />`
   ).join('\n');
+  const meta = [
+    `<meta name="description" content="${escapeHtml(description)}" />`,
+    `<meta name="robots" content="${ROBOTS[isMirror ? 'out' : 'in']}" />`,
+    // The door is the address `x-default` names, so it names itself: pointing
+    // it at the Russian tree would leave `x-default` on a page that disclaims
+    // being canonical, and would fold every `?utm_source=…` copy of the root
+    // into a language rather than into the address people shared.
+    `<link rel="canonical" href="${self}" />`,
+    '<link rel="icon" href="/favicon.ico" sizes="32x32" />',
+    '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />',
+    '<link rel="apple-touch-icon" href="/apple-touch-icon.png" />',
+    '<meta property="og:type" content="website" />',
+    '<meta property="og:site_name" content="Lectorea" />',
+    `<meta property="og:title" content="${escapeHtml(title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(description)}" />`,
+    `<meta property="og:image" content="${picture ? picture.url : rootHref('og.png')}" />`,
+    `<meta property="og:image:type" content="${picture ? picture.type : 'image/png'}" />`,
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    `<meta property="og:image:alt" content="${escapeHtml(picture ? picture.alt : 'Lectorea')}" />`,
+    `<meta property="og:url" content="${self}" />`,
+    `<meta property="og:locale" content="${LOCALE[DEFAULT_LANG] ?? DEFAULT_LANG}" />`,
+    ...LANGS.filter((lang) => lang !== DEFAULT_LANG).map(
+      (lang) => `<meta property="og:locale:alternate" content="${LOCALE[lang] ?? lang}" />`
+    ),
+    '<meta name="twitter:card" content="summary_large_image" />',
+  ].map((line) => `    ${line}`);
+
   return [
     '<!doctype html>',
     `<html lang="${DEFAULT_LANG}">`,
     '  <head>',
     '    <meta charset="UTF-8" />',
+    '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
     `    <title>${escapeHtml(title)}</title>`,
+    ...meta,
     alternates,
     `    <link rel="alternate" hreflang="x-default" href="${rootHref(pathname)}" />`,
     `    <script>${chooseLanguage()}</script>`,
@@ -819,8 +960,8 @@ function redirectPage(pathname: string, title: string): string {
 }
 
 /** The redirector, at the path itself and at the path with a slash on it. */
-function writeRedirect(pathname: string, title: string): void {
-  const html = redirectPage(pathname, title);
+function writeRedirect(pathname: string, title: string, description: string): void {
+  const html = redirectPage(pathname, title, description);
   const at = (file: string): void => {
     const full = path.join(DIST, file);
     ensureDir(path.dirname(full));
@@ -984,16 +1125,39 @@ function main(): void {
    * `x-default` has to name something: the page for a reader whose language we
    * cannot guess is the one that guesses.
    */
-  const { domainTitle, tr } = pagesIn(DEFAULT_LANG);
+  const fallbackPages = pagesIn(DEFAULT_LANG);
+  const { domainTitle, tr } = fallbackPages;
   const defaults = dicts.get(DEFAULT_LANG) ?? {};
-  writeRedirect('', defaults['app.documentTitle'] ?? 'Lectorea');
-  writeRedirect('courses', tr('seo.courses.title', {}, 'Lectorea'));
+  /*
+   * The description each door carries is the one its own page carries, taken
+   * from the page rather than written a second time. Two wordings for one
+   * address is how the card a link unfolds into comes to disagree with the page
+   * behind it, and the copy nobody opens is the one that goes stale.
+   */
+  writeRedirect(
+    '',
+    defaults['app.documentTitle'] ?? 'Lectorea',
+    fallbackPages.homePage().description
+  );
+  writeRedirect(
+    'courses',
+    tr('seo.courses.title', {}, 'Lectorea'),
+    fallbackPages.coursesPage().description
+  );
   for (const domain of fieldsWithCourses) {
-    writeRedirect(`fields/${domain.id}`, tr('seo.domain.title', { title: domainTitle(domain.id) }, 'Lectorea'));
+    writeRedirect(
+      `fields/${domain.id}`,
+      tr('seo.domain.title', { title: domainTitle(domain.id) }, 'Lectorea'),
+      fallbackPages.fieldPage(domain).description
+    );
   }
   for (const course of courses) {
     const title = defaults[`course.${course.id}.title`] ?? course.id;
-    writeRedirect(`courses/${course.id}`, tr('seo.course.titlePlain', { title }, 'Lectorea'));
+    writeRedirect(
+      `courses/${course.id}`,
+      tr('seo.course.titlePlain', { title }, 'Lectorea'),
+      fallbackPages.coursePage(course).description
+    );
   }
 
   const entries: Entry[] = [

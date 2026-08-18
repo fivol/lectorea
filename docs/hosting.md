@@ -65,6 +65,25 @@ part of `pnpm build`) and writes a real file for every URL the catalogue offers:
   meant to be taken. See [a field is a page](#a-field-is-a-page-not-a-query-string).
 - A `<noscript>` copy of what the page says — the description, what the course
   needs, what it opens up, links to both — for whatever does not run JavaScript.
+  It also names **the recordings themselves**: six of them, by university where
+  the catalogue knows one, with the playlist's own title and how many lectures
+  are in it. Everything above them is the catalogue's prose, in the same shape
+  on all 225 pages; this is the part that is unlike every other page and the
+  shape of the question people actually ask, which is never «математический
+  анализ» on its own but «матанализ МГУ лекции». The page's own language first,
+  because rating alone put six English playlists on the Russian page of half the
+  mathematics in the catalogue.
+- **The other names a course goes by** — «ТФКП», «теорвер», «линал». The build
+  already writes them into the dictionary for the card, and they are exactly
+  what a student types, being what the subject is called on a timetable rather
+  than in a syllabus. They go on the page as a line of prose and into the
+  `Course` markup as `alternateName`.
+- `robots`, on every page: `index, follow, max-image-preview:large` for the
+  ones that want to be found, `noindex, follow` for the two that do not.
+  Without the image clause Google shows a thumbnail the size of a favicon
+  beside a result and the page is not eligible for Discover at all — which
+  would waste the one thing a result of ours has that a list of YouTube links
+  does not, the 1200×630 card drawn for it.
 - `<path>/index.html` beside every page, byte for byte the same. A link that
   picked up a trailing slash somewhere — `/courses/calculus-1/` — is otherwise
   a path this site has no file for, and Pages answers it with `404.html` and
@@ -194,10 +213,28 @@ a redirect at the door.
 
 `scripts/prerender.ts` still writes a page at every address *without* a
 language — `/`, `/courses/calculus-1`, `/fields/math` — and its whole job is to
-choose one and leave. It carries no content, because content there would be a
+choose one and leave. It carries no *body*, because prose there would be a
 third copy of a page that already exists in two languages; it carries the
 choice, the `hreflang` pair for a crawler that will not run the script, and a
 `<noscript>` refresh to the catalogue's own language.
+
+Its **head** is another matter, and was nearly empty for a while — a title and
+the language links, nothing else. That was wrong twice over, because these are
+the addresses people actually pass around: `lectorea.org` is what goes into a
+chat, a post or a README, and a link with no `og:` tags unfolds into a grey
+rectangle with a hostname in it. So the door states everything a scraper reads
+— description, card, canonical, `og:locale` and its alternate, the icons — in
+the catalogue's own language, which is also the one it sends an unknown reader
+to. The card is *that address's* card rather than the site's, so a shared
+`/courses/calculus-1` unfolds into the same picture `/ru/courses/calculus-1`
+does, and the description is taken from the page it opens rather than written a
+second time: two wordings for one address is how the card and the page behind it
+come to disagree.
+
+The canonical link on a door names **itself**. It is what `x-default` points at,
+and pointing it into the Russian tree would leave `x-default` on a page that
+disclaims being canonical — and would fold every `?utm_source=…` copy of the
+root into a language rather than into the address that was shared.
 
 The order of preference is the honest one:
 

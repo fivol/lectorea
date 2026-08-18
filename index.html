@@ -60,6 +60,20 @@
       in front of the first letter drawn. See scripts/fonts.ts.
     -->
     <script>
+      // The language this document is in, taken from the address it was asked
+      // for. Every shipped page has it written into the tag by
+      // `scripts/prerender.ts`, which is the only version a crawler ever sees;
+      // this is the dev server, where one file answers `/ru/…` and `/en/…`
+      // alike and the attribute above is the catalogue's default rather than a
+      // fact about the page. A screen reader and a translation prompt both read
+      // that attribute before anything else on the page.
+      //
+      // Any two-letter first segment is a language here and cannot be anything
+      // else: every other address the router knows begins with `courses` or
+      // `fields`. So a language added to the catalogue needs no edit here.
+      const named = /^\/([a-z]{2})(\/|$)/.exec(location.pathname);
+      if (named) document.documentElement.lang = named[1];
+
       // Applied before first paint so the page never flashes the wrong theme.
       try {
         const stored = JSON.parse(localStorage.getItem('catalog.profile.v1') || '{}');

@@ -28,6 +28,7 @@
  */
 
 import { ANALYTICS_EVENTS, ANALYTICS_PARAMS, BUILT_IN_PARAMS } from '@shared/analytics';
+import { APP_BASE } from './lang';
 
 /** The GA4 web stream this build reports to. Empty means the site is silent. */
 const MEASUREMENT_ID = import.meta.env.VITE_GA4_ID ?? '';
@@ -112,8 +113,20 @@ export function initAnalytics(consent: boolean): void {
   started = true;
 
   window.dataLayer = window.dataLayer ?? [];
-  const gtag = (...args: unknown[]): void => {
-    window.dataLayer!.push(args);
+  /*
+   * `arguments`, and not the array a rest parameter would hand over.
+   *
+   * gtag.js walks its own queue and asks each entry what it is; the only answer
+   * it acts on is `[object Arguments]`. A plain array is left where it was put,
+   * without a warning, and everything downstream of it looks exactly like a
+   * working install: `dataLayer` fills up, the container script loads, the
+   * commands are visibly in the queue — and not one request to `/g/collect` is
+   * ever made, so the property stays empty. This site shipped that version for
+   * a day. The canonical snippet is written the way it is for this reason, and
+   * copying its shape rather than its intent is what the arrow function was.
+   */
+  const gtag: (...args: unknown[]) => void = function () {
+    window.dataLayer!.push(arguments);
   };
   window.gtag = gtag;
 
@@ -128,13 +141,23 @@ export function initAnalytics(consent: boolean): void {
   });
 
   gtag('js', new Date());
+  /*
+   * Only fields GA4 actually reads.
+   *
+   * A config key gtag does not recognise is not refused — it is forwarded as an
+   * *event parameter*, on every event, for the life of the property. That is
+   * how `anonymize_ip` and `transport_type` came to ride along as `ep.` fields
+   * in the payload: both are Universal Analytics, and GA4 answers them by
+   * doing what they asked for anyway — every IP is anonymised, and the tag
+   * already sends with `sendBeacon` when the page is going away. So they cost
+   * two useless parameters on every hit and bought nothing. The way to tell,
+   * for the next one: look at a `/g/collect` request and see whether the key
+   * came out prefixed with `ep.`.
+   */
   gtag('config', MEASUREMENT_ID, {
     send_page_view: false,
-    anonymize_ip: true,
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
-    // A page closed mid-event still reports: `sendBeacon` outlives the document.
-    transport_type: 'beacon',
     ...(DEBUG ? { debug_mode: true } : {}),
   });
 
@@ -219,6 +242,14 @@ export function track(name: string, params: EventParams = {}): void {
  * The query string is rebuilt from the allowlist above even so. A parameter
  * added to a canonical path next year would otherwise start leaving the browser
  * on the day it is added, without anybody having decided that it should.
+ *
+ * Resolved against `APP_BASE`, which is the one thing the canonical path leaves
+ * out: the language. Every screen builds its links language-free — that is what
+ * makes the router's `basename` work — so a page arrived at in either tree
+ * named itself `/courses/calculus-1`, and the two languages were one row in
+ * every report. They are two pages: two addresses, two sets of prose, two rows
+ * in Search Console. The path a report is read by should be the one a crawler
+ * and a shared link both name.
  */
 export function pageView(canonical: string, title: string): void {
   const [path, search = ''] = canonical.split('?');
@@ -227,11 +258,11 @@ export function pageView(canonical: string, title: string): void {
     if (SHAREABLE.has(key)) kept.append(key, value);
   }
   const query = kept.toString();
-  const page = `/${path}${query ? `?${query}` : ''}`;
+  const address = new URL(`${path}${query ? `?${query}` : ''}`, `${location.origin}${APP_BASE}`);
   track('page_view', {
-    page_path: page,
+    page_path: `${address.pathname}${address.search}`,
     page_title: title,
-    page_location: new URL(page, location.origin).href,
+    page_location: address.href,
   });
 }
 

@@ -616,3 +616,45 @@ navigator.serviceWorker.getRegistrations().then((r) => console.log(r.length));
 **Generally:** a service worker is a second server, running on the reader's
 machine, with a copy of the answers from a version of the site that no longer
 exists. Any change to *which file answers which address* is a change to it too.
+
+## The analytics queue was filled correctly and read by nobody
+
+Found on 2026-08-18, a day after the property was created and the site had been
+live with it.
+
+`initAnalytics` built its `gtag` the way any modern module would:
+
+```ts
+const gtag = (...args: unknown[]) => window.dataLayer!.push(args);
+```
+
+**Assumed:** that the canonical snippet's `function gtag(){dataLayer.push(arguments)}`
+is 2015 JavaScript, and a rest parameter is the same thing written properly.
+**It was:** `gtag.js` decides what to act on by asking each queue entry what it
+is, and the only answer it accepts is `[object Arguments]`. A plain array is
+left in the queue, silently, forever.
+
+What made it expensive is that every single thing you would check said it was
+working. The switch was on, `VITE_GA4_ID` was in the bundle, the script tag was
+in the head, `gtag/js?id=G-…` answered 200, `window.google_tag_manager['G-…']`
+existed, `gtm.dom` and `gtm.load` were in the dataLayer, and the `consent`,
+`js`, `config` and `page_view` commands were visibly queued in the right order.
+The only two facts anywhere that disagreed: there was no `_ga` cookie, and there
+had never been a request to `/g/collect`.
+
+**How not to repeat it, for the class:** when a third party is handed something
+through a queue, an array or a global rather than through a function call, the
+handover is unchecked by construction — nobody validates, nobody throws, and the
+absence of an error means nothing at all. Two things close it:
+
+1. **Verify at the far end, not at ours.** Not "did we push it" but "did a
+   request leave, and what did it carry". One look at the network panel filtered
+   to `collect` is the whole check, and it also reads back what the third party
+   thought we said — which is how `anonymize_ip` and `transport_type` were found
+   riding on every event as `ep.` parameters, GA4 having never understood either.
+2. **Pin the shape at the boundary with a test.** `tests/analytics.test.ts`
+   asserts the queue receives `[object Arguments]`, which is a strange thing to
+   assert until you have watched a day of traffic go nowhere.
+
+The recipe, and what a good payload looks like, is in
+[analytics.md](../analytics.md#checking-that-it-actually-sends).

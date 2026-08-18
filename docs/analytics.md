@@ -36,6 +36,14 @@ it is given rather than trusting its caller. Three rules do the work:
   parameters. A parameter added to the app next year cannot start leaving the
   browser without somebody adding it to that list.
 
+  The path carries the language, because an address does: `/ru/courses/calculus-1`
+  and `/en/courses/calculus-1` are two pages with two sets of prose, and they
+  are two rows in Search Console whatever a report here decides. Every screen
+  builds its links language-free — that is what makes the router's `basename`
+  work — so the language is put back in `pageView`, against the same base the
+  canonical link is resolved against. Anything counted before 2026-08-18 has no
+  language on its path and is the two trees summed.
+
   One consequence worth knowing before reading a report across 2026-08-18: a
   field of knowledge is `/fields/<id>` from that build on, where it used to be
   `/courses?domain=<id>` ([hosting.md](hosting.md#a-field-is-a-page-not-a-query-string)).
@@ -129,6 +137,51 @@ landed on is only knowable afterwards. The playlist filters are counted the same
 way, by diffing the panel's state, so all twelve of them — and the reset button,
 which no control owns — are covered by one function.
 
+## Checking that it actually sends
+
+Worth doing after any change to `initAnalytics`, and worth doing once by hand
+before believing a fresh property, because **this is a system whose failure
+looks exactly like its success**: the switch is on, the script is in the page,
+the events are visibly queued, and nothing is sent.
+
+That is not hypothetical. The first version of this module queued its commands
+as plain arrays:
+
+```js
+const gtag = (...args) => window.dataLayer.push(args);   // silent, sends nothing
+```
+
+`gtag.js` reads its own queue by asking each entry what it is, and the only
+answer it acts on is `[object Arguments]`. An array is left where it was put,
+without a warning in the console. So `dataLayer` filled up, `gtag/js?id=…`
+loaded with a 200, `google_tag_manager['G-…']` appeared, `gtm.load` fired — and
+in a day of traffic not one request to `/g/collect` was ever made. The canonical
+snippet writes `function gtag(){dataLayer.push(arguments)}` for this reason, and
+copying its shape rather than its intent is exactly the mistake available.
+
+`tests/analytics.test.ts` pins the shape now. What it cannot pin is the rest of
+the chain, and the check for that is one look at the network:
+
+1. Open the site, filter requests by `collect`.
+2. There has to be a `POST` to `google-analytics.com/g/collect` (or
+   `region1.google-analytics.com`) answered `204`, carrying `en=page_view`.
+3. Read the query string. `tid` is the measurement id, `dp` the page path —
+   with its language on it — and `gcs=G101` is Consent Mode saying analytics
+   granted, advertising denied.
+
+**And read it for `ep.` prefixes.** A `config` key gtag does not recognise is
+not refused: it is forwarded as an *event parameter*, on every event, forever.
+`anonymize_ip` and `transport_type` rode along that way for a while — both are
+Universal Analytics, and GA4 does what they asked for anyway (every IP is
+anonymised, and the tag already uses `sendBeacon` when the page is going away).
+Two useless fields on every hit, and the only place it was visible was the
+payload. So: anything in `ep.` that is not a parameter this site meant to send
+is a config key GA4 never understood.
+
+If nothing is sent at all, the order to check is cheapest first — the switch in
+**Профиль → Настройки**, `Do Not Track` or GPC in the browser, `VITE_GA4_ID` in
+the build (a fork has none by design), and only then the code.
+
 ## Setting the property up
 
 The site needs one thing: a measurement id, which is public by construction
@@ -166,6 +219,16 @@ So the rule is one line: **an event is added to `shared/analytics.ts` first**,
 and `pnpm ga4:setup --apply` is run before it ships. In development the console
 warns about any event or parameter that is not in the registry, which is the
 only moment anybody is watching.
+
+**Reading the reports back from a script** needs one more thing, and the error
+says so plainly when it happens: the **Google Analytics Data API**
+(`analyticsdata.googleapis.com`) has to be enabled in the Cloud project the
+service account belongs to — `lectorea`, project number 226808585309. The Admin
+API is already on, so listing properties, streams and custom dimensions works
+while every `runReport` and `runRealtimeReport` answers `403 SERVICE_DISABLED`.
+It is one switch in the console and nothing here needs it: the reports are read
+in the interface, and this is only worth knowing before concluding that a
+property has no data in it.
 
 The script needs administrative access, which is granted by hand and cannot be
 granted any other way: an analytics *account* cannot be created by an API at
