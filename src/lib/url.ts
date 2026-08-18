@@ -51,6 +51,7 @@ export type CatalogParams = {
 export function useCatalogParams(): CatalogParams {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const catalog = useCatalog();
   /**
    * Which of the two shapes the current address is in. `domainId` is set by the
    * `/fields/:domainId` route and `courseId` by `/courses/:courseId`; on the map
@@ -58,13 +59,34 @@ export function useCatalogParams(): CatalogParams {
    */
   const { courseId, domainId } = useParams<{ courseId?: string; domainId?: string }>();
 
-  const domains = useMemo(
-    () => (domainId ? [domainId] : parseList(params.get('domain'))),
-    [domainId, params]
-  );
   const providers = useMemo(() => parseList(params.get('provider')), [params]);
   const lecturers = useMemo(() => parseList(params.get('lecturer')), [params]);
   const playlistId = params.get('playlist');
+
+  /**
+   * The fields of knowledge the columns are looking through.
+   *
+   * Normally the address says: a `/fields/<id>` path, or a `domain=` list on
+   * `/courses`. The exception is a course reached by its bare address —
+   * `/courses/inorganic-chemistry`, which is what a search result and a shared
+   * link are — where nothing has been chosen and the honest answer, all 225
+   * cards across nine columns of every subject, is the one view that answers no
+   * question. Such a course brings its own fields with it, the same slice the
+   * search box and the profile already open it in (`useCourseSlice`).
+   *
+   * Derived here rather than corrected afterwards. An effect that rewrote the
+   * address would run after the first render, so the wall was drawn, painted
+   * and then rebuilt into the field — visible, and the expensive half of it
+   * wasted. The URL is left alone: `/courses/<id>` stays the clean canonical
+   * address it is in the sitemap, and the moment the reader touches a filter
+   * `writeDomains` writes down whatever they chose.
+   */
+  const domains = useMemo(() => {
+    if (domainId) return [domainId];
+    const named = parseList(params.get('domain'));
+    if (named.length || providers.length || lecturers.length) return named;
+    return courseId ? catalog.courseById.get(courseId)?.domains ?? [] : [];
+  }, [catalog, courseId, domainId, lecturers, params, providers]);
 
   const write = useCallback(
     (key: string, value: string[] | string | null, replace = false) => {

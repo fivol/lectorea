@@ -126,6 +126,15 @@ own fields of knowledge along with it, the same slice the search box and the
 profile already opened it in. Without that, a result from search landed the
 reader inside the wall of all 225 cards with one of them selected.
 
+That slice is **derived while the screen renders**, in `useCatalogParams`, and
+the address is left alone. Correcting it afterwards with a `replace` is the
+obvious way to write it and the wrong one: an effect runs after the first
+render, so the wall is built, painted and then rebuilt into the field — a
+visible lurch, and the expensive half of the work thrown away. Leaving the URL
+alone is also what keeps `/courses/<id>` the clean canonical address it is in
+the sitemap, instead of `?domain=…` appearing under every reader who arrived
+from search.
+
 The picture in those cards is `public/og.png` — the real map at 1200×630, drawn
 by [scripts/og-image.ts](../scripts/og-image.ts) from `map.svg` and the domain
 colours, with the wordmark over it. It is committed like any other asset and

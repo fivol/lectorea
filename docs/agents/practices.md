@@ -823,6 +823,15 @@ it. If the answer is "the same one as for everything else", it is not a page
 yet, and no amount of head-rewriting after boot will make search treat it as
 one.
 
+A second rule came out of the same change. When a screen has to default
+something the address did not say, **derive it during the render, do not correct
+it afterwards**. The first attempt set the course's own fields in a `useEffect`
+with `navigate(..., { replace: true })`, which is correct and looks fine in a
+test — and on a real machine draws all 225 cards, paints them, and rebuilds the
+screen into six. The user saw the lurch immediately. Deriving it in
+`useCatalogParams` costs one `useMemo`, renders right the first time, and leaves
+the URL clean, which the canonical link wanted anyway.
+
 **Rejected, with reasons:**
 
 - *Leave `?domain=` and drop the thirty-nine URLs from the sitemap.* One line,

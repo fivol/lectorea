@@ -7,7 +7,7 @@ import { useResumeList, useResumeProgress } from '@/lib/progress';
 import { SUGGEST_IN_SLICE, useSearchResults } from '@/lib/search';
 import { normalize } from '@shared/search';
 import { STAGE_ORDER } from '@shared/schema';
-import { columnsHref, courseHref, useCatalogParams, withDomains } from '@/lib/url';
+import { columnsHref, courseHref, useCatalogParams } from '@/lib/url';
 import { useDocumentMeta } from '@/lib/meta';
 import { useIsDesktop, useIsMobile, useEscape } from '@/lib/hooks';
 import { clamp, inkOn } from '@/lib/format';
@@ -51,46 +51,27 @@ export default function CoursesScreen() {
 
   const selected = courseId ? catalog.courseById.get(courseId) ?? null : null;
 
-  /**
-   * Whether anything at all narrows what the columns are showing. The three
-   * filters are equal here: «все курсы МИТ» is a slice somebody asked for, and
-   * only a screen with none of them set is the one nobody asked for.
-   */
-  const unfiltered = !params.domains.length && !params.providers.length && !params.lecturers.length;
-
   /*
-   * The columns are always looking at something. Two ways in break that, and
-   * both arrive from outside the app — a link somebody shared, a search result:
+   * The columns are always looking at something, and two ways in break that.
    *
-   * — `/courses` with nothing set draws all 225 cards across nine columns of
-   *   every subject at once. It is the one view of the catalogue that answers
-   *   no question: too wide to read, and the map exists precisely to choose a
-   *   field before the columns are worth opening. It goes back to the map.
-   * — `/courses/inorganic-chemistry` opens the right course inside that same
-   *   wall. Reached from the search box or the profile the course brings its
-   *   own fields along with it (`useCourseSlice`), so the address is the only
-   *   way to land on the wide one — and it gets the same treatment, its own
-   *   fields rather than the primary one alone, for the reason written there.
+   * `/courses` with nothing set draws all 225 cards across nine columns of
+   * every subject at once — the one view of the catalogue that answers no
+   * question, and too wide to read. The map exists precisely to choose a field
+   * before the columns are worth opening, so that is where it goes back to. The
+   * other way in, a course opened by its bare address, never reaches here: it
+   * brings its own fields with it while the screen is still being rendered
+   * (`useCatalogParams`), so there is nothing to correct afterwards.
    *
-   * A field of knowledge that does not exist is the third: `prerender.ts`
+   * A field of knowledge that does not exist is the second: `prerender.ts`
    * writes a page per real field and nothing links to any other, so it is a
    * stale link, and the map is a better answer than a screen filtered down to
    * nothing.
    */
+  const unfiltered = !params.domains.length && !params.providers.length && !params.lecturers.length;
   useEffect(() => {
-    if (domainId && !catalog.domainById.has(domainId)) {
-      navigate('/', { replace: true });
-      return;
-    }
-    if (!unfiltered) return;
-    if (!selected) {
-      navigate('/', { replace: true });
-      return;
-    }
-    if (selected.domains.length) {
-      navigate(courseHref(selected.id, withDomains('', selected.domains)), { replace: true });
-    }
-  }, [catalog, domainId, navigate, selected, unfiltered]);
+    const unknownField = Boolean(domainId) && !catalog.domainById.has(domainId ?? '');
+    if (unknownField || unfiltered) navigate('/', { replace: true });
+  }, [catalog, domainId, navigate, unfiltered]);
 
   /*
    * A course opened, with the facts a report needs about it beside the id.
@@ -112,6 +93,7 @@ export default function CoursesScreen() {
       playlists: selected.playlistCount,
     });
   }, [selected]);
+
   const maxStage = useProfile((state) => state.profile.settings.maxStage);
   /** Whether the columns draw the whole chain or the tree it cuts back to. */
   const fullGraph = useProfile((state) => state.profile.settings.fullGraph);
