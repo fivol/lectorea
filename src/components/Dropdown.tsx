@@ -54,6 +54,18 @@ type Props = {
    */
   width?: number;
   /**
+   * Size to the content, with the window as the only ceiling.
+   *
+   * `POPOVER_HEIGHT` is a rule about *lists*: past three hundred pixels of rows
+   * a menu has become a page, and scrolling it is better than filling the
+   * screen with it. A fixed set of controls is the opposite case — it is as
+   * tall as it is, every row of it was put there deliberately, and a panel that
+   * hides its last control behind a scroll is a control nobody finds. The
+   * viewport ceiling stays either way, because what hangs past the edge of a
+   * fixed box cannot be scrolled back into it.
+   */
+  fit?: boolean;
+  /**
    * Turns on a filter field above the list. The caller owns the query and does
    * the filtering — the popover has no idea what its children are, and a list
    * long enough to need searching always knows how it wants to be matched.
@@ -87,6 +99,7 @@ export default function Dropdown({
   className = '',
   trigger,
   width = POPOVER_WIDTH,
+  fit = false,
   search,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -178,7 +191,9 @@ export default function Dropdown({
               style={{
                 ...place,
                 width,
-                maxHeight: Math.min(place.maxHeight ?? POPOVER_HEIGHT, POPOVER_HEIGHT),
+                maxHeight: fit
+                  ? place.maxHeight
+                  : Math.min(place.maxHeight ?? POPOVER_HEIGHT, POPOVER_HEIGHT),
                 transformOrigin: place.bottom ? 'bottom' : 'top',
               }}
               className="fixed z-50 flex max-w-[calc(100vw-1rem)] flex-col overflow-hidden

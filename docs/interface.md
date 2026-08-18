@@ -816,15 +816,28 @@ word, and on a phone the clock alone, since that strip is shared with the rates
 somebody changes *during* a lecture and a word taking a third of the row costs
 them the one they are watching at.
 
-Pressing it opens the panel: a «Запустить», and the four numbers a run is cut
-by — how long a session is, how long the gap between two, how many sessions
-stand before the long rest, and how long that one is. They are ladders rather
-than fields, for the reason the day's goal is: the decision is «about half an
-hour», not «twenty-seven minutes». They live in the profile, so somebody who
-has decided a session is fifty minutes has decided it for the term, and a
-length changed in the middle of a session takes effect on the next one rather
-than moving the clock in front of them. Once it is running the same press shows
-what it is doing — «Сессия 3» — and offers to stop.
+Pressing it opens the panel, and the panel is read downwards: the four numbers a
+run is cut by — how long a session is, how long the gap between two, how many
+sessions stand before the long rest, and how long that one is — and «Запустить»
+underneath them. That order is the whole of it: the press is the answer to the
+four questions above it, and with the button on top the hand had to travel back
+up the panel after setting the last one.
+
+They are ladders rather than fields, for the reason the day's goal is: the
+decision is «about half an hour», not «twenty-seven minutes». They live in the
+profile, so somebody who has decided a session is fifty minutes has decided it
+for the term, and a length changed in the middle of a session takes effect on
+the next one rather than moving the clock in front of them. Once it is running
+the heading says what it is doing — «ПОМОДОРО · СЕССИЯ 3» — and the button at
+the foot offers to stop.
+
+**Starting puts the panel away**, because somebody who has pressed it is
+finished with it by definition: they came to set the lengths and did, and what
+they want in front of them now is the lecture with a clock ticking beside it.
+Stopping does not, since the panel is then showing what stopping did. And the
+panel is sized to its content rather than scrolled — the ceiling that turns a
+long *list* into a scrolling menu is wrong for a fixed set of controls, where a
+row hidden below the fold is a setting nobody finds.
 
 When the session runs out **the lecture is paused and the picture is covered**:
 the rest, its own countdown, which session it was, and two ways out — take the

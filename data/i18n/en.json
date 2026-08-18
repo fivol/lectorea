@@ -308,7 +308,6 @@
   "ui.pomodoro.break": "Break",
   "ui.pomodoro.longBreak": "Long break",
   "ui.pomodoro.over": "The break is over",
-  "ui.pomodoro.overHint": "The break is over — carry on when you are ready",
   "ui.pomodoro.after": "After session {n}",
   "ui.pomodoro.skip": "Carry on now",
   "ui.pomodoro.resume": "Continue",

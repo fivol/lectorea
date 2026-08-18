@@ -10,7 +10,7 @@ import { track } from '@/lib/analytics';
 import { formatDuration } from '@/lib/format';
 import { leftOf, type Pomodoro } from '@/lib/pomodoro';
 import { useProfile } from '@/store/profile';
-import Dropdown from '@/components/Dropdown';
+import Dropdown, { useCloseDropdown } from '@/components/Dropdown';
 import Icon from '@/components/Icon';
 import { Button, Segmented, cx } from '@/components/ui';
 
@@ -39,8 +39,7 @@ const PANEL_WIDTH = 340;
 
 export function PomodoroPill({ pomodoro }: { pomodoro: Pomodoro }) {
   const { t } = useT();
-  const { phase, endsAt, done, long, settings } = pomodoro;
-  const setSetting = useProfile((state) => state.setSetting);
+  const { phase, endsAt } = pomodoro;
 
   const running = phase !== 'off';
   /* Accented from the moment the lecture stops: the rest and the end of it are
@@ -72,6 +71,7 @@ export function PomodoroPill({ pomodoro }: { pomodoro: Pomodoro }) {
     <Dropdown
       label={t('ui.pomodoro.name')}
       width={PANEL_WIDTH}
+      fit
       className="shrink-0"
       trigger={({ open, toggle }) => (
         /* A ghost and bare numerals, like the speeds beside it: this strip sits
@@ -97,80 +97,117 @@ export function PomodoroPill({ pomodoro }: { pomodoro: Pomodoro }) {
         </button>
       )}
     >
-      <div className="space-y-1.5 px-1 pb-1">
-        <p className="mono-label">{t('ui.pomodoro.name')}</p>
+      <Panel pomodoro={pomodoro} />
+    </Dropdown>
+  );
+}
 
-        {/* What it is doing, and only while it is doing something. A sentence
-            saying «25 минут работы, 5 отдыха» over four ladders that already
-            say it in full is the strip narrating the row underneath it — the
-            second copy this product has a rule against. */}
+/**
+ * The four lengths, and the press under them.
+ *
+ * Read top to bottom it is one sentence — a session of this, a break of that,
+ * a long one every so many, and then «Запустить». The press was above the
+ * ladders to begin with, which put the answer before the question and left the
+ * hand travelling back up the panel after setting the last of them.
+ *
+ * Its own component because `useCloseDropdown` only reaches the tree the
+ * popover renders: the hook is read where the rows are, not where the
+ * `Dropdown` is written.
+ */
+function Panel({ pomodoro }: { pomodoro: Pomodoro }) {
+  const { t } = useT();
+  const { phase, done, long, settings } = pomodoro;
+  const setSetting = useProfile((state) => state.setSetting);
+  const close = useCloseDropdown();
+  const running = phase !== 'off';
+
+  return (
+    <div className="space-y-1.5 px-1 pb-1">
+      {/*
+        What this is, and — while it is running — what it is doing, on the one
+        line. Two lines would move every control under them by fifteen pixels
+        at the moment the timer starts, and the panel would jump under the
+        hand that had just pressed something.
+      */}
+      <p className="mono-label">
+        {t('ui.pomodoro.name')}
         {running ? (
-          <p className="num text-[11px] text-ink-faint">
+          <span className="text-ink-dim">
+            {' · '}
             {phase === 'focus'
               ? t('ui.pomodoro.session', { n: done + 1 })
               : phase === 'over'
-                ? t('ui.pomodoro.overHint')
+                ? t('ui.pomodoro.over')
                 : // Two calls rather than one with the key chosen inside it:
                   // `check:i18n` reads literals, and a key reached only through
                   // a ternary looks to it like a string nothing uses.
                   long
                   ? t('ui.pomodoro.longBreak')
                   : t('ui.pomodoro.break')}
-          </p>
+          </span>
         ) : null}
+      </p>
 
-        {running ? (
-          <Button icon="close" iconSize={14} className="w-full justify-center" onClick={pomodoro.stop}>
-            {t('ui.pomodoro.stop')}
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            icon="clock"
-            iconSize={14}
-            className="w-full justify-center"
-            onClick={() => {
-              pomodoro.start();
-              track('pomodoro_start', { value: String(settings.focus) });
-            }}
-          >
-            {t('ui.pomodoro.start')}
-          </Button>
-        )}
+      {/* The ladders stay put while it runs. A length changed mid-session takes
+          effect on the next one — see the settings ref in the hook — and hiding
+          them would mean stopping the timer to look at what it is set to. */}
+      <Ladder
+        label={t('ui.pomodoro.focus')}
+        value={settings.focus}
+        options={POMODORO_FOCUS}
+        unit
+        onChange={(next) => setSetting('pomodoroFocus', next)}
+      />
+      <Ladder
+        label={t('ui.pomodoro.break')}
+        value={settings.break}
+        options={POMODORO_BREAK}
+        unit
+        onChange={(next) => setSetting('pomodoroBreak', next)}
+      />
+      <Ladder
+        label={t('ui.pomodoro.every')}
+        value={settings.every}
+        options={POMODORO_EVERY}
+        onChange={(next) => setSetting('pomodoroEvery', next)}
+      />
+      <Ladder
+        label={t('ui.pomodoro.long')}
+        value={settings.long}
+        options={POMODORO_LONG}
+        unit
+        onChange={(next) => setSetting('pomodoroLong', next)}
+      />
 
-        {/* The ladders stay put while it runs. A length changed mid-session
-            takes effect on the next one — see the settings ref in the hook —
-            and hiding them would mean stopping the timer to look at what it is
-            set to. */}
-        <Ladder
-          label={t('ui.pomodoro.focus')}
-          value={settings.focus}
-          options={POMODORO_FOCUS}
-          unit
-          onChange={(next) => setSetting('pomodoroFocus', next)}
-        />
-        <Ladder
-          label={t('ui.pomodoro.break')}
-          value={settings.break}
-          options={POMODORO_BREAK}
-          unit
-          onChange={(next) => setSetting('pomodoroBreak', next)}
-        />
-        <Ladder
-          label={t('ui.pomodoro.every')}
-          value={settings.every}
-          options={POMODORO_EVERY}
-          onChange={(next) => setSetting('pomodoroEvery', next)}
-        />
-        <Ladder
-          label={t('ui.pomodoro.long')}
-          value={settings.long}
-          options={POMODORO_LONG}
-          unit
-          onChange={(next) => setSetting('pomodoroLong', next)}
-        />
-      </div>
-    </Dropdown>
+      {running ? (
+        <Button icon="close" iconSize={14} className="w-full justify-center" onClick={pomodoro.stop}>
+          {t('ui.pomodoro.stop')}
+        </Button>
+      ) : (
+        /*
+          Starting puts the panel away. Somebody who presses it has finished
+          with this panel by definition — they came to set the lengths and did,
+          and what they want to look at now is the lecture with a clock ticking
+          beside it. The same rule the kit's single-choice rows follow, for the
+          same reason: a control that is finished with should not have to be
+          dismissed by hand. Stopping does not, because the panel then shows
+          what stopping did.
+        */
+        <Button
+          variant="primary"
+          icon="clock"
+          iconSize={14}
+          className="w-full justify-center"
+          onClick={() => {
+            pomodoro.start();
+            track('pomodoro_start', { value: String(settings.focus) });
+            close();
+          }}
+        >
+          {t('ui.pomodoro.start')}
+        </Button>
+      )}
+    </div>
   );
 }
 

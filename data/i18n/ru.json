@@ -308,7 +308,6 @@
   "ui.pomodoro.break": "Перерыв",
   "ui.pomodoro.longBreak": "Долгий перерыв",
   "ui.pomodoro.over": "Перерыв закончен",
-  "ui.pomodoro.overHint": "Перерыв закончен — можно продолжать",
   "ui.pomodoro.after": "После сессии {n}",
   "ui.pomodoro.skip": "Продолжить сейчас",
   "ui.pomodoro.resume": "Продолжить",
