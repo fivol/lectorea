@@ -101,10 +101,13 @@ const HEAVY = 'raw_responses';
  * subagents and 3.3M tokens that no quota buys back.
  *
  * So the merge is newest-per-key and never deletes. It needs a single-column
- * primary key and a `checked_at`, which is the shape both tables already have
- * and the shape the next one should copy.
+ * primary key and a `checked_at`, which is the shape all three tables have and
+ * the shape the next one should copy. `searches` is the third and the same
+ * argument: a query costs 100 units, the record of having asked it is the only
+ * thing that stops the next hunt buying the same first page, and a laptop's
+ * hunt and the nightly job's have no claim on each other's questions.
  */
-const MERGED = new Set(['verdicts', 'ownership']);
+const MERGED = new Set(['verdicts', 'ownership', 'searches']);
 
 async function main(): Promise<void> {
   const command = process.argv[2];

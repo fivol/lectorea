@@ -147,6 +147,30 @@ CREATE TABLE IF NOT EXISTS verdicts (
   checked_at TEXT
 );
 
+-- Every question search.list has been paid for, and when.
+--
+-- 100 units a query, and the answer is a ranked first page that barely moves
+-- from week to week: asking the same words twice buys the same hits and the
+-- second copy is free of information. Nothing outside a single run knew that
+-- until this table existed, so the guard against repeating a hunt was the
+-- agent remembering which courses the last one covered -- which is the sort of
+-- thing that survives one iteration.
+--
+-- id is kind + ':' + the query folded to lower case, because that is the unit
+-- that was bought: the same words asked of playlists and of channels are two
+-- different answers and two different bills, and the course the question was
+-- asked for is not part of it (two courses may share a name in one language).
+-- (No backticks in this comment: SCHEMA is a template literal, and one closes it.)
+CREATE TABLE IF NOT EXISTS searches (
+  id TEXT PRIMARY KEY,
+  q TEXT,
+  kind TEXT,
+  lang TEXT,
+  course_id TEXT,
+  hits INTEGER,
+  checked_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS quota (
   date TEXT,
   key TEXT,
@@ -364,6 +388,7 @@ const WORK_COLUMNS: Array<[table: string, column: string]> = [
   ['matches', 'updated_at'],
   ['verdicts', 'checked_at'],
   ['ownership', 'checked_at'],
+  ['searches', 'checked_at'],
 ];
 
 /** The publish this copy descends from, or null when it has never been in one. */

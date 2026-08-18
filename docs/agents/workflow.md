@@ -44,6 +44,12 @@ full queue runs for hours.
   `sleep` is blocked.
 - Watch progress by querying `cache.db`, not only the log: the log buffers, the
   database does not.
+- **One writer on `cache.db` at a time.** Reading alongside a crawl is safe and
+  is how you watch it; a second *writing* process kills the crawl outright with
+  `SQLITE_BUSY_SNAPSHOT`, and the busy timeout does not cover that case
+  ([pitfalls.md](pitfalls.md#two-processes-wrote-to-cachedb-and-the-crawl-was-the-one-that-died)).
+  A day with more quota than one process can spend is spent in the expensive
+  currency — a hunt at 100 units a query — not in a second crawl.
 
 ```bash
 pnpm exec tsx -e "import {openDb} from './scripts/lib/db.ts'; const db=openDb({readonly:true}); console.log(db.prepare(\"SELECT count(*) c FROM jobs WHERE status='pending' AND type='videos'\").get())"

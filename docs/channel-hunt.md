@@ -453,6 +453,84 @@ institutional channel — a mirror pointing at a channel is evidence about *one
 playlist*, not a recommendation of the whole channel, and the refusals above
 still stand.
 
+## The seventh hunt, 2026-08-18 — a whole day of keys, and the first wide brief
+
+Eight untouched keys at four in the morning, two hours before the Pacific reset,
+and an empty video queue: 76 000 units that would expire by breakfast. That is
+the case seam 8 exists for, and this is the first time it was run at the size of
+a whole day rather than a corner of one — **643 queries, 64 300 units, 8913
+ownership probes**, in three runs of `_hunt.ts`.
+
+The brief was the difference. Earlier hunts asked about the courses the
+catalogue is *emptiest* in, under four playlists; this one asked about every
+course under forty, which is four fifths of the catalogue. The yield changed
+with it:
+
+| Hunt | Brief | Probed | Own material | Mirrors | Collections |
+|---|---|---|---|---|---|
+| 2026-08-15 | thin courses | 1424 | 43% | | |
+| 2026-08-16 | 18 courses under 7 | 316 | **5%** | 68 | 231 |
+| 2026-08-18 | 184 courses under 40 | 8913 | **45%** | 1760 | 3168 |
+
+**A search returns courses when courses exist to return.** The five per cent of
+2026-08-16 was not search being bad at its job — it was four courses that YouTube
+genuinely has nothing for, and a ranked list obliged with the nearest bookmarks
+anybody had collected. Asked about thermodynamics, topology or organic
+chemistry, the same call answers with real semester recordings 45% of the time.
+The corollary is the one to carry forward: **the thin courses are the worst place
+to spend search quota, and they are exactly where every previous hunt pointed
+it.**
+
+What the day bought: **4112 playlists queued**, of which the rule pass bound
+**2078 confidently** the same hour — against 192 courses, and 2079 of the
+accepted candidates bound to the very course whose name was searched. None of it
+publishes until a reader confirms it
+([practices.md](agents/practices.md#the-rules-are-the-sieve-a-reader-is-the-confirmation)),
+so the next iteration's first job is a review round.
+
+### The mechanism this hunt left behind
+
+Every query is now written into the `searches` table and never asked twice
+([pipeline.md](pipeline.md#a-question-is-bought-once-and-the-receipt-is-in-the-database)).
+The second run of the day proved it in its own first line — *186 questions
+skipped — already bought* — and that is what makes a wide brief affordable at
+all: `--variant=all` walks «лекции», «курс» and «видеолекции» in order, and the
+next hunt starts from whatever this one did not reach rather than from the top of
+the same list.
+
+### The channels it turned up, and the refusals that held
+
+One real find, from the run that asked in Russian:
+
+| Channel | Why |
+|---|---|
+| Видеозаписи Независимого Московского Университета | 39 playlists of its own across 8 subjects — «Алгебра-1, А.И.Ильин, осень 2025» — one lecturer, one semester, one playlist |
+
+The rest of the top of the list is the same five shapes refused in every hunt
+since the second, and they are worth naming again because a ranked list makes
+each of them look new:
+
+- **The institutional channel.** *Stanford* `UC-EnprmCZ3OXyAoG7vjVNCA` for the
+  sixth hunt running — this time as the owner of 38 mirrored playlists, which is
+  evidence about the playlists and not about the channel.
+- **The mirror hub.** *Образование для всех* (39 mirrors, 25 subjects) and
+  *ПостНаука* (22, 13): everything they publish was filmed by somebody else, and
+  the courses behind them are the candidates, not the hub.
+- **Exam coaching.** *GATE Wallah* (two channels, 27 playlists), *Kreatryx*,
+  *CSEET Unique Academy* — «GATE 2026 One Shot Series» is a syllabus sprint, not
+  a semester, and `lib/rules.ts` already refuses the brands it knows.
+- **The vendor.** *Ekeeda*, *Farhat Lectures*, *Simplilearn*, *edureka!*,
+  *Grow with Google* — real teaching, sold by the course, and the unit is a
+  product rather than a term.
+- **The chapter series.** *Last Minute Lecture* — «Strickberger's Evolution |
+  Complete Chapter Summaries», which is the unit failure the catalogue is
+  strictest about.
+
+*МЦМУ МИАН* appears again (13 own playlists), refused twice before for
+publishing seminars and summer schools rather than courses — and again worth the
+same answer: two of its playlists are real semesters, which is `pnpm playlist:add`
+at one unit, not a channel at thousands.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this

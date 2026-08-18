@@ -231,7 +231,18 @@ and 38 000 units with nothing queued to spend them on.
 ```bash
 pnpm tsx scripts/_hunt.ts out.json --min=4 --budget=6000     # look
 pnpm tsx scripts/_hunt.ts out.json --from=out.json --apply   # queue what survived
+pnpm tsx scripts/_hunt.ts out.json --min=20 --variant=all    # a whole day of it
 ```
+
+**A question is asked once, ever.** Every query goes into the `searches` table
+with what it returned, and a question already there is skipped before it costs
+anything ([pipeline.md](pipeline.md#a-question-is-bought-once-and-the-receipt-is-in-the-database)).
+That is what makes the third line above safe: `--variant=all` walks every
+phrasing in `QUALIFIERS` — «лекции», «курс», «видеолекции» — first phrasing of
+every course before the second phrasing of any of it, and stops when the budget,
+the quota or the unasked questions run out. Before the table existed the only
+guard against re-buying a previous hunt's answers was whoever ran it remembering
+which courses it had covered.
 
 **The brief writes itself.** The targets are the courses with the fewest
 playlists in the *built* catalogue, asked for under every name they have in

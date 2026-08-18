@@ -77,6 +77,29 @@ rather than in tomorrow's ledger. The one caller that does ask is
 quota that would otherwise expire — [harvest.md](harvest.md#seam-8--asking-youtube-itself)
 has the arithmetic and why it inverts exactly once a day.
 
+### A question is bought once, and the receipt is in the database
+
+`search.list` is the only call here whose answer barely changes: a ranked first
+page for the same words is the same page a month later. So the second copy of an
+answer costs the same hundred units as the first and carries nothing — and until
+2026-08-18 the only thing standing between two hunts and that bill was whoever
+ran the second one remembering which courses the first had covered, and passing
+a different `--variant`.
+
+The `searches` table is the receipt: one row per `kind:query`, with what it
+returned and when. `_hunt.ts` drops any question already in it before spending a
+unit, so the same hunt run twice asks the *rest* of the catalogue rather than
+the same courses again, and `--variant=all` can simply walk every phrasing until
+the day runs out. `--repeat` is there for the rare case where the answer itself
+is expected to have moved.
+
+It is written on the answer rather than on the charge: a query that was billed
+and then failed leaves no row, because a question nobody holds the answer to is
+worth asking again. And it is one of the three tables a restore **merges**
+instead of replacing ([moving the crawl between machines](#moving-the-crawl-between-machines)),
+for the reason `verdicts` and `ownership` are: a laptop's hunt and the nightly
+job's have no claim on each other's questions.
+
 Which steps go through the job queue is a quota decision. Anything the API
 answers 50 at a time — playlist metadata, liveness — runs in direct batches,
 because one job per playlist would turn one unit into fifty. Only genuinely

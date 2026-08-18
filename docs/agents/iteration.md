@@ -67,7 +67,7 @@ buckets — the method is [below](#the-review). On 2026-08-14 this bought about
 ### 3. Hunt channels for what is still thin
 
 Count the holes and let the empty courses write the brief —
-[channel-hunt.md](../channel-hunt.md) is the record of four hunts and
+[channel-hunt.md](../channel-hunt.md) is the record of seven hunts and
 [harvest.md](../harvest.md) the catalogue of seams. **Read the refusals in
 channel-hunt.md before proposing anything**: every one of them looked like a hit
 in a ranked list, and re-checking one costs a unit and a judgement call.
@@ -114,9 +114,20 @@ is somebody's bookmarks**, and one unit of `playlistItems.list` says which.
 
 Nothing is written without `--apply`, and `--from` re-reads a finished report —
 so a rule the hunt teaches `lib/rules.ts` reaches the candidates the search
-already paid for, without asking the same questions again. A second pass over
-the same courses wants `--variant=1`: search has one first page per question, and
-the way to get more out of it is a different question.
+already paid for, without asking the same questions again. Search has one first
+page per question, so the way to get more out of it is a different question:
+`--variant=all` walks all three phrasings, and every question it asks is written
+into the `searches` table and never asked twice, whatever a later run is pointed
+at. So when the day is mostly untouched, aim it wide rather than deep —
+`--min=20 --variant=all --budget=<what is left>` is one command for a whole day's
+keys, and it skips whatever an earlier hunt already bought.
+
+**And run it alone.** A hunt writes to `cache.db` on every call, and a second
+writer kills the crawl with `SQLITE_BUSY_SNAPSHOT`
+([pitfalls.md](pitfalls.md#two-processes-wrote-to-cachedb-and-the-crawl-was-the-one-that-died)).
+When the quota is larger than the time left to spend it, the answer is a hunt
+rather than a hunt *and* a crawl: 100 units a query against 2.3 a playlist means
+one process spending in the expensive currency drains a day the other cannot.
 
 ### 3c. Confirm the new bindings before they publish
 
@@ -312,7 +323,7 @@ that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
 | `_probe.ts [gained\|lost\|changed]` | free | what would a rule change do to the whole catalogue |
 | `_holes.ts [min]` | free | which channels does the catalogue keep choosing but never crawl |
 | `_vet.ts in.txt out.json` | 1 unit/channel | does this candidate own courses |
-| `_hunt.ts out.json [--min\|--courses] [--apply]` | 100 units/query | what does YouTube itself have for the thinnest courses — and whose channel is it really |
+| `_hunt.ts out.json [--min\|--courses] [--variant=all] [--apply]` | 100 units/query | what does YouTube itself have for the thinnest courses — and whose channel is it really. Never asks a question the `searches` table already holds |
 | `_owners.ts mined.json out.json` | 1 unit/50 ids | which channels are behind a set of playlist ids |
 | `_sweep.ts [--write]` | free | rows no rule can ever reach: impossible ids, playlists deferred with no title |
 | `_winners.ts` | free | which keyword won each confident binding, and what it dragged in |

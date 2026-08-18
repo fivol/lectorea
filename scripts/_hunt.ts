@@ -3,6 +3,7 @@
  *
  *   pnpm tsx scripts/_hunt.ts out.json [--min=4] [--budget=6000] [--kind=playlist]
  *   pnpm tsx scripts/_hunt.ts out.json --courses=poetics,ancient-art --apply
+ *   pnpm tsx scripts/_hunt.ts out.json --variant=all --min=99 --budget=40000
  *
  * `search.list` costs 100 units — a hundred crawled playlists, or forty walked
  * ones — which is why every other seam in docs/harvest.md comes first and why
@@ -27,6 +28,15 @@
  *   5. judges every survivor with the same rule pass `data:match` uses, so the
  *      report says which course a candidate would bind to rather than leaving
  *      a human to guess from a title.
+ *
+ * **Every question it asks is written down**, in the `searches` table, and a
+ * question already there is not asked again — so two hunts a month apart do not
+ * buy the same first page twice, and neither do a laptop and the nightly job
+ * (the table is merged on restore, not replaced). `--variant=all` walks every
+ * phrasing in `QUALIFIERS` in order, which is how a day with quota left over
+ * spends it: the run stops when the budget, the quota or the *unasked*
+ * questions run out. `--repeat` asks anyway, for the rare case where the answer
+ * itself is expected to have moved.
  *
  * Nothing is written without `--apply`, and even then it writes only into the
  * crawl queue: channels are printed as candidates for `data/channels.yaml`,
@@ -83,8 +93,8 @@ const BIN_VIDEOS = 150;
  * already covered.
  */
 const QUALIFIERS: Record<string, string[]> = {
-  ru: ['лекции', 'курс'],
-  en: ['lectures', 'full course'],
+  ru: ['лекции', 'курс', 'видеолекции'],
+  en: ['lectures', 'full course', 'lecture series'],
 };
 const REGION: Record<string, string> = { ru: 'RU', en: 'US' };
 
@@ -95,8 +105,14 @@ type Args = {
   kinds: Array<'playlist' | 'channel'>;
   courses: string[];
   apply: boolean;
-  /** Which phrasing of the query to use — see `QUALIFIERS`. */
-  variant: number;
+  /**
+   * Which phrasing of the query to use — see `QUALIFIERS`; `all` walks them in
+   * order, which is what a day with quota to burn wants: the first phrasing of
+   * every course before the second phrasing of any of it.
+   */
+  variant: number | 'all';
+  /** Ask questions the `searches` table says have already been paid for. */
+  repeat: boolean;
   /** An earlier report to carry on from, instead of asking search again. */
   from?: string;
 };
@@ -114,7 +130,8 @@ function parseArgs(argv: string[]): Args {
     kinds: kind === 'both' ? ['playlist', 'channel'] : [kind as 'playlist' | 'channel'],
     courses: (flag('courses') ?? '').split(',').map((s) => s.trim()).filter(Boolean),
     apply: argv.includes('--apply'),
-    variant: Number(flag('variant') ?? 0),
+    variant: flag('variant') === 'all' ? 'all' : Number(flag('variant') ?? 0),
+    repeat: argv.includes('--repeat'),
     from: flag('from'),
   };
 }
@@ -168,22 +185,62 @@ function brief(args: Args): Target[] {
 
 type Query = { courseId: string; lang: string; kind: 'playlist' | 'channel'; q: string };
 
-function queries(targets: Target[], kinds: Args['kinds'], variant: number): Query[] {
+function queries(targets: Target[], kinds: Args['kinds'], variant: Args['variant']): Query[] {
+  const widest = Math.max(...Object.values(QUALIFIERS).map((phrasings) => phrasings.length));
+  const rounds = variant === 'all' ? [...Array(widest).keys()] : [variant];
   const seen = new Set<string>();
   const list: Query[] = [];
-  for (const target of targets) {
-    for (const { lang, name } of target.names) {
-      for (const kind of kinds) {
-        const phrasings = QUALIFIERS[lang] ?? [''];
-        const q = `${name} ${phrasings[variant % phrasings.length]}`.trim();
-        const key = `${kind}:${q.toLowerCase()}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        list.push({ courseId: target.courseId, lang, kind, q });
+  // Variant-major, and that is the whole reason `all` is not a loop around the
+  // script: the first phrasing of every course is worth more than the second
+  // phrasing of a third of them, so a run cut short by the budget is cut where
+  // the answers are already thinnest.
+  for (const round of rounds) {
+    for (const target of targets) {
+      for (const { lang, name } of target.names) {
+        for (const kind of kinds) {
+          const phrasings = QUALIFIERS[lang] ?? [''];
+          if (round >= phrasings.length) continue;
+          const q = `${name} ${phrasings[round]}`.trim();
+          const key = `${kind}:${q.toLowerCase()}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          list.push({ courseId: target.courseId, lang, kind, q });
+        }
       }
     }
   }
   return list;
+}
+
+/** The id a query is billed under — see the `searches` table in lib/db.ts. */
+function askedKey(query: Query): string {
+  return `${query.kind}:${query.q.toLowerCase()}`;
+}
+
+/**
+ * Drops the questions some earlier run already paid a hundred units for.
+ *
+ * Search returns a ranked first page that barely moves from one week to the
+ * next, so the second copy of an answer carries no information and costs
+ * exactly what the first did. Before this, the only thing standing between a
+ * hunt and re-buying its predecessor's answers was whoever ran it remembering
+ * which courses the last one covered and passing a different `--variant`.
+ */
+function unasked(db: Db, list: Query[]): { fresh: Query[]; skipped: number } {
+  const asked = new Set(
+    (db.prepare(`SELECT id FROM searches`).all() as Array<{ id: string }>).map((row) => row.id)
+  );
+  const fresh = list.filter((query) => !asked.has(askedKey(query)));
+  return { fresh, skipped: list.length - fresh.length };
+}
+
+/** Writes down a question that has now been paid for, whatever it returned. */
+function recordSearch(db: Db, query: Query, hits: number): void {
+  db.prepare(
+    `INSERT INTO searches (id, q, kind, lang, course_id, hits, checked_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET hits = excluded.hits, checked_at = excluded.checked_at`
+  ).run(askedKey(query), query.q, query.kind, query.lang, query.courseId, hits, new Date().toISOString());
 }
 
 type Found = { hit: SearchHit; from: Query };
@@ -195,6 +252,7 @@ type Found = { hit: SearchHit; from: Query };
  * one query short of overrunning it instead of one query past.
  */
 async function runQueries(
+  db: Db,
   api: YoutubeClient,
   list: Query[],
   budget: number
@@ -237,6 +295,11 @@ async function runQueries(
 
     if (hits) {
       ran += 1;
+      // Written down on the answer, not on the charge. A query that was billed
+      // and threw left this run with nothing to show for it, and a question
+      // whose answer nobody holds is worth asking again; one that came back is
+      // not, however many runs later somebody points a hunt at the same course.
+      recordSearch(db, query, hits.length);
       for (const hit of hits) found.push({ hit, from: query });
       console.log(
         `  ${String(hits.length).padStart(2)} ${query.kind}s · ${query.courseId} · «${query.q}»`
@@ -632,15 +695,22 @@ async function main(): Promise<void> {
     );
   } else {
     targets = brief(args);
-    const list = queries(targets, args.kinds, args.variant);
+    const all = queries(targets, args.kinds, args.variant);
+    const { fresh, skipped } = args.repeat
+      ? { fresh: all, skipped: 0 }
+      : unasked(db, all);
+    const list = fresh;
     const affordable = Math.min(args.budget, api.remaining());
     console.log(
       `· ${targets.length} courses under ${args.min} playlists → ${list.length} queries ` +
         `(${list.length * SEARCH_COST} units); budget ${affordable}, quota left ${api.remaining()}`
     );
+    if (skipped) {
+      console.log(`· ${skipped} questions skipped — already bought, see the searches table`);
+    }
     console.log();
 
-    const searched = await runQueries(api, list, affordable);
+    const searched = await runQueries(db, api, list, affordable);
     found = searched.found;
     spent = searched.spent;
     ran = searched.ran;
