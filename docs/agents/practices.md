@@ -267,6 +267,12 @@ The first full pass, 2026-08-16, read all 5469 published bindings in 37 batches
 of 150: **4148 ok, 1204 not a course, 101 rebound, 16 unsure.** 24% wrong, twice
 what a hand-read sample of 120 had estimated.
 
+2026-08-18 read the 2815 bindings a day of crawling had added, in 19 batches:
+**2025 ok, 686 not a course, 39 rebound, 65 unsure** — 28% refused, and the
+third round in a row to land in the 24–28% band. That the rate is *stable across
+seams and rounds* is the useful part: it makes a batch that comes back 100% `ok`
+a reason to re-read the batch rather than a good day.
+
 **Why a reader rather than more rules.** The three dominant errors are all
 legible in the title and none is reachable by a keyword: a *unit* of a course
 published as a playlist (99 Khan Academy chemistry units in one batch alone), a
@@ -1107,3 +1113,32 @@ one, which is the question the script answers.
 The working tree is shared with concurrent sessions. `git add` names files one by
 one, and `git status --short` is checked before committing. See
 [pitfalls.md](pitfalls.md#the-git-index-is-shared-with-other-sessions).
+
+## What a subagent writes is a contract with the reader that consumes it
+
+Handing 2815 bindings to 19 subagents needs a brief, and the brief was written
+from the report `_review.ts export` produces. That was the wrong source. The
+exporter calls the column `course`, the importer reads `row.course` — and the
+first draft of the brief asked for `suggested_course`, because that is what the
+field *means*. Nothing would have failed: `import` treats a `wrong-course`
+verdict whose suggestion it cannot resolve as `not-a-course`, so all 39
+rebindings would have become refusals, and the log would have said `39
+not-a-course` in a tone of complete success.
+
+**Read the consumer, not the producer.** The format a delegated worker writes to
+is fixed by the code that parses it; a brief derived from anything else is a
+guess that fails quietly and in the direction of losing work.
+
+Two more things that batch taught, both cheap to prevent:
+
+- **Verify the output yourself, do not read the self-report.** Every one of the
+  19 agents reported its file as verified; that is a claim, and checking all 19
+  against their batches — count, ids, membership, duplicates, every suggested
+  course against `courses.txt` — is one script and about a second. Same rule as
+  [verifying a subagent's claim against the database](../agents/iteration.md#working-with-subagents),
+  applied to its output rather than to its findings.
+- **Give parallel agents distinct filenames.** Several picked the same obvious
+  name for a scratch script in the shared directory and overwrote each other
+  mid-run; one noticed and reported it as an anomaly, and the others would not
+  have. Anything a fan-out writes wants the batch number in its name, the
+  verdict files included.

@@ -287,7 +287,12 @@ doctor: ## What this machine has: tools, keys (counted, never printed), cache, b
 	@if gh auth status >/dev/null 2>&1; then echo "gh auth     logged in"; else echo "gh auth     — not logged in (gh auth login)"; fi
 	@if [ -f .env ]; then \
 		keys=$$(grep -cE '^[[:space:]]*YOUTUBE_API_KEY[0-9]*[[:space:]]*=[[:space:]]*[^[:space:]#]' .env || true); \
+		loaded=$$($(PNPM) exec tsx -e "import {env} from './scripts/lib/config.ts'; console.log(env.youtubeKeys.length)" 2>/dev/null | tail -1); \
 		echo ".env        present, $$keys YouTube key(s)"; \
+		if [ -n "$$loaded" ] && [ "$$loaded" != "$$keys" ]; then \
+			echo "            !! the crawler loads $$loaded of them — a key in .env that nothing spends"; \
+			echo "               is a whole project's 9500 units expiring nightly, in silence."; \
+		fi; \
 		if grep -qE '^[[:space:]]*OPENAI_API_KEY[[:space:]]*=[[:space:]]*[^[:space:]#]' .env; then \
 			echo "openai      set (optional: LLM matching, domain images)"; \
 		else echo "openai      unset — rules matching and procedural art still work"; fi; \

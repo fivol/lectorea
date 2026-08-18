@@ -42,13 +42,23 @@ When it finishes, the video queue is usually empty. **That is the normal end,
 and quota is then no longer the constraint** — there is simply nothing left to
 walk. To spend more, give it more input: `make mine` refills the queue for free
 from descriptions the crawl just brought in, and the seam keeps refilling for
-several rounds (2315 → 1853 → 1098 → 473 on 2026-08-14).
+several rounds (2315 → 1853 → 1098 → 473 on 2026-08-14; 4797 → 6758 → 3387 on
+2026-08-18, on a day that started with 7127 already queued).
 
 ```bash
 make mine && make refresh && make match
 ```
 
 Repeat until `mine` returns little. Then `make embeds && make data`.
+
+**When the round costs more than the day has left, stop and hunt instead.** The
+two are not symmetric: a mined queue is a row in `jobs` and waits — the nightly
+job walks it for nothing that today can spend — while an unspent key expires at
+Pacific midnight and takes nothing with it. So the last few thousand units of a
+day belong to whatever cannot be deferred, which is the hunt. On 2026-08-18 that
+was the call at 21 000 units with 3387 playlists mined: crawling them would have
+been the better *rate* (≈4 units a playlist against 100 a query) and the worse
+*decision*, because the crawl half of it was going to happen anyway.
 
 ### 2. Bind what is already on disk, before crawling more
 

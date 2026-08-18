@@ -44,7 +44,9 @@ YOUTUBE_API_KEY=AIza…      # project one
 YOUTUBE_API_KEY2=AIza…     # project two — another 10 000 units
 ```
 
-Slots run to `YOUTUBE_API_KEY9`. The crawler spends them in order and moves to
+Slots are read from the environment rather than from a list written down in
+the code, so `YOUTUBE_API_KEY11` works the day it is added and nothing has to be
+edited to admit it. The crawler spends them in order and moves to
 the next when one runs out, so two keys turn the two-day first crawl into one
 evening. Two keys of the *same* project share one budget: the crawler will find
 the second already empty and say so. Nothing needs configuring beyond the

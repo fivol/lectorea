@@ -60,12 +60,18 @@ loadEnv();
  * estimate lie.
  */
 function youtubeKeys(): string[] {
-  const slots = ['YOUTUBE_API_KEY', ...range(2, 9).map((n) => `YOUTUBE_API_KEY${n}`)];
+  // Read whichever slots the environment actually has rather than a range
+  // written down here: a hard-coded ceiling drops the key above it in silence,
+  // and the only symptom is a day that buys less than it should. `make doctor`
+  // counts the same slots with a grep, so a divergence between what is
+  // reported and what is spent cannot open again.
+  const numbered = Object.keys(process.env)
+    .map((name) => /^YOUTUBE_API_KEY(\d+)$/.exec(name))
+    .filter((m): m is RegExpExecArray => m !== null)
+    .sort((a, b) => Number(a[1]) - Number(b[1]))
+    .map((m) => m[0]);
+  const slots = ['YOUTUBE_API_KEY', ...numbered];
   return [...new Set(slots.map((slot) => (process.env[slot] ?? '').trim()).filter(Boolean))];
-}
-
-function range(from: number, to: number): number[] {
-  return Array.from({ length: to - from + 1 }, (_, i) => from + i);
 }
 
 export const env = {

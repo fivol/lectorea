@@ -121,6 +121,24 @@ where an hour really is 3 600 000 of them.
 
 ## Quota and accounting
 
+### A tenth key was in `.env` and the crawler read nine
+
+**Assumed:** a key added to `.env` is a key the crawl spends — the file is the
+configuration, so putting it there is the whole of the work.
+**It was:** `youtubeKeys()` built its slot list from a hard-coded
+`range(2, 9)`, so `YOUTUBE_API_KEY10` was never looked up. Nothing failed and
+nothing was printed: the crawler simply had 85 500 units where it should have
+had 95 000, and one Google Cloud project's day expired unused every night.
+`make doctor` counted ten, because it greps `.env` — so the machine reported one
+number and spent another, and the two had no reason to be compared.
+
+**How not to repeat it:** where a list is "however many of these exist", read
+the environment instead of writing the range down — `Object.keys(process.env)`
+filtered by a pattern has no ceiling to outgrow. And treat **two counters of the
+same thing as a thing to reconcile**: the divergence was visible for free the
+moment `make doctor` and `env.youtubeKeys.length` were put side by side, which
+is now the check.
+
 ### Spend was counted by hand, and the error paths do not agree
 
 **Assumed:** "the call threw, so no units were spent" — the spend can be tallied
