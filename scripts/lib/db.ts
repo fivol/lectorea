@@ -25,6 +25,19 @@ CREATE TABLE IF NOT EXISTS channels (
   stats_fetched_at TEXT
 );
 
+-- found_at is the one date here that is written once and never again.
+--
+-- Every other timestamp in this schema says when a row was last touched --
+-- checked_at, videos_fetched_at, updated_at all move every time the crawl looks
+-- again — so none of them can answer what a given day actually found. The
+-- distinction is invisible until something asks: a re-walk rewrites the whole
+-- video list of a playlist, and read through checked_at a night of refreshing
+-- known material looks exactly like a night of discovery.
+--
+-- Written by the insert and left out of every ON CONFLICT clause, which is what
+-- keeps it meaning "first sighting". A row that predates the column stays null,
+-- because "unknown" is the truth about it; scripts/_found.ts reconstructs what
+-- raw_responses can still account for.
 CREATE TABLE IF NOT EXISTS playlists (
   id TEXT PRIMARY KEY,
   channel_id TEXT,
@@ -46,7 +59,8 @@ CREATE TABLE IF NOT EXISTS playlists (
   checked_at TEXT,
   next_refresh_at TEXT,
   list_playable INTEGER,
-  list_checked_at TEXT
+  list_checked_at TEXT,
+  found_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_playlists_channel ON playlists(channel_id);
 CREATE INDEX IF NOT EXISTS idx_playlists_refresh ON playlists(next_refresh_at);
@@ -59,7 +73,8 @@ CREATE TABLE IF NOT EXISTS videos (
   duration_seconds INTEGER,
   published_at TEXT,
   views INTEGER,
-  likes INTEGER
+  likes INTEGER,
+  found_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_videos_playlist ON videos(playlist_id, position);
 
@@ -218,6 +233,8 @@ const ADDED_COLUMNS: Array<{ table: string; column: string; type: string }> = [
   { table: 'playlists', column: 'last_video_at', type: 'TEXT' },
   { table: 'playlists', column: 'list_playable', type: 'INTEGER' },
   { table: 'playlists', column: 'list_checked_at', type: 'TEXT' },
+  { table: 'playlists', column: 'found_at', type: 'TEXT' },
+  { table: 'videos', column: 'found_at', type: 'TEXT' },
   { table: 'matches', column: 'refused', type: 'INTEGER DEFAULT 0' },
   { table: 'verdicts', column: 'course_id', type: 'TEXT' },
 ];

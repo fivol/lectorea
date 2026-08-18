@@ -307,6 +307,38 @@ than derived from a local clock. From a zone ahead of UTC the two disagree for
 the first hours after the reset, which is exactly when the nightly job runs: the
 crawler would read yesterday's spend and stop before it started.
 
+### What a night found, as against what it re-read
+
+The consequence of everything above is that most of a run is re-reading: the
+refresh walks playlists it already has, and a re-walk deletes a playlist's whole
+video list and writes it back. So none of the timestamps the crawl keeps can
+answer «what did last night actually turn up» — `checked_at`,
+`videos_fetched_at` and `matches.updated_at` all say when a row was last
+*touched*, and read through any of them a night of refreshing known material is
+indistinguishable from a night of discovery.
+
+`playlists.found_at` and `videos.found_at` are the answer, and the whole of them
+is that they are written **once**, by the insert, and left out of every
+`ON CONFLICT` clause. Two places need care and both were wrong first in the
+obvious way:
+
+- **The re-walk.** `fetchPlaylistVideos` deletes the playlist's videos before
+  writing the new list, so the stamp has to be read out and carried across, or
+  every refresh reports the whole playlist as found tonight.
+- **The re-discovery.** A channel scan meets the same playlists every 30 days.
+  It updates the title and the count and must not touch the stamp — the day it
+  met them again is not the day they were found.
+
+A row from before the column existed keeps a null, and everything that counts
+by day leaves nulls out rather than drawing them as zero: on a chart, an empty
+column is a claim that the crawl found nothing that day, which is a different
+statement from "this was not recorded". `scripts/_found.ts` reconstructs the
+history from `raw_responses`, where the first body that mentions a playlist or a
+video is, by definition, the day it was found — 63 077 playlists and 1 801 186
+videos, all of them datable, on 2026-08-18. The dashboard draws both as
+«Новых плейлистов в день» and «Новых видео в день»
+([stats](scripts/catalogue.md#pnpm-stats)).
+
 ### A pass may only defer the call it makes itself
 
 `next_refresh_at` is one column and the metadata pass's own clock, and the video

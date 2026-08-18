@@ -775,8 +775,16 @@ export function renderPage(stats: Stats): string {
     // The window follows the data — see `windowDays` — so the captions read it
     // back off the series rather than repeating a number that has moved.
     const window = days(crawl.matchesByDay.length);
+    // The two first-sighting series run on a window of their own, and it is
+    // empty on a cache that predates the stamp — the caption has to say which
+    // of the two "nothing here" it is.
+    const found = crawl.newPlaylistsByDay.length
+      ? `впервые попало в кеш, за ${days(crawl.newPlaylistsByDay.length)}`
+      : 'в этом кеше нет отметок о находке — они пишутся с первого обхода после обновления схемы';
     sections.push(`<h2 class="band" id="dynamics">Динамика</h2>
 <div class="grid">
+  ${card('Новых плейлистов в день', found, dense(crawl.newPlaylistsByDay, { tone: 'accent' }))}
+  ${card('Новых видео в день', found, dense(crawl.newVideosByDay))}
   ${card(
     'Разметка растёт',
     `сколько плейлистов привязано к курсам, накопительно за ${window}`,

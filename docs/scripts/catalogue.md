@@ -186,6 +186,15 @@ but has not published, `data/` says what was decided by hand. Either of the
 first two may be missing — the page then says so in a badge and drops the
 sections that would have been guesses.
 
+«Динамика» carries the daily series, and two of them answer the question the
+others cannot: **«Новых плейлистов в день»** and **«Новых видео в день»** count
+first sightings — what a day *found*, as against what it re-read — from the
+`found_at` stamp described in [pipeline.md](../pipeline.md#what-a-night-found-as-against-what-it-re-read).
+They run on a window of their own, from the first day anything carries a stamp,
+because a day before that means "not recorded" rather than "found nothing", and
+a zero column would be a claim about the crawl. On a cache with no stamps at all
+the two cards say so instead of drawing a flat line.
+
 The estimate keeps quota and review time apart, because they are not the same
 currency: quota refills by itself overnight, review time does not. It says how
 many units of crawling would still put something in the catalogue, how many

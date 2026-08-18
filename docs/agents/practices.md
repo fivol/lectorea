@@ -113,6 +113,53 @@ stop at step six is to throw away five that were already paid for.
 depend on what failed, and only then report — but **report the failure
 explicitly** rather than continuing quietly.
 
+## A row that is upserted needs a column that says when it arrived
+
+Everything the crawl stores is written more than once — a playlist is
+re-discovered monthly, a video list is deleted and rewritten on every walk — so
+every timestamp in `cache.db` had come to mean *last touched*. Nothing could
+answer «what did today find», and the shape of the failure is that nothing looks
+broken: `checked_at` is a real date, it moves every night, and a chart drawn
+from it is a chart of the crawl re-reading itself.
+
+`found_at` is one nullable column per growing table, written by the insert and
+absent from every `ON CONFLICT` clause. Three rules make it mean what it says:
+
+1. **Never in the update clause.** The day the crawl met a row again is not the
+   day it found it.
+2. **Carried across a delete-and-reinsert.** The video pass drops a playlist's
+   whole list before writing the new one; without reading the old stamps back
+   first, a refresh of 800 lectures reports 800 discoveries.
+3. **Null stays null.** A row from before the column is *unknown*, not "found on
+   the day the column was added" — and anything counting by day leaves nulls
+   out rather than drawing them as a zero, which would be a claim.
+
+**Generally:** when a table is upserted, "when did this arrive" is a different
+question from "when was this last written", and only the second one answers
+itself. The column costs one `ALTER TABLE` and is unrecoverable later —
+`_found.ts` only exists because `raw_responses` happened to still hold the
+receipts.
+
+## What a paid answer still holds, a later question can be asked of
+
+The history above was recoverable at all because every API body is kept with the
+time it arrived: the first body that mentions a playlist is the day it was
+found, whatever the row now says. That made an eight-day chart possible on the
+day the column was added, instead of one that starts empty.
+
+Two details are worth copying, both about **not paying for the reconstruction**.
+The keys of `raw_responses` are indexed and the bodies are not: asking only for
+`(endpoint, request_key)` is answered out of `idx_raw_key` and never touches the
+18 GB beside it, which is why the video pass reads 108 000 request keys in
+seconds. And `fetched_at` *is* behind the bodies — so the day each row belongs
+to is binary-searched by rowid instead, which is exact because the table is only
+ever appended to.
+
+**Generally:** a cache kept "so a parser fix costs nothing" answers questions
+nobody had when it was written. Before concluding that history is lost, ask what
+was written down at the time — and reach for it through an index rather than a
+scan.
+
 ## A channel takes three files, not one
 
 1. `data/channels.yaml` — the entry, with a comment saying **what it is for**;

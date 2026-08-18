@@ -147,6 +147,8 @@ export type CrawlStats = {
   facts: Fact[];
   funnel: Bar[];
   quotaByDay: Point[];
+  newPlaylistsByDay: Point[];
+  newVideosByDay: Point[];
   matchesByDay: Point[];
   matchesCumulative: Point[];
   checksByDay: Point[];
@@ -233,6 +235,24 @@ function windowDays(earliest: string | null, min = 14, max = 90): number {
   if (!earliest) return min;
   const days = Math.ceil((Date.now() - Date.parse(`${earliest}T00:00:00Z`)) / (24 * HOUR * 1000));
   return Math.min(max, Math.max(min, days + 1));
+}
+
+/**
+ * The window for a series that only exists from the day it began to be kept.
+ *
+ * `windowDays` above answers "how much history is worth drawing"; this answers
+ * "how much history there is". They differ for anything counted by first
+ * sighting: before `found_at` was written, a day with nothing in it means *not
+ * recorded*, and a zero column is a claim that the crawl found nothing that
+ * night. So the series starts on the first day that carries a stamp and the
+ * card says «нет данных» until one does.
+ */
+function windowFrom(first: string | null, max: number): number {
+  if (!first) return 0;
+  const today = new Date();
+  const midnight = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const span = Math.round((midnight - Date.parse(`${first}T00:00:00Z`)) / (24 * HOUR * 1000)) + 1;
+  return Math.min(max, Math.max(1, span));
 }
 
 function running(points: Point[], from: number): Point[] {
@@ -762,6 +782,16 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
       days
     );
 
+    // What a day turned up, as against what it re-read: `found_at` is written
+    // once, by the insert. Rows that predate the column carry a null and are
+    // left out rather than counted as a quiet day — see `windowFrom`.
+    const foundPlaylists = new Map(
+      all<{ d: string; n: number }>(
+        `SELECT substr(found_at, 1, 10) AS d, count(*) AS n FROM playlists
+         WHERE found_at IS NOT NULL GROUP BY d ORDER BY d`
+      ).map((row) => [row.d, row.n])
+    );
+
     const matchDays = new Map(
       all<{ d: string; n: number }>(
         `SELECT substr(updated_at, 1, 10) AS d, count(*) AS n FROM matches
@@ -784,10 +814,28 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
       days
     );
 
-    const videosByYear = all<{ y: string; n: number }>(
-      `SELECT substr(published_at, 1, 4) AS y, count(*) AS n FROM videos
-       WHERE published_at IS NOT NULL AND published_at >= '2006' GROUP BY y ORDER BY y`
-    ).map((row) => ({ label: row.y, value: row.n }));
+    // Both of the questions asked of `videos`, in one pass. It is the largest
+    // table in the cache by an order of magnitude, and a group-by over its 1.8
+    // million rows is most of what a reload costs — asking twice took 17
+    // seconds where asking once takes 8. The grouping is 150 rows wide, so the
+    // splitting is free.
+    const videoRows = all<{ y: string | null; d: string | null; n: number }>(
+      `SELECT substr(published_at, 1, 4) AS y, substr(found_at, 1, 10) AS d, count(*) AS n
+       FROM videos GROUP BY y, d`
+    );
+    const videoYears = new Map<string, number>();
+    const foundVideos = new Map<string, number>();
+    for (const row of videoRows) {
+      if (row.y && row.y >= '2006') videoYears.set(row.y, (videoYears.get(row.y) ?? 0) + row.n);
+      if (row.d) foundVideos.set(row.d, (foundVideos.get(row.d) ?? 0) + row.n);
+    }
+    const videosByYear = [...videoYears]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([year, count]) => ({ label: year, value: count }));
+
+    // One window for both first-sighting series, so they read side by side.
+    const firstFound = [...foundPlaylists.keys(), ...foundVideos.keys()].sort()[0] ?? null;
+    const foundDays = windowFrom(firstFound, WINDOW_DAYS);
 
     const freshness: Bar[] = [
       { label: 'за сутки', value: freshCount(db, 1), tone: 'accent' },
@@ -868,6 +916,8 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
         { label: 'в каталоге', value: context.publishedPlaylists },
       ],
       quotaByDay,
+      newPlaylistsByDay: foundDays ? dailyWindow(foundPlaylists, foundDays) : [],
+      newVideosByDay: foundDays ? dailyWindow(foundVideos, foundDays) : [],
       matchesByDay,
       matchesCumulative: running(matchesByDay, before),
       checksByDay,

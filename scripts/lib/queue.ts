@@ -142,8 +142,8 @@ export function queuePlaylists(
   limit = Infinity
 ): { added: number; skipped: number; rejected: number } {
   const insert = db.prepare(
-    `INSERT INTO playlists (id, channel_id, title, video_count, alive, checked_at, next_refresh_at)
-     VALUES (?, ?, ?, 0, 1, ?, ?)
+    `INSERT INTO playlists (id, channel_id, title, video_count, alive, checked_at, next_refresh_at, found_at)
+     VALUES (?, ?, ?, 0, 1, ?, ?, ?)
      ON CONFLICT(id) DO NOTHING`
   );
   const exists = db.prepare(`SELECT 1 FROM playlists WHERE id = ?`);
@@ -161,7 +161,7 @@ export function queuePlaylists(
         if (!exists.get(item.id)) skipped += 1;
         continue;
       }
-      if (insert.run(item.id, origin, item.title || null, nowIso(), nowIso()).changes) {
+      if (insert.run(item.id, origin, item.title || null, nowIso(), nowIso(), nowIso()).changes) {
         enqueue(db, 'videos', item.id);
         added += 1;
       }

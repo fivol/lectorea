@@ -55,6 +55,25 @@ full queue runs for hours.
 pnpm exec tsx -e "import {openDb} from './scripts/lib/db.ts'; const db=openDb({readonly:true}); console.log(db.prepare(\"SELECT count(*) c FROM jobs WHERE status='pending' AND type='videos'\").get())"
 ```
 
+## The dashboard is a file, not a page you can open in the preview
+
+`pnpm stats` recomputes everything from an 18 GB `cache.db` — about 35 seconds,
+most of it one group-by over the 1.8 million rows of `videos` — and `--serve`
+does the whole thing again on every request. Reading it through the browser
+preview did not work on 2026-08-18: the same server answered `curl` in 30 s
+while the preview tab, which re-requests while the first one is still
+computing, never rendered and left the queue draining for ten minutes.
+
+So look at what plain `pnpm stats` writes:
+
+```bash
+pnpm stats && open .stats/dashboard.html
+```
+
+The page is one self-contained file with no script and no external request, so
+it opens from disk exactly as it would be served — which also means the markup
+can simply be read when what is being checked is a number rather than a colour.
+
 ## The order that must not be rearranged
 
 `import → discover → mine → match → refresh → subscribers → match → authors → embeds → build`.

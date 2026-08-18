@@ -95,10 +95,15 @@ export async function discoverChannel(
   ).run(channel.id, channel.title, seed.providerId, channel.uploadsPlaylistId, seed.id, nowIso());
 
   const playlists = await api.channelPlaylists(channel.id);
+  // `found_at` is deliberately absent from the update clause: a re-discovery a
+  // month later meets the same playlists again, and the day it met them is not
+  // the day they were found. A row from before the column existed keeps its
+  // null for the same reason — stamping it now would date the whole back
+  // catalogue to whenever the crawl next came round.
   const insert = db.prepare(
     `INSERT INTO playlists
-       (id, channel_id, title, description, video_count, published_at, lang, alive, checked_at, next_refresh_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+       (id, channel_id, title, description, video_count, published_at, lang, alive, checked_at, next_refresh_at, found_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        title = excluded.title,
        description = excluded.description,
@@ -124,7 +129,8 @@ export async function discoverChannel(
         playlist.snippet.publishedAt,
         playlist.snippet.defaultLanguage ?? detectLang(playlist.snippet.title, seed.lang),
         nowIso(),
-        inDays(REFRESH_DAYS.playlistMetadata)
+        inDays(REFRESH_DAYS.playlistMetadata),
+        nowIso()
       );
       // A monthly re-discovery finds mostly the same playlists. Queuing every
       // one of them again would re-crawl the whole catalogue's videos for the
@@ -181,8 +187,8 @@ const PLACEHOLDER_CHANNELS_SQL = `(${PLACEHOLDER_CHANNELS.map((id) => `'${id}'`)
  */
 export function seedManualMatches(db: Db, matches: Record<string, string | string[] | null>): number {
   const insert = db.prepare(
-    `INSERT INTO playlists (id, channel_id, video_count, alive, next_refresh_at)
-     VALUES (?, '${PLACEHOLDER_CHANNEL}', 0, 1, ?)
+    `INSERT INTO playlists (id, channel_id, video_count, alive, next_refresh_at, found_at)
+     VALUES (?, '${PLACEHOLDER_CHANNEL}', 0, 1, ?, ?)
      ON CONFLICT(id) DO NOTHING`
   );
 
@@ -192,7 +198,7 @@ export function seedManualMatches(db: Db, matches: Record<string, string | strin
       if (!courseId) continue; // `null` means "this is not a course", not "fetch it"
       // Due immediately: it is bound to a course already, so it is the most
       // valuable metadata the next run can buy.
-      if (!insert.run(playlistId, nowIso()).changes) continue;
+      if (!insert.run(playlistId, nowIso(), nowIso()).changes) continue;
       enqueue(db, 'videos', playlistId);
       seeded += 1;
     }
@@ -388,8 +394,8 @@ export async function fetchPlaylistVideos(
   const position = new Map(ids.map((id, index) => [id, index]));
 
   const insert = db.prepare(
-    `INSERT INTO videos (id, playlist_id, position, title, duration_seconds, published_at, views, likes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO videos (id, playlist_id, position, title, duration_seconds, published_at, views, likes, found_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        playlist_id = excluded.playlist_id,
        position = excluded.position,
@@ -398,6 +404,22 @@ export async function fetchPlaylistVideos(
        views = excluded.views,
        likes = excluded.likes`
   );
+
+  // When each video was first seen, read before the delete below throws the
+  // rows away. Every re-walk of a playlist deletes its whole video list and
+  // writes it back, so a stamp that is not carried across would say the crawl
+  // discovered eight hundred lectures on the night it merely refreshed them.
+  // The upsert above leaves the column alone for the same reason — a video
+  // that moved here from another playlist was found when that one was walked.
+  const foundBefore = new Map(
+    (
+      db.prepare(`SELECT id, found_at FROM videos WHERE playlist_id = ?`).all(playlistId) as Array<{
+        id: string;
+        found_at: string | null;
+      }>
+    ).map((row) => [row.id, row.found_at])
+  );
+  const foundNow = nowIso();
 
   let views = 0;
   let likes = 0;
@@ -433,7 +455,8 @@ export async function fetchPlaylistVideos(
         seconds,
         video.snippet.publishedAt,
         Number(video.statistics.viewCount ?? 0),
-        Number(video.statistics.likeCount ?? 0)
+        Number(video.statistics.likeCount ?? 0),
+        foundBefore.get(video.id) ?? foundNow
       );
     }
 

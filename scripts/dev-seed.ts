@@ -64,13 +64,13 @@ function main(): void {
     `INSERT OR REPLACE INTO playlists
        (id, channel_id, title, description, video_count, published_at, views, likes, comments,
         lang, captions, total_seconds, median_seconds, stats_fetched_at, videos_fetched_at,
-        alive, checked_at, next_refresh_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`
+        alive, checked_at, next_refresh_at, found_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`
   );
   const insertVideo = db.prepare(
     `INSERT OR REPLACE INTO videos
-       (id, playlist_id, position, title, duration_seconds, published_at, views, likes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+       (id, playlist_id, position, title, duration_seconds, published_at, views, likes, found_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const insertMatch = db.prepare(
     `INSERT OR REPLACE INTO matches (playlist_id, course_id, confidence, method, reviewed, updated_at)
@@ -137,7 +137,8 @@ function main(): void {
             seconds,
             `${year}-09-${String(1 + (v % 28)).padStart(2, '0')}T10:00:00Z`,
             Math.floor(views / videoCount),
-            Math.floor(likes / videoCount)
+            Math.floor(likes / videoCount),
+            now
           );
           videos += 1;
         }
@@ -157,6 +158,7 @@ function main(): void {
           captions,
           total,
           median,
+          now,
           now,
           now,
           now,
