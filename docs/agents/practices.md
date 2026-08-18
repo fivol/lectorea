@@ -1027,6 +1027,41 @@ single constant standing for its unit — not for tidiness, but because that
 constant is the only affordance that makes the feature observable in one sitting.
 Write it before the feature is long enough to need it.
 
+## A shared block with holes punched in it for one view belongs to one view
+
+The player dialog has two shapes — the sheet a recording is read about on, and
+the screen it is watched on — and the fact sheet under them was written once and
+drawn on both. It could not simply be drawn on both, though: three things inside
+it had a better home on the watching shape, so the block carried three
+`{watching ? null : …}` holes — the progress bar (which stands over the queue
+there), the day line (same), and the part navigation for a series (same). A
+fourth conditional above it drew the «О ЗАПИСИ» heading that announced the sheet
+had followed the queue down.
+
+Four conditionals in one block is the block saying it is not shared. The sheet
+went into the branch that reads it, the three holes and the heading went with
+it, and each shape now owns its own column outright. The diff is mostly
+indentation; what it removed is the standing obligation to check, for every line
+added to the sheet from then on, which of the two shapes it was true of.
+
+The evidence that the move is right — and the part worth reusing — is **what the
+holes were for.** Each one existed because the fact had already been given a
+better place on the other shape. That is not a variation on a shared block; it
+is two blocks that were sharing a file. A heading whose job is to say "there is
+more below this list" is the same admission one line further on.
+
+Rejected: keeping the sheet and cutting it down for the watching shape — the
+lecturer, the length, the rating and nothing else. It keeps both problems, a
+second layout to maintain and a column that still does not end where the queue
+ends, in exchange for facts nobody was going back to mid-lecture.
+
+**Generally:** count the per-view conditionals inside a block drawn on more than
+one view. One is a variation. Three or more, especially when each exists because
+the other view already says the thing better, means the block belongs to one
+view and the other view is being served a copy with the interesting parts cut
+out. Move it whole rather than deepening the holes, and check afterwards that
+the branch that lost it is not now missing something the holes were hiding.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

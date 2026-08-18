@@ -67,9 +67,12 @@ type Playing = { id: string; start: number };
  *
  * `watch` is the screen it is studied on: the frame takes the room and the
  * lectures become a queue beside it, where the row in the frame is lit, carries
- * its own playhead and holds the tick that marks it off. The fact sheet is
- * still there, under the queue, because a question about the recording does not
- * stop being asked once it is running.
+ * its own playhead and holds the tick that marks it off. Nothing about the
+ * recording as a whole is repeated there — who the lecturer is, how many hours
+ * it is, what the audience made of it are read once, on the sheet, before
+ * sitting down with it; under a running lecture they were a screen of scroll
+ * between the queue and the end of it. The glyph in the header is the way back,
+ * and it is one press.
  */
 export type PlayerView = 'list' | 'watch';
 
@@ -868,238 +871,239 @@ export default function PlaylistModal({
                   onTick={tick}
                 />
 
-                {/* The fact sheet does not go away while the lecture runs, it
-                    goes below the queue: «who is this, how long, is it any
-                    good» is asked as often on the third lecture as on the
-                    first. The heading is what says there is more under the
-                    list. */}
-                <p className="mono-label border-t border-line px-4 pt-4">{t('ui.player.about')}</p>
               </>
-            ) : null}
-
-            <div className="min-w-0 p-4">
-              <p className="text-sm font-medium text-ink">
-                {lecturerFilter ? (
-                  <FilterName
-                    on={lecturerFilter.on}
-                    name={lecturerFilter.name}
-                    onClick={lecturerFilter.press}
-                  />
-                ) : (
-                  (playlist.lecturer ?? playlist.channelTitle)
-                )}
-              </p>
-              <p className="num mt-1 text-xs text-ink-faint">
-                {providerFilter ? (
-                  <FilterName
-                    on={providerFilter.on}
-                    name={providerFilter.name}
-                    onClick={providerFilter.press}
-                  />
-                ) : (
-                  provider?.title
-                )}
-                {(providerFilter || provider?.title) && rest ? ' · ' : null}
-                {rest}
-              </p>
-
-              {watching ? null : seriesNav}
-
-              {/* One recording, two courses — «Алгоритмы и структуры данных»
-                  is a semester of both, and saying so is how the reader knows
-                  they are not looking at a stray. */}
-              {alsoCovers.length ? (
-                <p className="mt-3 text-xs text-ink-faint">
-                  {t('ui.playlist.alsoCovers', {
-                    courses: alsoCovers.map((id) => t(`course.${id}.title`)).join(', '),
-                  })}
+            ) : (
+              /* The sheet about the recording, and only on the shape that is
+                 read rather than watched. It used to follow the queue as well,
+                 on the argument that «who is this, how long, is it any good» is
+                 asked on the third lecture too — but it is asked *before*
+                 starting, and the price of keeping it was a screen of scroll
+                 between the last row of the queue and the way out of it, in a
+                 column whose whole job while a lecture runs is the queue. */
+              <div className="min-w-0 p-4">
+                <p className="text-sm font-medium text-ink">
+                  {lecturerFilter ? (
+                    <FilterName
+                      on={lecturerFilter.on}
+                      name={lecturerFilter.name}
+                      onClick={lecturerFilter.press}
+                    />
+                  ) : (
+                    (playlist.lecturer ?? playlist.channelTitle)
+                  )}
                 </p>
-              ) : null}
+                <p className="num mt-1 text-xs text-ink-faint">
+                  {providerFilter ? (
+                    <FilterName
+                      on={providerFilter.on}
+                      name={providerFilter.name}
+                      onClick={providerFilter.press}
+                    />
+                  ) : (
+                    provider?.title
+                  )}
+                  {(providerFilter || provider?.title) && rest ? ' · ' : null}
+                  {rest}
+                </p>
 
-              {/* Above the fact sheet, because it is the one thing here that is
-                  about the reader rather than about the recording. Absent until
-                  there is something to say: an empty bar over «0 из 30» repeats
-                  the lecture count two lines below it — and absent while
-                  watching, where it stands over the queue instead. */}
-              {progress.started && !watching ? (
-                <div className="mt-4">
-                  <ProgressBar
-                    done={progress.done}
-                    total={progress.total}
-                    fill={progress.fraction}
-                    label={`${percent(progress.fraction)}%`}
-                  />
-                  <p className="num mt-1 text-[11px] text-ink-faint">
-                    {t('ui.playlist.watchedOf', {
-                      done: progress.done,
-                      total: progress.total,
-                      hours: formatHours(hoursFromSeconds(progress.watchedSeconds)),
-                      of: formatHours(hoursFromSeconds(progress.totalSeconds)),
+                {seriesNav}
+
+                {/* One recording, two courses — «Алгоритмы и структуры данных»
+                    is a semester of both, and saying so is how the reader knows
+                    they are not looking at a stray. */}
+                {alsoCovers.length ? (
+                  <p className="mt-3 text-xs text-ink-faint">
+                    {t('ui.playlist.alsoCovers', {
+                      courses: alsoCovers.map((id) => t(`course.${id}.title`)).join(', '),
                     })}
                   </p>
-                  <AudienceLine playlist={playlist} progress={progress} className="mt-0.5" />
-                  {/* [game:audience] */}
-                </div>
-              ) : null}
-
-              {/*
-                And the day, which is nobody's recording. [game:today]
-
-                The line lived in the queue's header and so arrived *after* the
-                press: the poster is where somebody decides to sit down with
-                this, and the sheet beside it was the one screen with a
-                «Продолжить с лекции 12» on it and nothing about the twenty
-                minutes that press is for. Outside the `started` condition
-                above, for the reason the watching copy is outside its own one —
-                the day belongs to the reader and does not wait on this
-                recording having been begun.
-              */}
-              {watching ? null : <TodayLine className={progress.started ? 'mt-2' : 'mt-4'} />}
-
-              {/* How big the thing is, in the three numbers somebody deciding
-                  whether to take it on actually weighs. Tiles rather than the
-                  «характеристика · значение» lines that were here: those three
-                  numbers were set in the same small grey type as the five
-                  categorical facts under them, and the one question the sheet
-                  is opened with — how many hours is this — had to be found
-                  among them. See `Facts.tsx`. */}
-              <FactTiles className="mt-4">
-                <FactTile
-                  icon="list"
-                  value={String(playlist.videoCount)}
-                  label={t('ui.playlist.label.lectures')}
-                />
-                <FactTile
-                  icon="clock"
-                  value={t('ui.playlist.hours', {
-                    n: formatHours(hoursFromSeconds(playlist.totalSeconds)),
-                  })}
-                  label={t('ui.playlist.label.total')}
-                />
-                <FactTile
-                  icon="hourglass"
-                  value={t('ui.playlist.avgLecture', {
-                    n: formatMinutes(playlist.medianSeconds),
-                  })}
-                  label={t('ui.playlist.label.avg')}
-                />
-              </FactTiles>
-
-              {/* And the fourth number, which is the three above divided by the
-                  reader rather than by anything about the recording: how many
-                  weeks of their own studying this is. It sits under the tiles
-                  because it is only an answer once «82 ч» has been read.
-                  [game:weeks] */}
-              <WeekPlan playlist={playlist} progress={progress} className="mt-2" />
-
-              {/* What the recording *is*, in the words it is one of a few of.
-                  A category laid out as a value in a table is a word pretending
-                  to be data — «тип · Разная длина» is two words where one of
-                  them is a column heading. As chips they are what they always
-                  were: tags, read in whatever order the eye lands on them. */}
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {/* Here even when it is «Лекции», which the row leaves unsaid:
-                    the row is a list to be scanned and this is a sheet about
-                    one recording, where the ordinary answer is still an
-                    answer. */}
-                <Chip hint={t(`ui.playlist.type.${playlistTypeOf(playlist)}.hint`)}>
-                  {t(`ui.playlist.type.${playlistTypeOf(playlist)}`)}
-                </Chip>
-                {/* The classification of the number in the tile above it, which
-                    is why it wears the same glyph. */}
-                <Chip icon="hourglass">{t(`ui.playlist.length.${playlist.lectureLength}`)}</Chip>
-                {/* Only «фрагмент», which is the half of this field worth
-                    printing. «Полнота: неизвестна» is a line about the
-                    catalogue rather than about the playlist, and «полнота:
-                    полный курс» is a regex over the title plus «twelve videos
-                    or more» — 77% of the catalogue passes it, and it said the
-                    same thing the type beside it says on structural evidence.
-                    Two answers, one of them cheap.
-
-                    In the warning colour, like «Подборка» on a row and for the
-                    same reason: it is the one word here that changes what you
-                    would do with the recording. */}
-                {playlist.completeness !== 'partial' ? null : (
-                  <Chip className="text-warning" hint={t('ui.playlist.label.completeness')}>
-                    {t(`ui.playlist.completeness.${playlist.completeness}`)}
-                  </Chip>
-                )}
-                <Chip icon="captions" hint={t('ui.playlist.label.captions')}>
-                  {playlist.captions.length
-                    ? playlist.captions.join(', ')
-                    : t('ui.playlist.noCaptions')}
-                </Chip>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <Meter
-                  icon="eye"
-                  label={t('ui.playlist.views')}
-                  value={formatCompact(playlist.stats.views, lang)}
-                  fraction={1}
-                  hint={t('ui.playlist.relativeHint')}
-                />
-                <Meter
-                  icon="like"
-                  label={t('ui.playlist.likes')}
-                  value={formatCompact(playlist.stats.likes, lang)}
-                  fraction={
-                    playlist.stats.views ? (playlist.stats.likes / playlist.stats.views) * 12 : 0
-                  }
-                  hint={t('ui.playlist.relativeHint')}
-                />
-                <Meter
-                  icon="comment"
-                  label={t('ui.playlist.comments')}
-                  value={formatCompact(playlist.stats.comments, lang)}
-                  fraction={
-                    playlist.stats.views ? (playlist.stats.comments / playlist.stats.views) * 60 : 0
-                  }
-                  hint={t('ui.playlist.relativeHint')}
-                />
-                {/* The share of the audience still there at the end — the one
-                    number here that is about the course rather than its size,
-                    and the only bar on this sheet that is a real share of a
-                    real whole. Hence the accent, and the finish flag. */}
-                {retention !== null ? (
-                  <Meter
-                    icon="flag"
-                    tone="accent"
-                    label={t('ui.playlist.retention')}
-                    value={`${Math.round(retention * 100)}%`}
-                    fraction={retention}
-                    hint={t('ui.playlist.retentionValue', {
-                      percent: `${Math.round(retention * 100)}%`,
-                    })}
-                  />
                 ) : null}
-                <div className="flex items-center justify-between gap-3 pt-1 text-xs text-ink-faint">
-                  <span>{t('ui.playlist.statusHow')}</span>
-                  <StatusBadge playlist={playlist} />
-                </div>
-              </div>
 
-              {/* The course is a link, not a caption: it is the one name in the
-                  dialog that leads somewhere, and the press means "put the
-                  panel back" — so it goes to the course with the playlist
-                  dropped from the query, which is exactly what closing does.
-                  `replace`, like the opening did, so the way back out of the
-                  dialog is still one press. */}
-              {course ? (
-                <p className="mt-4 text-xs text-ink-faint">
-                  {t('ui.playlist.forCourse')}:{' '}
-                  <Link
-                    to={courseHref(course.id, courseSearch)}
-                    replace
-                    className="rounded text-ink-dim underline decoration-line underline-offset-2
-                               transition-colors duration-fast ease-out
-                               hover:text-accent hover:decoration-accent"
-                  >
-                    {t(`course.${course.id}.title`)}
-                  </Link>
-                </p>
-              ) : null}
-            </div>
+                {/* Above the fact sheet, because it is the one thing here that is
+                    about the reader rather than about the recording. Absent until
+                    there is something to say: an empty bar over «0 из 30» repeats
+                    the lecture count two lines below it. The watching shape has
+                    its own copy of this, over the queue. */}
+                {progress.started ? (
+                  <div className="mt-4">
+                    <ProgressBar
+                      done={progress.done}
+                      total={progress.total}
+                      fill={progress.fraction}
+                      label={`${percent(progress.fraction)}%`}
+                    />
+                    <p className="num mt-1 text-[11px] text-ink-faint">
+                      {t('ui.playlist.watchedOf', {
+                        done: progress.done,
+                        total: progress.total,
+                        hours: formatHours(hoursFromSeconds(progress.watchedSeconds)),
+                        of: formatHours(hoursFromSeconds(progress.totalSeconds)),
+                      })}
+                    </p>
+                    <AudienceLine playlist={playlist} progress={progress} className="mt-0.5" />
+                    {/* [game:audience] */}
+                  </div>
+                ) : null}
+
+                {/*
+                  And the day, which is nobody's recording. [game:today]
+
+                  The line lived in the queue's header and so arrived *after* the
+                  press: the poster is where somebody decides to sit down with
+                  this, and the sheet beside it was the one screen with a
+                  «Продолжить с лекции 12» on it and nothing about the twenty
+                  minutes that press is for. Outside the `started` condition
+                  above, for the reason the watching copy is outside its own one —
+                  the day belongs to the reader and does not wait on this
+                  recording having been begun.
+                */}
+                <TodayLine className={progress.started ? 'mt-2' : 'mt-4'} />
+
+                {/* How big the thing is, in the three numbers somebody deciding
+                    whether to take it on actually weighs. Tiles rather than the
+                    «характеристика · значение» lines that were here: those three
+                    numbers were set in the same small grey type as the five
+                    categorical facts under them, and the one question the sheet
+                    is opened with — how many hours is this — had to be found
+                    among them. See `Facts.tsx`. */}
+                <FactTiles className="mt-4">
+                  <FactTile
+                    icon="list"
+                    value={String(playlist.videoCount)}
+                    label={t('ui.playlist.label.lectures')}
+                  />
+                  <FactTile
+                    icon="clock"
+                    value={t('ui.playlist.hours', {
+                      n: formatHours(hoursFromSeconds(playlist.totalSeconds)),
+                    })}
+                    label={t('ui.playlist.label.total')}
+                  />
+                  <FactTile
+                    icon="hourglass"
+                    value={t('ui.playlist.avgLecture', {
+                      n: formatMinutes(playlist.medianSeconds),
+                    })}
+                    label={t('ui.playlist.label.avg')}
+                  />
+                </FactTiles>
+
+                {/* And the fourth number, which is the three above divided by the
+                    reader rather than by anything about the recording: how many
+                    weeks of their own studying this is. It sits under the tiles
+                    because it is only an answer once «82 ч» has been read.
+                    [game:weeks] */}
+                <WeekPlan playlist={playlist} progress={progress} className="mt-2" />
+
+                {/* What the recording *is*, in the words it is one of a few of.
+                    A category laid out as a value in a table is a word pretending
+                    to be data — «тип · Разная длина» is two words where one of
+                    them is a column heading. As chips they are what they always
+                    were: tags, read in whatever order the eye lands on them. */}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {/* Here even when it is «Лекции», which the row leaves unsaid:
+                      the row is a list to be scanned and this is a sheet about
+                      one recording, where the ordinary answer is still an
+                      answer. */}
+                  <Chip hint={t(`ui.playlist.type.${playlistTypeOf(playlist)}.hint`)}>
+                    {t(`ui.playlist.type.${playlistTypeOf(playlist)}`)}
+                  </Chip>
+                  {/* The classification of the number in the tile above it, which
+                      is why it wears the same glyph. */}
+                  <Chip icon="hourglass">{t(`ui.playlist.length.${playlist.lectureLength}`)}</Chip>
+                  {/* Only «фрагмент», which is the half of this field worth
+                      printing. «Полнота: неизвестна» is a line about the
+                      catalogue rather than about the playlist, and «полнота:
+                      полный курс» is a regex over the title plus «twelve videos
+                      or more» — 77% of the catalogue passes it, and it said the
+                      same thing the type beside it says on structural evidence.
+                      Two answers, one of them cheap.
+
+                      In the warning colour, like «Подборка» on a row and for the
+                      same reason: it is the one word here that changes what you
+                      would do with the recording. */}
+                  {playlist.completeness !== 'partial' ? null : (
+                    <Chip className="text-warning" hint={t('ui.playlist.label.completeness')}>
+                      {t(`ui.playlist.completeness.${playlist.completeness}`)}
+                    </Chip>
+                  )}
+                  <Chip icon="captions" hint={t('ui.playlist.label.captions')}>
+                    {playlist.captions.length
+                      ? playlist.captions.join(', ')
+                      : t('ui.playlist.noCaptions')}
+                  </Chip>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <Meter
+                    icon="eye"
+                    label={t('ui.playlist.views')}
+                    value={formatCompact(playlist.stats.views, lang)}
+                    fraction={1}
+                    hint={t('ui.playlist.relativeHint')}
+                  />
+                  <Meter
+                    icon="like"
+                    label={t('ui.playlist.likes')}
+                    value={formatCompact(playlist.stats.likes, lang)}
+                    fraction={
+                      playlist.stats.views ? (playlist.stats.likes / playlist.stats.views) * 12 : 0
+                    }
+                    hint={t('ui.playlist.relativeHint')}
+                  />
+                  <Meter
+                    icon="comment"
+                    label={t('ui.playlist.comments')}
+                    value={formatCompact(playlist.stats.comments, lang)}
+                    fraction={
+                      playlist.stats.views ? (playlist.stats.comments / playlist.stats.views) * 60 : 0
+                    }
+                    hint={t('ui.playlist.relativeHint')}
+                  />
+                  {/* The share of the audience still there at the end — the one
+                      number here that is about the course rather than its size,
+                      and the only bar on this sheet that is a real share of a
+                      real whole. Hence the accent, and the finish flag. */}
+                  {retention !== null ? (
+                    <Meter
+                      icon="flag"
+                      tone="accent"
+                      label={t('ui.playlist.retention')}
+                      value={`${Math.round(retention * 100)}%`}
+                      fraction={retention}
+                      hint={t('ui.playlist.retentionValue', {
+                        percent: `${Math.round(retention * 100)}%`,
+                      })}
+                    />
+                  ) : null}
+                  <div className="flex items-center justify-between gap-3 pt-1 text-xs text-ink-faint">
+                    <span>{t('ui.playlist.statusHow')}</span>
+                    <StatusBadge playlist={playlist} />
+                  </div>
+                </div>
+
+                {/* The course is a link, not a caption: it is the one name in the
+                    dialog that leads somewhere, and the press means "put the
+                    panel back" — so it goes to the course with the playlist
+                    dropped from the query, which is exactly what closing does.
+                    `replace`, like the opening did, so the way back out of the
+                    dialog is still one press. */}
+                {course ? (
+                  <p className="mt-4 text-xs text-ink-faint">
+                    {t('ui.playlist.forCourse')}:{' '}
+                    <Link
+                      to={courseHref(course.id, courseSearch)}
+                      replace
+                      className="rounded text-ink-dim underline decoration-line underline-offset-2
+                                 transition-colors duration-fast ease-out
+                                 hover:text-accent hover:decoration-accent"
+                    >
+                      {t(`course.${course.id}.title`)}
+                    </Link>
+                  </p>
+                ) : null}
+              </div>
+            )}
 
             {/* Pinned to the bottom of whichever box scrolls — the dialog on a
                 phone, the sidebar itself once it is a column. It lets go on a
