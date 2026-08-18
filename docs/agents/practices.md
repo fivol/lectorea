@@ -701,7 +701,7 @@ a number answers exactly one:
 
 | Horizon | The question | Where it may stand |
 |---|---|---|
-| **the day** | what do I do now | where there is a press that answers it — the front page's card, the player between lectures |
+| **the day** | what do I do now | where there is a press that answers it — the front page's card, the course panel's continue block, the recording's sheet, the player between lectures |
 | **the week** | how is it going | where looking back is the point — the profile; on the card as standing, never as an ask |
 | **the object** — a recording, a course, a field, a path | how far into *this* am I | inside that object and nowhere else |
 

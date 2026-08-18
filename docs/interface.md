@@ -840,11 +840,25 @@ at every site.
   was — «Сегодня — 2 лекции, 1,5 часа» — and with nothing behind today it is
   the target on its own rather than a zero.
 
-  The same line stands on the front page's card, under «Продолжить» — one
-  component in two homes rather than two sentences about the same afternoon
-  that have to be kept in step. Two moments, one unit: the player is where "one
-  more lecture" is decided and the card is where "anything at all tonight" is
-  ([where you were](#where-you-were)).
+  **One component, four homes, and the rule that picks them is the press.** The
+  day says what to do next, so it stands wherever there is a button that does
+  it: the front page's card under «Продолжить»
+  ([where you were](#where-you-were)), the course panel under the same block,
+  the recording's sheet before play, and the queue's header once a lecture is
+  running. It is one component reading one log rather than four sentences about
+  the same afternoon that have to be kept in step.
+
+  The sheet was the gap this rule found. «Продолжить с лекции 12» is where
+  somebody decides to sit down with a recording, and the line arrived only
+  *after* they had pressed it — a target delivered to a reader who had already
+  done the thing it was asking for. In the sheet it stands whether or not this
+  particular recording has been started, for the same reason it does over the
+  queue: the day belongs to the reader, not to the recording under it.
+
+  Where it deliberately does **not** stand: the field card in the corner of the
+  columns, which answers a question about a field, and the course panel with
+  nothing to continue in it. An ask with no press beside it belongs on the
+  screen that has one.
 
   It stops asking once the week's days are all made — «Неделя выполнена · 5 из
   5 дней» — because a goal of «45 минут, 5 дней» is a week with two days off

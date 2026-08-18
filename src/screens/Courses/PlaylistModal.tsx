@@ -778,6 +778,20 @@ export default function PlaylistModal({
                 </div>
               ) : null}
 
+              {/*
+                And the day, which is nobody's recording. [game:today]
+
+                The line lived in the queue's header and so arrived *after* the
+                press: the poster is where somebody decides to sit down with
+                this, and the sheet beside it was the one screen with a
+                «Продолжить с лекции 12» on it and nothing about the twenty
+                minutes that press is for. Outside the `started` condition
+                above, for the reason the watching copy is outside its own one —
+                the day belongs to the reader and does not wait on this
+                recording having been begun.
+              */}
+              {watching ? null : <TodayLine className={progress.started ? 'mt-2' : 'mt-4'} />}
+
               {/* How big the thing is, in the three numbers somebody deciding
                   whether to take it on actually weighs. Tiles rather than the
                   «характеристика · значение» lines that were here: those three

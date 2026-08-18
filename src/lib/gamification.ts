@@ -22,7 +22,7 @@ import { localDay, useProfile } from '@/store/profile';
  *
  * | Flag | Tag | What it is | Where it renders |
  * |---|---|---|---|
- * | `today` | `[game:today]` | the session said in numbers, and what is left of the day's goal | the player's progress header, and the front page's card |
+ * | `today` | `[game:today]` | the session said in numbers, and what is left of the day's goal | wherever a press answers it: the front page's card, the course panel, the recording's sheet, the player's progress header |
  * | `milestones` | `[game:milestones]` | a long recording cut into stages of about three hours | the lecture list, and a line over it |
  * | `audience` | `[game:audience]` | where the rest of the audience stopped, and how far past them you are | the lecture list, and a line over it |
  * | `finish` | `[game:finish]` | the end of a recording as an event, and the courses it opened | the foot of the player sidebar |
@@ -63,13 +63,14 @@ export const GAME = {
  * finished. So the two numbers travel to the player: what today came to, and
  * what is left of it.
  *
- * And to the front page's card, which is where the *other* decision is made —
- * not "one more lecture" but "anything at all this evening". Both are
- * decisions about the next twenty minutes, which is what the day is the unit
- * of; the week says how it is going and asks for nothing. The line is one
- * component in two homes rather than two lines that have to be kept in step,
- * so what the card says and what the player says can never disagree
- * (`TodayLine`).
+ * And to every other place a press answers it: the front page's card, the
+ * course panel's continue block, and the recording's sheet before play — which
+ * is where the *other* decision is made, not "one more lecture" but "anything
+ * at all this evening". Both are decisions about the next twenty minutes,
+ * which is what the day is the unit of; the week says how it is going and asks
+ * for nothing. The line is one component in four homes rather than four lines
+ * that have to be kept in step, so no two screens can disagree about the same
+ * afternoon (`TodayLine`).
  *
  * Both are already in `profile.days` — see `credit()` in the store, which is
  * what makes them trustworthy: the log is written by the acts that mean
