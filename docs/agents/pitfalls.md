@@ -400,6 +400,34 @@ still mounted (`document.querySelector('iframe')`), and that the page is running
 the code you just wrote (look for the markup the edit added, not for its
 effect) — reload rather than trusting HMR in the pane.
 
+### A position report was read as a statement about what is on screen
+
+**Assumed:** the player's position callback is about the lecture being watched,
+so the screen's copy of "which lecture, and where in it" can be written from it.
+That is what `onPosition` had always done.
+**It was:** the *last* report for a lecture is sent after the frame has already
+moved on to the next one. `useYouTubePlayer` flushes the outgoing lecture at the
+moment the player names a new video — correct as a record, and read as "this is
+what is playing" it walks the screen backwards. So pressing «Дальше» switched
+the frame to lecture 12 and then put the queue back on lecture 11 for the whole
+`WRITE_EVERY_MS` window: the finished row lit again, and the offer to move on
+came back with it, five seconds of a control that had just been pressed. The
+same glitch was already there on YouTube's own autoplay, where nobody had
+noticed it because the row it went back to was the one that had just ended.
+
+**How not to repeat it:** **a callback that fires for two different reasons
+needs two callbacks.** The split here is `onPosition` — a record, right about
+whichever lecture it names — and `onVideo`, which fires only when the frame
+changes lecture and is the only thing allowed to say what is on screen. Plus a
+`framed` ref on the app side, written by both things that can change what the
+frame holds (this app asking for a lecture, and the player walking to one), so a
+report about anything else can be recorded without being displayed.
+
+The wider rule: before wiring a callback to a piece of screen state, ask **when
+it fires relative to the change it seems to describe**. Anything that flushes,
+closes or finalises fires *after* the thing it is about has stopped being
+current, which is exactly when it is wrong to draw from it.
+
 ### A pointer was given the power to lay the page out
 
 **Assumed:** a name in the panel that points at a card the filter is hiding

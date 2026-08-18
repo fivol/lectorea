@@ -774,20 +774,24 @@ to hold: «Место остановки» switches the stored position off alto
 lecture already ticked keeps none, and anything under fifteen seconds is not a
 place worth coming back to. All three silences are right about a lecture
 somebody left and wrong about the one running beside the list — and the fill
-stays put once the lecture passes 90% and counts as watched, because the tick
+stays put once the lecture passes 95% and counts as watched, because the tick
 says whether it is behind you and the fill says where you are.
 
 Three levels, and only the bottom one holds anything. A lecture is watched or it
 is not; a playlist and a course are arithmetic over that.
 
-- **A lecture** counts as watched at 90% of its length, or when the player says
+- **A lecture** counts as watched at 95% of its length, or when the player says
   it ended. The last minutes of a recording are credits and a Q&A that trails
   off, and a bar that will not complete because of them is a bar people stop
-  trusting. Crossing it is also what puts «Дальше» in the strip under the
-  picture — the same rule, read as an offer rather than as a tick. Every lecture also carries a tick of its own, for the ones watched
-  on YouTube — without it, everything watched outside this player would be
-  invisible here, which makes the progress it shows a lie of omission. Shift
-  extends from the last tick, so twelve of thirty is one press and not twelve.
+  trusting. Not further short of the end than that, though, because the number
+  is now read twice: as the tick, and as the moment «Дальше» appears in the
+  strip under the picture. A threshold with a quarter of an hour of a long
+  lecture still behind it would be offering the next one while there is
+  teaching left in this one. Every lecture also carries a tick of its own, for
+  the ones watched on YouTube — without it, everything watched outside this
+  player would be invisible here, which makes the progress it shows a lie of
+  omission. Shift extends from the last tick, so twelve of thirty is one press
+  and not twelve.
 - **A playlist** is the share of its lectures behind you. «Отметить все» is a
   seal rather than thirty ticks — a playlist here runs to 1192 videos — so
   taking it off uncovers what was actually watched underneath instead of wiping
@@ -1044,23 +1048,27 @@ lecture being followed — the question. Everything else about the recording is
 in the queue, which is where it is chosen.
 
 **«Дальше»** is the strip's one control that is not always there. A lecture
-counts as watched at 90% of its length, which leaves the credits and the
-questions still running: the reader is finished with it several minutes before
-it is finished with them, and what they want then is the next lecture. The queue
-has it — as a row to find among a hundred, behind whatever they had scrolled to
-while it played — so the offer is made where the eye already is, as one accent
-capsule that takes them to the next row and marks off the one they are leaving.
+counts as watched at 95% of its length, which still leaves the credits and the
+last questions running: the reader is finished with it before it is finished
+with them, and what they want then is the next lecture. The queue has it — as a
+row to find among a hundred, behind whatever they had scrolled to while it
+played — so the offer is made where the eye already is, as one accent capsule
+that takes them to the next row and marks off the one they are leaving. It sits
+at the **right** end of the strip, in the corner the hand is already in, beside
+the question and the control that changes the dialog's shape: that end of the
+strip is everything pressed about the lecture, and the left is what the player
+itself is doing.
 
 It is drawn only while the lecture in the frame is behind them **and** there is a
 row after it. On the last lecture there is nothing to offer: what follows the end
 of a recording is the next part of the run, and that stands over the queue
 already. And "behind them" is read off the ticks rather than off the player's own
 fraction, which makes one rule out of four ways of arriving at the same state —
-90%, the player's own ending, a tick by hand, and reopening a lecture that was
-finished last week. Pressing it is the same act as the walk the player makes for
-itself when a recording has no rail behind it to autoplay along, and it is
-literally the same call, so the button and the automation cannot come to mean
-different things.
+the threshold, the player's own ending, a tick by hand, and reopening a lecture
+that was finished last week. Pressing it is the same act as the walk the player
+makes for itself when a recording has no rail behind it to autoplay along, and
+it is literally the same call, so the button and the automation cannot come to
+mean different things.
 
 Where it deliberately is **not**: over the picture, which is YouTube's own chrome
 and the reason the strip exists at all; and nowhere while the lecture is still

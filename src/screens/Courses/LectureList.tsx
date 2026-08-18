@@ -176,9 +176,10 @@ function LectureRow({
    * stored mark for every other one.
    *
    * The live figure is kept even once the lecture counts as watched. It crosses
-   * 90% with minutes still to play, and a row that emptied its fill at that
-   * moment would look like the player had lost its place — the tick is the
-   * statement about *whether* it is behind you, the fill about where you are.
+   * the threshold with minutes still to play, and a row that emptied its fill
+   * at that moment would look like the player had lost its place — the tick is
+   * the statement about *whether* it is behind you, the fill about where you
+   * are.
    */
   const at = live ?? (!done && isResumable(mark?.sec) ? mark.sec : 0);
   const part = at ? Math.min(100, (at / Math.max(1, video.seconds)) * 100) : 0;

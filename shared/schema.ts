@@ -503,8 +503,13 @@ export type CourseStatus = z.infer<typeof CourseStatus>;
  * Not 100%: the last minutes of a recording are credits, a Q&A that trails off,
  * or a camera left running, and a progress bar that refuses to complete because
  * of them is a progress bar people stop trusting.
+ *
+ * And not far short of it either. This is read twice over — once as a tick, and
+ * once as the offer to move on that appears under the picture — so a threshold
+ * with a quarter of an hour of a long lecture still behind it would be calling
+ * a lecture finished while there is teaching left in it.
  */
-export const VIDEO_DONE_FRACTION = 0.9;
+export const VIDEO_DONE_FRACTION = 0.95;
 
 /**
  * A day of study, and what it was worth.

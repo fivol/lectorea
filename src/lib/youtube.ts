@@ -224,8 +224,25 @@ type Options = {
    * Throttled, plus a final one whenever the lecture or the tab changes.
    * `played` is how much of the lecture actually went past since the last
    * report — the seek-proof measure of time spent, see `peak`.
+   *
+   * It is a **record**, not a statement about what is on screen: the last one
+   * for a lecture arrives after the frame has already moved on to the next.
+   * What is on screen is `onVideo`.
    */
   onPosition: (videoId: string, sec: number, played: number) => void;
+  /**
+   * The frame is on a different lecture now — the first one, and every change
+   * after it, including the ones this app never asked for, which is what
+   * `list=` autoplay does.
+   *
+   * Separate from `onPosition` because the two answer different questions —
+   * *which* lecture is in the frame, and *where* its playhead is — and the
+   * order they happen in is what made keeping them together wrong: the report
+   * that closes the lecture being left is sent *after* the switch, so a screen
+   * following the position followed it back to the lecture that had just
+   * finished, and stayed there until the next write five seconds later.
+   */
+  onVideo?: (videoId: string, sec: number) => void;
   /** Once per lecture, when enough of it is behind the reader. */
   onWatched: (videoId: string) => void;
   /**
@@ -251,16 +268,19 @@ export function useYouTubePlayer({
   onRate,
   home,
   onPosition,
+  onVideo,
   onWatched,
   onEnded,
 }: Options) {
   // Through refs so that a re-render — of which there is one per write — does
   // not tear the listener down and lose the handshake with it.
   const position = useRef(onPosition);
+  const moved = useRef(onVideo);
   const watched = useRef(onWatched);
   const ended = useRef(onEnded);
   const remember = useRef(onRate);
   position.current = onPosition;
+  moved.current = onVideo;
   watched.current = onWatched;
   ended.current = onEnded;
   remember.current = onRate;
@@ -447,6 +467,10 @@ export function useYouTubePlayer({
         // of it: measuring the first stretch from zero would book twenty
         // minutes nobody watched today.
         from.current = { id, sec: typeof sec === 'number' ? sec : 0, at: Date.now() };
+        // Said here and not left to the next position report: that one is up to
+        // `WRITE_EVERY_MS` away, and until it lands the screen would still be
+        // describing the lecture that has just been left.
+        moved.current?.(id, typeof sec === 'number' ? sec : 0);
       }
       if (!current.current) return;
       // Kept for as long as this lecture is the one in the frame — see the

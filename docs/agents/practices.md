@@ -689,8 +689,8 @@ profile is entitled to silences an on-screen reading is not.
 
 ## A rule written to paint something is usually an act waiting to be offered
 
-`VIDEO_DONE_FRACTION` had been in the player for a year with one consumer: at
-90% a checkbox turned green. But 90% of a lecture is not the end of it — the
+`VIDEO_DONE_FRACTION` had been in the player for a year with one consumer: past
+it, a checkbox turned green. But the threshold is not the end of a lecture — the
 last minutes are credits and a Q&A — so the rule fires at exactly the moment the
 reader has a question the interface was not answering. *What now?* The answer
 was in the queue all along, as a row to find among a hundred while a lecture ran
@@ -709,14 +709,21 @@ Three things make it an offer rather than another control:
   and they drift: one of them marks the lecture off, the other forgets to. So
   `advance()` is one function with two callers.
 - **The state it reads is the durable one.** "Behind you" is the tick in the
-  profile, not the player's own fraction — which makes 90%, the player's
-  `ENDED`, a tick by hand and a lecture finished last week all the same case,
+  profile, not the player's own fraction — which makes the threshold, the
+  player's `ENDED`, a tick by hand and a lecture finished last week one case,
   and the offer survives the dialog being closed and opened again.
 
 Rejected on the way: drawing it over the picture, where YouTube's chrome lives
 and where the whole strip exists precisely to avoid landing; and offering the
 next *unwatched* lecture rather than the next row, which is a different act from
 the one the queue and the autoplay both perform.
+
+A second reader also **moves the rule**, and that is part of the price. 90% was
+chosen when it only had to decide when a bar may complete, where being early is
+generous; the same number offering the next lecture is telling somebody to leave
+while a long lecture still has ten minutes of teaching in it. It went to 95%
+with the offer, and the constant's comment now says both jobs, so the next
+person to move it knows what else they are moving.
 
 **Generally:** when a rule is written so that something can be *painted*, ask
 what the reader does next once it is true. If the answer is a press they would

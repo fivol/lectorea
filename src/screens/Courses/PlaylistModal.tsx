@@ -152,6 +152,17 @@ export default function PlaylistModal({
    * through an autoplay the app never ordered.
    */
   const [at, setAt] = useState<{ id: string; sec: number } | null>(null);
+  /**
+   * The same answer as `at.id`, held where a callback can read it without being
+   * rebuilt — and it is what says whose position report may move the screen.
+   *
+   * Two things change which lecture is in the frame: this app asking for one,
+   * and the player walking to one by itself. Both write here. A position report
+   * for anything else is the closing record of a lecture already left, and the
+   * screen must not follow it back — which it did, for the whole five seconds
+   * until the next write, every time somebody pressed «Дальше».
+   */
+  const framed = useRef<string | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   /** Which of the two shapes the dialog is in — see `PlayerView`. */
   const [view, setView] = useState<PlayerView>('list');
@@ -165,6 +176,7 @@ export default function PlaylistModal({
   useEffect(() => {
     setPlaying(null);
     setAt(null);
+    framed.current = null;
   }, [playlist.id]);
 
   /**
@@ -243,9 +255,20 @@ export default function PlaylistModal({
       // out of the profile: «Место остановки» switches the stored position off,
       // and somebody who asked not to be *remembered* has not asked to stop
       // being *shown* how far into the lecture they are.
-      setAt({ id: videoId, sec });
+      //
+      // Only for the lecture actually in the frame. The rest of this call is a
+      // record and is right about whichever lecture it names; the playhead on
+      // screen is about the one being watched, and the last report for a
+      // lecture arrives after the frame has moved on from it.
+      if (videoId === framed.current) setAt({ id: videoId, sec });
       recordPosition(videoId, sec, context, played);
       reachedIn(videoId, sec, lengthOf(videoId), watched);
+    },
+    // The frame changed lecture — by autoplay, since everything this app asks
+    // for goes through `play`. Both write the same two things.
+    onVideo: (videoId, sec) => {
+      framed.current = videoId;
+      setAt({ id: videoId, sec });
     },
     // «player», so the day is not charged for the lecture's whole length on top
     // of the time the frame has already reported watching it.
@@ -334,6 +357,7 @@ export default function PlaylistModal({
     const mark = profile.videos[video.id];
     const sec = !mark?.done && isResumable(mark?.sec) ? mark.sec : 0;
     setPlaying({ id: video.id, start: sec });
+    framed.current = video.id;
     setAt({ id: video.id, sec });
     setView('watch');
   };
@@ -634,12 +658,14 @@ export default function PlaylistModal({
                 chrome, and these are pressed while the lecture runs. Only once
                 there is a player to talk to — before that they control nothing.
 
-                The two ends are where a player puts them: what it is doing on
-                the left, what shape it is in on the right, under the corner of
-                the picture and beside the fullscreen button inside the frame,
-                because that is the corner a hand already goes to. The one in
-                the header stays — it is the way *back* on a dialog that has no
-                strip when nothing is playing. */}
+                The two ends are where a player puts them: on the left what it
+                is doing — the speed, the timer — and on the right everything
+                pressed *about* the lecture rather than about playback: the way
+                on, the question, and what shape the dialog is in. The right end
+                is under the corner of the picture and beside the fullscreen
+                button inside the frame, because that is the corner a hand
+                already goes to. The one in the header stays — it is the way
+                *back* on a dialog that has no strip when nothing is playing. */}
             {playing ? (
               <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-1.5">
                 <PlayerSpeed rate={rate} rates={rates} onPick={setRate} />
@@ -649,93 +675,108 @@ export default function PlaylistModal({
                 <PomodoroPill pomodoro={pomodoro} />
 
                 {/*
-                  The offer to move on, and only in the minutes it is an offer.
+                  The right end of the strip, as one group.
 
-                  A lecture crosses 90% with its credits and its questions still
-                  to run, and what the reader wants then is the next one — which
-                  the queue has, as a row to find among a hundred, behind
-                  whatever they were reading while it played. The queue does not
-                  stop being the way to any *particular* lecture; this is the way
-                  to the obvious one, and it is drawn only while there is an
-                  obvious one to be had.
-
-                  So it is not the strip that was taken down for narrating the
-                  playing row (see the practice on it): it says nothing the row
-                  says, it holds no state, and it is absent for all but the tail
-                  of each lecture — where a permanent pair of arrows would be a
-                  second door to every row of the queue.
-
-                  In the strip and not over the picture, for the reason the whole
-                  strip is there: an overlay lands on YouTube's own chrome. In
-                  the kit's accent capsule at the strip's own scale, so that the
-                  one thing here worth finding without looking is found without
-                  looking, and the strip does not change height when it arrives.
+                  It used to be three elements each deciding for itself where it
+                  stood, with `ml-auto` moving between them depending on which
+                  ones existed. One auto margin on the group is the same layout
+                  with one rule instead of three — and it is what keeps the
+                  question and the corner control still when the offer to move on
+                  appears beside them, which happens in the middle of a lecture
+                  and must not shuffle the strip.
                 */}
-                {shownVideo && shownBehind && upNext ? (
-                  <Tooltip content={t('ui.player.nextHint')}>
-                    <span className="inline-flex shrink-0">
-                      <Button
-                        variant="primary"
-                        icon="chevron-right"
-                        iconSize={13}
-                        // `tap-soft` and not `tap`: this stands in a row of
-                        // controls that are all this size, and a 44px capsule
-                        // in the middle of them would stop the strip reading as
-                        // one strip. The halo catches the thumb instead, and
-                        // takes no width.
-                        className="tap-soft gap-1 px-2.5 py-1 text-[11px] leading-none"
-                        onClick={() => advance(shownVideo.id)}
-                      >
-                        {t('ui.player.next')}
-                      </Button>
-                    </span>
-                  </Tooltip>
-                ) : null}
-                {/* The question, taken away with everything needed to answer it
-                    — see `lecturePrompt`. A ghost and not a plate, for the same
-                    reason the speeds are bare numerals: this strip sits under a
-                    running lecture, and a capsule here shouts over it.
+                <div className="ml-auto flex shrink-0 items-center gap-2">
+                  {/*
+                    The offer to move on, and only in the minutes it is an offer.
 
-                    It stops the lecture on the way out. Somebody who has just
-                    said they have a question is about to go and write one, and
-                    a player left running answers it four minutes further on. */}
-                {shownVideo ? (
-                  <Tooltip content={t('ui.player.askHint')}>
-                    <span className="ml-auto inline-flex shrink-0">
-                      <CopyButton
-                        variant="ghost"
-                        className="inline-flex items-center gap-1.5 rounded-full
-                                   px-2 py-1 text-[11px] leading-none"
-                        idleIcon="help"
-                        iconSize={13}
-                        what="lecture-prompt"
-                        onPress={() => command(frame, 'pauseVideo')}
-                        text={() =>
-                          lecturePrompt({
-                            playlist,
-                            video: shownVideo,
-                            index: shownIndex,
-                            // The playhead is written down every few seconds rather
-                            // than on every frame, so this is a moment ago at worst
-                            // — well inside the window the prompt asks about.
-                            sec: at?.id === shownVideo.id ? at.sec : 0,
-                            catalog,
-                            t: translator,
-                          })
-                        }
-                      >
-                        {t('ui.player.ask')}
-                      </CopyButton>
-                    </span>
-                  </Tooltip>
-                ) : null}
-                <IconButton
-                  className={shownVideo ? '' : 'ml-auto'}
-                  icon={watching ? 'collapse' : 'fit'}
-                  label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
-                  aria-pressed={watching}
-                  onClick={() => setView(watching ? 'list' : 'watch')}
-                />
+                    A lecture crosses the threshold with its credits and its
+                    questions still to run, and what the reader wants then is the
+                    next one — which the queue has, as a row to find among a
+                    hundred, behind whatever they were reading while it played.
+                    The queue does not stop being the way to any *particular*
+                    lecture; this is the way to the obvious one, and it is drawn
+                    only while there is an obvious one to be had.
+
+                    So it is not the strip that was taken down for narrating the
+                    playing row (see the practice on it): it says nothing the row
+                    says, it holds no state, and it is absent for all but the tail
+                    of each lecture — where a permanent pair of arrows would be a
+                    second door to every row of the queue.
+
+                    In the strip and not over the picture, for the reason the
+                    whole strip is there: an overlay lands on YouTube's own
+                    chrome. At this end of it because this is the end a hand is
+                    already at — the same corner as the fullscreen button inside
+                    the frame. In the kit's accent capsule at the strip's own
+                    scale, so that the one thing here worth finding without
+                    looking is found without looking, and the strip does not
+                    change height when it arrives.
+                  */}
+                  {shownVideo && shownBehind && upNext ? (
+                    <Tooltip content={t('ui.player.nextHint')}>
+                      <span className="inline-flex shrink-0">
+                        <Button
+                          variant="primary"
+                          icon="chevron-right"
+                          iconSize={13}
+                          // `tap-soft` and not `tap`: this stands in a row of
+                          // controls that are all this size, and a 44px capsule
+                          // in the middle of them would stop the strip reading
+                          // as one strip. The halo catches the thumb instead,
+                          // and takes no width.
+                          className="tap-soft gap-1 px-2.5 py-1 text-[11px] leading-none"
+                          onClick={() => advance(shownVideo.id)}
+                        >
+                          {t('ui.player.next')}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  ) : null}
+                  {/* The question, taken away with everything needed to answer it
+                      — see `lecturePrompt`. A ghost and not a plate, for the same
+                      reason the speeds are bare numerals: this strip sits under a
+                      running lecture, and a capsule here shouts over it.
+
+                      It stops the lecture on the way out. Somebody who has just
+                      said they have a question is about to go and write one, and
+                      a player left running answers it four minutes further on. */}
+                  {shownVideo ? (
+                    <Tooltip content={t('ui.player.askHint')}>
+                      <span className="inline-flex shrink-0">
+                        <CopyButton
+                          variant="ghost"
+                          className="inline-flex items-center gap-1.5 rounded-full
+                                     px-2 py-1 text-[11px] leading-none"
+                          idleIcon="help"
+                          iconSize={13}
+                          what="lecture-prompt"
+                          onPress={() => command(frame, 'pauseVideo')}
+                          text={() =>
+                            lecturePrompt({
+                              playlist,
+                              video: shownVideo,
+                              index: shownIndex,
+                              // The playhead is written down every few seconds rather
+                              // than on every frame, so this is a moment ago at worst
+                              // — well inside the window the prompt asks about.
+                              sec: at?.id === shownVideo.id ? at.sec : 0,
+                              catalog,
+                              t: translator,
+                            })
+                          }
+                        >
+                          {t('ui.player.ask')}
+                        </CopyButton>
+                      </span>
+                    </Tooltip>
+                  ) : null}
+                  <IconButton
+                    icon={watching ? 'collapse' : 'fit'}
+                    label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
+                    aria-pressed={watching}
+                    onClick={() => setView(watching ? 'list' : 'watch')}
+                  />
+                </div>
               </div>
             ) : null}
 
