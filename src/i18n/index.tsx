@@ -60,8 +60,14 @@ export type Translator = {
   /**
    * A stretch of time in whatever unit it is actually in, as the number and its
    * noun apart — a tile prints them on two lines, a sentence in one breath.
+   *
+   * `scale` is for the second of a **pair** printed together: pass the larger
+   * of the two and both come out in one unit. Without it «2,5 из 45 минут» is
+   * what a long afternoon against a short goal reads as — two units in one
+   * sentence, and the reader has to convert one of them before the comparison
+   * the line exists for can happen.
    */
-  span: (seconds: number) => Span;
+  span: (seconds: number, scale?: number) => Span;
   /** True when the key is missing — lets a caller fall back instead of showing the key. */
   has: (key: string) => boolean;
   lang: string;
@@ -104,13 +110,16 @@ export function useT(): Translator {
    * take, so it is pluralised as if it were two.
    */
   const span = useCallback(
-    (seconds: number): Span => {
+    // The unit is chosen by `scale` and the number is `seconds`: the same call
+    // with one argument is the old behaviour, where a stretch decides its own
+    // unit and nothing else is on the line with it.
+    (seconds: number, scale = seconds): Span => {
       const say = (value: string, noun: string): Span => ({
         value,
         noun,
         text: `${value} ${noun}`,
       });
-      if (seconds < 3600) {
+      if (scale < 3600) {
         const minutes = formatMinutes(seconds);
         return say(String(minutes), plural(minutes, 'minute'));
       }

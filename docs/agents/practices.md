@@ -621,6 +621,70 @@ and two sets of controls that must agree. And when the panel goes, check what
 its numbers were read from — the row's usual source is often the profile, and a
 profile is entitled to silences an on-screen reading is not.
 
+## Which horizon a number belongs to is fixed by the question, not by the data
+
+The day's goal existed, was chosen as the unit somebody acts in, and was printed
+in exactly one place — the player. The front page, which is where the decision
+"anything at all tonight" actually gets made, carried the week and nothing else.
+Every screen had been settled on its own merits, and the answer to "should the
+goal go here too" was being argued from scratch each time, with the same
+evidence: the data is in the profile, so it *could* go anywhere.
+
+The rule that settles it in advance is the reader's question. Three of them, and
+a number answers exactly one:
+
+| Horizon | The question | Where it may stand |
+|---|---|---|
+| **the day** | what do I do now | where there is a press that answers it — the front page's card, the player between lectures |
+| **the week** | how is it going | where looking back is the point — the profile; on the card as standing, never as an ask |
+| **the object** — a recording, a course, a field, a path | how far into *this* am I | inside that object and nowhere else |
+
+Four rules fall out of it, and each one deletes an argument that used to be had
+per screen:
+
+- **One ask per screen.** A second horizon may be on it as context — the week's
+  bar under the day's line is what makes twenty minutes look worth doing — but
+  two things asking at once is a screen that has stopped asking anything.
+- **Nothing is offered to somebody who did not ask for it.** A goal is the one
+  chosen number in the product; with none set, the same slot carries the report
+  («Сегодня — 2 лекции, 1,5 часа») or nothing. An *invitation* is allowed only
+  where the habit it would describe is already in the log.
+- **An object's number never becomes a target,** but it may be divided by the
+  reader's own pace: «осталось ≈37 ч · ≈2 месяца», with the sentence saying
+  whose pace that is (`horizonFor`, `Forecast`).
+- **A goal stops asking once it is met at its own grain.** «45 минут, 5 дней» is
+  a week with two days off in it; a sixth day asked for is a target nobody set.
+
+What the rule cost when it was applied: one line added to the front page, one
+tile taken off it (the week's hours, which the bar beside it already said in
+full), and two screens that cannot disagree because they render the same
+component. What it saved is the next screen — the field card and the course
+panel got the same question asked of them and the answer was **no**, in a
+minute, with a reason that will still be there next time.
+
+**Generally:** when the same kind of number keeps turning up in new places, do
+not decide the places one at a time. Name the question each grain of it answers,
+and the placement becomes a lookup rather than a debate — including the "no",
+which is the half that never gets written down otherwise.
+
+## A printed pair shares a unit, chosen by the larger half
+
+«Сегодня — 2,5 из 45 минут» is what a long afternoon against a short goal came
+out as: `span()` picked a unit per value, and each value picked correctly. The
+sentence exists so two numbers can be compared, and it was handing the reader a
+conversion to do first.
+
+The fix is one optional argument — `span(seconds, scale)`, where `scale` is the
+larger of the pair — rather than a rule at the call site, because there were
+already two call sites and the third would have got it wrong again. The bar for
+the week had solved the same problem years earlier by writing both halves in
+hours whatever their size; this is that decision made available to everything
+that prints a pair.
+
+**Generally:** a formatter that is right about one value can still be wrong
+about two. Where values are printed to be compared, the unit belongs to the
+pair, and the cheapest place to hold that is the formatter's own signature.
+
 ## Commit an explicit list of files
 
 The working tree is shared with concurrent sessions. `git add` names files one by

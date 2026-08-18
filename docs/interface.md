@@ -79,12 +79,56 @@ names.
 A front page answers "what is there"; somebody who has been here before is
 asking "where was I", and that answer used to be two presses away behind an
 avatar in the corner. So for a reader with a past here the front page carries
-it: the lecture that was playing, and the three numbers that say whether the
-habit is alive — days in a row, hours this week, lectures this week — and, for
-anybody who has set one, how far into the week's goal that is. On a wide window
-it is a plate in the corner, on a narrower one a bar at the foot of the screen
-— where a thumb reaches it — and on the list view the first section of the
-page. A profile with nothing in it yet shows none of it.
+it: the lecture that was playing, what today has come to, and the numbers that
+say whether the habit is alive — days in a row, lectures this week, the hours
+of it where nothing else is already saying them — and, for anybody who has set
+one, how far into the week's goal that is. On a wide window it is a plate in
+the corner, on a narrower one a bar at the foot of the screen — where a thumb
+reaches it — and on the list view the first section of the page. A profile with
+nothing in it yet shows none of it.
+
+**Three horizons, and each of them said once.** A card in the corner of a map
+can carry three kinds of number and they answer three different questions, so
+each has one place on it and one job:
+
+| | The question | Where it stands |
+|---|---|---|
+| **The day** | what do I do now | under the offer, in the same block as the press that answers it |
+| **The week** | how is it going | the tiles and the bar under them |
+| **The recording** | how far into this one am I | the thin line inside the offer |
+
+The day is the only thing on the card that **asks** for anything — «Сегодня —
+25 из 45 минут · ещё 20 минут» — and it stands a line under «Продолжить»,
+because the ask and the press that answers it are one decision and were three
+screens apart. It is the same line the player shows between lectures, the same
+component reading the same log ([the player](#what-makes-a-long-recording-finishable)):
+there is one sentence about today in this product and two places it is needed.
+The week asks for nothing. It is the standing — a bar that already has
+something in it on a Monday evening is the reason the day's twenty minutes look
+worth doing, and a reader arriving at the site should be able to see both in
+one glance without being told off by either.
+
+What paid for the day's line is the hours tile. «1,8 из 4,5 ч» on the bar
+contains «1,8 часа за неделю» whole, and the tile was spending a third of the
+row to add the word «часа» — so where the bar is drawn the tile stands down,
+and where there is no goal it stays, being then the only place the week's hours
+are said. Three horizons, one line taller than nothing.
+
+Once the day is made the ask becomes the news — «День закрыт · 3 из 5 дней
+недели», accented — and once the week's days are all made it stops asking
+altogether: «Неделя выполнена · 5 из 5 дней». A goal of «45 минут, 5 дней» is a
+week with two days off written into it, and a line asking for a sixth would be
+the site handing out a target nobody set.
+
+**And the invitation, for the reader who has never set one.** The goal's slot
+is empty until there is a goal, and into it goes «Поставить цель» — but only
+once there are three days of study in the last four weeks, which is the same
+floor the pace uses before it will average anything. Under it there is no habit
+to describe, only a visit or two, and a target offered then is the debt the
+whole design refuses to hand out; above it the goal describes what somebody is
+already doing, and the control was three presses away behind an avatar. It
+opens the panel, where the choosing belongs, and the card's × puts it away with
+the rest of the card.
 
 The numbers are about the week in hand rather than about everything, and the
 week starts on Monday. A lifetime total is a monument, and a monument says
@@ -566,12 +610,20 @@ The rules, and where each is argued in full:
 |---|---|---|
 | The map | three continents ranged, fitted whole | a second drawing with them stacked, opening close in — [two shapes of paper](#two-shapes-of-paper) |
 | Map or list | a switch in the header | a thumb-sized switch floating at the foot of both views |
-| Where you were | a plate in the corner | a bar along the bottom, where a thumb reaches it |
+| Where you were | a plate in the corner | a bar along the bottom, where a thumb reaches it — the day as a ring round the run of days |
 | The catalogue | columns that scroll sideways | one column of rows, folded by difficulty |
 | A course | a panel beside the columns | a sheet over the list, dragged up for the whole card — [the course panel](#the-course-panel) |
 | Links and path | three sections, always open | folded into one **Связи и путь** line, and the fold is remembered |
 | Search | a field in the header | its own screen, full width and full height — [search](#search) |
 | The profile | a modal over the page | the same modal, the numbers in two columns instead of four |
+
+The bar has one row and no line to spend on a sentence, so the one thing it
+carries beyond the lecture is the disc at its end: the run of days, with today's
+goal drawn as a ring round it where there is one. A run is kept by closing
+today, so the two belong on the same mark rather than on two — and the bar is
+exactly as wide as it was before, the ring standing where the flame stands
+without a goal. What a ring cannot say it says in the label a screen reader
+reads out: «3 дня подряд · Сегодня — 25 из 45 минут».
 
 The header is the one place something has to give. On the map there is room for
 the wordmark and the search field itself; above the columns the row is a way
@@ -778,6 +830,20 @@ at every site.
   about the lecture that just ended. With no goal set it is the plain report it
   was — «Сегодня — 2 лекции, 1,5 часа» — and with nothing behind today it is
   the target on its own rather than a zero.
+
+  The same line stands on the front page's card, under «Продолжить» — one
+  component in two homes rather than two sentences about the same afternoon
+  that have to be kept in step. Two moments, one unit: the player is where "one
+  more lecture" is decided and the card is where "anything at all tonight" is
+  ([where you were](#where-you-were)).
+
+  It stops asking once the week's days are all made — «Неделя выполнена · 5 из
+  5 дней» — because a goal of «45 минут, 5 дней» is a week with two days off
+  written into it, and a line asking for a sixth is a target nobody set. And
+  both numbers on it are always in one unit, taken from the longer of the two:
+  a two-and-a-half-hour afternoon against a forty-five-minute day printed
+  «2,5 из 45 минут», which is arithmetically right and asks the reader to
+  convert one half of the comparison the line exists to make.
 - **Конец записи.** The last lecture of a long recording used to end the way one
   lecture ends: a checkbox went green. It is an event now — «Запись пройдена ·
   25 лекций · 3,4 ч» — and it carries the one reward this catalogue can hand
@@ -1024,6 +1090,15 @@ So it reads top to bottom as the routine it describes:
   numbers keep counting past the goal while they are at it: six hours against a
   target of five is the best week somebody has had, and rounding it to «5 из 5»
   would take that away to tidy an arithmetic nobody was confused by.
+
+  **Made means the days are made**, not the hours. What was chosen is «45 минут,
+  5 дней», and four and a half hours in two long Sundays is the hours of that
+  week without the habit in it — the word and the «2 из 5 дней закрыто» three
+  lines under it were contradicting each other, and a reader settles that kind of
+  pair by trusting neither. The bar keeps the hours and accents its own number
+  when they are in, which is a claim about the bar rather than about the week.
+  The days imply the hours and never the other way round, so a week that says
+  «выполнена» is never a week with an unfilled bar beside it.
 
   The mark on all of it is a target rather than a star. The star already means a
   favourite course — which is a goal of an entirely different kind, with its own

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
-import { useActivity, type Week } from '@/lib/activity';
+import { useActivity, useDayGoal, useWeekGoal, type DayGoal, type Week } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
 import { useResumeList, useResumeProgress, type ResumePointer } from '@/lib/progress';
 import { courseHref, useCourseSlice } from '@/lib/url';
@@ -9,9 +9,10 @@ import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from './Icon';
 import { CountTile } from './Facts';
+import TodayLine from './game/TodayLine';
 import { LectureThumb, ResumeCard, ResumeStepper, useResumeCarousel } from './ResumeCard';
 import { WeekGoalBar } from './WeekGoal';
-import { IconButton } from './ui';
+import { Button, IconButton } from './ui';
 
 /**
  * The profile, said in one card, on the front page.
@@ -122,6 +123,7 @@ function SummaryCard({
   const hideSummary = useUi((state) => state.hideSummary);
   const floating = variant === 'card';
   const { current: resume, index, count, prev, next } = useResumeCarousel(resumes);
+  const goal = useWeekGoal();
 
   return (
     <div
@@ -154,7 +156,21 @@ function SummaryCard({
       </div>
 
       <div className={floating ? 'space-y-2.5' : 'flex flex-col gap-3 sm:flex-row sm:items-center'}>
-        {resume ? <ResumeButton resume={resume} className={floating ? '' : 'sm:flex-1'} /> : null}
+        {/*
+          The offer and the day it belongs to, in one block, because they are
+          one decision. Everything else on this card is a report of what has
+          already happened; the day is the only thing on it that asks for
+          something, and the press that answers it is directly above — «ещё 20
+          минут» a line away from the lecture those twenty minutes are in. The
+          same line stands in the player, where the question is "one more
+          lecture" rather than "anything at all tonight". [game:today]
+        */}
+        <div className={`min-w-0 space-y-1 ${floating ? '' : 'sm:flex-1'}`}>
+          {resume ? <ResumeButton resume={resume} /> : null}
+          {/* Indented to the offer's own padding, so the sentence starts under
+              the word «Продолжить» rather than under the still beside it. */}
+          <TodayLine className="px-1" />
+        </div>
 
         <div className={`flex flex-col gap-2 ${floating ? '' : 'shrink-0'}`}>
           <div className="flex items-stretch gap-2">
@@ -166,7 +182,14 @@ function SummaryCard({
                 label={t('ui.profile.stats.streak', { noun: plural(streak, 'day') })}
               />
             ) : null}
-            <WeekTime seconds={week.seconds} />
+            {/* And only while the bar below is not already saying it. «1,8 из
+                4,5 ч» contains this tile whole — the tile adds the word «часа»
+                and takes a third of the row to do it. Without a goal there is
+                no bar and the tile is the only place the week's hours appear,
+                which is why it stays rather than moving. The line it frees is
+                what the day above is standing on: the card carries three
+                horizons and did not grow. */}
+            {goal ? null : <WeekTime seconds={week.seconds} />}
             <CountTile
               value={week.lectures}
               label={t('ui.profile.stats.week', { noun: plural(week.lectures, 'lecture') })}
@@ -175,8 +198,10 @@ function SummaryCard({
           {/* Nothing at all until a goal is set — see `WeekGoal`. The bar is
               the whole of it here: the choosing lives in the panel, and a card
               in the corner of a map is not where somebody decides how much
-              they mean to study this week. */}
+              they mean to study this week. One slot, and with no goal in it the
+              invitation below stands in the same place. */}
           <WeekGoalBar />
+          <GoalInvite />
         </div>
       </div>
     </div>
@@ -193,11 +218,12 @@ function SummaryCard({
  * one part of the bar that opens the panel.
  */
 function SummaryBar({ highlights, className }: { highlights: Highlights; className: string }) {
-  const { t, count, plural } = useT();
+  const { t, count, plural, span } = useT();
   const catalog = useCatalog();
   const { resume, week, streak } = highlights;
   const openProfile = useUi((state) => state.openProfile);
   const openResume = useOpenResume();
+  const day = useDayGoal();
 
   if (!resume) {
     return (
@@ -242,7 +268,7 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
           </span>
         </span>
       </button>
-      {streak ? (
+      {streak || day ? (
         <>
           <span className="plate-divider" aria-hidden="true" />
           <button
@@ -250,12 +276,29 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
             onClick={openProfile}
             // The whole sentence, not the caption: the tile's «{noun} подряд»
             // is written to stand under a number, and read out on its own it
-            // was announcing the word «{noun}».
-            aria-label={t('ui.home.streak', { n: streak, noun: plural(streak, 'day') })}
+            // was announcing the word «{noun}». The day joins it in words,
+            // because a ring is a shape and a shape reads out as nothing.
+            aria-label={[
+              streak ? t('ui.home.streak', { n: streak, noun: plural(streak, 'day') }) : null,
+              day
+                ? t('ui.game.todayOf', {
+                    done: span(day.done).value,
+                    target: span(day.seconds).text,
+                  })
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
             className="plate-disc num shrink-0 gap-0.5 px-2 text-xs"
           >
-            <Icon name="flame" size={12} />
-            {streak}
+            {/* The day takes the glyph's place rather than a place of its own.
+                There is one disc at the end of this bar and it is already the
+                thing about today — a run of days is kept by closing today —
+                so the ring goes round nothing and replaces the flame, and the
+                bar is exactly as wide as it was. Without a goal there is no
+                ring and the flame stays. */}
+            {day ? <DayRing goal={day} /> : <Icon name="flame" size={12} />}
+            {streak || null}
           </button>
         </>
       ) : null}
@@ -284,11 +327,105 @@ function ResumeButton({ resume, className = '' }: { resume: ResumePointer; class
 }
 
 
+/**
+ * «Поставить цель» — offered only to somebody who already has the habit it
+ * would describe.
+ *
+ * A goal is the one thing on these screens that is chosen rather than earned,
+ * and the standing rule is that nobody is handed one they did not ask for: a
+ * target set for a reader who came here to watch one lecture is a debt, and a
+ * debt is what makes people stop opening a panel. That argument is about
+ * *strangers*, though, and it has been quietly keeping the offer from the
+ * readers it is for — the goal lives three presses away behind an avatar, and
+ * a reader who has studied on eight evenings out of the last twenty-eight has
+ * shown what their week looks like without ever being asked to name it.
+ *
+ * So the invitation waits for the habit and then stands in the goal's own slot
+ * on the card. Three days is the same floor `useWeekPace` uses before it will
+ * average anything: under it there is no habit to describe, only a visit or
+ * two. It is one line, it opens the panel where the choosing belongs, and the
+ * card's × puts it away with everything else for the visit.
+ */
+const GOAL_INVITE_MIN_DAYS = 3;
+
+function GoalInvite() {
+  const { t } = useT();
+  const goal = useWeekGoal();
+  const activity = useActivity();
+  const openProfile = useUi((state) => state.openProfile);
+
+  const studied = activity.recent.filter((day) => day.studied).length;
+  if (goal || studied < GOAL_INVITE_MIN_DAYS) return null;
+
+  return (
+    /* A ghost is a word rather than a plate and carries no layout of its own,
+       so the mark in front of it needs one — the same shape the panel's own
+       «Поставить цель» has, since it is the same decision reached from a
+       different room. */
+    <Button
+      variant="ghost"
+      small
+      icon="target"
+      className="inline-flex items-center gap-1.5"
+      onClick={openProfile}
+    >
+      {t('ui.profile.goal.set')}
+    </Button>
+  );
+}
+
 /** The week's time, in whatever unit it is actually in — minutes early on, hours later. */
 function WeekTime({ seconds }: { seconds: number }) {
   const { t, span } = useT();
   const { value, noun } = span(seconds);
   return <CountTile value={value} label={t('ui.profile.stats.week', { noun })} />;
+}
+
+/**
+ * Today's goal as a ring, at the size of a glyph.
+ *
+ * The narrow bar is one row at the foot of a phone and has no line to spend on
+ * a sentence, but the one thing worth carrying there is the same thing the
+ * card carries: whether today is still open. A ring says that without a word
+ * and in the space the flame was using.
+ *
+ * `currentColor` for the track, so it is the button's own ink in both themes
+ * and needs no palette of its own; the accent only on the part that is done.
+ * A zero-length arc gets a square cap, because a round one at length nought
+ * draws a dot — a reader who has watched nothing today would see a mark saying
+ * they had.
+ */
+function DayRing({ goal }: { goal: DayGoal }) {
+  const radius = 5;
+  const circumference = 2 * Math.PI * radius;
+
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="shrink-0">
+      <circle
+        cx="6"
+        cy="6"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity="0.3"
+        strokeWidth="1.5"
+      />
+      <circle
+        cx="6"
+        cy="6"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap={goal.fraction > 0 ? 'round' : 'butt'}
+        strokeDasharray={`${circumference * goal.fraction} ${circumference}`}
+        // From the top rather than from three o'clock: a ring that fills from
+        // the side is read as a pie chart of something.
+        transform="rotate(-90 6 6)"
+        className="text-accent"
+      />
+    </svg>
+  );
 }
 
 /** Back into the playlist that was open, with its own field behind it. */

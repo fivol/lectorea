@@ -194,7 +194,25 @@ export type WeekGoal = {
   done: number;
   /** 0..1, never past 1: a bar that overflows is a bar that has stopped meaning anything. */
   fraction: number;
+  /**
+   * The goal as it was actually set: **the days are made.**
+   *
+   * A goal here is «45 минут, 5 дней в неделю», and a week that holds four and
+   * a half hours in two long Sundays is not the week that was asked for — it is
+   * the hours of it without the habit. Counting the hours instead made
+   * «выполнена» and «2 из 5 дней закрыто» stand one line apart contradicting
+   * each other, which is the sort of pair a reader resolves by believing
+   * neither. So the word belongs to the days, and the hours keep the bar.
+   */
   met: boolean;
+  /**
+   * The bar's own reading: the hours are in, whatever shape the days came in.
+   *
+   * The bar is drawn and labelled in hours, so its number is entitled to say
+   * when it has reached its own target — that is a fact about the bar and not
+   * a claim about the week.
+   */
+  hoursMet: boolean;
   /** Days of study the week is meant to hold, and how many of them are made. */
   days: number;
   closed: number;
@@ -241,7 +259,8 @@ export function useWeekGoal(): WeekGoal | null {
       hours: target / 3600,
       done: hoursFromSeconds(activity.week.seconds),
       fraction: Math.min(1, activity.week.seconds / target),
-      met: activity.week.seconds >= target,
+      met: closed >= pair.days,
+      hoursMet: activity.week.seconds >= target,
       days: pair.days,
       closed,
     };

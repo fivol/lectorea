@@ -268,6 +268,7 @@
   "ui.game.dayLeft": "ещё {time}",
   "ui.game.dayTarget": "Цель дня — {time}",
   "ui.game.dayMet": "День закрыт · {closed} из {days} дней недели",
+  "ui.game.weekMet": "Неделя выполнена · {closed} из {days} дней",
   "ui.game.milestone": "До вехи — {lectures}, {time}",
   "ui.game.segment": "Веха {n} из {total}",
   "ui.game.segmentSize": "{lectures} · {time}",

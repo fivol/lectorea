@@ -53,6 +53,13 @@ export function WeekGoalBar({ className = '' }: { className?: string }) {
  * The two screens say it the same way, at two sizes. A week that has been made
  * says so in a word — a full bar is a fact somebody has to read off a shape,
  * and «выполнена» is the one thing worth saying out loud on the day it happens.
+ *
+ * Made means **the days are made**, not the hours. A goal here is «45 минут, 5
+ * дней в неделю», and four and a half hours in two long Sundays is the hours of
+ * that week without the habit in it: the word and the «2 из 5 дней закрыто»
+ * three lines below were contradicting each other, and a reader settles that
+ * kind of pair by trusting neither. The hours keep the bar and its number —
+ * see `GoalBar`, which accents its own label on its own reading.
  */
 function GoalName({
   goal,
@@ -130,10 +137,16 @@ function GoalBar({ goal, className = '' }: { goal: WeekGoal; className?: string 
        * The label keeps counting past the goal. A week of six hours against a
        * target of five is the best week somebody has had, and rounding it down
        * to «5 из 5» would take that away to tidy up an arithmetic that nobody
-       * was confused by. Accented once it is made: the bar is full and green,
-       * and the number beside it should be saying the same thing.
+       * was confused by. Accented once the hours are in: the bar is full and
+       * green, and the number beside it should be saying the same thing.
+       *
+       * The hours rather than the days, which is what «выполнена» above is
+       * about. This is the bar's own claim about its own number, and a full
+       * green bar beside a quiet grey number would be the same contradiction
+       * the other way round: whether the week was the week that was planned is
+       * a different sentence, and it is written in words.
        */
-      label={goal.met ? <span className="text-accent">{label}</span> : label}
+      label={goal.hoursMet ? <span className="text-accent">{label}</span> : label}
     />
   );
 }

@@ -12,6 +12,14 @@ import { GAME, useDayLeft, useToday } from '@/lib/gamification';
  * after one ends, with the player still open. «Ещё 20 минут» is a different
  * sentence there than it is three screens away.
  *
+ * Two homes, one line. The player is where "one more lecture" is decided and
+ * the front page's card is where "anything at all tonight" is, and both are
+ * questions about the next twenty minutes. Rendering the same component in
+ * both is what makes it impossible for the two screens to say different things
+ * about the same afternoon — the fact keeps its source when it moves, which is
+ * the half of these moves that usually goes wrong
+ * (`practices.md`, «a strip that narrates the current row»).
+ *
  * The day rather than the week, and that is the whole reason the goal is
  * stored as a day: «осталось 3,5 часа до цели недели» is true, unactionable
  * and faintly depressing at eleven at night, while «25 из 45 минут» is a
@@ -37,6 +45,15 @@ function Line({ className }: { className: string }) {
   if (!studiedToday && !day) return null;
 
   /*
+   * One unit for the whole line, taken from the longer of the two stretches on
+   * it. A goal of 45 minutes read against an afternoon of two and a half hours
+   * printed «Сегодня — 2,5 из 45 минут» — arithmetically right, and the pair
+   * the sentence exists to compare is in two different units. The same rule the
+   * week's bar follows for «45 минут из 5 часов».
+   */
+  const scale = day ? Math.max(today.seconds, day.target) : today.seconds;
+
+  /*
    * With a goal the day is a position — «Сегодня — 25 из 45 минут» — and
    * without one it is a report of what happened. The same slot either way: a
    * goal turns the number into a fraction of something, it does not add a
@@ -44,8 +61,8 @@ function Line({ className }: { className: string }) {
    */
   const todayText = day
     ? t('ui.game.todayOf', {
-        done: span(today.seconds).value,
-        target: span(day.target).text,
+        done: span(today.seconds, scale).value,
+        target: span(day.target, scale).text,
       })
     : today.lectures
       ? t('ui.game.today', {
@@ -64,14 +81,21 @@ function Line({ className }: { className: string }) {
     ? null
     : day.met
       ? t('ui.game.dayMet', { closed: day.closed, days: day.days })
-      : studiedToday
-        ? // «Сегодня — 25 из 45 минут · ещё 20 минут». The unit is already on
-          // the line in front of it and the word «цель» is what «из 45» means.
-          t('ui.game.dayLeft', { time: span(day.seconds).text })
-        : // With nothing behind today the remainder is the whole target, and
-          // on its own it needs saying what it is a remainder of. «0 из 45» is
-          // the alternative, and a zero over somebody's morning is a scolding.
-          t('ui.game.dayTarget', { time: span(day.seconds).text });
+      : day.weekMet
+        ? // The days of the week are all made and today is not one of them —
+          // which is a rest day, not a shortfall. A goal of «45 минут, 5 дней»
+          // is a week with two days off written into it, and a line asking for
+          // a sixth would be the site handing out a target nobody set. So the
+          // ask goes and the standing is what is left to say.
+          t('ui.game.weekMet', { closed: day.closed, days: day.days })
+        : studiedToday
+          ? // «Сегодня — 25 из 45 минут · ещё 20 минут». The unit is already on
+            // the line in front of it and the word «цель» is what «из 45» means.
+            t('ui.game.dayLeft', { time: span(day.seconds, scale).text })
+          : // With nothing behind today the remainder is the whole target, and
+            // on its own it needs saying what it is a remainder of. «0 из 45» is
+            // the alternative, and a zero over somebody's morning is a scolding.
+            t('ui.game.dayTarget', { time: span(day.seconds).text });
 
   /*
    * One string rather than two spans with a separator between them.
@@ -82,14 +106,13 @@ function Line({ className }: { className: string }) {
    * any other word does. Both halves keep their capital for the same reason:
    * either can be the only one on the line.
    *
-   * The accent is for the whole line when the week is made, which is the one
-   * piece of news here: elsewhere it is a report, and a report is quiet.
+   * The accent is for the whole line when a day or a week is made, which is the
+   * only news here: elsewhere it is a report, and a report is quiet.
    */
   const line = [studiedToday ? todayText : null, goalText].filter(Boolean).join(' · ');
+  const news = Boolean(day?.met || day?.weekMet);
 
   return (
-    <p className={`num text-[11px] ${day?.met ? 'text-accent' : 'ink-soft'} ${className}`}>
-      {line}
-    </p>
+    <p className={`num text-[11px] ${news ? 'text-accent' : 'ink-soft'} ${className}`}>{line}</p>
   );
 }

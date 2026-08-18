@@ -22,7 +22,7 @@ import { localDay, useProfile } from '@/store/profile';
  *
  * | Flag | Tag | What it is | Where it renders |
  * |---|---|---|---|
- * | `today` | `[game:today]` | the session said in numbers, and what is left of the week's goal | the player's progress header |
+ * | `today` | `[game:today]` | the session said in numbers, and what is left of the day's goal | the player's progress header, and the front page's card |
  * | `milestones` | `[game:milestones]` | a long recording cut into stages of about three hours | the lecture list, and a line over it |
  * | `audience` | `[game:audience]` | where the rest of the audience stopped, and how far past them you are | the lecture list, and a line over it |
  * | `finish` | `[game:finish]` | the end of a recording as an event, and the courses it opened | the foot of the player sidebar |
@@ -61,7 +61,15 @@ export const GAME = {
  * actually gets made. Nobody decides whether to watch one more lecture while
  * looking at the map; they decide it on the titles of the one that just
  * finished. So the two numbers travel to the player: what today came to, and
- * what is left of the week.
+ * what is left of it.
+ *
+ * And to the front page's card, which is where the *other* decision is made —
+ * not "one more lecture" but "anything at all this evening". Both are
+ * decisions about the next twenty minutes, which is what the day is the unit
+ * of; the week says how it is going and asks for nothing. The line is one
+ * component in two homes rather than two lines that have to be kept in step,
+ * so what the card says and what the player says can never disagree
+ * (`TodayLine`).
  *
  * Both are already in `profile.days` — see `credit()` in the store, which is
  * what makes them trustworthy: the log is written by the acts that mean
@@ -89,6 +97,15 @@ export type DayLeft = {
   /** What today was aimed at, so the line can print «25 из 45 минут». */
   target: number;
   met: boolean;
+  /**
+   * And whether the *week* is already made — its days closed, not its hours.
+   *
+   * A goal of «45 минут, 5 дней» is a week with two days off in it. Once the
+   * five are behind the reader, a sixth is not owed, and a line asking for one
+   * is the site inventing a target nobody set: a rest day is a day this goal
+   * was written to allow. So the ask goes quiet and the news stays.
+   */
+  weekMet: boolean;
   /** Days of the week made so far, out of how many were meant — only once met. */
   closed: number;
   days: number;
@@ -117,6 +134,7 @@ export function useDayLeft(): DayLeft | null {
       seconds: Math.max(0, day.seconds - day.done),
       target: day.seconds,
       met: day.met,
+      weekMet: week.met,
       closed: week.closed,
       days: week.days,
     };
