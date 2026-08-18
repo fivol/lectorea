@@ -150,6 +150,12 @@ time that month's data cannot be recovered. `ga4:setup` reads the registry in
 turns Google signals off and sets retention to fourteen months, because two
 months cannot answer whether a course opened last autumn is still opened.
 
+The property is `properties/550301710`, which `--property=` takes directly and
+saves the three round trips it otherwise costs to find the stream. A label GA4
+refuses — it allows letters, digits, underscores and spaces and nothing else,
+which «Watched %» found out — is reported and the run carries on, because one
+name being wrong is not a reason to leave the other thirty unregistered.
+
 So the rule is one line: **an event is added to `shared/analytics.ts` first**,
 and `pnpm ga4:setup --apply` is run before it ships. In development the console
 warns about any event or parameter that is not in the registry, which is the

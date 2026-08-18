@@ -31,7 +31,11 @@ export type ParamScope = 'dimension' | 'metric';
 
 export type ParamSpec = {
   scope: ParamScope;
-  /** What it is called in a report. Must be unique across the property. */
+  /**
+   * What it is called in a report. Must be unique across the property, and
+   * **letters, digits, underscores and spaces only** — GA4 refuses the rest,
+   * which «Watched %» found out on the first run.
+   */
   label: string;
   note: string;
 };
@@ -94,7 +98,11 @@ export const ANALYTICS_PARAMS: Record<string, ParamSpec> = {
   lectures: { scope: 'metric', label: 'Lectures', note: 'How many lectures the playlist holds' },
   courses: { scope: 'metric', label: 'Courses in profile', note: 'Size of an imported profile' },
   count: { scope: 'metric', label: 'Lectures marked', note: 'How many marks the press actually moved' },
-  video_percent: { scope: 'metric', label: 'Watched %', note: 'Milestone reached: 10, 25, 50, 75, 90' },
+  video_percent: {
+    scope: 'metric',
+    label: 'Watched percent',
+    note: 'Milestone reached: 10, 25, 50, 75, 90',
+  },
   results: { scope: 'metric', label: 'Results', note: 'How many hits the query returned' },
 };
 
