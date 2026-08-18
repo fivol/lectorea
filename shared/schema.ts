@@ -657,6 +657,29 @@ export const ProfileSchema = z.object({
       // no longer ships would otherwise fail the whole parse and be read as
       // corrupt, losing every mark in it over one string.
       lang: UiLang.catch('ru'),
+      /**
+       * Which languages the playlist filter asks for, or `null` for "never
+       * said".
+       *
+       * The two are different answers and the difference is the whole point of
+       * the field. Unanswered means the filter starts on the language of the
+       * page, which is the right guess for somebody reading the Russian site
+       * and the right guess again for somebody reading the English one.
+       * Answered means it starts where they put it — **including an empty
+       * list**, which is somebody saying "show me everything, I do not care
+       * what it is in", and which no `[]`-means-default scheme can tell from
+       * silence.
+       *
+       * Stored rather than kept for the session because the alternative was
+       * the filter quietly reappearing on the next course opened, which is the
+       * one thing a filter must not do: it makes a reader who cleared it
+       * believe they are seeing everything.
+       *
+       * `catch` like every other field here, so a value written by a build that
+       * offered a third language cannot fail the parse and cost the reader
+       * their progress over a string.
+       */
+      playlistLangs: z.array(z.string()).nullable().catch(null),
       theme: z.enum(['auto', 'light', 'dark']).default('auto'),
       splitRatio: z.number().min(0.3).max(0.8).default(0.62),
       /**
@@ -769,6 +792,28 @@ export const ProfileSchema = z.object({
        * What the switch actually does is in `src/lib/analytics.ts`.
        */
       analytics: z.boolean().catch(true),
+      /**
+       * The pomodoro, in the four numbers it is cut by: how long a session
+       * runs, how long the gap between two is, how many sessions stand before
+       * the long rest, and how long that one is.
+       *
+       * Four flat fields rather than one object, like `dayGoal`/`goalDays`
+       * above and for the same reason: every one of them is `catch`-guarded on
+       * its own, so a profile written before this existed — or one carrying a
+       * number a later build stops offering — loses that one setting and not
+       * the three beside it. A nested object fails as a whole.
+       *
+       * They are stored because a reader who has decided that a session is
+       * fifty minutes has decided it for the term, and re-choosing it at the
+       * top of every evening is the tax that makes a control not worth having.
+       * Nothing here starts a timer: the numbers wait until somebody presses
+       * play on one, which is the difference between a setting and a target —
+       * see `src/lib/pomodoro.ts`.
+       */
+      pomodoroFocus: z.number().int().min(5).max(180).catch(25),
+      pomodoroBreak: z.number().int().min(1).max(60).catch(5),
+      pomodoroEvery: z.number().int().min(1).max(12).catch(4),
+      pomodoroLong: z.number().int().min(1).max(120).catch(20),
     })
     .default({
       lang: 'ru',
@@ -868,6 +913,27 @@ export function migrateProfile(raw: unknown): unknown {
 export const DAY_GOALS = [15, 30, 45, 60, 90, 120] as const;
 /** And days a week. Two is a habit; one is a lecture with a date on it. */
 export const GOAL_DAYS = [2, 3, 4, 5, 6, 7] as const;
+
+/**
+ * The four ladders the pomodoro is set on.
+ *
+ * Ladders rather than free numbers, for the reason the day's goal is one: the
+ * decision is «about half an hour», not «twenty-seven minutes», and a field
+ * that accepts any integer asks for a precision nobody has. They widen as they
+ * go, like a volume knob.
+ *
+ * The lengths are the classic ones stretched a little upwards, because a
+ * lecture is not a task list: the recording in the frame runs 42 minutes at the
+ * median, and a session that has to be interrupted in the middle of one is a
+ * timer fighting the thing it is timing. Twenty-five stays the default all the
+ * same — it is what somebody who says «помодоро» means, and the ladder is one
+ * press wide.
+ */
+export const POMODORO_FOCUS = [15, 25, 30, 45, 60] as const;
+export const POMODORO_BREAK = [3, 5, 10, 15] as const;
+/** Sessions before the long rest. One would make every break the long one. */
+export const POMODORO_EVERY = [2, 3, 4, 5] as const;
+export const POMODORO_LONG = [10, 15, 20, 30] as const;
 
 /**
  * The offered pair whose week comes nearest to a week somebody already chose.

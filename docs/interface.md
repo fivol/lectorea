@@ -588,12 +588,24 @@ inside it; here the shard is in hand, so the offer is the lecture itself.
   renumbers somebody's course.
 
   Filter by language, provider, lecturer, type, lecture
-  length, captions, year, completeness; hide what you have watched. The language
-  filter starts on the language of the interface and stays there even for a
+  length, captions, year, completeness; hide what you have watched.
+
+  The language filter starts on the language of the page — the Russian site
+  opens on Russian, the English one on English — and stays there even for a
   course that has nothing in it: rather than quietly dropping the filter, the
   list says there is nothing in that language and shows the other languages
   underneath, so «no Russian lectures on this at all» is something you learn
-  instead of something you infer. The filters
+  instead of something you infer.
+
+  Once you move it, that is where it starts from then on, on this course and on
+  every course after it — **including when you clear it**. The two are different
+  answers and the profile keeps them apart: never touched is a guess the site is
+  making, and an empty filter is somebody saying they do not care what the
+  lecture is in. A filter that re-seeded itself on the next course would tell
+  the reader who cleared it that they are seeing everything while it hides half
+  the catalogue from them, which is the one thing a filter must never do.
+
+  The filters
   sit in one strip that scrolls sideways, ordered by how often they are reached
   for, and the button at its end unfolds the lot; sorting has its own row,
   because at the end of that strip it read as one more filter. The provider and

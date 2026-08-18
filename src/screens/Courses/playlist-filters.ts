@@ -48,17 +48,27 @@ export const EMPTY_FILTERS: PlaylistFilterState = {
 export const LANG_LABELS: Record<string, string> = { ru: 'Русский', en: 'English' };
 
 /**
- * The language filter starts on the language the interface is in, and stays on
- * it even for a course that has nothing in that language.
+ * Where the language filter starts, and it is a question with two answers.
  *
- * Dropping the filter in that case used to keep the list from looking empty,
- * but it also hid the fact that there is not a single recording in your
- * language — the list simply appeared, in English, with no filter to explain
- * it. The list now says so itself and shows the other languages underneath
- * (see PlaylistList), so the filter can stay where the user put it.
+ * If the reader has never touched it, the page's own language is the guess —
+ * right for somebody reading the Russian site and right again for somebody
+ * reading the English one. If they have, that is what it starts on, **empty
+ * included**: clearing the filter is an answer ("show me everything"), not the
+ * absence of one, and `profile.settings.playlistLangs` keeps `null` apart from
+ * `[]` precisely so the two cannot be confused.
+ *
+ * That distinction is the whole feature. A filter that re-seeds itself on the
+ * next course opened tells a reader who cleared it that they are seeing
+ * everything while it quietly hides half the catalogue from them.
+ *
+ * The filter also stays on for a course that has nothing in the chosen
+ * language. Dropping it there used to keep the list from looking empty, and it
+ * hid the fact that there is not a single recording in your language — the
+ * list simply appeared, in English, with no filter to explain it. The list now
+ * says so itself and shows the other languages underneath (see PlaylistList).
  */
-export function defaultFilters(lang: string): PlaylistFilterState {
-  return { ...EMPTY_FILTERS, langs: [lang] };
+export function defaultFilters(lang: string, chosen: string[] | null = null): PlaylistFilterState {
+  return { ...EMPTY_FILTERS, langs: chosen ?? [lang] };
 }
 
 /** «Русский, English» — what the filter is currently asking for, in one line. */

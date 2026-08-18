@@ -35,8 +35,19 @@ export default function PlaylistList({ course }: Props) {
   const profile = useProfile((state) => state.profile);
   const params = useCatalogParams();
 
+  /**
+   * The reader's own answer about which languages they want, or `null` if they
+   * have never given one — see `defaultFilters`. Held in the profile rather
+   * than in this component because the question it answers outlives the panel:
+   * it is about them, not about the course that happens to be open.
+   */
+  const chosenLangs = useProfile((state) => state.profile.settings.playlistLangs);
+  const setSetting = useProfile((state) => state.setSetting);
+
   const [playlists, setPlaylists] = useState<BuiltPlaylist[] | null>(null);
-  const [filters, setFilters] = useState<PlaylistFilterState>(() => defaultFilters(lang));
+  const [filters, setFilters] = useState<PlaylistFilterState>(() =>
+    defaultFilters(lang, chosenLangs)
+  );
   const [sort, setSort] = useState<SortKey>('rating');
   /**
    * Whether a course cut into parts is drawn as one thing. On by default and
@@ -58,19 +69,39 @@ export default function PlaylistList({ course }: Props) {
   const filtersBefore = useRef(filters);
   useEffect(() => {
     reportFilters(filtersBefore.current, filters);
+    /*
+     * And the language, written down where the next course will find it.
+     *
+     * Kept here, beside the diff that already knows what moved, rather than in
+     * the language dropdown: the same state is set from the dropdown, from the
+     * reset button and from the chip's own cross, and a rule repeated at three
+     * controls is a rule that will be missing from the fourth. Seeding on a
+     * course change writes the value it just read, so it cannot fire — only a
+     * real change reaches this.
+     */
+    if (filtersBefore.current.langs.join(',') !== filters.langs.join(',')) {
+      setSetting('playlistLangs', filters.langs);
+    }
     filtersBefore.current = filters;
-  }, [filters]);
+  }, [filters, setSetting]);
 
-  // The interface language is the starting point, not a leash: opening another
-  // course starts from it again, but switching the header toggle leaves an open
-  // panel's filters alone — they are the user's, and the chip says which.
-  const langRef = useRef(lang);
-  langRef.current = lang;
+  /*
+   * What the next course opens on, kept in a ref so that reading it is not a
+   * reason to re-seed.
+   *
+   * The page's language is the starting point and not a leash: opening another
+   * course starts from it again, but only until the reader has said otherwise,
+   * and after that their answer is what a new course starts on. Switching the
+   * header toggle leaves an open panel's filters alone either way — they are
+   * the reader's, and the chip says which.
+   */
+  const seedRef = useRef({ lang, chosenLangs });
+  seedRef.current = { lang, chosenLangs };
 
   useEffect(() => {
     let cancelled = false;
     setPlaylists(null);
-    setFilters(defaultFilters(langRef.current));
+    setFilters(defaultFilters(seedRef.current.lang, seedRef.current.chosenLangs));
     loadPlaylistsCached(course.id).then((loaded) => {
       if (cancelled) return;
       setPlaylists(loaded);
@@ -232,7 +263,10 @@ export default function PlaylistList({ course }: Props) {
           onSortChange={setSort}
           grouped={grouped}
           onGroupedChange={setGrouped}
-          onReset={() => setFilters(defaultFilters(lang))}
+          // Back to where this panel would have opened, which after an answer
+          // is that answer — resetting to the page's language instead would
+          // overwrite it, and the reader would have to give it again.
+          onReset={() => setFilters(defaultFilters(lang, chosenLangs))}
         />
       ) : null}
 
