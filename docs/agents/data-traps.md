@@ -480,8 +480,10 @@ tail of the one before — with per-word timing tags inside every line:
 | 10-minute lecture | 43 KB | 5.7 KB |
 | 87-minute lecture | **780 KB** | 144 KB, 2000 lines |
 
-A ±2 minute window around a timecode is about **7 KB**, which is the size worth
-handing anybody. Never pass a raw VTT of a long lecture to a model.
+A 2-minute window is about **7 KB**, which is the size worth handing anybody —
+and it is taken *behind* the timecode rather than around it, because the reader
+has not seen what comes after. Never pass a raw VTT of a long lecture to a
+model.
 
 ### Why this is not in the pipeline
 

@@ -19,6 +19,7 @@ import { useProfile, type WatchContext } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import Icon from '@/components/Icon';
 import ProgressBar from '@/components/ProgressBar';
+import Tooltip from '@/components/Tooltip';
 import { FactTile, FactTiles, Meter } from '@/components/Facts';
 import AudienceLine from '@/components/game/Audience';
 import FinishCard from '@/components/game/FinishCard';
@@ -554,30 +555,33 @@ export default function PlaylistModal({
                     said they have a question is about to go and write one, and
                     a player left running answers it four minutes further on. */}
                 {shownVideo ? (
-                  <CopyButton
-                    variant="ghost"
-                    className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full
-                               px-2 py-1 text-[11px] leading-none"
-                    idleIcon="help"
-                    iconSize={13}
-                    title={t('ui.player.askHint')}
-                    onPress={() => command(frame, 'pauseVideo')}
-                    text={() =>
-                      lecturePrompt({
-                        playlist,
-                        video: shownVideo,
-                        index: shownIndex,
-                        // The playhead is written down every few seconds rather
-                        // than on every frame, so this is a moment ago at worst
-                        // — well inside the window the prompt asks about.
-                        sec: at?.id === shownVideo.id ? at.sec : 0,
-                        catalog,
-                        t: translator,
-                      })
-                    }
-                  >
-                    {t('ui.player.ask')}
-                  </CopyButton>
+                  <Tooltip content={t('ui.player.askHint')}>
+                    <span className="ml-auto inline-flex shrink-0">
+                      <CopyButton
+                        variant="ghost"
+                        className="inline-flex items-center gap-1.5 rounded-full
+                                   px-2 py-1 text-[11px] leading-none"
+                        idleIcon="help"
+                        iconSize={13}
+                        onPress={() => command(frame, 'pauseVideo')}
+                        text={() =>
+                          lecturePrompt({
+                            playlist,
+                            video: shownVideo,
+                            index: shownIndex,
+                            // The playhead is written down every few seconds rather
+                            // than on every frame, so this is a moment ago at worst
+                            // — well inside the window the prompt asks about.
+                            sec: at?.id === shownVideo.id ? at.sec : 0,
+                            catalog,
+                            t: translator,
+                          })
+                        }
+                      >
+                        {t('ui.player.ask')}
+                      </CopyButton>
+                    </span>
+                  </Tooltip>
                 ) : null}
                 <IconButton
                   className={shownVideo ? '' : 'ml-auto'}

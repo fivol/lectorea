@@ -28,12 +28,19 @@ import { momentUrl } from '@/lib/youtube';
  * most of them: the last line says so, because an assistant that quietly
  * invents the content of a lecture it never saw is worse than one that says it
  * could not look.
+ *
+ * **Everything past the playhead is unseen, and the prompt says so once.** The
+ * reader has watched up to this second and no further, so an answer resting on
+ * the next twenty minutes answers a question they have not reached yet and
+ * spoils the lecture on the way. That is why the transcript is asked for
+ * *behind* the moment rather than around it, and why the rule is written as its
+ * own line: it governs the whole answer, not only which minutes get read.
  */
 
 /** Prerequisites worth naming before the line stops being read. */
 const DEPS_SHOWN = 4;
 
-/** How much of the lecture around the playhead the question is likely about. */
+/** How much of the lecture *before* the playhead the question is likely about. */
 const WINDOW_MIN = 2;
 
 export type LecturePromptInput = {
@@ -104,6 +111,7 @@ export function lecturePrompt({
       title: video.title,
     }),
     t('ui.ask.moment', { time, duration: formatDuration(video.seconds), url }),
+    t('ui.ask.sofar'),
     '',
     t('ui.ask.subs'),
     t('ui.ask.command', { langs: subLangs(playlist), url: source }),

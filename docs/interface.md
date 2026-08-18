@@ -855,6 +855,17 @@ itself is typed wherever the prompt is pasted. It is the same move as «Скоп
 промпт» in the profile — the site knows things an assistant cannot guess, and
 the clipboard is the only channel to an assistant this site does not host.
 
+**Everything past the playhead is unseen, and the prompt says so.** The reader
+has watched up to this second and no further, so an answer resting on the next
+twenty minutes answers a question they have not reached and spoils the lecture
+on the way there. One line states it, and it governs the whole answer rather
+than only the transcript — which is also why the minutes asked for are the two
+*behind* the moment, not two either side of it.
+
+The hint is the kit's own bubble and not a `title`: the browser's tooltip
+arrives after a second, is unstyled, never shows on keyboard focus and does not
+exist on touch.
+
 **What it deliberately does not carry is the subtitles**, because a page cannot
 have them. YouTube's `timedtext` answers a browser with an empty `200`, and so
 does the signed URL out of the watch page — both want a proof-of-origin token
