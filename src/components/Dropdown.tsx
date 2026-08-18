@@ -36,6 +36,24 @@ type Props = {
   align?: 'left' | 'right';
   className?: string;
   /**
+   * Something other than a chip to open it with.
+   *
+   * The filters are chips and want to stay chips; the strip under a running
+   * lecture is the one place that cannot have one, because a plate there
+   * shouts over the video — which is the whole argument `PlayerSpeed` is
+   * written from. What the popover is worth reusing for is everything below
+   * the trigger: the portal, the placement that follows a scrolling anchor,
+   * and the `Escape` that closes the menu **without** closing the modal
+   * underneath it.
+   */
+  trigger?: (state: { open: boolean; toggle: () => void }) => ReactNode;
+  /**
+   * A wider panel, where the rows are controls rather than a list of names.
+   * Both the measurement and the box take it, or the panel is placed for one
+   * width and drawn at another — and lands half off a narrow window.
+   */
+  width?: number;
+  /**
    * Turns on a filter field above the list. The caller owns the query and does
    * the filtering — the popover has no idea what its children are, and a list
    * long enough to need searching always knows how it wants to be matched.
@@ -67,6 +85,8 @@ export default function Dropdown({
   children,
   align = 'left',
   className = '',
+  trigger,
+  width = POPOVER_WIDTH,
   search,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -95,9 +115,9 @@ export default function Dropdown({
   useLayoutEffect(() => {
     if (!open) return;
     const measure = (): void => {
-      const trigger = ref.current?.getBoundingClientRect();
-      if (!trigger) return;
-      const next = placeBy(trigger, align, POPOVER_WIDTH);
+      const anchor = ref.current?.getBoundingClientRect();
+      if (!anchor) return;
+      const next = placeBy(anchor, align, width);
       setPlace((prev) => (samePlace(prev, next) ? prev : next));
     };
     measure();
@@ -111,7 +131,7 @@ export default function Dropdown({
       window.removeEventListener('resize', measure);
       document.removeEventListener('scroll', measure, true);
     };
-  }, [open, align]);
+  }, [open, align, width]);
 
   useEffect(() => {
     if (!open) return;
@@ -143,21 +163,27 @@ export default function Dropdown({
       {/* No dot beside the label: the chip already changes colour when it holds
           a value, and what that value *is* is spelled out in the removable
           chips below — so the dot repeated a signal twice and crowded the row. */}
-      <Chip on={active} onClick={() => (open ? close() : setOpen(true))} ariaExpanded={open}>
-        {label}
-        <Icon name="chevron-down" size={12} />
-      </Chip>
+      {trigger ? (
+        trigger({ open, toggle: () => (open ? close() : setOpen(true)) })
+      ) : (
+        <Chip on={active} onClick={() => (open ? close() : setOpen(true))} ariaExpanded={open}>
+          {label}
+          <Icon name="chevron-down" size={12} />
+        </Chip>
+      )}
       {open
         ? createPortal(
             <div
               ref={popoverRef}
               style={{
                 ...place,
+                width,
                 maxHeight: Math.min(place.maxHeight ?? POPOVER_HEIGHT, POPOVER_HEIGHT),
                 transformOrigin: place.bottom ? 'bottom' : 'top',
               }}
-              className="fixed z-50 flex w-60 flex-col overflow-hidden animate-pop-in rounded-pop
-                         border border-line bg-surface shadow-[var(--shadow-pop)]"
+              className="fixed z-50 flex max-w-[calc(100vw-1rem)] flex-col overflow-hidden
+                         animate-pop-in rounded-pop border border-line bg-surface
+                         shadow-[var(--shadow-pop)]"
             >
               {search ? (
                 <div className="shrink-0 border-b border-line p-2">

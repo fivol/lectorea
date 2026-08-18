@@ -80,6 +80,11 @@ missed.
    into it you are, the way to the next one and a button to mark it off — so a
    whole course can be worked through without ever opening YouTube.
 
+   There is a pomodoro in that strip too, set to whatever lengths you study in.
+   When the session runs out it pauses the lecture and puts the rest on the
+   screen; when the rest runs out it chimes, and the lecture starts again on the
+   same press that starts the next session.
+
    ![A recording open in the player, its lectures ticked off](docs/images/lectures.webp)
 
 ## What is in it

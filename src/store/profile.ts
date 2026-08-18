@@ -272,6 +272,14 @@ const TRACKED_SETTINGS = new Set([
   'dayGoal',
   'goalDays',
   'analytics',
+  // The four lengths a pomodoro is cut by. Worth a line each for the reason the
+  // goal is: a ladder is a guess about what people would choose, and the only
+  // way to find out whether the middle rung is the one anybody wants is to ask
+  // what they actually moved it to.
+  'pomodoroFocus',
+  'pomodoroBreak',
+  'pomodoroEvery',
+  'pomodoroLong',
 ]);
 
 /**

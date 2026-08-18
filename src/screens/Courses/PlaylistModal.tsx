@@ -12,6 +12,7 @@ import { track, watchProgress } from '@/lib/analytics';
 import { useCatalog } from '@/lib/catalog';
 import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
 import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
+import { usePomodoro } from '@/lib/pomodoro';
 import { percent, playlistProgress } from '@/lib/progress';
 import { courseHref, useCatalogParams } from '@/lib/url';
 import { lecturePrompt } from '@/lib/lecture-prompt';
@@ -30,6 +31,7 @@ import WeekPlan from '@/components/game/WeekPlan';
 import { Button, ButtonLink, Chip, CopyButton, IconButton, cx } from '@/components/ui';
 import LectureList from './LectureList';
 import PlayerSpeed from './PlayerSpeed';
+import { PomodoroCover, PomodoroPill } from './Pomodoro';
 import { FilterName, StatusBadge } from './PlaylistRow';
 import type { FilterFacet } from './playlist-filters';
 import { neighbours, partLabel } from './series';
@@ -179,6 +181,37 @@ export default function PlaylistModal({
   }, [playing, holdKeyboard]);
 
   /**
+   * The pomodoro — the one thing here that stops the lecture without being
+   * asked at the moment it does it.
+   *
+   * It lives with the dialog and dies with it, which is the honest lifetime for
+   * a timer over watching: a rest that comes due with no lecture to pause is a
+   * chime about nothing, and a timer still running behind a closed player is
+   * state nobody can see or stop. Changing lecture or part keeps it — that is
+   * the same sitting — because the dialog is not remounted for either.
+   *
+   * Two commands to the frame and nothing else. `pauseVideo` when the rest
+   * falls due, which is what makes it a rest rather than a notice; `playVideo`
+   * on the press that takes up the next session, because the reader pressing
+   * play on a rest screen means the same thing they mean pressing it on a
+   * video.
+   */
+  const timer = usePomodoro();
+  useEffect(() => {
+    if (timer.phase === 'break') command(frame, 'pauseVideo');
+  }, [timer.phase]);
+  const pomodoro = useMemo(
+    () => ({
+      ...timer,
+      resume: () => {
+        timer.resume();
+        command(frame, 'playVideo');
+      },
+    }),
+    [timer]
+  );
+
+  /**
    * The playlist to hand the player, or nothing.
    *
    * A few perfectly public playlists are met with «This video is unavailable»
@@ -222,14 +255,10 @@ export default function PlaylistModal({
     },
     // Without `list=` there is no rail behind the frame to walk along, so the
     // walking is done here. With one, YouTube is already doing it and a second
-    // mover would fight it.
-    onEnded: listId
-      ? undefined
-      : (videoId) => {
-          const index = playlist.videos.findIndex((video) => video.id === videoId);
-          const next = index === -1 ? undefined : playlist.videos[index + 1];
-          if (next) play(next);
-        },
+    // mover would fight it. The walk itself is `advance`, which is also what
+    // the button under the picture presses: moving on is one act, however it
+    // was asked for.
+    onEnded: listId ? undefined : (videoId) => advance(videoId),
   });
 
   /**
@@ -316,6 +345,32 @@ export default function PlaylistModal({
     else if (playlist.videos[0]) play(playlist.videos[0]);
   };
 
+  /**
+   * Leave the lecture in the frame and take the row after it.
+   *
+   * The one answer to "move on", so that the two things which ask it — the
+   * player running out with no rail behind it, and the button that appears
+   * under the picture once the lecture is behind you — cannot come to mean
+   * different things. The next lecture is the **next row**, not the next
+   * unwatched one: that is what the queue shows, what YouTube's own autoplay
+   * does, and what somebody re-watching a course means by "further on".
+   *
+   * The lecture being left is marked off as part of the press rather than
+   * assumed to have been marked already. Both callers arrive with it ticked —
+   * one at `VIDEO_DONE_FRACTION`, the other on the player's own `ENDED` — so
+   * this ordinarily writes nothing; what it buys is that the promise is the
+   * button's own and does not depend on the rule that put the button there.
+   * `player`, never `hand`: the frame has already reported the minutes, and
+   * `hand` would charge the day for the whole length of the lecture on top.
+   */
+  const advance = (from: string): void => {
+    const index = playlist.videos.findIndex((video) => video.id === from);
+    const next = index === -1 ? undefined : playlist.videos[index + 1];
+    if (!next) return;
+    setVideosDone([from], true, context, 'player');
+    play(next);
+  };
+
   // Where the last tick was, so a shift-click has a range to work with.
   const anchor = useRef<number | null>(null);
 
@@ -349,6 +404,24 @@ export default function PlaylistModal({
    */
   const shownIndex = shownId ? playlist.videos.findIndex((video) => video.id === shownId) : -1;
   const shownVideo = shownIndex === -1 ? null : playlist.videos[shownIndex];
+  /**
+   * Whether the lecture in the frame is behind the reader, and what comes
+   * after it — the two facts the offer to move on is made of.
+   *
+   * "Behind you" is read off the profile rather than off the player's own
+   * fraction, and that is the difference between an event and a state: a
+   * lecture counts as watched at `VIDEO_DONE_FRACTION` **or** when the player
+   * says it ended **or** when the reader ticks it themselves, and reopening one
+   * already ticked is the same answer as watching one to the end. One rule for
+   * all four, and it survives the dialog being closed and opened again.
+   *
+   * Null on the last row, which is what takes the offer away there: what
+   * follows the end of a recording is another recording, and the parts of a run
+   * are already offered over the queue.
+   */
+  const upNext = shownIndex === -1 ? null : (playlist.videos[shownIndex + 1] ?? null);
+  const shownBehind =
+    shownVideo !== null && (progress.complete || (profile.videos[shownVideo.id]?.done ?? false));
 
   /*
    * Where this sits in the run, and the way out of it in either direction. A
@@ -550,6 +623,10 @@ export default function PlaylistModal({
                   onLoad={onLoad}
                 />
               )}
+              {/* After the frame and never around it: an iframe that moves in
+                  the tree reloads, and a reloaded embed starts the lecture from
+                  the top. A sibling drawn over it moves nothing. */}
+              <PomodoroCover pomodoro={pomodoro} />
             </div>
 
             {/* The controls the frame cannot carry, in the strip below it
@@ -566,6 +643,54 @@ export default function PlaylistModal({
             {playing ? (
               <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-1.5">
                 <PlayerSpeed rate={rate} rates={rates} onPick={setRate} />
+                {/* Beside the speed because it is the same kind of thing: what
+                    the reader has decided about this sitting, which the frame
+                    has no way of carrying. */}
+                <PomodoroPill pomodoro={pomodoro} />
+
+                {/*
+                  The offer to move on, and only in the minutes it is an offer.
+
+                  A lecture crosses 90% with its credits and its questions still
+                  to run, and what the reader wants then is the next one — which
+                  the queue has, as a row to find among a hundred, behind
+                  whatever they were reading while it played. The queue does not
+                  stop being the way to any *particular* lecture; this is the way
+                  to the obvious one, and it is drawn only while there is an
+                  obvious one to be had.
+
+                  So it is not the strip that was taken down for narrating the
+                  playing row (see the practice on it): it says nothing the row
+                  says, it holds no state, and it is absent for all but the tail
+                  of each lecture — where a permanent pair of arrows would be a
+                  second door to every row of the queue.
+
+                  In the strip and not over the picture, for the reason the whole
+                  strip is there: an overlay lands on YouTube's own chrome. In
+                  the kit's accent capsule at the strip's own scale, so that the
+                  one thing here worth finding without looking is found without
+                  looking, and the strip does not change height when it arrives.
+                */}
+                {shownVideo && shownBehind && upNext ? (
+                  <Tooltip content={t('ui.player.nextHint')}>
+                    <span className="inline-flex shrink-0">
+                      <Button
+                        variant="primary"
+                        icon="chevron-right"
+                        iconSize={13}
+                        // `tap-soft` and not `tap`: this stands in a row of
+                        // controls that are all this size, and a 44px capsule
+                        // in the middle of them would stop the strip reading as
+                        // one strip. The halo catches the thumb instead, and
+                        // takes no width.
+                        className="tap-soft gap-1 px-2.5 py-1 text-[11px] leading-none"
+                        onClick={() => advance(shownVideo.id)}
+                      >
+                        {t('ui.player.next')}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                ) : null}
                 {/* The question, taken away with everything needed to answer it
                     — see `lecturePrompt`. A ghost and not a plate, for the same
                     reason the speeds are bare numerals: this strip sits under a

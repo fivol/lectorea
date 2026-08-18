@@ -173,6 +173,34 @@ export function isResumable(sec: number | undefined): sec is number {
   return typeof sec === 'number' && sec >= RESUME_FLOOR_SEC;
 }
 
+/**
+ * How much of a lecture went past between two reports — the number every hour
+ * the profile counts is made of.
+ *
+ * **It is lecture time, not time at the desk, and that is the whole point.**
+ * What the reader is credited with is how far the playhead travelled: an hour
+ * of a recording watched at 2× is an hour of that recording, done in half an
+ * evening. The catalogue measures a course in its own hours — «82 ч» is the
+ * sum of the lectures — so a bar filled in wall-clock minutes would be a bar
+ * whose two ends were counted in different units, and «0,1 из 3,4 ч» would mean
+ * something different for every reader depending on how fast they watch.
+ *
+ * The ceiling is what makes it safe. A seek travels an hour of tape in no time
+ * at all and is a press of a button rather than an hour of studying, so the
+ * distance is capped at what could physically have been played: the time it
+ * actually took, times the speed it was running at. At any honest speed the
+ * travel is under that ceiling and the reader gets every second of it; only a
+ * jump is cut back — and by construction it is cut back to the length of one
+ * report, never to zero.
+ *
+ * @param travelled seconds of the recording between the two reports
+ * @param elapsed   seconds of the reader's evening between them
+ * @param rate      the fastest the player admitted to running in that stretch
+ */
+export function watchedBetween(travelled: number, elapsed: number, rate: number): number {
+  return Math.max(0, Math.min(travelled, elapsed * rate));
+}
+
 type Options = {
   /** Off while nothing is playing — no listener, no handshake. */
   enabled: boolean;
@@ -246,12 +274,9 @@ export function useYouTubePlayer({
   /** Cleared on every `load`, so each new frame is put back to `wanted` once. */
   const applied = useRef(false);
   /**
-   * The fastest the tape ran since the last report.
-   *
-   * Time watched is the distance the playhead travelled between two reports,
-   * and a seek travels an hour in no time at all — so the distance is capped by
-   * how long it actually took, times the speed it was played at. The player is
-   * the one that knows that speed, and it says so on the same channel.
+   * The fastest the tape ran since the last report — the third argument to
+   * `watchedBetween`, which is where the rule it serves is written down. The
+   * player is the one that knows the speed, and it says so on the same channel.
    */
   const peak = useRef(rate);
 
@@ -289,7 +314,7 @@ export function useYouTubePlayer({
     const now = Date.now();
     const start = from.current?.id === playing.id ? from.current : null;
     const played = start
-      ? Math.max(0, Math.min(playing.sec - start.sec, ((now - start.at) / 1000) * peak.current))
+      ? watchedBetween(playing.sec - start.sec, (now - start.at) / 1000, peak.current)
       : 0;
     from.current = { id: playing.id, sec: playing.sec, at: now };
     peak.current = speed.current;

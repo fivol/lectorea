@@ -131,6 +131,11 @@ export const ANALYTICS_EVENTS: Record<string, string> = {
   search_select: 'Which row of the results was chosen',
   filter_apply: 'One facet of the playlist filters moved',
   setting_change: 'A setting pressed in the profile',
+  // No `pomodoro_end`: the interesting half is whether anybody reaches for it
+  // at all, and a run ends by being finished, abandoned or having the dialog
+  // closed under it — three different facts that one event would blur into a
+  // number nobody could read.
+  pomodoro_start: 'A pomodoro started over a lecture, with the session length it was set to',
   map_view: 'The front page switched between the map and the blocks',
   profile_open: 'The profile panel opened',
   summary_hidden: '«Ваше обучение» put away for the visit',

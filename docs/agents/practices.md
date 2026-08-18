@@ -687,6 +687,43 @@ and two sets of controls that must agree. And when the panel goes, check what
 its numbers were read from — the row's usual source is often the profile, and a
 profile is entitled to silences an on-screen reading is not.
 
+## A rule written to paint something is usually an act waiting to be offered
+
+`VIDEO_DONE_FRACTION` had been in the player for a year with one consumer: at
+90% a checkbox turned green. But 90% of a lecture is not the end of it — the
+last minutes are credits and a Q&A — so the rule fires at exactly the moment the
+reader has a question the interface was not answering. *What now?* The answer
+was in the queue all along, as a row to find among a hundred while a lecture ran
+on; making it a press cost one derived boolean and one capsule, because the
+state was already computed.
+
+Three things make it an offer rather than another control:
+
+- **It expires.** It is drawn only while the state that justifies it holds — the
+  lecture behind you, a row after it — so it is never a permanent second door to
+  something the list already does. That is what separates it from the strip
+  above, which was taken down for being exactly that.
+- **It is the same call as the automation.** The player already walked to the
+  next lecture by itself where the embed had no rail to autoplay along. A button
+  that did its own version of "move on" would be two answers to one question,
+  and they drift: one of them marks the lecture off, the other forgets to. So
+  `advance()` is one function with two callers.
+- **The state it reads is the durable one.** "Behind you" is the tick in the
+  profile, not the player's own fraction — which makes 90%, the player's
+  `ENDED`, a tick by hand and a lecture finished last week all the same case,
+  and the offer survives the dialog being closed and opened again.
+
+Rejected on the way: drawing it over the picture, where YouTube's chrome lives
+and where the whole strip exists precisely to avoid landing; and offering the
+next *unwatched* lecture rather than the next row, which is a different act from
+the one the queue and the autoplay both perform.
+
+**Generally:** when a rule is written so that something can be *painted*, ask
+what the reader does next once it is true. If the answer is a press they would
+have to go and find, the rule is also the trigger for offering it — where the
+state was noticed, for as long as it holds, and through whatever function
+already performs that act elsewhere.
+
 ## Which horizon a number belongs to is fixed by the question, not by the data
 
 The day's goal existed, was chosen as the unit somebody acts in, and was printed
@@ -852,6 +889,78 @@ the URL clean, which the canonical link wanted anyway.
   list — and only the breakpoint decides which is showing, so the promotion
   risks a page with three `<h1>`s. One `sr-only` heading in the screen itself is
   always exactly one, in every state.
+
+## An invariant that lives inside an expression cannot be checked, and fails quietly
+
+Every hour this product prints came out of one line inside a React hook:
+
+```ts
+Math.max(0, Math.min(playing.sec - start.sec, ((now - start.at) / 1000) * peak.current))
+```
+
+It was right. It had been right for months. But the question «do the day's
+hours count the lecture or the evening?» could only be answered by reading that
+line and reasoning about it, which is exactly what the neighbouring paragraph of
+[interface.md](../interface.md#progress-down-to-the-lecture) had failed to do:
+the documentation said «capped by how long that took» and dropped the `* rate`,
+so the prose described a product that credits a reader watching at 2× with half
+of what they watched. Nobody could have caught that, because **nothing fails
+when this breaks.** Tighten the ceiling by an honest-looking mistake and the
+hours simply come out smaller, on a screen nobody can hold a stopwatch to.
+
+The fix is not a comment. It is a name, a signature and a test:
+`watchedBetween(travelled, elapsed, rate)` in `lib/youtube.ts`, six cases in
+`tests/watched.test.ts` — one at 1×, one at 2× stated at the scale it is
+printed at («half an evening, a whole hour»), one at 0.5×, a seek, a rewind, a
+pause. The behaviour did not change by a single second.
+
+**Generally:** when a rule the whole product rests on is spelled as an
+expression at its one call site, three things are true at once — it cannot be
+tested, it cannot be linked to from the documentation that explains it, and its
+failure mode is a number that is merely *wrong* rather than absent. Give it a
+name and a test the day you notice, even when it is correct. The test's job is
+not to find today's bug; it is to make tomorrow's tightening fail out loud.
+
+The corollary is about the docs beside it: **prose that paraphrases arithmetic
+goes stale in the direction nobody checks.** If a sentence in `docs/` restates a
+formula, it should name the function, so the next reader can go and see whether
+the sentence is still true.
+
+## Two clocks over one evening, and neither converts to the other
+
+The pomodoro counts the wall — twenty-five minutes is twenty-five minutes of
+somebody's evening — and the profile counts the lecture, so a session at 2×
+comes to fifty minutes of studying. The temptation is to pick one, and both
+attempts are wrong: measured in wall clock, a course's bar would have its two
+ends in different units («0,1 из 3,4 ч», where the 3,4 is the sum of the
+lectures and the 0,1 is the reader's sofa); measured in lecture time, a
+pomodoro would run twelve minutes for somebody at 2× and be a timer that lies.
+
+So both stand, neither is converted into the other, and the documentation says
+out loud that they are different clocks answering different questions.
+
+**Generally:** when two numbers on one screen measure the same afternoon and
+disagree, check whether they are answering the same question before reconciling
+them. A unit is fixed by **what the number will be compared against**, not by
+what it was measured with — and two numbers with different comparisons are two
+facts, not an inconsistency to fix.
+
+## A wall-clock feature is tested by shrinking its unit, once, in one place
+
+A pomodoro's shortest honest setting is fifteen minutes, and the cycle worth
+watching is session → rest → chime → next session — an hour of sitting there to
+see it once. `const MINUTE = 60_000` became `1_000` for one pass, which made the
+whole cycle forty seconds, and went back before the commit.
+
+That works because the constant is **one named thing that every deadline is
+multiplied by**. The version of this that goes wrong is a feature where the unit
+is spelled `* 60 * 1000` at four call sites: then the test patch is four edits,
+three of them get reverted and the fourth ships.
+
+**Generally:** a feature whose behaviour is spread over minutes or hours needs a
+single constant standing for its unit — not for tidiness, but because that
+constant is the only affordance that makes the feature observable in one sitting.
+Write it before the feature is long enough to need it.
 
 ## Commit an explicit list of files
 

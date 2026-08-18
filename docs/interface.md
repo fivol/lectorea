@@ -140,14 +140,27 @@ panel, which is where somebody goes to look back rather than forward. A quiet
 week does not take the card away: it is the profile being empty that does that,
 not the week being.
 
-The hours are time actually spent, not time implied. The embedded player reports
-where the playhead is about every five seconds, and what counts is how far it
-travelled between two reports, capped by how long that took — a seek across an
-hour of a recording is a press of a button, not an hour of studying. Everything
-marked off by hand is credited its full length instead, because there is nothing
-to measure: a playlist sealed as watched is worth the lectures under it that had
-no tick of their own, and a lecture the player finishes on its own is worth
-nothing extra, having already been paid for as it played.
+The hours are hours **of the lectures**, not hours at the desk, and the
+difference is the speed. The embedded player reports where the playhead is
+about every five seconds, and what counts is how far it travelled between two
+reports: an hour of a recording watched at 2× is an hour of that recording,
+done in half an evening. That is the only reading under which the two ends of a
+bar are in the same unit — the catalogue measures a course in its own hours,
+«82 ч» being the sum of its lectures, so counting the reader's side in minutes
+of wall clock would make «0,1 из 3,4 ч» mean something different for every
+reader. The ceiling that keeps it honest is what could physically have been
+played: the time the stretch actually took, times the speed it was running at,
+so a seek across an hour of a recording is credited as the press of a button it
+was rather than as an hour of studying (`watchedBetween`, and the test beside
+it). Everything marked off by hand is credited its full length instead, because
+there is nothing to measure: a playlist sealed as watched is worth the lectures
+under it that had no tick of their own, and a lecture the player finishes on its
+own is worth nothing extra, having already been paid for as it played.
+
+The pomodoro's clock is the other one — the wall — and the two are not
+reconciled anywhere, because they answer different questions: a session is
+twenty-five minutes of somebody's evening whatever speed the lecture runs at.
+See [the pomodoro](#a-timer-over-the-lecture).
 
 The avatar stays in the header either way, and it is the only door: the card
 used to carry a «Профиль ›» of its own, a thumb away from the button in the
@@ -770,7 +783,8 @@ is not; a playlist and a course are arithmetic over that.
 - **A lecture** counts as watched at 90% of its length, or when the player says
   it ended. The last minutes of a recording are credits and a Q&A that trails
   off, and a bar that will not complete because of them is a bar people stop
-  trusting. Every lecture also carries a tick of its own, for the ones watched
+  trusting. Crossing it is also what puts «Дальше» in the strip under the
+  picture — the same rule, read as an offer rather than as a tick. Every lecture also carries a tick of its own, for the ones watched
   on YouTube — without it, everything watched outside this player would be
   invisible here, which makes the progress it shows a lie of omission. Shift
   extends from the last tick, so twelve of thirty is one press and not twelve.
@@ -794,6 +808,98 @@ says how many are behind you, and the lighter part of the bar is the course in
 hand. Counting only milestones leaves the bar still for a fortnight while
 somebody works through a forty-hour prerequisite; counting only fractions loses
 the milestone.
+
+### A timer over the lecture
+
+A pomodoro, in the strip under the picture beside the speed — a clock and the
+word, and on a phone the clock alone, since that strip is shared with the rates
+somebody changes *during* a lecture and a word taking a third of the row costs
+them the one they are watching at.
+
+Pressing it opens the panel: a «Запустить», and the four numbers a run is cut
+by — how long a session is, how long the gap between two, how many sessions
+stand before the long rest, and how long that one is. They are ladders rather
+than fields, for the reason the day's goal is: the decision is «about half an
+hour», not «twenty-seven minutes». They live in the profile, so somebody who
+has decided a session is fifty minutes has decided it for the term, and a
+length changed in the middle of a session takes effect on the next one rather
+than moving the clock in front of them. Once it is running the same press shows
+what it is doing — «Сессия 3» — and offers to stop.
+
+When the session runs out **the lecture is paused and the picture is covered**:
+the rest, its own countdown, which session it was, and two ways out — take the
+rest early, or stop the timer. Covering the play button is the point; a rest
+that leaves the video one click away is a notice, not a rest. It is white on
+black at either theme, because what is underneath is a video and video is black
+in both.
+
+When the rest runs out **it makes a noise** — two soft notes, `public/chime.mp3`
+— and that is the whole reason the mechanic needs a sound at all: it is the one
+transition in the product the reader is deliberately not at the screen for. It
+is the only thing on the site that is not looked at, and the only asset that is
+somebody else's: [«Airplane Chime Sound Effect»](https://commons.wikimedia.org/wiki/File:Airplane_Chime_Sound_Effect.ogg)
+from Wikimedia Commons, by Sharelk, released **CC0** — trimmed to its two
+strikes, faded out and re-encoded to 17 KB of mono MP3, which is precached with
+the bundle rather than fetched when it rings, since the moment it is needed is
+the moment nobody is there to notice a failed request. What it plays is a
+descending minor third, D5 to B4, at about −7 dBFS: loud enough to carry to the
+next room and not a thing that makes anybody jump.
+
+The cover then says so and waits, with a play button on it. It does **not** start
+the next session by itself: a session that begins while somebody is still making tea
+is a session spent on an empty chair, and the video would be playing to nobody.
+The press that takes up the next one is the same press that starts the lecture.
+
+Two things are worth saying about what it is not.
+
+**Its clock is the wall, and the profile's is not.** Twenty-five minutes is
+twenty-five minutes of somebody's evening whatever speed the lecture runs at, so
+a session at 2× puts fifty minutes of lecture behind them — and the day's hours
+say fifty, because [they count the lecture](#progress-down-to-the-lecture) and
+not the sitting. Both numbers are right about different questions, and nothing
+tries to reconcile them. A pomodoro writes nothing to the profile of its own: it
+is a way of spending an evening, not a thing that was studied.
+
+**It lives with the dialog and dies with it.** Close the player and the timer is
+gone; change lecture, or change part, and it is not, because that is the same
+sitting and the dialog is not rebuilt for either. The alternative — a timer
+still running behind a closed player — is state nobody can see or stop, ringing
+about a lecture that is not on screen.
+
+The deadline is held as an absolute moment rather than counted down, so a tab
+left in the background or a machine that slept comes back to the phase it is
+actually in. Timers in a hidden tab are throttled to about one a minute, so the
+chime can be up to that late; it cannot be earlier, and it cannot drift.
+
+Everything about it is one press wide: nothing starts on its own, nothing is
+offered to anybody who has not pressed it, and one press ends it. That is the
+same rule the goal and the week are written against, with the difference that
+this one stops the video — so the bar for asking first is higher rather than
+lower.
+
+**Rejected, with reasons:**
+
+- *A timer that outlives the player, held in a store of its own.* It is the
+  better shape on paper — a pomodoro is about an evening, not about one
+  recording — and it buys a chime that rings while the reader is on the map,
+  with nothing on screen saying why and no control anywhere to stop it. The
+  dialog is where the only two things it does live: pausing a lecture and
+  offering to resume one.
+- *The four settings in the profile's **Настройки** tab as well.* One control
+  in two homes is two controls to keep in step, and this one is reached where
+  it is used. The profile is where things are looked back at; a session length
+  is chosen with a lecture in front of you.
+- *A tone synthesised in the browser instead of a file.* No asset, no licence to
+  record, no bytes — and no way to know what it sounds like without shipping it.
+  A published CC0 recording of a real chime can be listened to before it is
+  chosen, which is the half that matters for the one thing here that is heard
+  rather than read. Two other CC0 candidates were measured and dropped: a glass
+  chime whose energy sits at 5–12 kHz, which is shrill on a laptop, and a
+  tubular clock bell at 124 Hz with a four-second tail, which is a grandfather
+  clock telling somebody off.
+- *A sound at the start of the rest as well.* The video stopping and the picture
+  going dark is already unmissable, and the reader is looking at it. The point
+  of the chime is the moment they are not.
 
 ### What makes a long recording finishable
 
@@ -923,6 +1029,33 @@ frame, because that is the corner a hand already goes to. Between them stands
 the one thing that is about neither the player nor the recording but about the
 lecture being followed — the question. Everything else about the recording is
 in the queue, which is where it is chosen.
+
+**«Дальше»** is the strip's one control that is not always there. A lecture
+counts as watched at 90% of its length, which leaves the credits and the
+questions still running: the reader is finished with it several minutes before
+it is finished with them, and what they want then is the next lecture. The queue
+has it — as a row to find among a hundred, behind whatever they had scrolled to
+while it played — so the offer is made where the eye already is, as one accent
+capsule that takes them to the next row and marks off the one they are leaving.
+
+It is drawn only while the lecture in the frame is behind them **and** there is a
+row after it. On the last lecture there is nothing to offer: what follows the end
+of a recording is the next part of the run, and that stands over the queue
+already. And "behind them" is read off the ticks rather than off the player's own
+fraction, which makes one rule out of four ways of arriving at the same state —
+90%, the player's own ending, a tick by hand, and reopening a lecture that was
+finished last week. Pressing it is the same act as the walk the player makes for
+itself when a recording has no rail behind it to autoplay along, and it is
+literally the same call, so the button and the automation cannot come to mean
+different things.
+
+Where it deliberately is **not**: over the picture, which is YouTube's own chrome
+and the reason the strip exists at all; and nowhere while the lecture is still
+running, because a permanent pair of arrows under the frame is exactly what was
+taken down for being a second door to every row of the queue. What it offers is
+the **next row**, not the next unwatched one — that is what the queue shows, what
+YouTube's own autoplay does, and what somebody going back through a course they
+have seen means by "further on".
 
 **Speed** is a row of rates — «0,5× … 2×» — plus `Shift + .` and `Shift + ,`,
 and the choice is remembered: it belongs to the reader rather than to the

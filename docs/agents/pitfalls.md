@@ -373,6 +373,33 @@ window.addEventListener('message', (e) => {
 });
 ```
 
+### A play button was pressed from the console, and the embed ignored it
+
+**Assumed:** verifying a control that resumes the video is the same as verifying
+any other button — find it, `element.click()`, read what happened.
+**It was:** `playVideo` sent that way does nothing. The frame *receives* it — the
+player answers with delivery frames, which is what made it look like a working
+command doing nothing — and the playhead never moves. Pressed with a real
+pointer through the pane's `computer` tool, the same button resumed the lecture
+on the first try. A scripted click carries no user activation, and a
+cross-origin player asked to make a sound without one is entitled to decline.
+Forty minutes went into a feature that was correct the whole time.
+
+Two things made it worse and are worth separating. A stray `left_click` at the
+foot of the window landed **outside the dialog** and closed it, so the next
+probe was talking to a frame that no longer existed — a dead iframe and a
+refused command look identical from the console. And the pane's HMR websocket
+had dropped, so an edit made between two probes was not in the page being
+probed: the DOM said the old markup while the file on disk said the new.
+
+**How not to repeat it:** **anything that starts media is verified with a real
+click**, never with `element.click()` or a raw `postMessage` — the rest of a
+screen can be driven from the console, this cannot. Before believing a negative
+result, check the two cheap things first: that the element you are talking to is
+still mounted (`document.querySelector('iframe')`), and that the page is running
+the code you just wrote (look for the markup the edit added, not for its
+effect) — reload rather than trusting HMR in the pane.
+
 ### A pointer was given the power to lay the page out
 
 **Assumed:** a name in the panel that points at a card the filter is hiding
