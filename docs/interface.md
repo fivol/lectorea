@@ -732,19 +732,27 @@ second after the pointer does. On a phone the frame and that strip stop
 scrolling with the page and the queue scrolls under them, which is the one thing
 a phone owes a screen somebody watches an hour of video on.
 
-The fact sheet does not go away, it goes under the queue behind a «О ЗАПИСИ»
-line: how good a recording is gets asked as often on the third lecture as on the
-first. Nothing else moves — one lecture list, one set of ticks, one set of
-numbers, laid out twice. For a course cut into parts, «Часть 2» comes with it and
-stands over the queue rather than at the far end of the sheet, since the reader
-who has run out of lectures is looking at the bottom of the queue.
+**The fact sheet does not travel.** It did once, under the queue behind a
+«О ЗАПИСИ» line, on the argument that how good a recording is gets asked as
+often on the third lecture as on the first. What it bought was a screen of
+scroll between the last row of the queue and the end of the column — in a column
+whose whole job while a lecture runs is the queue — for questions that are in
+fact asked *before* sitting down with a course: who is lecturing, how many
+hours, is it any good. It is one press away, and the press is the glyph in the
+header that was already there.
 
-Two things do not travel: **«В избранное» and «Отметить все 26»**. Both are
-decisions about the recording as a whole and neither is a thing anybody does
-while a lecture is running — on the watching screen they would be two full-width
-buttons of nothing to do, one of which wipes the ticks of a course in progress.
-Marking off here is one lecture at a time, down the queue, and the sheet
-somebody reads before starting still has both.
+What does travel is what the queue is missing without it: the recording's own
+progress, over the queue rather than at the far end of a sheet, and for a course
+cut into parts «Часть 2» with it — the reader who has run out of lectures is
+looking at the bottom of the queue. One lecture list either way, one set of
+ticks, one set of numbers.
+
+Nor do **«В избранное» and «Отметить все 26»** travel, the two buttons in the bar
+below. Both are decisions about the recording as a whole and neither is a thing
+anybody does while a lecture is running — on the watching screen they would be
+two full-width buttons of nothing to do, one of which wipes the ticks of a
+course in progress. Marking off here is one lecture at a time, down the queue,
+and the sheet somebody reads before starting still has both.
 
 Which shape a recording opens in is **not** remembered, and that is the one
 setting in this dialog that is not. It would buy nothing: watching starts with a
@@ -944,30 +952,45 @@ one lecture and eighty-two hours there was nothing, and one lecture of sixty
 moves a bar by 1.7%. An evening that leaves no mark is an evening nobody
 repeats.
 
-Five things are said in the player about the middle distance. All five are
-reports of something that already happened — none of them sets anybody a target
-they did not choose — and each is silent until it has something true to say.
-They are switched on and off in one place, `GAME` in
+Five things are said in the player about the middle distance. Four are reports
+of something that already happened, the fifth is the reader's own goal divided
+by the rows in front of them, and none of them sets anybody a target they did
+not choose — each is silent until it has something true to say. They are
+switched on and off in one place, `GAME` in
 [`src/lib/gamification.ts`](../src/lib/gamification.ts), and tagged `[game:…]`
 at every site.
 
-- **Вехи.** A long recording is cut into stages of about three hours — three to
-  eight lectures, whichever comes first — and the queue carries a rule between
-  them saying which stage it is and what the rows under it come to: «ВЕХА 2 ИЗ
-  15 · 3 лекции · 4,6 часа», with «✓ пройдена» once it is behind you. Over the
-  bar, one line says how near the next one is: «До вехи — 4 лекции, 1,7 часа».
-  A stage is never *named*, and that is a measurement rather than a shrug: of
-  the 2732 long recordings only 170 — 6% — carry a section marker in their
-  titles that can be parsed at all, so «Глава 2» would be invented for fifteen
-  recordings in sixteen. What a stage is instead is a fact about the rows it
-  covers, which is the same rule the run-of-parts heading follows
+- **Недели.** The lectures still ahead, dealt into the reader's own calendar:
+  the queue carries a rule between them saying which week it is and what the
+  rows under it come to — «ТЕКУЩАЯ НЕДЕЛЯ · 3 лекции · 2,3 часа», «СЛЕДУЮЩАЯ
+  НЕДЕЛЯ · 5 лекций · 3,6 часа», and «31 АВГ. – 6 СЕНТ.» from the third one on.
+  A week is Monday to Sunday, and the week in hand gets what is **left** of the
+  goal rather than the whole of it, so three hours in since Monday it reaches
+  only as far as the remaining forty-five minutes do. Once the week is made it
+  takes nothing at all and the plan opens on «Следующая неделя» — which is the
+  one thing this says about what has been done, and it says it by asking for
+  nothing.
+
+  Only where a goal is set, and there is deliberately no measured fallback of
+  the kind «Сколько это недель» below uses: a pace read off the last four weeks
+  is an honest thing to report and a poor thing to draw a calendar from,
+  because that calendar hands out dates nobody agreed to and moves them the
+  week somebody takes off. Nothing is drawn either where less than two weeks of
+  work is left — one rule saying «всё это помещается в эту неделю» is what the
+  bar over the list already says — and the plan runs a quarter ahead at the
+  outside, past which a date on a lecture is a promise about next spring. Rows
+  already behind the reader carry no rule at all: the plan is the future, and
+  «Текущая неделя» over a lecture watched last month is a claim about the past.
+
+  **It replaced вехи**, which cut the same list into stages of about three
+  hours. Both of that mechanic's troubles were the unit. A stage had to be
+  named and could not be — of the 2732 long recordings only 170, 6%, carry a
+  section marker in their titles that can be parsed at all, so «Глава 2» would
+  have been invented for fifteen recordings in sixteen — and three hours is not
+  a unit anybody's life is in. A week is, and the reader has already said what
+  theirs holds. What a week is worth is still a fact about the rows it covers
+  and nothing else
   ([practices](agents/practices.md#sum-the-rows-do-not-infer-the-whole--and-the-label-is-part-of-the-sum)).
-  Nothing under twelve lectures, or under two stages' worth of hours, is cut up
-  at all, and nothing is cut into more than about twenty stages — «College
-  Algebra» is 2462 clips of thirty-five seconds, where eight of them never
-  reach three hours and the lecture cap alone put 308 rules through the list.
-  Two thirds of the catalogue's recordings end up with stages, six of them at
-  the median.
 - **Где остановились остальные.** The catalogue has always known this and has
   only ever said it about the recording — «досматриваемость 33%». Read per
   lecture it is a fact about the reader: «Вы прошли дальше, чем 83% начавших»,

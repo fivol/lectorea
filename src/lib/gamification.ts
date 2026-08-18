@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import type { BuiltPlaylist, Profile, Video } from '@shared/schema';
-import { useActivity, useDayGoal, useWeekGoal } from './activity';
+import type { BuiltPlaylist, Video } from '@shared/schema';
+import { shiftDay, startOfWeek, useActivity, useDayGoal, useWeekGoal, weekOf } from './activity';
 import { unlocksOf, useCatalog } from './catalog';
 import { clamp } from './format';
 import type { PlaylistProgress } from './progress';
@@ -23,13 +23,13 @@ import { localDay, useProfile } from '@/store/profile';
  * | Flag | Tag | What it is | Where it renders |
  * |---|---|---|---|
  * | `today` | `[game:today]` | the session said in numbers, and what is left of the day's goal | wherever a press answers it: the front page's card, the course panel, the recording's sheet, the player's progress header |
- * | `milestones` | `[game:milestones]` | a long recording cut into stages of about three hours | the lecture list, and a line over it |
+ * | `schedule` | `[game:schedule]` | the lectures still ahead dealt into calendar weeks of the reader's goal | the lecture list |
  * | `audience` | `[game:audience]` | where the rest of the audience stopped, and how far past them you are | the lecture list, and a line over it |
  * | `finish` | `[game:finish]` | the end of a recording as an event, and the courses it opened | the foot of the player sidebar |
  * | `weeks` | `[game:weeks]` | what this recording costs at the reader's own pace | the recording sheet |
  *
  * ```bash
- * grep -rn "game:milestones" src scripts shared
+ * grep -rn "game:schedule" src scripts shared
  * ```
  *
  * finds every site of one of them, and `false` here switches it off whole —
@@ -40,14 +40,20 @@ import { localDay, useProfile } from '@/store/profile';
  *
  * Two rules they are all written against, both from `docs/agents/practices.md`:
  * **a number printed here is a fact about the rows on screen**, never an
- * inference about the course they came from — which is why a stage is not
- * called «Глава 2» ([`segmentsOf`](#)) — and **nothing here hands the reader a
- * debt they did not take on**: every one of them is a report of something that
- * already happened, or silence.
+ * inference about the course they came from — which is why a week of the plan
+ * is labelled with the dates it covers and what the rows under it come to, and
+ * never with a chapter read off somebody's titles ([`weeksOf`](#)) — and
+ * **nothing here hands the reader a debt they did not take on**: each of them
+ * is a report of something that already happened, or silence.
+ *
+ * The plan is the one that looks like an exception and is not. It is a
+ * forecast rather than a report, but every figure in it is the reader's own
+ * goal divided by rows they can see, and without a goal there is nothing to
+ * divide and it draws nothing at all.
  */
 export const GAME = {
   today: true,
-  milestones: true,
+  schedule: true,
   audience: true,
   finish: true,
   weeks: true,
@@ -142,159 +148,183 @@ export function useDayLeft(): DayLeft | null {
   }, [day, week]);
 }
 
-/* ───────────────────────────  2 · milestones  ───────────────────────────
- * [game:milestones]
+/* ────────────────────────────  2 · schedule  ────────────────────────────
+ * [game:schedule]
  *
  * A recording of sixty lectures is one object with one finish line, and the
- * finish line is eighty hours away. Cut into stages of about three hours it is
- * twenty-seven finish lines, the nearest of them tonight.
+ * finish line is eighty hours away. Laid out on the reader's own calendar it
+ * is four rows that are this week's, four under them that are next week's, and
+ * a date on everything after that — which is the form the question actually
+ * comes in. Nobody asks how much of a course is left; they ask what they are
+ * doing on Thursday.
  *
- * A stage is deliberately **unnamed**. Naming one «Глава 2» would be a claim
- * about somebody else's course, and the data does not support it: of the 2732
- * recordings with twenty lectures or more, only 170 — 6% — carry a section
- * marker in their titles that can be parsed at all (`§ N`, `week N`,
- * `chapter N`, `N.M`). Chapters read off titles are not a mechanism, they are
- * a coincidence that holds for one recording in sixteen. What a stage *is* is
- * a fact about the rows it covers: these five lectures, four point two hours —
- * which is printable, by the rule in `practices.md`.
+ * The other half of `[game:weeks]`, and the same division read the other way
+ * round: that one says how long the whole recording will take («≈5 недель ·
+ * примерно до 15 декабря»), this one says which rows fall where.
+ *
+ * **It replaced stages of about three hours**, and both of that mechanic's
+ * troubles came from the unit. A stage had to be named, and it could not be:
+ * of the 2732 recordings with twenty lectures or more only 170 — 6% — carry a
+ * section marker in their titles that can be parsed at all, so «Веха 2 из 15»
+ * was our own arithmetic printed in the voice of somebody's syllabus. And
+ * three hours is not a unit anybody lives in. A week is, and the reader has
+ * already said what theirs holds — «45 минут, 5 дней» — which makes the
+ * division here the only one on the screen that is *theirs* rather than ours.
+ *
+ * Which is also why the whole mechanic is silent without a goal. There is
+ * deliberately no measured fallback of the kind `useWeekPace` has: a pace read
+ * off the last four weeks is an honest thing to *report* and a poor thing to
+ * draw a calendar from, because a calendar drawn from it hands the reader
+ * dates nobody agreed to and moves them the week they take off. A plan is a
+ * division of a goal somebody set, or it is nothing.
  */
 
-/** About two evenings. Long enough to be an achievement, short enough to be tonight's. */
-export const MILESTONE_SECONDS = 3 * 3600;
-/** Bounds in lectures, so neither ten-minute nor three-hour lectures make a silly stage. */
-export const MILESTONE_MIN = 3;
-export const MILESTONE_MAX = 8;
 /**
- * And a ceiling on how many stages a recording may be cut into.
+ * How far ahead the rows are dated.
  *
- * The lecture cap above is the one that goes wrong at scale, because it is the
- * one that fires when lectures are *short*. «College Algebra» is 2462 clips
- * of thirty-five seconds inside 24 hours: eight of them never reach three
- * hours, so the cap closed every stage and the list came out with 308 rules
- * through it, each over five minutes of material. 119 recordings did this.
- *
- * So the walk is run again with a wider cap when it overflows — a stage of a
- * recording like that is a hundred clips, and the honest reading of the number
- * beside it («124 лекции · 1,2 часа») is still what the rows come to.
+ * A quarter of a year, which is where a date on a plan stops being information
+ * — `planFor` gives up at about the same distance and for the same reason.
+ * Without the cap a 515-lecture recording at four hours a week puts a hundred
+ * and thirty rules through one list, each of them a promise about next spring;
+ * with it the plan runs out and the rest of the list is a list again.
  */
-export const MILESTONE_MAX_STAGES = 20;
-/**
- * Under this a recording is its own milestone and cutting it up is noise: the
- * mechanic is for the long ones, and a twelve-lecture course already shows its
- * whole self in one screen of list.
- */
-export const MILESTONE_MIN_LECTURES = 12;
+export const SCHEDULE_MAX_WEEKS = 12;
 
-/** A run of consecutive lectures that is meant to be one sitting or two. */
-export type Segment = {
-  /** 1-based, for the reader. */
+/**
+ * The step the week's spent time is read at.
+ *
+ * What is left of this week's goal is one of the two inputs, and the player
+ * writes the profile every five seconds — so the exact figure re-cuts a
+ * five-hundred-row list twelve times a minute under the reader's hand. Rounded
+ * down to five minutes it is re-cut at most twelve times an hour, at the price
+ * of a boundary that can sit up to five minutes of budget behind where the
+ * exact figure would have put it.
+ */
+export const SCHEDULE_STEP_SECONDS = 300;
+
+/** One calendar week of the plan, and the run of rows that falls in it. */
+export type PlanWeek = {
+  /** 0 is the week the reader is standing in, 1 the one after it. */
   index: number;
-  total: number;
-  /** Inclusive lecture indexes, 0-based. */
-  from: number;
-  to: number;
+  /** Its Monday and its Sunday, as local day strings. */
+  from: string;
+  to: string;
+  /** The row it opens at. It runs to the row before the next week's. */
+  at: number;
+  /** What is still ahead under it, and what those rows come to. */
+  lectures: number;
   seconds: number;
 };
 
 /**
- * Cut a recording into stages, or refuse to.
+ * Deal the lectures still ahead into calendar weeks, or refuse to.
  *
- * Refuses on three grounds, each of which would make the cut a lie or a
- * nuisance: too few lectures, too short to hold two stages, or no lengths in
- * the shard to measure with. An empty array is the honest answer and every
- * caller treats it as "this recording has no stages", not as an error.
+ * Three rules, and the first is the reason this is not a progress bar cut into
+ * pieces:
+ *
+ * **Only what is ahead is in the plan.** A lecture behind the reader costs
+ * nothing and starts nothing, so the rows above the first unticked one carry
+ * no rule at all — they are last month's, and «Текущая неделя» over them would
+ * be a claim about the past. A ticked row in the middle of a week simply sits
+ * under whatever rule is open and adds nothing to it.
+ *
+ * **Whole lectures, whatever the playhead says.** A lecture half watched still
+ * costs its full length. The plan is a list of rows to sit down to; one that
+ * re-cut itself as the frame reported its position would be a plan nobody
+ * could read twice, and half a lecture is not half an evening.
+ *
+ * **A week takes what fits, and never fewer than one.** The lecture that would
+ * overflow opens the next week instead — but a week that has nothing yet takes
+ * it regardless, because a rule with no rows under it says nothing and an
+ * eighty-minute lecture against a forty-five-minute day would produce an
+ * endless run of them.
+ *
+ * The week in hand gets what is left of the goal rather than the whole of it,
+ * which is the point of counting it at all: three hours in since Monday, this
+ * week is what the remaining forty-five minutes reach. Once the goal is made
+ * the week in hand takes nothing and the plan opens on «Следующая неделя» —
+ * the mechanic's one statement about what has been done, made by going quiet
+ * rather than by asking for an evening the goal never asked for.
  */
-export function segmentsOf(videos: Video[]): Segment[] {
-  if (videos.length < MILESTONE_MIN_LECTURES) return [];
-  const total = videos.reduce((sum, video) => sum + video.seconds, 0);
-  if (total < 2 * MILESTONE_SECONDS) return [];
-
-  let bounds = walk(videos, MILESTONE_MAX, MILESTONE_SECONDS);
-  if (bounds.length > MILESTONE_MAX_STAGES) {
-    // Both bounds are widened, because either of them can be the one that
-    // overflowed: 2462 clips of half a minute overflow the lecture cap, and a
-    // 250-hour recording of hour-long lectures overflows the clock. Divided
-    // through, each lands on about twenty stages either way.
-    bounds = walk(
-      videos,
-      Math.ceil(videos.length / MILESTONE_MAX_STAGES),
-      total / MILESTONE_MAX_STAGES
-    );
-  }
-  if (bounds.length < 2) return [];
-
-  return bounds.map((bound, index) => ({ ...bound, index: index + 1, total: bounds.length }));
-}
-
-/** One pass down the lectures, closing a stage on whichever bound comes first. */
-function walk(
+export function weeksOf(
   videos: Video[],
-  maxLectures: number,
-  target: number
-): Array<Omit<Segment, 'index' | 'total'>> {
-  const bounds: Array<Omit<Segment, 'index' | 'total'>> = [];
-  let from = 0;
-  let seconds = 0;
-  for (const [index, video] of videos.entries()) {
-    seconds += video.seconds;
-    const count = index - from + 1;
-    const full = seconds >= target && count >= MILESTONE_MIN;
-    if (full || count >= maxLectures) {
-      bounds.push({ from, to: index, seconds });
-      from = index + 1;
-      seconds = 0;
-    }
-  }
-  // Whatever is left over joins the stage before it rather than standing as a
-  // one-lecture stage of its own: the tail of a course is where people are
-  // most likely to be, and «Веха 13 · 1 лекция» is a milestone made of nothing.
-  if (from < videos.length) {
-    const tail = { from, to: videos.length - 1, seconds };
-    const last = bounds[bounds.length - 1];
-    if (last && videos.length - from < MILESTONE_MIN) {
-      last.to = tail.to;
-      last.seconds += tail.seconds;
-    } else {
-      bounds.push(tail);
-    }
-  }
-  return bounds;
-}
+  done: (index: number) => boolean,
+  weekSeconds: number,
+  spentSeconds: number,
+  today: string
+): PlanWeek[] {
+  if (weekSeconds <= 0 || !videos.length) return [];
 
-export type Milestone = Segment & {
-  /** Lectures of it not behind you yet. */
-  left: number;
-  /** Their length, less whatever the player has already been through of them. */
-  secondsLeft: number;
-};
+  const weeks: PlanWeek[] = [];
+  const monday = startOfWeek(today);
+  let index = spentSeconds >= weekSeconds ? 1 : 0;
+  let budget = index === 0 ? weekSeconds - spentSeconds : weekSeconds;
+  let open: PlanWeek | null = null;
+
+  for (const [row, video] of videos.entries()) {
+    if (done(row)) continue;
+    if (open && open.seconds + video.seconds > budget) {
+      weeks.push(open);
+      open = null;
+      index += 1;
+      budget = weekSeconds;
+    }
+    if (!open) {
+      if (weeks.length >= SCHEDULE_MAX_WEEKS) break;
+      const from = shiftDay(monday, index * 7);
+      open = { index, from, to: shiftDay(from, 6), at: row, lectures: 0, seconds: 0 };
+    }
+    open.lectures += 1;
+    open.seconds += video.seconds;
+  }
+  if (open) weeks.push(open);
+
+  // One week is not a plan. It says everything left fits in the week in hand,
+  // which is a fact about the recording the bar over the list already carries.
+  return weeks.length < 2 ? [] : weeks;
+}
 
 /**
- * The stage the reader is in the middle of, and what is left of it.
+ * The plan for one recording, keyed by the row each week opens at.
  *
- * The *first* stage holding an unwatched lecture, not the one after the last
- * tick: somebody who skipped ahead and came back is owed the gap, which is the
- * same rule `playlistProgress` follows for `next`.
+ * Every input is pulled out of the store as a **primitive**, and that is the
+ * whole design of this hook. The list under it runs to five hundred rows and
+ * each of them is subscribed to its own tick; a selector here returning an
+ * object would hand all five hundred a new parent every five seconds, which is
+ * the same trap the stage headers were written around before. So: two settings,
+ * a rounded number of seconds, and a string of ones and noughts for which rows
+ * are behind the reader. Strings compare by value, so the list is left alone
+ * until a tick actually changes.
  */
-export function milestoneOf(profile: Profile, playlist: BuiltPlaylist): Milestone | null {
-  const videos = playlist.videos;
-  if (profile.playlists[playlist.id]?.watched) return null;
-  const segments = segmentsOf(videos);
-  if (!segments.length) return null;
+export function useSchedule(videos: Video[], complete: boolean): Map<number, PlanWeek> {
+  const minutes = useProfile((state) => state.profile.settings.dayGoal);
+  const days = useProfile((state) => state.profile.settings.goalDays);
+  const spent = useProfile((state) => {
+    const week = weekOf(state.profile.days, localDay());
+    return Math.floor(week.seconds / SCHEDULE_STEP_SECONDS) * SCHEDULE_STEP_SECONDS;
+  });
+  const done = useProfile((state) => {
+    // Nothing to divide and nothing to divide it into: the string is not worth
+    // building on every write the player makes for a reader who set no goal.
+    if (complete || !minutes) return '';
+    let key = '';
+    for (const video of videos) key += state.profile.videos[video.id]?.done ? '1' : '0';
+    return key;
+  });
 
-  for (const segment of segments) {
-    let left = 0;
-    let secondsLeft = 0;
-    for (let index = segment.from; index <= segment.to; index += 1) {
-      const video = videos[index];
-      if (!video) continue;
-      const mark = profile.videos[video.id];
-      if (mark?.done) continue;
-      left += 1;
-      secondsLeft += Math.max(0, video.seconds - (mark?.sec ?? 0));
-    }
-    if (left) return { ...segment, left, secondsLeft };
-  }
-  return null;
+  return useMemo(() => {
+    const plan = new Map<number, PlanWeek>();
+    if (!GAME.schedule || complete || !minutes || !days) return plan;
+    const weeks = weeksOf(
+      videos,
+      (row) => done[row] === '1',
+      minutes * 60 * days,
+      spent,
+      localDay()
+    );
+    for (const week of weeks) plan.set(week.at, week);
+    return plan;
+  }, [videos, complete, minutes, days, spent, done]);
 }
 
 /* ────────────────────────────  3 · audience  ────────────────────────────

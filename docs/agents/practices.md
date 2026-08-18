@@ -681,6 +681,17 @@ sessions are also editing, the unit to protect is *reversibility*. One owner
 module, one flag each, one grep-able tag, and no logic at the call sites — then
 "take it out again" is a word and a deletion of files nobody else touched.
 
+**It was collected on.** Stages inside a recording came out again later and were
+replaced by the week plan — the same rows, dealt into the reader's own calendar
+instead of into three-hour blocks. The whole swap was one flag renamed
+(`milestones` → `schedule`), one component file replaced, two call sites, and
+four dictionary keys; `grep -rn "game:milestones"` listed every site to visit
+before anything was touched, and nothing outside `gamification.ts`,
+`components/game/` and the two call sites had to be read at all. The one file
+that was not on the grep's list was a shared helper the new mechanic needed —
+which is the honest limit of the pattern: a flag isolates a *feature*, not the
+utilities it grows on the way out.
+
 ## A key assembled at the call site is a key `check:i18n` calls dead
 
 `t(source === 'goal' ? 'ui.game.planGoal' : 'ui.game.planPace', params)` reads

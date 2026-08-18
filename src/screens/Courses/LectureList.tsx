@@ -1,13 +1,13 @@
-import { Fragment, useEffect, useMemo, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import type { Video } from '@shared/schema';
 import { useT } from '@/i18n';
 import { formatDuration } from '@/lib/format';
-import { GAME, segmentsOf } from '@/lib/gamification';
+import { useSchedule } from '@/lib/gamification';
 import { isResumable } from '@/lib/youtube';
 import { useProfile } from '@/store/profile';
 import Icon from '@/components/Icon';
 import { AudienceMark } from '@/components/game/Audience';
-import { SegmentHeader } from '@/components/game/Milestone';
+import WeekHeader from '@/components/game/Schedule';
 
 type Props = {
   videos: Video[];
@@ -76,16 +76,15 @@ export default function LectureList({
   const list = useRef<HTMLOListElement>(null);
 
   /*
-   * [game:milestones] Where the stages start, keyed by the row that opens one.
+   * [game:schedule] Where each week of the plan starts, keyed by the row that
+   * opens it.
    *
-   * Empty for anything short enough to be read whole — `segmentsOf` refuses
-   * rather than cutting a twelve-lecture course into three — so the ordinary
-   * list is exactly the list it was.
+   * Empty for a reader who has set no goal, and for anything with less than
+   * two weeks of work left in it — `weeksOf` refuses rather than ruling a
+   * list that fits in one sitting — so the ordinary list is exactly the list
+   * it was.
    */
-  const headers = useMemo(() => {
-    if (!GAME.milestones) return new Map<number, ReturnType<typeof segmentsOf>[number]>();
-    return new Map(segmentsOf(videos).map((segment) => [segment.from, segment]));
-  }, [videos]);
+  const weeks = useSchedule(videos, complete);
 
   /*
    * `block: 'nearest'` rather than `center`: a row already on screen is left
@@ -105,10 +104,8 @@ export default function LectureList({
       {videos.length ? (
         videos.map((video, index) => (
           <Fragment key={video.id}>
-            {/* [game:milestones] */}
-            {headers.has(index) ? (
-              <SegmentHeader segment={headers.get(index)!} videos={videos} sealed={complete} />
-            ) : null}
+            {/* [game:schedule] */}
+            {weeks.has(index) ? <WeekHeader week={weeks.get(index)!} /> : null}
             <LectureRow
               video={video}
               index={index}

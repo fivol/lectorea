@@ -25,7 +25,6 @@ import Tooltip from '@/components/Tooltip';
 import { FactTile, FactTiles, Meter } from '@/components/Facts';
 import AudienceLine from '@/components/game/Audience';
 import FinishCard from '@/components/game/FinishCard';
-import MilestoneLine from '@/components/game/Milestone';
 import TodayLine from '@/components/game/TodayLine';
 import WeekPlan from '@/components/game/WeekPlan';
 import { Button, ButtonLink, Chip, CopyButton, IconButton, cx } from '@/components/ui';
@@ -834,11 +833,11 @@ export default function PlaylistModal({
                           of: formatHours(hoursFromSeconds(progress.totalSeconds)),
                         })}
                       </p>
-                      {/* The two facts a percentage cannot carry: how near the
-                          next stage is, and where the rest of the audience
-                          got to. Both are about this recording and belong
-                          with the bar that measures it. */}
-                      <MilestoneLine playlist={playlist} className="mt-1" /> {/* [game:milestones] */}
+                      {/* The fact a percentage cannot carry: where the rest of
+                          the audience got to. It is about this recording and
+                          belongs with the bar that measures it — how the rows
+                          themselves fall into weeks is said in the list, on
+                          the rows it is about. */}
                       <AudienceLine playlist={playlist} progress={progress} className="mt-0.5" />
                       {/* [game:audience] */}
                     </>
@@ -938,7 +937,6 @@ export default function PlaylistModal({
                       of: formatHours(hoursFromSeconds(progress.totalSeconds)),
                     })}
                   </p>
-                  <MilestoneLine playlist={playlist} className="mt-1" /> {/* [game:milestones] */}
                   <AudienceLine playlist={playlist} progress={progress} className="mt-0.5" />
                   {/* [game:audience] */}
                 </div>

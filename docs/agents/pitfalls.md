@@ -100,6 +100,25 @@ plus a `checked_at`, which is what `verdicts` and `ownership` already are.
 
 ---
 
+### A day was moved by adding 86 400 000 milliseconds
+
+**Assumed:** local midnight plus `n × 86 400 000` is the same clock time `n` days
+later, so `localDay()` of the result is the day that was wanted.
+**It was:** true only in a zone that does not change its clocks. The hour they go
+back turns midnight plus seven days into 23:00 the evening before, and the string
+that comes out of it is the wrong date — a streak broken on a Sunday somebody did
+study, a week of the plan starting on a Sunday. It had been sitting in `shift()`
+in [`src/lib/activity.ts`](../../src/lib/activity.ts) since the strip of days was
+written: invisible in Moscow, wrong twice a year in Berlin and London, and read
+by the streak, the strip, the week and now the lecture list.
+
+**How not to repeat it:** day arithmetic goes through the `Date` constructor,
+which normalises an out-of-range day of the month itself — `new Date(y, m, d +
+by)` — and it is now the only thing `shiftDay` does. The rule for the class: **a
+calendar day is not a duration.** Anything counted in days — streaks, windows,
+weeks, expiry — is counted on the calendar; milliseconds are for lengths of time,
+where an hour really is 3 600 000 of them.
+
 ## Quota and accounting
 
 ### Spend was counted by hand, and the error paths do not agree

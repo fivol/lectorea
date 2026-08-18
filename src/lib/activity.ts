@@ -68,16 +68,27 @@ export function levelOf(day: Day, goalSeconds?: number | null): 0 | 1 | 2 | 3 | 
   return (steps.filter((step) => day.seconds >= step).length + 1) as 1 | 2 | 3 | 4;
 }
 
-const DAY = 86_400_000;
-
 /** `2026-08-13` → the same day at local midnight. */
-function parseDay(day: string): Date {
+export function parseDay(day: string): Date {
   const [year, month, date] = day.split('-').map(Number);
   return new Date(year, (month ?? 1) - 1, date ?? 1);
 }
 
-function shift(day: string, by: number): string {
-  return localDay(new Date(parseDay(day).getTime() + by * DAY));
+/**
+ * A day, some days later or earlier.
+ *
+ * Counted in *dates* rather than in milliseconds. Adding `n × 86 400 000` to a
+ * local midnight is right in a zone with no daylight saving and wrong twice a
+ * year everywhere else: the hour the clocks go back turns midnight plus seven
+ * days into 23:00 the evening before, and the string that comes out of it is
+ * the wrong day. That is a streak broken on a Sunday somebody studied, and a
+ * week of the plan starting on a Sunday. The constructor normalises an
+ * out-of-range date itself, so `+ by` on the day of the month is the whole of
+ * the arithmetic.
+ */
+export function shiftDay(day: string, by: number): string {
+  const date = parseDay(day);
+  return localDay(new Date(date.getFullYear(), date.getMonth(), date.getDate() + by));
 }
 
 /**
@@ -89,11 +100,11 @@ function shift(day: string, by: number): string {
  * Sunday zero, so the offset is rotated before it is used.
  */
 export function startOfWeek(day: string): string {
-  return shift(day, -((parseDay(day).getDay() + 6) % 7));
+  return shiftDay(day, -((parseDay(day).getDay() + 6) % 7));
 }
 
 /** Everything logged from Monday to today, inclusive. */
-function weekOf(days: DayLog[], today: string): Week {
+export function weekOf(days: DayLog[], today: string): Week {
   const monday = startOfWeek(today);
   const week: Week = { seconds: 0, lectures: 0, days: 0 };
   for (const entry of days) {
@@ -112,7 +123,7 @@ export function activityOf(days: DayLog[], today: string, window: number): Activ
   const strip = (): Day[] => {
     const out: Day[] = [];
     for (let back = window - 1; back >= 0; back -= 1) {
-      const day = shift(today, -back);
+      const day = shiftDay(today, -back);
       const entry = logged.get(day);
       out.push({
         day,
@@ -136,11 +147,11 @@ export function activityOf(days: DayLog[], today: string, window: number): Activ
    * day after that that it is genuinely over.
    */
   const todayDone = logged.has(today);
-  let cursor = todayDone ? today : shift(today, -1);
+  let cursor = todayDone ? today : shiftDay(today, -1);
   let streak = 0;
   while (logged.has(cursor)) {
     streak += 1;
-    cursor = shift(cursor, -1);
+    cursor = shiftDay(cursor, -1);
   }
 
   // The longest run ever: walk the sorted days and break wherever the next one
@@ -150,7 +161,7 @@ export function activityOf(days: DayLog[], today: string, window: number): Activ
   let run = 0;
   let previous: string | null = null;
   for (const day of sorted) {
-    run = previous && shift(previous, 1) === day ? run + 1 : 1;
+    run = previous && shiftDay(previous, 1) === day ? run + 1 : 1;
     if (run > best) best = run;
     previous = day;
   }
