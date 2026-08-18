@@ -116,8 +116,26 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        // Generated data is static between deploys — cache it whole.
-        globPatterns: ['**/*.{js,css,html,svg,woff2,webp,png}'],
+        /*
+         * No single-page fallback.
+         *
+         * The plugin's default is to answer every navigation from the
+         * precached `index.html`, which is right for an app that is one file
+         * and wrong the moment it is not. Every address here has a real page
+         * written for it by `scripts/prerender.ts` — and the file at the root
+         * is no longer the app at all but the redirector that picks a language
+         * — so the fallback would hand a returning reader a page containing one
+         * link, on every address, with nothing in the console to say why.
+         *
+         * The cost is that a page never visited before is not available
+         * offline. That is the honest behaviour for a site made of pages.
+         */
+        navigateFallback: null,
+        // Generated data is static between deploys — cache it whole. `mp3` is
+        // the pomodoro's chime, and it is precached rather than fetched when it
+        // rings for the reason it exists: the one moment it is needed is the
+        // one moment nobody is at the machine to notice a failed request.
+        globPatterns: ['**/*.{js,css,html,svg,woff2,webp,png,mp3}'],
         runtimeCaching: [
           {
             urlPattern: /\/data\/.*\.json$/,

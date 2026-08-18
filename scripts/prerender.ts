@@ -59,11 +59,18 @@ const isMirror = base !== '/';
 /* ────────────────────────────  The languages  ──────────────────────────── */
 
 /**
- * The catalogue's own language, served from the root, and every other one
- * served from a directory named after it. Which way round matters: the root is
- * the address people already link to and the one a search engine has already
- * seen, and moving it would throw that away for a language most of the material
- * is not in.
+ * Every language lives in a directory named after it — `/ru/…`, `/en/…` — and
+ * none of them at the root.
+ *
+ * The root was the catalogue's own language for a while, which is the cheaper
+ * arrangement and the wrong one: it makes one language the exception to every
+ * rule about addresses, so a link is `/courses/x` or `/en/courses/x` depending
+ * on which, and every function that builds one has to know which. Symmetry is
+ * worth the redirect at the door.
+ *
+ * The root keeps a page at each of those addresses all the same — a small one
+ * that decides which language the reader wants and sends them there. See
+ * `redirectPage`.
  */
 const DEFAULT_LANG = env.defaultLang as UiLang;
 const LANGS: UiLang[] = [
@@ -71,9 +78,18 @@ const LANGS: UiLang[] = [
   ...UI_LANGS.map((entry) => entry.id).filter((id) => id !== DEFAULT_LANG),
 ];
 
-/** `''` for the language at the root, `en/` for the one in a directory. */
+/** `ru/`, `en/` — the directory a language's pages live in. */
 function langBase(lang: UiLang): string {
-  return lang === DEFAULT_LANG ? '' : `${lang}/`;
+  return `${lang}/`;
+}
+
+/**
+ * The same path with no language on it — where the redirector lives, and what
+ * `x-default` names: the address for a reader whose language we cannot guess,
+ * which is exactly the one that guesses.
+ */
+function rootHref(pathname = ''): string {
+  return `${origin}${base}${pathname}`;
 }
 
 /** An absolute URL for a path inside the site: `href('en', 'courses')`. */
@@ -190,17 +206,37 @@ function jsonLdScript(value: unknown): string {
   return `<script type="application/ld+json">${json}</script>`;
 }
 
+/**
+ * The picture a shared link unfolds into: this page's own, if one was drawn.
+ *
+ * `scripts/og-cards.ts` writes a card per course and per field, in both
+ * languages, during the same build — but it needs a Chrome, and a machine
+ * without one is a supported way to build the site. So the file is looked for
+ * rather than assumed, and a page with no card of its own falls back to the
+ * card for the site. Nothing announces a picture that is not there.
+ */
+function card(page: Page): { url: string; type: string; alt: string } | null {
+  if (!page.pathname) return null;
+  const file = `og/${page.lang}/${page.pathname}.jpg`;
+  if (!fs.existsSync(path.join(DIST, file))) return null;
+  return { url: rootHref(file), type: 'image/jpeg', alt: page.title };
+}
+
 function render(page: Page): string {
   const url = href(page.lang, page.pathname);
+  const picture = card(page);
   const head = [
     `<title>${escapeHtml(page.title)}</title>`,
     `<meta name="description" content="${escapeHtml(page.description)}" />`,
     `<meta property="og:title" content="${escapeHtml(page.title)}" />`,
     `<meta property="og:description" content="${escapeHtml(page.description)}" />`,
     // Absolute by requirement: a card is fetched by a scraper that has only the
-    // tag to go on, and a path relative to the site means nothing to it. The
-    // size and the alt text stay in the template — one picture, every page.
-    `<meta property="og:image" content="${href(DEFAULT_LANG, 'og.png')}" />`,
+    // tag to go on, and a path relative to the site means nothing to it.
+    `<meta property="og:image" content="${picture ? picture.url : rootHref('og.png')}" />`,
+    `<meta property="og:image:type" content="${picture ? picture.type : 'image/png'}" />`,
+    `<meta property="og:image:alt" content="${escapeHtml(
+      picture ? picture.alt : 'Lectorea'
+    )}" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:locale" content="${LOCALE[page.lang] ?? page.lang}" />`,
   ];
@@ -219,13 +255,23 @@ function render(page: Page): string {
     for (const lang of LANGS) {
       head.push(`<link rel="alternate" hreflang="${lang}" href="${href(lang, page.pathname)}" />`);
     }
-    head.push(
-      `<link rel="alternate" hreflang="x-default" href="${href(DEFAULT_LANG, page.pathname)}" />`
-    );
+    head.push(`<link rel="alternate" hreflang="x-default" href="${rootHref(page.pathname)}" />`);
   }
 
   if (page.noindex || isMirror) head.push('<meta name="robots" content="noindex, follow" />');
   for (const entry of page.jsonLd ?? []) head.push(jsonLdScript(entry));
+
+  /*
+   * The same door script the root pages carry, in every page of the app too.
+   *
+   * On a real page it returns on its first line — the path already names a
+   * language. It is here for `404.html`, which is one file answering every
+   * address nobody claimed: served for `/courses/typo` it has to send the
+   * reader somewhere with a language on it, and served for `/ru/courses/typo`
+   * it must not. Only the path can tell those apart, and only at the moment it
+   * is read.
+   */
+  head.push(`<script>${chooseLanguage()}</script>`);
 
   const html = template
     // Dropped rather than rewritten in place: the template writes some of these
@@ -236,6 +282,9 @@ function render(page: Page): string {
     .replace(/[ \t]*<meta\s+property="og:title"[\s\S]*?\/>\n/, '')
     .replace(/[ \t]*<meta\s+property="og:description"[\s\S]*?\/>\n/, '')
     .replace(/[ \t]*<meta\s+property="og:image"[\s\S]*?\/>\n/, '')
+    // The template's alt text describes the map, which is the wrong caption for
+    // a card with a course name on it — and a wrong alt is worse than none.
+    .replace(/[ \t]*<meta\s+property="og:image:alt"[\s\S]*?\/>\n/, '')
     // The one attribute outside the head that says what language this is, and
     // the first thing a screen reader and a translation prompt both read.
     .replace(/<html lang="[^"]*"/, `<html lang="${page.lang}"`)
@@ -637,8 +686,8 @@ function pagesIn(lang: UiLang) {
           '@context': 'https://schema.org',
           '@type': 'Organization',
           name: 'Lectorea',
-          url: href(DEFAULT_LANG),
-          logo: href(DEFAULT_LANG, 'pwa-512.png'),
+          url: rootHref(),
+          logo: rootHref('pwa-512.png'),
           description: dict['app.tagline'] ?? '',
           sameAs: [`https://github.com/${repo}`],
         },
@@ -684,6 +733,103 @@ function notFoundPage(): Page {
   };
 }
 
+/* ──────────────────────  The door, and who opens it  ───────────────────── */
+
+/**
+ * The script that decides which language a reader gets, as one string used in
+ * two places.
+ *
+ * It runs on the pages at the root — the ones with no language on them — and
+ * also inside the app's own pages, where it is a no-op because their path
+ * already names a language. The second copy is what makes `404.html` work: it
+ * is one file answering every unknown address, so it is served for
+ * `/courses/typo` as readily as for `/ru/courses/typo`, and only the path can
+ * say which of those just happened.
+ *
+ * The order of preference is the honest one. What the reader chose themselves
+ * outranks what their browser says about them, and the browser outranks our
+ * own default — nobody is sent to a language they have already switched away
+ * from. `replace` rather than an assignment, so the back button leaves the site
+ * instead of returning to a door that opens the same way again.
+ */
+function chooseLanguage(): string {
+  return [
+    '(function () {',
+    `  var langs = ${JSON.stringify(LANGS)};`,
+    `  var fallback = ${JSON.stringify(DEFAULT_LANG)};`,
+    `  var base = ${JSON.stringify(base)};`,
+    '  var path = location.pathname;',
+    '  var rest = path.indexOf(base) === 0 ? path.slice(base.length) : path;',
+    '  while (rest.charAt(0) === "/") rest = rest.slice(1);',
+    '  // Already in a language: this is one of the real pages, nothing to do.',
+    '  if (langs.indexOf(rest.split("/")[0]) >= 0) return;',
+    '  var chosen = null;',
+    '  try {',
+    '    var stored = JSON.parse(localStorage.getItem("catalog.profile.v1") || "{}");',
+    '    if (langs.indexOf(stored && stored.settings && stored.settings.lang) >= 0) {',
+    '      chosen = stored.settings.lang;',
+    '    }',
+    '  } catch (error) {',
+    '    // A profile that will not parse is not a reason to refuse to open.',
+    '  }',
+    '  var wanted = navigator.languages || [navigator.language || ""];',
+    '  for (var i = 0; i < wanted.length && !chosen; i += 1) {',
+    '    var code = String(wanted[i]).toLowerCase().split("-")[0];',
+    '    if (langs.indexOf(code) >= 0) chosen = code;',
+    '  }',
+    '  location.replace(base + (chosen || fallback) + "/" + rest + location.search + location.hash);',
+    '})();',
+  ].join('\n');
+}
+
+/**
+ * A page at an address with no language on it.
+ *
+ * Every address the catalogue has exists twice over — `/ru/courses/x` and
+ * `/en/courses/x` — and this is the third, the one without an opinion. It is
+ * what `x-default` names, what every link shared before the languages had
+ * addresses still points at, and what somebody typing the site's name lands on.
+ *
+ * Small on purpose: it carries no content, because content here would be a
+ * third copy of a page that already exists in two languages. What it carries is
+ * the choice, the `hreflang` pair for a crawler that will not run the script,
+ * and a `<noscript>` refresh to the catalogue's own language for a reader whose
+ * browser will not either.
+ */
+function redirectPage(pathname: string, title: string): string {
+  const fallback = href(DEFAULT_LANG, pathname);
+  const alternates = LANGS.map(
+    (lang) => `    <link rel="alternate" hreflang="${lang}" href="${href(lang, pathname)}" />`
+  ).join('\n');
+  return [
+    '<!doctype html>',
+    `<html lang="${DEFAULT_LANG}">`,
+    '  <head>',
+    '    <meta charset="UTF-8" />',
+    `    <title>${escapeHtml(title)}</title>`,
+    alternates,
+    `    <link rel="alternate" hreflang="x-default" href="${rootHref(pathname)}" />`,
+    `    <script>${chooseLanguage()}</script>`,
+    `    <noscript><meta http-equiv="refresh" content="0; url=${fallback}" /></noscript>`,
+    '  </head>',
+    `  <body><a href="${fallback}">Lectorea</a></body>`,
+    '</html>',
+    '',
+  ].join('\n');
+}
+
+/** The redirector, at the path itself and at the path with a slash on it. */
+function writeRedirect(pathname: string, title: string): void {
+  const html = redirectPage(pathname, title);
+  const at = (file: string): void => {
+    const full = path.join(DIST, file);
+    ensureDir(path.dirname(full));
+    fs.writeFileSync(full, html, 'utf8');
+  };
+  at(pathname ? `${pathname}.html` : 'index.html');
+  if (pathname) at(`${pathname}/index.html`);
+}
+
 /* ─────────────────────────────  Sitemap etc.  ──────────────────────────── */
 
 type Entry = { pathname: string; priority: string };
@@ -700,13 +846,13 @@ function sitemap(entries: Entry[]): string {
   const urls: string[] = [];
   for (const { pathname, priority } of entries) {
     for (const lang of LANGS) {
-      const alternates = [...LANGS, DEFAULT_LANG]
-        .map((other, index) =>
-          `    <xhtml:link rel="alternate" hreflang="${
-            index === LANGS.length ? 'x-default' : other
-          }" href="${href(other, pathname)}" />`
-        )
-        .join('\n');
+      const alternates = [
+        ...LANGS.map(
+          (other) =>
+            `    <xhtml:link rel="alternate" hreflang="${other}" href="${href(other, pathname)}" />`
+        ),
+        `    <xhtml:link rel="alternate" hreflang="x-default" href="${rootHref(pathname)}" />`,
+      ].join('\n');
       urls.push(
         `  <url>\n    <loc>${href(lang, pathname)}</loc>\n${alternates}\n` +
           `    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`
@@ -744,7 +890,7 @@ function robots(): string {
     '# page, and each one otherwise makes a second address for it.',
     'Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&yclid&gclid&fbclid&from&ref',
     '',
-    `Sitemap: ${href(DEFAULT_LANG, 'sitemap.xml')}`,
+    `Sitemap: ${rootHref('sitemap.xml')}`,
     '',
   ].join('\n');
 }
@@ -790,7 +936,7 @@ function llms(): string {
           )}): ${tr('seo.llms.pageCourse')}.`,
         ]
       : []),
-    `- [sitemap.xml](${href(DEFAULT_LANG, 'sitemap.xml')}): ${tr('seo.llms.pageSitemap')}.`,
+    `- [sitemap.xml](${rootHref('sitemap.xml')}): ${tr('seo.llms.pageSitemap')}.`,
     ...LANGS.filter((lang) => lang !== DEFAULT_LANG).map(
       (lang) => `- [${lang}](${href(lang)}): ${tr('seo.llms.pageEnglish')}.`
     ),
@@ -827,6 +973,27 @@ function main(): void {
     write(pages.coursesPage());
     for (const domain of fieldsWithCourses) write(pages.fieldPage(domain));
     for (const course of courses) write(pages.coursePage(course));
+  }
+
+  /*
+   * And the same addresses without a language on them.
+   *
+   * Two things depend on these existing. Every link shared before the languages
+   * had addresses of their own says `/courses/calculus-1`, and a site that
+   * answers those with 404 has thrown away whatever they were worth. And
+   * `x-default` has to name something: the page for a reader whose language we
+   * cannot guess is the one that guesses.
+   */
+  const { domainTitle, tr } = pagesIn(DEFAULT_LANG);
+  const defaults = dicts.get(DEFAULT_LANG) ?? {};
+  writeRedirect('', defaults['app.documentTitle'] ?? 'Lectorea');
+  writeRedirect('courses', tr('seo.courses.title', {}, 'Lectorea'));
+  for (const domain of fieldsWithCourses) {
+    writeRedirect(`fields/${domain.id}`, tr('seo.domain.title', { title: domainTitle(domain.id) }, 'Lectorea'));
+  }
+  for (const course of courses) {
+    const title = defaults[`course.${course.id}.title`] ?? course.id;
+    writeRedirect(`courses/${course.id}`, tr('seo.course.titlePlain', { title }, 'Lectorea'));
   }
 
   const entries: Entry[] = [

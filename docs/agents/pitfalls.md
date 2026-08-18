@@ -505,3 +505,40 @@ and `node_modules` into the worktree, copy across any `data/` files you have
 edited yourself, build there, and copy `public/data` back. `git stash` on their
 files would have been the faster fix and the wrong one: it edits the tree they
 are working in.
+
+## The service worker was still serving the app shell for every address
+
+Found on 2026-08-18, moving the languages into `/ru/` and `/en/`.
+
+`vite-plugin-pwa` in `generateSW` mode registers a navigation route bound to the
+precached `index.html`: every navigation, whatever its address, is answered from
+that one file. That is exactly right for an app that is one file, and it had
+been right here for as long as `index.html` *was* the app.
+
+The moment the root became the language door — a page with a script and one
+link in it — every returning reader with the worker installed would have got
+that page at every address. Not an error, not a blank screen, nothing in the
+console: a link, on a site that had worked a minute earlier.
+
+**The assumption that was false:** that the service worker's caching is a
+performance detail, and that changing what lives at `/` is a routing change.
+It is neither. `navigateFallback` is a statement that the site is a
+single page, and it goes on being true after it stops being true.
+
+The fix is one line — `navigateFallback: null` in the workbox options — and it
+is correct for the reason the fallback existed: every address now has a real
+file written for it by `prerender.ts`, so there is nothing to fall back *to*.
+
+**What found it,** and this is the part worth keeping: the page in the browser
+did not match the file on disk. `dist/ru/fields/math.html` had the right title
+and the right canonical link, and the tab showed the front page's. Whenever
+those two disagree, the suspects are a service worker and a cache, in that
+order — and the check is one line in the console:
+
+```js
+navigator.serviceWorker.getRegistrations().then((r) => console.log(r.length));
+```
+
+**Generally:** a service worker is a second server, running on the reader's
+machine, with a copy of the answers from a version of the site that no longer
+exists. Any change to *which file answers which address* is a change to it too.

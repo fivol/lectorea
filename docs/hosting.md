@@ -90,10 +90,12 @@ part of `pnpm build`) and writes a real file for every URL the catalogue offers:
   written once, in the catalogue's language: Pages answers every unknown path
   with that one file whatever language the path was in, so it has no
   translation to name.
-- All of the above twice, once per language — see
+- All of the above twice, once per language, plus a small redirecting page at
+  each address with no language on it — see
   [a language is an address](#a-language-is-an-address). The sitemap carries
-  both, each `<url>` naming its translations with `xhtml:link`, so a crawler
-  that starts from the sitemap learns the pair before fetching either page.
+  the language trees only, each `<url>` naming its translations with
+  `xhtml:link`, so a crawler that starts from the sitemap learns the pair
+  before fetching either page.
 
 Pages resolves `/courses/calculus-1` to `courses/calculus-1.html` on its own, so
 the URLs do not change and neither does the router.
@@ -171,10 +173,10 @@ a site of its own.
 
 ## A language is an address
 
-Russian lives at the root and English under `/en/`: `/courses/calculus-1` and
-`/en/courses/calculus-1` are two pages, each declaring the other with
-`hreflang`, and `x-default` points at the Russian one — the catalogue's own
-language and the address people already link to.
+Every language lives in a directory named after it — `/ru/courses/calculus-1`
+and `/en/courses/calculus-1` — and none of them at the root. Each declares the
+other with `hreflang`, and `x-default` names the address with no language on
+it at all.
 
 The language used to live in `localStorage`, which is fine for a reader and
 useless for everything else. One address served both, so a search engine had
@@ -182,31 +184,99 @@ one URL and no way to be told which language was on it; a link pasted into a
 chat carried the language of whoever pasted it rather than of whoever opened
 it; and a page that is two languages can declare neither.
 
+Russian sat at the root for one build in between, which is the cheaper
+arrangement and the wrong one: it makes one language the exception to every
+rule about addresses, so a link is `/courses/x` or `/en/courses/x` depending on
+which, and every function that builds one has to know which. Symmetry is worth
+a redirect at the door.
+
+### The door
+
+`scripts/prerender.ts` still writes a page at every address *without* a
+language — `/`, `/courses/calculus-1`, `/fields/math` — and its whole job is to
+choose one and leave. It carries no content, because content there would be a
+third copy of a page that already exists in two languages; it carries the
+choice, the `hreflang` pair for a crawler that will not run the script, and a
+`<noscript>` refresh to the catalogue's own language.
+
+The order of preference is the honest one:
+
+1. **what the reader chose**, from the profile in `localStorage` — nobody is
+   sent to a language they have already switched away from;
+2. **what their browser asks for**, `navigator.languages` matched by its
+   first tag, which is where an `Accept-Language` of `ru-RU` ends up;
+3. **the catalogue's own language**, for anything else.
+
+It uses `location.replace`, so the back button leaves the site rather than
+returning to a door that opens the same way again. And it is the same script on
+the app's own pages, where it returns on its first line because the path
+already names a language — which is what makes `404.html` work, since that one
+file answers `/courses/typo` and `/ru/courses/typo` alike and only the path can
+say which just happened.
+
+These pages are also what keeps every link shared before the languages had
+addresses alive: `/courses/calculus-1` is a redirect now rather than a 404.
+
+### Inside the app
+
 The seam is [src/lib/lang.ts](../src/lib/lang.ts) and it is deliberately one
 line of consequence: the language is read from the path **before React mounts**
-and becomes the router's `basename`. Every `to=` and `navigate()` in the app
-resolves against it, so no screen, no `href` builder and no route knows there is
-a prefix at all — `/courses/calculus-1` is what the code says in both trees.
-The two things that do know are the canonical link, which has to name the
-address of the page it is actually on, and the header switch, which is a real
+and becomes the router's `basename`. Every `to=` and `navigate()` resolves
+against it, so no screen, no `href` builder and no route knows there is a
+prefix at all — `/courses/calculus-1` is what the code says in both trees. The
+two things that do know are the canonical link, which has to name the address
+of the page it is actually on, and the header switch, which is a real
 `<a href>` to the other tree: a link can be copied, opened in a new tab, and
 followed by a crawler that would otherwise never learn the second tree exists.
 
 Switching language reloads the document rather than re-routing. The `basename`
 is fixed when the router mounts and so is the dictionary the page was rendered
 from, and a language is changed rarely enough that the honest reload is worth
-more than the machinery to avoid it. It also lands on the file search already
-has in that language.
+more than the machinery to avoid it.
 
 The profile still records the choice — an export carries it, and the switch
-writes it on its way out — but nothing renders from it, and **nothing redirects
-on it**. A reader who opens a Russian link gets the Russian page, and a crawler
-gets what any reader would.
+writes it on its way out — and the door reads it, but nothing renders from it.
 
 `scripts/prerender.ts` writes both trees, and `check:i18n` gates them: the
 prose in those pages is in `data/i18n/*.json` like everything else, and the
 checker reads `prerender.ts` alongside `src/` so a key only the pages use is
 not mistaken for an orphan.
+
+**The service worker has no single-page fallback**, and that is part of this.
+`vite-plugin-pwa` answers every navigation from the precached `index.html` by
+default, which is right for an app that is one file — and the file at the root
+is now the door, not the app. See
+[pitfalls.md](agents/pitfalls.md#the-service-worker-was-still-serving-the-app-shell-for-every-address).
+
+## The card a shared link unfolds into
+
+`public/og.png` is the picture for the site as a whole: the real map, drawn by
+`pnpm og:build`, committed like any other asset. Every course and every field
+has one of its own on top of that — its name, its field of knowledge in the
+field's colour, and how many recordings there are — written by
+[scripts/og-cards.ts](../scripts/og-cards.ts) during `pnpm build` into
+`dist/og/<lang>/…`, and named by `og:image` when the file is there.
+
+Three decisions in it are worth keeping:
+
+- **One Chrome, five hundred pictures.** A `--screenshot` per card is seven
+  seconds of process start each, which is an hour for a catalogue this size.
+  The browser is started once and driven over its own debugging protocol
+  instead: the page is loaded and the fonts laid out a single time, and each
+  card is a text substitution and a capture, about sixty milliseconds apiece.
+  The whole set takes under twenty seconds.
+- **Built, not committed.** The site card is a picture somebody decided on;
+  these are a function of the catalogue, which changes every night. Five
+  hundred files in the repository would be five hundred rewritten on every
+  title fix, and stale the day after.
+- **JPEG.** The card is mostly a soft wash of the field's colour, which is the
+  one thing PNG cannot compress — 55 MB as PNG against 15 as JPEG, for pictures
+  no reader ever looks at closely. It also keeps them out of the service
+  worker's precache, whose glob list is deliberately without `jpg`.
+
+A machine with no Chrome is a supported way to build the site: the script says
+so and stops, and `prerender.ts` looks for each file rather than assuming it,
+so those pages fall back to the site card and nothing else is wrong.
 
 ## The typefaces are ours to serve
 
