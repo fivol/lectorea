@@ -134,6 +134,35 @@ genitive of «химия» is not «химия» plus letters, so it is written 
 course and every template then reaches it
 ([data-traps.md](data-traps.md#russian-inflection-the-tolerance-is-three-letters-after-the-phrase-and-that-is-masculine-nouns-only)).
 
+## A list somebody kept adding to by hand is a rule waiting to be written
+
+Thirteen singular English keywords — «data structure», «computer network»,
+«differential equation» — were added by hand on 2026-08-16, because a stored
+plural can never find a singular title while the reverse is free
+([data-traps.md](data-traps.md#english-plurals-store-the-singular-and-only-when-the-phrase-has-two-words)).
+They bought about 70 bindings, and they left the next fourteen to whoever
+remembered the trap existed.
+
+On 2026-08-19 the list became `singularOf` in `lib/rules.ts`: every multi-word
+English phrase in the index gains its singular, generated, the way `SCHOOL_FORMS`
+generates school phrasings off `stage` ([above](#what-varies-by-a-field-is-read-off-the-field-not-written-out-per-course)).
+Over a catalogue where the thirteen best cases were already covered by hand it
+probes **+9, −0** — small on the day, and the point is that the fourteenth
+keyword now arrives with its singular whether or not anybody knows why.
+
+**The shape to look for:** a hand-maintained list whose entries all follow one
+derivation from data the repository already holds. It is the same trade as the
+school forms — the generator invents some strings nothing is titled, and a
+phrase nothing is titled never matches.
+
+**Rejected, and measured before rejecting.** The same rule over *one-word*
+keywords probes +63, −2, and reading the gained column is what killed it: three
+tolerated letters walk «cells» into a cello recital, «graphs» into GraphQL,
+«groups» into «Al Bayan Lectures - Group 1» and «currents» into AC current. The
+restriction to multi-word phrases is not caution, it is the measurement — and it
+independently reproduced the table `data-traps.md` had already written down from
+the hand pass.
+
 ## A refusal is a finding, and gets written down
 
 [channel-hunt.md](../channel-hunt.md) keeps the list of **refused** channels with

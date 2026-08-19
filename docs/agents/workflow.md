@@ -39,6 +39,37 @@ right call ([harvest.md](../harvest.md#seam-8--asking-youtube-itself), seam 8).
 units, metadata for 50 playlists 1, `search.list` 100. Hence the ordering rule:
 match before crawling, because matching is free and decides what the day buys.
 
+## The nightly job crawls what the laptop published, not what the laptop has
+
+`refresh.yml` fires at **08:30 UTC** — half an hour after the quota resets — and
+restores the `data-cache` release before it crawls. So a day of local crawling
+that was never published is invisible to it: it re-walks a queue the laptop has
+already paid for, out of the same three keys, and then publishes a snapshot
+*behind* the laptop.
+
+That was the state on 2026-08-19 at 08:00 UTC — release 63 077 playlists, laptop
+79 475 — and the fix is one command with a deadline:
+
+```bash
+pnpm cache:publish            # ~4 minutes: 24 GB on disk → 686 MB → 210 MB uploaded
+```
+
+**If the laptop has crawled since the last publish, publish before 08:30 UTC.**
+Then the nightly restores that generation and spends the night on the real
+queue. Checking costs nothing:
+
+```bash
+gh release download data-cache --pattern 'cache.db.stamp' -D /tmp --clobber && cat /tmp/cache.db.stamp
+pnpm exec tsx -e "import {openDb} from './scripts/lib/db.ts'; const db=openDb({readonly:true}); console.log(db.prepare('SELECT count(*) c FROM playlists').get())"
+```
+
+The mirror of the same rule holds for the rest of the day: **anything the
+nightly crawls after that is only reachable by `make pull`**, and a pull
+replaces the local database — so it goes *before* the day's own crawling and
+hunting, never after. A laptop that hunts first and pulls second throws the
+searches away; one that publishes over the release without pulling throws the
+night away.
+
 ## What to run in the background
 
 The crawl comfortably outlives the `Bash` timeout of 600 s; `data:refresh` on a

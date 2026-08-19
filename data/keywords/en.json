@@ -521,9 +521,9 @@
   "course.thermodynamics": [
     "thermodynamics",
     "thermo",
-    "heat",
+    "?heat",
     "entropy",
-    "molecular physics"
+    "?molecular physics"
   ],
   "course.optics": [
     "optics",
@@ -762,7 +762,7 @@
   ],
   "course.pharmacology": [
     "pharmacology",
-    "drugs",
+    "?drugs",
     "pharmacokinetics"
   ],
   "course.immunology": [
@@ -787,7 +787,7 @@
     "circuits",
     "circuit theory",
     "electrical circuits",
-    "electronics",
+    "?electronics",
     "electrical circuit"
   ],
   "course.control-theory": [
@@ -800,7 +800,7 @@
   "course.signal-processing": [
     "signal processing",
     "dsp",
-    "fourier",
+    "?fourier",
     "filters",
     "sampling"
   ],
@@ -816,7 +816,7 @@
     "intro to machine learning",
     "statistical machine learning",
     "supervised learning",
-    "regression",
+    "?regression",
     "data mining"
   ],
   "course.deep-learning": [
@@ -878,7 +878,7 @@
     "investing",
     "corporate finance",
     "asset pricing",
-    "portfolio"
+    "?portfolio"
   ],
   "course.behavioral-economics": [
     "behavioural economics",
@@ -1176,7 +1176,7 @@
   ],
   "course.semantics": [
     "semantics",
-    "meaning",
+    "?meaning",
     "formal semantics",
     "pragmatics"
   ],
@@ -1420,7 +1420,7 @@
   "course.metrology": [
     "metrology",
     "measurement",
-    "instrumentation",
+    "?instrumentation",
     "sensors"
   ],
   "course.transport-phenomena": ["transport phenomena","momentum transfer"],
@@ -1502,5 +1502,37 @@
 
   "course.business-communication": ["business communication","business writing","professional communication"],
 
-  "course.power-electronics": ["power electronics","power converter","pulse width modulation"]
+  "course.power-electronics": ["power electronics","power converter","pulse width modulation"],
+
+  "course.cloud-computing": [
+    "cloud computing",
+    "kubernetes",
+    "docker",
+    "aws",
+    "amazon web services",
+    "devops"
+  ],
+
+  "course.web-development": [
+    "web development",
+    "web programming",
+    "full stack development",
+    "fullstack",
+    "frontend",
+    "front end",
+    "backend",
+    "back end",
+    "html css"
+  ],
+
+  "course.mobile-development": [
+    "mobile development",
+    "mobile application development",
+    "mobile app development",
+    "android development",
+    "ios development",
+    "flutter",
+    "swiftui",
+    "react native"
+  ]
 }

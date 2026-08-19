@@ -118,3 +118,22 @@
   stage: bachelor-4
   deps: [computer-architecture]
   soft: [algorithms]
+
+- id: cloud-computing
+  domains: [cs]
+  stage: bachelor-4
+  # Networks alone: it already carries operating systems, and a machine in a
+  # datacentre is reached over a network before anything else is true of it.
+  deps: [networks]
+
+- id: web-development
+  domains: [cs]
+  stage: bachelor-1
+  deps: [programming-intro]
+  soft: [databases, networks]
+
+- id: mobile-development
+  domains: [cs]
+  stage: bachelor-2
+  deps: [programming-intro]
+  soft: [software-engineering]

@@ -651,7 +651,7 @@
   ],
   "course.cosmology": [
     "космология",
-    "вселенная",
+    "?вселенная",
     "cosmology"
   ],
   "course.general-chemistry": [
@@ -1384,5 +1384,34 @@
 
   "course.business-communication": ["деловая коммуникация","деловое общение","деловая переписка"],
 
-  "course.power-electronics": ["силовая электроника","преобразовательная техника","инверторы"]
+  "course.power-electronics": ["силовая электроника","преобразовательная техника","инверторы"],
+
+  "course.cloud-computing": [
+    "облачные вычисления",
+    "облачные технологии",
+    "cloud computing",
+    "kubernetes",
+    "docker",
+    "devops"
+  ],
+
+  "course.web-development": [
+    "веб-разработка",
+    "веб разработка",
+    "веб-программирование",
+    "вёрстка",
+    "фронтенд",
+    "бэкенд",
+    "web development",
+    "fullstack"
+  ],
+
+  "course.mobile-development": [
+    "мобильная разработка",
+    "разработка мобильных приложений",
+    "мобильных приложений",
+    "mobile development",
+    "android development",
+    "flutter"
+  ]
 }

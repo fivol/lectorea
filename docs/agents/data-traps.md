@@ -528,10 +528,69 @@ one-word keyword the same three letters walk straight into another word:
 
 Thirteen multi-word singulars added on 2026-08-16 (`data structure`, `computer
 network`, `control system`, `complex variable`, `differential equation`,
-`neural network`, …) bought about 70 bindings and lost nothing. This is the same
+`neural network`, …) bought about 70 bindings and lost nothing. **Since
+2026-08-19 they are generated** rather than remembered — `singularOf` in
+`lib/rules.ts` derives the singular of every multi-word English phrase, with the
+one-word case refused for the reason the table above gives
+([practices.md](practices.md#a-list-somebody-kept-adding-to-by-hand-is-a-rule-waiting-to-be-written));
+a keyword written in the plural no longer needs anybody to know this entry
+exists. This is the same
 rule [above](#a-loose-keyword-costs-nothing-visible-and-plenty-invisible)
 already states from the other side — under about six characters, English
 keywords are dangerous — and the reason is the same tolerance.
+
+## A keyword can lose its meaning to the noise pass and keep matching
+
+«full stack» was written into `keywords/en.json` for the new `web-development`
+course. `cleanTitle` strips «full» — it is in `NOISE` with «the», «course» and
+«part» — so what reached the index was **«stack»**, which bound «Stacker» and
+«Stacks - Solved Questions» at 0.88 apiece. The keyword file says one thing and
+the index holds another, and nothing in between says so.
+
+`buildKeywordIndex` already guards this for *course names*: a name that comes
+out of `cleanTitle` as a single word is dropped when the name had three words or
+more. A two-word keyword sits under that floor.
+
+Lowering the floor to two was measured and **rejected** — over the whole
+catalogue exactly four keywords collapse from two words to one, and three of
+them are the ones you want:
+
+| keyword | becomes | verdict |
+|---|---|---|
+| «Introductory Astronomy» | «astronomy» | right, for `astronomy-intro` |
+| «Introductory Biology» | «biology» | right, for `general-biology` |
+| «conic section» | «conic» | specific enough |
+| «full stack» | «stack» | the bug |
+
+Three good entries deleted to catch one bad one is a worse file. So the check
+stays a check — run it after adding keywords, and write the phrase so its
+meaning survives («full stack development» → «stack development»):
+
+```bash
+pnpm exec tsx -e "
+import { cleanTitle } from './scripts/lib/rules.ts';
+import { loadSources } from './scripts/lib/sources.ts';
+for (const c of loadSources().courses)
+  for (const n of loadSources().courseNames.get(c.id) ?? []) {
+    const cleaned = cleanTitle(n);
+    if (n.trim().split(/\s+/).length >= 2 && cleaned && !cleaned.includes(' '))
+      console.log(c.id, '«' + n + '» → «' + cleaned + '»');
+  }
+"
+```
+
+## A channel `_holes.ts` names can be invisible to `discover`
+
+`playlists?channelId=…` returns a channel's **public, channel-owned** playlists,
+and for some channels that list is empty however many playlists the catalogue
+has from them. *UCI Open* — 10 playlists in `playlists`, 7 of them bound, all of
+them the university-course shape («Math 2A: Calculus», «Chem 51C, Organic
+Chemistry», «MAE 130A. Intro to Fluid Mechanics») — answers `_vet.ts` with **0
+playlists**. A line in `data/channels.yaml` would discover nothing, for ever.
+
+So `_holes.ts` names candidates and `_vet.ts` still decides, and a `?` with zero
+playlists is not "small", it is "unreachable from the channel end". What such a
+channel is for is `playlist:add` on the playlists that are already known.
 
 ## A course cannot be told from a topic bin by its size
 

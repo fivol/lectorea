@@ -1201,5 +1201,14 @@
   "course.business-communication.desc": "Переговоры, презентации, деловая переписка",
 
   "course.power-electronics.title": "Силовая электроника",
-  "course.power-electronics.desc": "Преобразователи, выпрямители и инверторы, ШИМ, управление ключами"
+  "course.power-electronics.desc": "Преобразователи, выпрямители и инверторы, ШИМ, управление ключами",
+
+  "course.cloud-computing.title": "Облачные вычисления",
+  "course.cloud-computing.desc": "Виртуализация, контейнеры, оркестрация, облачные сервисы",
+
+  "course.web-development.title": "Веб-разработка",
+  "course.web-development.desc": "HTTP, фронтенд и бэкенд, фреймворки, развёртывание",
+
+  "course.mobile-development.title": "Мобильная разработка",
+  "course.mobile-development.desc": "Android и iOS, интерфейс, жизненный цикл, публикация приложения"
 }

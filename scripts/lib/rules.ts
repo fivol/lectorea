@@ -96,6 +96,55 @@ function isSchoolStage(stage: string | undefined): boolean {
   return typeof stage === 'string' && stage.startsWith('school-');
 }
 
+/**
+ * Words that end in `s` and are already singular, so trimming one would invent
+ * a stem that is not a word — and `findPhrase` lets a phrase grow three letters
+ * to its right, which is exactly enough for such a stem to reach words the
+ * course has nothing to do with. «mathematics» trimmed to «mathematic» matches
+ * «mathematical» and would file every mathematical-physics playlist under
+ * school mathematics.
+ *
+ * `-ics` covers the whole Greek family the catalogue is full of — physics,
+ * statistics, economics, mechanics, optics, ethics, politics, linguistics,
+ * genetics, classics — and the rest are the endings a plural never has.
+ */
+const NOT_A_PLURAL = /(?:ics|ss|us|is|as|os|ys)$/;
+
+/**
+ * The singular of an English keyword written in the plural.
+ *
+ * The mirror of the tolerance in `findPhrase`: a phrase may pick up an ending
+ * a title added, but nothing lets it drop one the keyword itself carries. So
+ * «databases» matches «Databases» and «Database Systems» — and misses
+ * «Database Modeling and Design» — while the singular form matches all three,
+ * the plural among them, because one letter is well inside what the right edge
+ * already tolerates. Russian is untouched: its forms are a list, written out in
+ * data/keywords/ru.json, and a stemmer is what this file refuses to be.
+ *
+ * Only the last word is tried, since that is the only edge the tolerance
+ * reaches: «systems analysis» stays as it is, and a title writing it in the
+ * singular still wants a keyword of its own.
+ *
+ * And only inside a phrase that has other words in it. A plural noun on its own
+ * is the whole of what a course is called and its singular is the ordinary
+ * word: measured over the catalogue, dropping the «s» from one-word keywords
+ * bound «cells» to a cello recital, «graphs» to GraphQL, «groups» to a lecture
+ * series' Group 1 and «currents» to AC current, because three tolerated letters
+ * are more than enough to reach a different word. With a qualifier in front —
+ * «operating system», «differential equation», «legal system» — the phrase
+ * still names the subject in either number.
+ */
+function singularOf(phrase: string): string | null {
+  const at = phrase.lastIndexOf(' ');
+  if (at === -1) return null;
+  const last = phrase.slice(at + 1);
+  if (!/^[a-z]{4,}s$/.test(last) || NOT_A_PLURAL.test(last)) return null;
+  // «-es» is the plural of a word that could not take a bare «s»: box → boxes,
+  // process → processes. Anywhere else the «e» belongs to the word.
+  const stem = /(?:s|x|z|ch|sh)es$/.test(last) ? last.slice(0, -2) : last.slice(0, -1);
+  return phrase.slice(0, at + 1) + stem;
+}
+
 export function buildKeywordIndex(sources: Sources): KeywordIndex {
   const index: KeywordIndex = [];
   for (const course of sources.courses) {
@@ -126,6 +175,13 @@ export function buildKeywordIndex(sources: Sources): KeywordIndex {
           if (cleaned) phrases.add(cleaned);
         }
       }
+    }
+    // Written after the school forms so a generated «{} classes» is de-pluralised
+    // too, and into the same set, so a course that already lists both forms by
+    // hand gets one entry rather than two.
+    for (const base of [...phrases]) {
+      const singular = singularOf(base);
+      if (singular) phrases.add(singular);
     }
     for (const phrase of phrases) {
       if (phrase.length >= MIN_PHRASE) index.push({ courseId: course.id, phrase });

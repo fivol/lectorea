@@ -1201,5 +1201,14 @@
   "course.business-communication.desc": "Negotiation, presentations and business writing",
 
   "course.power-electronics.title": "Power electronics",
-  "course.power-electronics.desc": "Converters, rectifiers and inverters, PWM and switch control"
+  "course.power-electronics.desc": "Converters, rectifiers and inverters, PWM and switch control",
+
+  "course.cloud-computing.title": "Cloud computing",
+  "course.cloud-computing.desc": "Virtualisation, containers, orchestration, cloud services",
+
+  "course.web-development.title": "Web development",
+  "course.web-development.desc": "HTTP, frontend and backend, frameworks, deployment",
+
+  "course.mobile-development.title": "Mobile development",
+  "course.mobile-development.desc": "Android and iOS, interface, lifecycle, publishing an app"
 }

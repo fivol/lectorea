@@ -412,6 +412,30 @@ Refused, each after reading the titles:
   nothing else, so not a channel. Both turned out to be **already bound at
   0.95**, mined from a link: the check before adding is a query, not a memory.
 
+### The same list, read again on 2026-08-19
+
+`_holes.ts` still names eleven channels, and five units of `_vet.ts` closed the
+five that had never been judged. **None was added**, and the two shapes are
+worth the line:
+
+- **Saul Leung** `UCbmZjgR_LiEIkTae9f6rvYg` — 45 playlists, 37 of ten or more,
+  and every title carries somebody else's name: «CS6476 Introduction to Computer
+  Vision — Part 2 | Georgia Tech», «Machine Learning | WQU», «Caltech —
+  Principles of Economics with Calculus». A mirror, which is the one shape that
+  passes every size test in [harvest.md](harvest.md#the-bar) and still fails it.
+  **Amir H. Ashouri** `UCBCCxk-1JgAARTOaWIAWgnA` is the small version of the
+  same: three playlists of ten or more, all of them U Toronto and York lectures.
+- **Adaptive Agents Laboratory** `UCTp91O_mEZCZB6sTR5GSAVw` — two playlists,
+  both real, both **already bound**, like Lindsey Kuper above. Two courses is a
+  `playlist:add`, not a channel.
+
+And one that is neither, and is a trap rather than a judgement: **UCI Open**
+`UCngehmCV-65FikHYUV1_qXA` — ten playlists in the catalogue, seven bound, every
+one of them a proper university course — answers `_vet.ts` with **zero
+playlists**, because `playlists?channelId=` does not return them
+([data-traps.md](agents/data-traps.md#a-channel-_holests-names-can-be-invisible-to-discover)).
+A line in `channels.yaml` would have discovered nothing for ever.
+
 ## The sixth seam, 2026-08-17 — the catalogue naming its own candidates
 
 Not a hunt: `data:authors --min=20` probed 1336 published bindings at a unit
