@@ -225,6 +225,27 @@ generalising it, list what it would do to the *other* case and read the titles �
 [data-traps.md](data-traps.md#english-plurals-store-the-singular-and-only-when-the-phrase-has-two-words)
 has the table this produced.
 
+### A qualifier was called noise because it looked like «введение»
+
+**Assumed:** «школьная химия», «Химия 8 класс» and «Физика для школьников» name
+a level and not a subject, so the level words belong in `NOISE` beside
+«введение», «полный» and «курс» — one rule, every school subject, nothing to
+write per course.
+
+**It was:** `buildKeywordIndex` cleans the *keywords* through the same pass. So
+«школьная алгебра» became «алгебра», which `abstract-algebra` already owns, and
+the tie rule silenced both — 40 МГУ and НМУ algebra recordings bound to nobody.
+`_probe.ts` read **−55**. And the words being deleted were the only thing
+telling `school-algebra` from `abstract-algebra` in the first place: «Алгебра 8
+класс» is school algebra *because of* «8 класс».
+
+**How not to repeat it:** a word is noise only when **no course of the catalogue
+is told apart by it**. Where two courses share a head noun and differ by level,
+by language or by department, that word is the whole signal — and the answer is
+a longer phrase in the keywords, not a shorter title. `_probe.ts` said so in
+ninety seconds; the design argument for the noise rule had been running for
+twenty minutes before that.
+
 ### A gain was counted without checking the gain was not already there
 
 **Assumed:** counting titles where a keyword's singular matches and its plural
@@ -557,6 +578,24 @@ part of every day; the local date is wrong more often.
 **How not to repeat it:** ask `lib/db.ts` for the key rather than recomputing a
 date. Anywhere a value is derived by a rule with a comment above it, the rule is
 the interface — see [workflow.md](workflow.md#quota-is-the-scarce-resource).
+
+### A pure helper was imported, and its script ran
+
+**Assumed:** `playlistIdFrom` is four lines of string parsing, so importing it
+from `scripts/playlist-add.ts` to read a link is free.
+
+**It was:** the module calls `main()` at the bottom, as every script here does.
+The import ran `playlist:add` with the *importing* script's `process.argv` —
+which happened to carry `--course=general-chemistry` — so a read-only
+reachability check wrote `data/overrides.yaml`, queued a crawl and printed its
+own success in the middle of somebody else's output. The binding was one that
+was going to be made anyway, which is exactly why it was nearly missed.
+
+**How not to repeat it:** anything a script and a tool both need lives in a
+module that does **nothing** when imported. `playlistIdFrom` now sits in
+`shared/playlist-id.ts` with the rest of the id parsing and is re-exported from
+`playlist-add.ts` for its old callers. The general form: in this repository a
+file under `scripts/` that is not under `scripts/lib/` runs when you import it.
 
 ### The git index is shared with other sessions
 

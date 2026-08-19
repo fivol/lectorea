@@ -247,9 +247,22 @@ export async function refreshPlaylistMetadata(
         // fell out of the scan window with no title at all — which is the one
         // thing matching reads, so it could never be classified and sat in the
         // review queue for ever. 3252 rows on 2026-08-15.
+        //
+        // And a playlist somebody added by hand comes before all of it. The
+        // seeding above says it is "the most valuable metadata the next run can
+        // buy" and only made it *due*, which is not the same thing: due-ness
+        // decides whether a row may be bought, this ordering decides whether it
+        // is reached. Behind 4939 mined rows with no title, a link accepted
+        // from an issue waited a fortnight for the 1/50th of a unit that gives
+        // it a name — while its videos, at 2.3 units, had been walked the same
+        // evening. `proposed` is the hand-added marker and only that: `imported`
+        // is a wide seam and has no claim on the front of the queue.
         `SELECT id, views, video_count, videos_fetched_at, next_refresh_at FROM playlists
          WHERE alive = 1
-         ORDER BY (title IS NULL OR title = '') DESC, (published_at IS NULL) DESC, views DESC
+         ORDER BY (channel_id = '${PLACEHOLDER_CHANNEL}') DESC,
+                  (title IS NULL OR title = '') DESC,
+                  (published_at IS NULL) DESC,
+                  views DESC
          LIMIT ?`
       )
       .all(SCAN_LIMIT) as Array<{

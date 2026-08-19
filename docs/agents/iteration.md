@@ -213,6 +213,78 @@ Before calling the iteration done, run the end-of-iteration ritual in
 
 ---
 
+## When somebody sends a link
+
+A playlist arrives — an issue, a message, a recommendation — and it is not in
+the catalogue. **Two things happen, and the second one is the work.**
+
+The playlist itself is one unit and one line:
+
+```bash
+pnpm playlist:add "<link>" --course=<id>
+```
+
+Then the real question: *why had nothing here reached it?* Whatever the answer
+is, it is holding back everything shaped like it, and the next link will be the
+same conversation ([practices.md](practices.md#a-link-that-arrives-is-a-sample-of-a-class-and-the-class-is-the-work)).
+
+```bash
+pnpm tsx scripts/_reachable.ts "<link>" --course=<id>          # free
+pnpm tsx scripts/_reachable.ts "<link>" --course=<id> --ask    # 100 units a question
+```
+
+It walks the four gates in price order and prints where the playlist stood at
+each. They fail in ways that look identical from `cache.db` — which holds
+neither "never found" nor "found and dropped" — and they are fixed in four
+different files:
+
+| Gate | What the output says | Where the fix lives |
+|---|---|---|
+| **Discovery** | no row in `playlists` | `data/channels.yaml`, `data/sources.yaml`, or the questions below |
+| **The questions** | none of them returns it under `--ask` | `scripts/lib/questions.ts` — a phrasing, or the names a course is asked under |
+| **The rules** | `unclaimed` / `undecided` / under 0.75 | `data/keywords/*.json`, `data/aliases/*.json` — and this is the gate the hunt applies before it queues anything, so an unclaimed title is *found and discarded* |
+| **The reader** | a `not-a-course` verdict | usually right; check it is |
+
+**Then fix the class, not the link**, and prove it with the numbers the rest of
+this page already asks for:
+
+```bash
+pnpm tsx scripts/_probe.ts && pnpm tsx scripts/_probe.ts lost
+make match FORCE=1 && make data
+```
+
+and a review round for whatever the change newly bound
+([3c above](#3c-confirm-the-new-bindings-before-they-publish)) — a keyword change
+is not finished until the reader has confirmed what it dragged in.
+
+### The worked example, 2026-08-19
+
+«Полный курс школьной химии» — 13 lectures, 290 000 views, a channel of twenty
+videos. Every guess about why it was missing was wrong:
+
+- it was **not** undiscovered: it is the 21st of the 50 answers to «Общая химия
+  лекции», which the hunt had asked and paid for a fortnight earlier;
+- it was **not** below a threshold: 13 videos clears `MIN_VIDEOS`, and nothing
+  in `NOT_A_COURSE` touches it;
+- it was `unclaimed`. `general-chemistry` knew «общая химия» and the title says
+  «школьной химии» — a level qualifier the keywords had never heard of, over a
+  genitive the inflection tolerance cannot reach.
+
+The class was **every school-level subject**: seven courses at `stage: school-*`,
+of which one had school vocabulary and six did not. Closing it took two lists
+read off `stage` — `SCHOOL_FORMS` in `lib/rules.ts`, `SCHOOL_QUALIFIERS` in
+`lib/questions.ts` — seven genitives in `data/keywords/ru.json`, and one
+ordering fix so a hand-added playlist can buy its own title
+([data-traps.md](data-traps.md#a-playlist-added-by-hand-waits-behind-everything-the-crawl-mined)).
+`_probe.ts`: **+56, −2**. The link was the smallest part of it.
+
+The channel itself was refused, and that is the ordinary answer for a channel
+somebody links from: five playlists, one of them a course
+([channel-hunt.md](../channel-hunt.md#what-was-refused)). `playlist:add` is what
+a good playlist on a thin channel is for.
+
+---
+
 ## The review
 
 `_refusals.ts` puts every refusal into one of five buckets, and each wants a
@@ -331,6 +403,7 @@ that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
 | `_gaps.ts [course-id]` | free | is a course worth adding — what waits for it, and what it would take from its neighbours |
 | `_noisy.ts [min]` | free | which keywords claim and never win |
 | `_probe.ts [gained\|lost\|changed]` | free | what would a rule change do to the whole catalogue |
+| `_reachable.ts <link> [--course] [--meta] [--ask]` | free / 1 unit / 100 a question | would this catalogue ever have found this playlist by itself, and at which of the four gates it stopped |
 | `_holes.ts [min]` | free | which channels does the catalogue keep choosing but never crawl |
 | `_vet.ts in.txt out.json` | 1 unit/channel | does this candidate own courses |
 | `_hunt.ts out.json [--min\|--courses] [--variant=all] [--apply]` | 100 units/query | what does YouTube itself have for the thinnest courses — and whose channel is it really. Never asks a question the `searches` table already holds |

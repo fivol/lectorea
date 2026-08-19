@@ -38,6 +38,64 @@ const MIN_PHRASE = 4;
  * Every language at once, from `sources.courseNames` — a playlist is titled in
  * the language its author speaks, not the one the build renders in.
  */
+/**
+ * What school material puts around a subject, and a university never does.
+ *
+ * A course at `stage: school-*` is published under the level as much as under
+ * the subject — «Полный курс школьной химии», «Химия 8 класс», «Биология для
+ * школьников», «Школьный курс алгебры» — and the qualifier is most of the
+ * clause, so a keyword holding only the head noun scores 0.6 and never
+ * publishes. It is the faculty-title pattern of docs/agents/data-traps.md with
+ * a different qualifier, and it has the same answer: **store the whole phrase.**
+ *
+ * Written once and combined with every name the course has, rather than typed
+ * out per course, because it is the `stage` that predicts the phrasing.
+ * `school-algebra` had this vocabulary by hand since the day it was added and
+ * the other six school courses never got it — which is exactly the shape of
+ * thing a list in one place fixes for good, including for the school course
+ * added next year.
+ *
+ * Combinations that are not Russian — «уроки химия», «школьная химии» — are
+ * generated too and cost nothing: a phrase nothing is titled is a string that
+ * never matches. Paying for that is much cheaper than asking this file to know
+ * which case and gender each of 225 course names is in.
+ *
+ * The one form that cannot be generated is the genitive of the noun itself
+ * («химия» → «химии»), which Russian does not derive from the nominative
+ * without a stemmer and this file refuses to guess. It is written down beside
+ * the course in data/keywords/ru.json, once, and every template below then
+ * reaches it.
+ */
+const SCHOOL_FORMS: string[] = [
+  'школьная {}',
+  'школьный {}',
+  'школьное {}',
+  'школьной {}',
+  'школьного {}',
+  'школьный курс {}',
+  'уроки {}',
+  '{} для школьников',
+  '{} школьникам',
+  // Cleaned, «Алгебра 7-11 классы» is «алгебра классы»: the range is stripped
+  // by the course-code rule long before anything reads the word after it.
+  '{} класс',
+  '{} классы',
+  '{} 5 класс',
+  '{} 6 класс',
+  '{} 7 класс',
+  '{} 8 класс',
+  '{} 9 класс',
+  '{} 10 класс',
+  '{} 11 класс',
+  'high school {}',
+  '{} for high school',
+];
+
+/** `stage` as data/courses/*.yaml writes it — school-9, school-10, school-11. */
+function isSchoolStage(stage: string | undefined): boolean {
+  return typeof stage === 'string' && stage.startsWith('school-');
+}
+
 export function buildKeywordIndex(sources: Sources): KeywordIndex {
   const index: KeywordIndex = [];
   for (const course of sources.courses) {
@@ -57,6 +115,17 @@ export function buildKeywordIndex(sources: Sources): KeywordIndex {
       const cleaned = cleanTitle(name);
       if (!cleaned.includes(' ') && name.trim().split(/\s+/).length >= 3) continue;
       phrases.add(cleaned);
+    }
+    // The level is part of the name for a course read at school — see
+    // `SCHOOL_FORMS`. Generated from what the course is already called, so the
+    // whole class is covered by the `stage` rather than by whoever remembers.
+    if (isSchoolStage(course.stage)) {
+      for (const base of [...phrases]) {
+        for (const form of SCHOOL_FORMS) {
+          const cleaned = cleanTitle(form.replace('{}', base));
+          if (cleaned) phrases.add(cleaned);
+        }
+      }
     }
     for (const phrase of phrases) {
       if (phrase.length >= MIN_PHRASE) index.push({ courseId: course.id, phrase });

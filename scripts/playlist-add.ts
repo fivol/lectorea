@@ -3,7 +3,7 @@ import path from 'node:path';
 import { parseDocument } from 'yaml';
 import { env, paths } from './lib/config.js';
 import { openDb } from './lib/db.js';
-import { isPlaylistId } from './lib/playlist-id.js';
+import { playlistIdFrom } from './lib/playlist-id.js';
 import { loadCourseFiles, SourceError } from './lib/sources.js';
 import { reportRunError } from './lib/exit.js';
 import { seedManualMatches } from './lib/tasks.js';
@@ -37,13 +37,7 @@ type Args = { playlistId: string; courseId?: string };
  * exactly where a half-copied id comes from, and lib/playlist-id.ts is the
  * record of what an id loosely accepted here goes on to cost downstream.
  */
-export function playlistIdFrom(input: string): string | undefined {
-  const trimmed = input.trim();
-  const candidate = trimmed.includes('/')
-    ? /[?&]list=([A-Za-z0-9_-]+)/.exec(trimmed)?.[1]
-    : trimmed;
-  return candidate && isPlaylistId(candidate) ? candidate : undefined;
-}
+export { playlistIdFrom } from './lib/playlist-id.js';
 
 function parseArgs(argv: string[]): Args {
   const positional = argv.filter((argument) => !argument.startsWith('--'));

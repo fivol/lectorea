@@ -86,6 +86,54 @@ paid filter runs last and only on what is left — 1 unit × 2611 rather than
 expensive filter placed first pays for what a free one would have removed for
 nothing.
 
+## A link that arrives is a sample of a class, and the class is the work
+
+Somebody sends a playlist that is not in the catalogue. Adding it costs one unit
+and answers nothing: whatever kept it out is still keeping out everything shaped
+like it, and the next link will be the same conversation.
+
+So the link is worked in two halves, and the second one is the deliverable:
+
+1. **Add it.** `pnpm playlist:add <link> --course=<id>` — one unit, and the
+   binding is a committed fact in `overrides.yaml`.
+2. **Find the class it is a sample of, and close it.** Which gate refused it —
+   discovery, the questions, the rule pass, the reader — and what else has the
+   same shape.
+
+`scripts/_reachable.ts` exists to make step 2 mechanical, because the gates fail
+in ways that look identical from outside and are fixed in different files. On
+2026-08-19 the answer for «Полный курс школьной химии» was not the one anybody
+predicted: search had returned it a fortnight earlier, 21st of 50, and the hunt
+had discarded it because no keyword claimed the title. The class was every
+school-level subject, the fix was two lists read off `stage`, and the link
+itself was the least of it — 56 further bindings came with the class.
+
+The runbook: [iteration.md](iteration.md#when-somebody-sends-a-link).
+
+## What varies by a field is read off the field, not written out per course
+
+`school-algebra` had its school vocabulary — «школьная алгебра», «алгебра 7
+класс», «high school math» — from the day it was added. Its six siblings at
+`stage: school-*` had none, and nothing anywhere said they should: the knowledge
+lived in whoever typed the first one.
+
+**A property one course has by hand and its siblings lack is a rule that should
+have been read off a field.** `stage` was already in `data/courses/*.yaml`, on
+every course, validated by the schema — so the school phrasings are generated
+from it (`SCHOOL_FORMS` in `lib/rules.ts`) and the school search questions are
+chosen by it (`SCHOOL_QUALIFIERS` in `lib/questions.ts`). A school course added
+next year arrives with both and nobody has to remember.
+
+The cost of generating is combinations that are not language — «уроки химия»,
+«школьная химии» — and they are free: a phrase nothing is titled is a string
+that never matches. That trade is worth taking every time it is offered, against
+asking a file to know the gender and case of 225 course names.
+
+What generation cannot do is invent a form the language does not derive: the
+genitive of «химия» is not «химия» plus letters, so it is written down once per
+course and every template then reaches it
+([data-traps.md](data-traps.md#russian-inflection-the-tolerance-is-three-letters-after-the-phrase-and-that-is-masculine-nouns-only)).
+
 ## A refusal is a finding, and gets written down
 
 [channel-hunt.md](../channel-hunt.md) keeps the list of **refused** channels with

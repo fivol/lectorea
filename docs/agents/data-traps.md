@@ -170,13 +170,35 @@ Two shapes to watch for:
   for Russian inflection and that tolerance does not know which language it is
   in. Under about six characters, English keywords are dangerous.
 
-## Russian inflection: the tolerance only covers the last word
+## Russian inflection: the tolerance is three letters *after* the phrase, and that is masculine nouns only
 
-`findPhrase` allows a short tail on the **end of the whole phrase**, so
-«алгебра» finds «алгебры». It does nothing for a multi-word phrase whose *first*
-word inflects: the stored «дискретная математика» does not find «Основы
-**дискретной математики**», and «квантовая механика» does not find
-«Математические основы **квантовой механики**».
+`findPhrase` allows a short tail on the **end of the whole phrase**. That is not
+"it handles inflection": it handles inflection whose nominative is a *prefix* of
+the oblique form, and in Russian that is the masculine declension and nothing
+else.
+
+| stored | reaches | why |
+|---|---|---|
+| «анализ» | «анализа», «анализом», «анализе» | ✓ the nominative is a prefix |
+| «язык» | «языка», «языком» | ✓ |
+| «алгебра» | «алгебрах» ✓, «алгебры» ✗ | the final `а` *changes*, so nothing is appended |
+| «химия» | «химии» ✗ | the same, and this is every subject in `-ия` |
+| «физика», «биология», «логика», «математика» | their genitives ✗ | — |
+
+So the whole feminine half of the catalogue's subject names — which is most of
+them — is invisible in the genitive, and the genitive is the case a Russian
+title puts the subject in: «Полный курс школьной **химии**», «Основы
+**биологии**», «Уроки **математики**». Store the genitive beside the nominative
+and stop expecting the tolerance to derive it.
+
+This page said the opposite until 2026-08-19 («so «алгебра» finds «алгебры»»),
+which is worth remembering as a shape: a rule's comment describes the case it
+was written for, and «short tail» quietly became «inflection» in the retelling.
+
+It does nothing either for a multi-word phrase whose *first* word inflects: the
+stored «дискретная математика» does not find «Основы **дискретной математики**»,
+and «квантовая механика» does not find «Математические основы **квантовой
+механики**».
 
 Measured ceiling for the whole class: **194 playlists, about 4% of the
 `no-phrase` bucket** — and a stem-tolerant match also produced visible false
@@ -187,6 +209,99 @@ So the decision stands: **no stemmer; add the oblique form by hand**, exactly as
 Add the genitive when a course keeps appearing in one:
 «дискретной математики», «квантовой механики», «теории чисел», «мировой
 литературы», «робототехники».
+
+## A school subject is not published under the university's name for it
+
+Seven courses sit at `stage: school-*` — `school-algebra`, `general-chemistry`,
+`general-biology`, `astronomy-intro`, `ancient-history`, `logic-intro`,
+`programming-intro` — and every one of them is *named* by a university and
+*filmed* by a school. The catalogue calls the course «Общая химия»; the material
+is «Полный курс школьной химии», «Химия 8 класс», «Химия для школьников»,
+«Уроки химии». Not one of those contains the phrase «общая химия».
+
+The qualifier is also most of the clause, so even where the head noun does
+survive, coverage puts the match at 0.6 and it never publishes — the faculty
+pattern [below](#the-russian-faculty-title-pattern) with a different qualifier.
+
+`school-algebra` had the whole school vocabulary written out by hand from the
+day it was added («школьная алгебра», «алгебра 7 класс», …) and the other six
+never got it. That asymmetry is the tell: **anything one course has by hand and
+its six siblings lack is a rule that should have been read off a field.** It is
+now generated from `stage` in `lib/rules.ts` (`SCHOOL_FORMS`), so a school
+course added next year arrives with its vocabulary, and the search seam asks
+school-worded questions from `lib/questions.ts` for the same reason.
+
++56 confident bindings on 2026-08-19, −2, and the two are honest ties. What the
+generator cannot supply is the genitive of the noun — see
+[above](#russian-inflection-the-tolerance-is-three-letters-after-the-phrase-and-that-is-masculine-nouns-only)
+— so «химии», «биологии», «математики», «логики», «астрономии»,
+«программирования», «информатики» are written beside their courses in
+`data/keywords/ru.json` and every template then reaches them.
+
+### And the level qualifier is not noise, however much it looks like one
+
+The obvious fix is one line: put «школьн\p{L}*» and «N класс» in `NOISE`
+beside «введение» and «полный», and every school title collapses to its subject.
+It was implemented, measured and reverted the same hour: **−55 bindings.**
+
+Two reasons, and the second is the one worth keeping. Stripping the qualifier
+from a *title* strips it from the *keyword* too — `buildKeywordIndex` cleans
+both — so «школьная алгебра» became «алгебра», which `abstract-algebra` already
+owns, and [a tie silences both](#a-tie-silences-both-courses): 40 МГУ and НМУ
+algebra recordings went to nobody. And the discriminator was the thing being
+thrown away — «Алгебра 8 класс» is school algebra *because of* the words the
+noise pass was about to delete.
+
+**A qualifier is only noise when no course of the catalogue is told apart by
+it.** Where two courses share a head noun and differ by level, it is the whole
+signal.
+
+## A seam's yield is capped by the rule pass, not by the seam
+
+«Полный курс школьной химии» was **found by search and thrown away by matching**,
+and every visible number said otherwise. `_hunt.ts` refuses a candidate whose
+title no course claims (`accept: 'unclaimed'`), because the rule pass reads
+nothing but the title and no later run decides differently — so an unclaimed
+playlist is 2.3 units for something the site can never show. Correct, and it
+means the search seam can only bring in what the keywords already recognise.
+
+Measured on 2026-08-19, asking the catalogue's own questions about
+`general-chemistry`:
+
+| question | where the playlist ranks |
+|---|---|
+| «Общая химия лекции» — the only one ever asked | **21st of 50** |
+| «Химия школьный курс» | 1st |
+| «Общая химия школьный курс» | 4th |
+| «Химия для школьников», «Химия уроки» | 7th |
+| «Общая химия видеолекции» | absent |
+
+So the seam had done its job a fortnight earlier and the report threw the row
+away. Two consequences:
+
+- **Teach the rules before spending on the seam.** A hunt run against keywords
+  that cannot name the material buys 100 units a question and files the answer
+  under `unclaimed`.
+- **"We never found it" and "we found it and dropped it" look identical from
+  `cache.db`,** which holds neither. `scripts/_reachable.ts` is the tool that
+  separates them, and the separation is the whole diagnosis: one is a phrasing
+  in `lib/questions.ts`, the other a keyword.
+
+## A playlist added by hand waits behind everything the crawl mined
+
+`seedManualMatches` makes a hand-bound playlist *due* immediately and its own
+comment calls it "the most valuable metadata the next run can buy". Due-ness and
+ordering are different things: the metadata scan sorted titleless rows by
+`published_at IS NULL` and then by views, and a playlist whose videos had
+already been walked has both a `published_at` and a view count — so it sorted
+*behind* 3321 anonymous mined rows and could not buy the 1/50th of a unit that
+gives it a name. Its videos, at 2.3 units, had been fetched the same minute.
+
+Now `channel_id = 'proposed'` — the hand-added marker, and not `imported`, which
+is a wide seam with no claim on the front of the queue — sorts first in
+`refreshPlaylistMetadata`. The shape recurs and is the same one
+[the blank rows](#a-blank-row-in-the-queue-is-not-a-hard-case-it-is-a-missing-title)
+came from: **a step that makes a row eligible has not made it reachable.**
 
 ## The Russian faculty title pattern
 

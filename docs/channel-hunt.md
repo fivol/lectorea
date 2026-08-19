@@ -539,6 +539,31 @@ publishing seminars and summer schools rather than courses — and again worth t
 same answer: two of its playlists are real semesters, which is `pnpm playlist:add`
 at one unit, not a channel at thousands.
 
+## A channel that arrives with a link, 2026-08-19 — Dogtoris, refused
+
+Not a hunt: somebody sent one playlist. The channel behind it is worth a line
+here because it is the commonest shape a linked channel has, and the answer is
+always the same.
+
+*Dogtoris* (`UCnD_LfIR5G5tSaIGWQ7U6ag`, 4270 subscribers, 20 videos) — `_vet.ts`:
+
+| playlists | of 10+ videos | median items |
+|---:|---:|---:|
+| 5 | 1 | 2 |
+
+«Полный курс школьной химии» (13), then «Биология» (3), «Коррекция веса» (2),
+«Биохимия. БХ.» (1), «Первая помощь» (1). **One course and four scraps** — the
+bar in [harvest.md](harvest.md#the-bar) asks for *several* playlists that are
+each a course, and a channels.yaml line would put the four others into the queue
+for ever, plus a provider entry, for one playlist.
+
+So the same answer МЦМУ МИАН and Vidya-mitra got: `pnpm playlist:add` at one
+unit, and no line in `data/channels.yaml`. **A link to a good playlist is not a
+case for adding its channel** — it is a case for adding the playlist and then
+asking why the crawl had not reached it, which is
+[the other half](agents/iteration.md#when-somebody-sends-a-link) and where the
+day's real work turned out to be.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this

@@ -244,12 +244,30 @@ the quota or the unasked questions run out. Before the table existed the only
 guard against re-buying a previous hunt's answers was whoever ran it remembering
 which courses it had covered.
 
+**The phrasings follow the course's `stage`.** All three of those words ask for
+a lecture hall, and the seven courses at `stage: school-*` are not filmed in
+one: `SCHOOL_QUALIFIERS` in
+[lib/questions.ts](../scripts/lib/questions.ts) asks them «для школьников»,
+«школьный курс» and «уроки» first, and under the bare subject name as well as
+the catalogue's — «Химия» beside «Общая химия», which is the university's word
+for it. Measured against one playlist the catalogue was missing, the school
+wording moved it from 21st of 50 answers to 1st, and each phrasing is another 50
+answers the lecture wording never returns at all.
+
 **The brief writes itself.** The targets are the courses with the fewest
 playlists in the *built* catalogue, asked for under every name they have in
 every language — which is the whole point for this catalogue, since the fields
 it is thinnest in are the ones no English list covers. One page per query and no
 paging: page two of a query costs the same 100 units as page one of the next
 question and is worth much less.
+
+**And what the seam can bring in is capped by the keywords.** The third filter
+below refuses a candidate no course claims by title, correctly — but that makes
+the rule pass the ceiling on the search pass. «Полный курс школьной химии» was
+the 21st answer to a question this hunt had already paid for and was thrown away
+at that filter, because `general-chemistry` knew «общая химия» and nothing else.
+Teach the rules first, then spend
+([data-traps.md](agents/data-traps.md#a-seams-yield-is-capped-by-the-rule-pass-not-by-the-seam)).
 
 **Then four filters, in rising order of cost.** Search answers a *subject*, not
 the question, so most of what comes back is not a course:

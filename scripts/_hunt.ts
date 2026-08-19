@@ -51,7 +51,8 @@ import { paths } from './lib/config.js';
 import { openDb, type Db, type PlaylistRow } from './lib/db.js';
 import { queuePlaylists } from './lib/queue.js';
 import { buildKeywordIndex, cleanTitle, isNotACourse, judgeByRules } from './lib/rules.js';
-import { loadDictionary, loadSources, type Sources } from './lib/sources.js';
+import { qualifiersFor, searchNames } from './lib/questions.js';
+import { loadAliases, loadDictionary, loadSources, type Sources } from './lib/sources.js';
 import {
   createClient,
   QuotaExceededError,
@@ -76,26 +77,6 @@ const MIN_VIDEOS = 8;
  */
 const BIN_VIDEOS = 150;
 
-/**
- * What is appended to a course name to ask for a course rather than a video.
- *
- * A bare subject name returns the best *single video* about it, because that is
- * what most people searching that phrase want. The word for "lectures" is what
- * turns the same query into a list of series — and it is per language, since
- * `relevanceLanguage` biases the ranking without translating the query.
- */
-/**
- * More than one, because a course already asked about is not asked again by
- * repeating the question. Search ranks by relevance and returns the same first
- * page for the same words; «поэтика курс» and «поэтика лекции» do not.
- * `--variant=1` picks the second phrasing for a second pass over the same
- * courses, which is the only way a hunt adds anything to a course the last one
- * already covered.
- */
-const QUALIFIERS: Record<string, string[]> = {
-  ru: ['лекции', 'курс', 'видеолекции'],
-  en: ['lectures', 'full course', 'lecture series'],
-};
 const REGION: Record<string, string> = { ru: 'RU', en: 'US' };
 
 type Args = {
@@ -138,7 +119,13 @@ function parseArgs(argv: string[]): Args {
 
 /* ─────────────────────────────  The brief  ──────────────────────────────── */
 
-type Target = { courseId: string; playlists: number; names: Array<{ lang: string; name: string }> };
+type Target = {
+  courseId: string;
+  playlists: number;
+  /** From the built catalogue: what phrasing the material is published under. */
+  stage?: string;
+  names: Array<{ lang: string; name: string }>;
+};
 
 /**
  * Which courses to ask about, and under what names.
@@ -157,10 +144,11 @@ function brief(args: Args): Target[] {
   }
   const built = (
     JSON.parse(fs.readFileSync(file, 'utf8')) as {
-      courses: Array<{ id: string; playlistCount: number }>;
+      courses: Array<{ id: string; playlistCount: number; stage?: string }>;
     }
   ).courses;
   const counts = new Map(built.map((course) => [course.id, course.playlistCount]));
+  const stages = new Map(built.map((course) => [course.id, course.stage]));
 
   const chosen = args.courses.length
     ? args.courses
@@ -169,15 +157,25 @@ function brief(args: Args): Target[] {
         .sort((a, b) => a.playlistCount - b.playlistCount)
         .map((course) => course.id);
 
-  const dictionaries = ['ru', 'en'].map((lang) => ({ lang, i18n: loadDictionary(lang) }));
+  const dictionaries = ['ru', 'en'].map((lang) => ({
+    lang,
+    i18n: loadDictionary(lang),
+    aliases: loadAliases(lang),
+  }));
 
   return chosen.map((courseId) => {
     const names: Array<{ lang: string; name: string }> = [];
-    for (const { lang, i18n } of dictionaries) {
-      const title = i18n[`course.${courseId}.title`];
-      if (title) names.push({ lang, name: title });
+    const stage = stages.get(courseId);
+    for (const { lang, i18n, aliases } of dictionaries) {
+      for (const name of searchNames(
+        i18n[`course.${courseId}.title`],
+        aliases[`course.${courseId}`] ?? [],
+        stage
+      )) {
+        names.push({ lang, name });
+      }
     }
-    return { courseId, playlists: counts.get(courseId) ?? 0, names };
+    return { courseId, playlists: counts.get(courseId) ?? 0, stage, names };
   });
 }
 
@@ -186,7 +184,12 @@ function brief(args: Args): Target[] {
 type Query = { courseId: string; lang: string; kind: 'playlist' | 'channel'; q: string };
 
 function queries(targets: Target[], kinds: Args['kinds'], variant: Args['variant']): Query[] {
-  const widest = Math.max(...Object.values(QUALIFIERS).map((phrasings) => phrasings.length));
+  const widest = Math.max(
+    ...targets.flatMap((target) =>
+      target.names.map(({ lang }) => qualifiersFor(lang, target.stage).length)
+    ),
+    0
+  );
   const rounds = variant === 'all' ? [...Array(widest).keys()] : [variant];
   const seen = new Set<string>();
   const list: Query[] = [];
@@ -198,7 +201,7 @@ function queries(targets: Target[], kinds: Args['kinds'], variant: Args['variant
     for (const target of targets) {
       for (const { lang, name } of target.names) {
         for (const kind of kinds) {
-          const phrasings = QUALIFIERS[lang] ?? [''];
+          const phrasings = qualifiersFor(lang, target.stage);
           if (round >= phrasings.length) continue;
           const q = `${name} ${phrasings[round]}`.trim();
           const key = `${kind}:${q.toLowerCase()}`;

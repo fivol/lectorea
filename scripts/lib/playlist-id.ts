@@ -13,4 +13,5 @@ export {
   PLAYLIST_ID_IN_TEXT,
   isPlaylistId,
   playlistIdsIn,
+  playlistIdFrom,
 } from '../../shared/playlist-id.js';

@@ -74,3 +74,22 @@ export function playlistIdsIn(text: string): string[] {
   for (const match of text.matchAll(new RegExp(PLAYLIST_ID_IN_TEXT))) found.add(match[1]);
   return [...found];
 }
+
+/**
+ * One id out of one thing a person pasted — a share link, a watch URL, or the
+ * bare id.
+ *
+ * Lives here rather than beside `playlist:add`, which is where it was written,
+ * because a *pure* helper inside a script that runs `main()` on import is a
+ * trap: `_reachable.ts` imported it to parse a link and silently ran the add,
+ * writing `overrides.yaml` and queueing a crawl on what was meant to be a
+ * read-only question. Anything both a script and a tool need belongs in a
+ * module that does nothing when imported.
+ */
+export function playlistIdFrom(input: string): string | undefined {
+  const trimmed = input.trim();
+  const candidate = trimmed.includes('/')
+    ? /[?&]list=([A-Za-z0-9_-]+)/.exec(trimmed)?.[1]
+    : trimmed;
+  return candidate && isPlaylistId(candidate) ? candidate : undefined;
+}

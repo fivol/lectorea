@@ -112,11 +112,18 @@ misleads.
 Four things shape the answer.
 
 **Word boundaries, not substrings.** A keyword has to match as a word, with a
-short tail allowed for Russian inflection — «алгебра» still finds «алгебры», but
+short tail allowed for Russian inflection — «анализ» still finds «анализа», but
 `logic` no longer finds «bio**logic**al Chemistry» and `evolution` no longer
 finds «The American R**evolution**». Both were real bindings before this. The
 tail is letters only: an ending is inflection, a digit is another course, so
 `algebra 1` does not find «ALGEBRA 16».
+
+Three letters *after* the stored phrase is less than it sounds: it reaches every
+form whose nominative is a prefix, which in Russian is the masculine declension
+and nothing else. «алгебра» does not find «алгебры» and «химия» does not find
+«химии» — the final vowel changes rather than being added to — so the genitive
+of a feminine subject name is written down beside it
+([data-traps.md](../agents/data-traps.md#russian-inflection-the-tolerance-is-three-letters-after-the-phrase-and-that-is-masculine-nouns-only)).
 
 **A word can be search-only.** `data/keywords/{lang}.json` is read by search and
 by this pass, and they want opposite things from the same word: «genre»,
@@ -135,6 +142,23 @@ owns «GO Language» and «C Language tutorials» outright. A name of three or m
 words that comes out as one is dropped: whatever it meant lived in the words the
 noise pass removed, and a catalogue that wants the bare word can always write it
 into `keywords` on purpose.
+
+**A school course is also named by its level.** Material for the seven courses
+at `stage: school-*` is titled «Полный курс школьной химии», «Химия 8 класс»,
+«Биология для школьников», «Уроки математики» — never «Общая химия», which is
+the university's word for the same subject. So `SCHOOL_FORMS` combines every
+name such a course has with the phrasings school material uses, and the index
+gets them all. Combinations that are not language («уроки химия») are generated
+too and cost nothing: a phrase nothing is titled never matches, which is much
+cheaper than teaching this file the gender and case of 225 course names.
+
+Read off `stage` rather than written per course, deliberately — six of the seven
+had no school vocabulary at all until 2026-08-19 while the seventh had it typed
+out by hand, and a school course added next year now arrives with it. The level
+words are *not* in the noise list, and that is the same decision from the other
+side: «Алгебра 8 класс» is school algebra **because of** «8 класс», which is the
+only thing separating it from `abstract-algebra`
+([pitfalls.md](../agents/pitfalls.md#a-qualifier-was-called-noise-because-it-looked-like-введение)).
 
 **Noise is stripped first.** `MIT 18.06SC Linear Algebra, Fall 2011` is measured
 as `linear algebra`. Course codes, terms and years go, and so do the words that
