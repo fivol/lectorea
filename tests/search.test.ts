@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { SearchEntry } from '../shared/schema';
 import {
+  findPlaylist,
   groupBySection,
+  matchRanges,
   normalize,
   queryVariants,
   searchEntries,
@@ -74,6 +76,9 @@ const entries: SearchEntry[] = [
   { t: 'c', id: 'calculus-1', n: 'Математический анализ 1', k: ['матанализ', 'матан'], s: 5 },
   { t: 'p', id: 'PL1', n: 'Матанализ — МФТИ', k: ['матанализ мфти'], s: 900 },
   { t: 'v', id: 'mipt', n: 'МФТИ', k: ['мфти'], s: 200 },
+  // Titled by whoever published it: the subject in the name, the lecturer only
+  // in the channel. Neither field holds the query anybody would type for it.
+  { t: 'p', id: 'PL2', n: 'Лекции по теории вероятностей', k: ['лекции по теории вероятностей', 'савватеев'], s: 100 },
 ];
 
 describe('search', () => {
@@ -120,5 +125,74 @@ describe('sections', () => {
   it('keeps the section order: domains, courses, playlists, vendors, lecturers', () => {
     const order = groupBySection(searchEntries(entries, 'мфти'), 5).map((s) => s.type);
     expect(order.indexOf('p')).toBeLessThan(order.indexOf('v'));
+  });
+});
+
+/* ─────────────────────────  Words, not phrases  ────────────────────────── */
+
+/**
+ * Half the catalogue's recordings are titled by somebody who was not writing a
+ * catalogue entry: the lecturer after the subject, the university in the
+ * channel name, a semester in brackets. A query is the same facts in whatever
+ * order they came to mind, so the phrase is tried first and the words after it.
+ */
+
+describe('matching by words', () => {
+  it('finds a recording whose title has the words in the other order', () => {
+    expect(searchEntries(entries, 'мфти матанализ')[0].entry.id).toBe('PL1');
+  });
+
+  it('collects the words from different fields — the title and the channel', () => {
+    expect(searchEntries(entries, 'савватеев вероятностей')[0].entry.id).toBe('PL2');
+  });
+
+  it('needs every word: one that lands nowhere refuses the row', () => {
+    expect(searchEntries(entries, 'мфти квакозябра')).toEqual([]);
+  });
+
+  it('keeps a phrase above a row that only has the words scattered', () => {
+    // «Математический анализ 1» holds the phrase; the playlist holds the two
+    // words with a dash between them and a university after.
+    const [first] = searchEntries(entries, 'математический анализ');
+    expect(first.entry.id).toBe('calculus-1');
+  });
+
+  it('leaves a one-word query exactly as it was', () => {
+    expect(searchEntries(entries, 'теорвер')[0].entry.id).toBe('probability');
+  });
+});
+
+describe('highlighting', () => {
+  it('marks the phrase when it is there whole', () => {
+    expect(matchRanges('Теория вероятностей', 'вероятност')).toEqual([[7, 17]]);
+  });
+
+  it('marks each word when the phrase is not', () => {
+    // A row found by its words has to be able to show which ones — an unmarked
+    // hit is indistinguishable from a bug.
+    expect(matchRanges('Матанализ — МФТИ', 'мфти матанализ')).toEqual([
+      [0, 9],
+      [12, 16],
+    ]);
+  });
+
+  it('marks nothing for words that are not in the name', () => {
+    expect(matchRanges('Лекции по теории вероятностей', 'савватеев квакозябра')).toEqual([]);
+  });
+});
+
+/* ───────────────────────────  Pasted addresses  ────────────────────────── */
+
+describe('finding a playlist by id', () => {
+  it('finds the entry a link names', () => {
+    expect(findPlaylist(entries, 'PL1')?.n).toBe('Матанализ — МФТИ');
+  });
+
+  it('is case-sensitive, because two ids differing only in case are two playlists', () => {
+    expect(findPlaylist(entries, 'pl1')).toBeNull();
+  });
+
+  it('never answers with a course that happens to share the id', () => {
+    expect(findPlaylist(entries, 'probability')).toBeNull();
   });
 });

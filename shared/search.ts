@@ -129,24 +129,61 @@ function normalizeWithMap(input: string): { text: string; source: number[] } {
  * «Савватеев» has to be able to show why. The query is tried in the same order
  * of trust as the search itself, so a transliterated or layout-swapped hit
  * highlights the characters it actually matched.
+ *
+ * When the phrase is not there as a phrase, the words are marked one by one —
+ * because that is also how the row was found (see `tokenScore`). «савватеев
+ * теория чисел» lands on «Теория чисел | Алексей Савватеев» with all three
+ * words lit and the bar between them not, which is the difference between a
+ * result that explains itself and one that looks arbitrary.
  */
 export function matchRanges(name: string, raw: string): Array<[number, number]> {
   const { text, source } = normalizeWithMap(name);
   if (!text) return [];
 
+  const spanOf = (at: number, length: number): [number, number] => [
+    source[at],
+    source[at + length - 1] + 1,
+  ];
+
   for (const variant of queryVariants(raw)) {
     if (!variant) continue;
-    const ranges: Array<[number, number]> = [];
+
+    const phrase: Array<[number, number]> = [];
     let at = text.indexOf(variant);
     while (at !== -1) {
-      const start = source[at];
-      const end = source[at + variant.length - 1] + 1;
-      ranges.push([start, end]);
+      phrase.push(spanOf(at, variant.length));
       at = text.indexOf(variant, at + variant.length);
     }
-    if (ranges.length) return ranges;
+    if (phrase.length) return phrase;
+
+    const tokens = tokensOf(variant);
+    if (tokens.length < 2) continue;
+    const marks: Array<[number, number]> = [];
+    for (const token of tokens) {
+      // A one-letter word would mark every «и» in the title, which is noise
+      // wearing the costume of an explanation.
+      if (token.length < 2) continue;
+      let from = text.indexOf(token);
+      while (from !== -1) {
+        marks.push(spanOf(from, token.length));
+        from = text.indexOf(token, from + token.length);
+      }
+    }
+    if (marks.length) return merge(marks);
   }
   return [];
+}
+
+/** Sorted, and with overlaps folded together — what `MarkedText` walks. */
+function merge(ranges: Array<[number, number]>): Array<[number, number]> {
+  const sorted = [...ranges].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const out: Array<[number, number]> = [];
+  for (const [start, end] of sorted) {
+    const last = out[out.length - 1];
+    if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+    else out.push([start, end]);
+  }
+  return out;
 }
 
 /* ───────────────────────────────  Matching  ────────────────────────────── */
@@ -161,6 +198,17 @@ const WORD_PREFIX = 600;
 const PREFIX = 400;
 const INSIDE = 150;
 
+/**
+ * What a match on separate words is worth against a match on the phrase.
+ *
+ * Half, and the half is load-bearing: `EXACT * TOKEN_FACTOR` is 500, which is
+ * below `WORD_PREFIX`. So a row found because its words happen to be scattered
+ * through a long title can never outrank a row whose title actually begins with
+ * what was typed — the loose pass adds answers under the strict one instead of
+ * rearranging it.
+ */
+const TOKEN_FACTOR = 0.5;
+
 /** Score of one haystack against one already-normalised needle, 0 = no match. */
 function fieldScore(haystack: string, needle: string): number {
   if (!haystack) return 0;
@@ -171,6 +219,93 @@ function fieldScore(haystack: string, needle: string): number {
   if (atWord) return WORD_PREFIX;
   if (haystack.includes(needle)) return INSIDE;
   return 0;
+}
+
+/**
+ * The words of an already-normalised query.
+ *
+ * Memoised on the last query because this is asked once per entry and the
+ * catalogue is nine thousand of them — the same three-word string split nine
+ * thousand times a keystroke.
+ */
+let lastQuery = '';
+let lastTokens: string[] = [];
+function tokensOf(needle: string): string[] {
+  if (needle !== lastQuery) {
+    lastQuery = needle;
+    lastTokens = needle.split(' ').filter(Boolean);
+  }
+  return lastTokens;
+}
+
+/**
+ * Every word of the query has to land somewhere, and the score is what they
+ * averaged. Nothing else models the query people actually type: «савватеев
+ * теория чисел» is three facts about one recording — a lecturer, a subject, and
+ * that they go together — and the recording is titled with them in the other
+ * order, split across the title and the channel.
+ *
+ * The conjunction is what keeps it from becoming a different search. Any one
+ * word of a three-word query matches hundreds of playlists; all three match the
+ * handful that are being asked for, and a query whose rarest word is rare stays
+ * as precise as that word.
+ *
+ * `scoreOf` says where a word is allowed to be found: over one string when a
+ * name is being explained, over the whole entry when it is being ranked.
+ */
+function tokenScore(tokens: string[], scoreOf: (token: string) => number): number {
+  let total = 0;
+  for (const token of tokens) {
+    const best = scoreOf(token);
+    if (!best) return 0;
+    total += best;
+  }
+  return (total / tokens.length) * TOKEN_FACTOR;
+}
+
+/**
+ * One string against a query: the phrase if it is there, else its words.
+ *
+ * The same two passes `scoreEntry` makes, over a single haystack — so a name
+ * and an alias are judged by the rule the ranking used, and «why is this row
+ * here» keeps one answer instead of two.
+ */
+function textScore(haystack: string, needle: string, tokens: string[]): number {
+  const phrase = fieldScore(haystack, needle);
+  if (phrase || tokens.length < 2) return phrase;
+  return tokenScore(tokens, (token) => fieldScore(haystack, token));
+}
+
+/**
+ * `normalize` over a name, remembered.
+ *
+ * The name is the one field the index ships unnormalised — it is printed, so it
+ * has to stay as it was written — and normalising it inside the ranking loop
+ * meant three regular expressions per entry per keystroke, which measured as
+ * most of the cost of a search over 9000 entries. The map is weak because the
+ * entries are the catalogue's, not this module's: switching interface language
+ * replaces them and nothing here should keep the old ones alive.
+ */
+const NORMALIZED = new WeakMap<SearchEntry, string>();
+function normalizedName(entry: SearchEntry): string {
+  let name = NORMALIZED.get(entry);
+  if (name === undefined) {
+    name = normalize(entry.n);
+    NORMALIZED.set(entry, name);
+  }
+  return name;
+}
+
+/** The best any one field of an entry does against one needle. */
+function bestFieldScore(entry: SearchEntry, needle: string): number {
+  let best = fieldScore(normalizedName(entry), needle);
+  if (best >= EXACT) return best;
+  for (const keyword of entry.k) {
+    const score = fieldScore(keyword, needle);
+    if (score > best) best = score;
+    if (best >= EXACT) break;
+  }
+  return best;
 }
 
 /**
@@ -189,8 +324,9 @@ export function matchedAlias(entry: SearchEntry, raw: string): string | null {
   if (!entry.a?.length) return null;
   for (const variant of queryVariants(raw)) {
     if (!variant) continue;
-    if (fieldScore(normalize(entry.n), variant) > 0) return null;
-    const hit = entry.a.find((alias) => fieldScore(normalize(alias), variant) > 0);
+    const tokens = tokensOf(variant);
+    if (textScore(normalizedName(entry), variant, tokens) > 0) return null;
+    const hit = entry.a.find((alias) => textScore(normalize(alias), variant, tokens) > 0);
     if (hit) return hit;
   }
   return null;
@@ -202,12 +338,24 @@ export type Scored = { entry: SearchEntry; score: number };
  * Ranks one entry against a normalised query. Keywords are compared as
  * prefixes, which is what makes `мат` find `математика`, `математический` and
  * `матанализ` without any stemming.
+ *
+ * Two passes, in that order of trust: the query as a phrase, then — only if the
+ * phrase is not there whole — its words spread over the entry's fields. The
+ * second pass is what makes a catalogue of somebody else's titles searchable
+ * at all: half of them put the lecturer after the subject, or the subject after
+ * the university, and «мфти матанализ» is nobody's title and everybody's query.
+ *
+ * A one-word query has nothing to spread, so the second pass is skipped and
+ * ranking is exactly what it was.
  */
-export function scoreEntry(entry: SearchEntry, needle: string): number {
-  let best = fieldScore(normalize(entry.n), needle);
-  for (const keyword of entry.k) {
-    best = Math.max(best, fieldScore(keyword, needle));
-    if (best >= EXACT) break;
+export function scoreEntry(
+  entry: SearchEntry,
+  needle: string,
+  tokens: string[] = tokensOf(needle)
+): number {
+  let best = bestFieldScore(entry, needle);
+  if (best < EXACT && tokens.length > 1) {
+    best = Math.max(best, tokenScore(tokens, (token) => bestFieldScore(entry, token)));
   }
   if (best === 0) return 0;
   // Type is the tiebreaker inside equal textual relevance, weight nudges within a type.
@@ -216,9 +364,10 @@ export function scoreEntry(entry: SearchEntry, needle: string): number {
 
 export function searchEntries(entries: SearchEntry[], raw: string, limit = 200): Scored[] {
   for (const variant of queryVariants(raw)) {
+    const tokens = tokensOf(variant);
     const hits: Scored[] = [];
     for (const entry of entries) {
-      const score = scoreEntry(entry, variant);
+      const score = scoreEntry(entry, variant, tokens);
       if (score > 0) hits.push({ entry, score });
     }
     if (hits.length) {
@@ -227,6 +376,18 @@ export function searchEntries(entries: SearchEntry[], raw: string, limit = 200):
     }
   }
   return [];
+}
+
+/**
+ * The playlist a link names, by exact id.
+ *
+ * Nothing about this goes through the ranking: an id is not a word, and the one
+ * comparison that answers a link is `===` on the id YouTube wrote. Lower-casing
+ * it — which every other path here does — would fold two different playlists
+ * together and answer with whichever came first in the file.
+ */
+export function findPlaylist(entries: SearchEntry[], id: string): SearchEntry | null {
+  return entries.find((entry) => entry.t === 'p' && entry.id === id) ?? null;
 }
 
 /**

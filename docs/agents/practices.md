@@ -1142,3 +1142,86 @@ Two more things that batch taught, both cheap to prevent:
   mid-run; one noticed and reported it as an anomaly, and the others would not
   have. Anything a fan-out writes wants the batch number in its name, the
   verdict files included.
+
+## A pasted address is answered by its id, and everything else by its words
+
+Search here had one shape for two questions. «Теория вероятностей» asks what the
+catalogue has about a subject; a link somebody was sent asks about one recording
+the reader already holds. Both were normalised, lower-cased, stripped of
+punctuation and matched as a phrase, so the second one found nothing —
+`https://www.youtube.com/playlist?list=PL…` became the words `https www youtube
+com playlist list pl…`, and the id, which the index already stores as the
+playlist entry's own `id`, was never compared against anything.
+
+**The address is read before `normalize` sees it.** Two of that function's three
+jobs are fatal here: it lower-cases, and a YouTube id is case-sensitive — `PLxA`
+and `plxa` are different playlists, and folding them answers with whichever came
+first in the file — and it drops the `?` and `=` the id lives behind. So
+`parseYoutubeRef` runs first, and what it returns is looked up with `===`.
+Everything after that is the ordinary path: one hit or none, and the sections,
+the keyboard walk and the map's highlight are built from it unchanged, which is
+why the feature is a branch rather than a second search.
+
+**A link that finds nothing is not «ничего не найдено».** Four different things
+can be pasted and only one of them is a question the catalogue can answer. A
+playlist it does not hold is worth proposing, and the reader is holding exactly
+the field the form requires — so the form opens with the address already in it.
+A video, a channel, and one of YouTube's own personal lists (`WL`, `LL`, `RD…`)
+are dead ends and say which one they are; proposing a mix that resolves for
+nobody but its owner spends a maintainer's attention on nothing.
+
+**Ask the code that already knows the shape.** `scripts/lib/playlist-id.ts`
+existed, with three forms counted over 32 914 crawled rows and a header
+explaining that its own predecessor was three copies of one wrong regex. Writing
+a fourth here was the obvious move and the one that file is an argument against,
+so the definition moved to `shared/playlist-id.ts` — both sides read it now — and
+the crawl's path stayed valid as a re-export. It decides the *offer*, not the
+lookup: a link is found or missed by `===` regardless, but `OLAK5uy…` is an
+auto-generated music album that the pipeline would refuse, so it is never
+proposed.
+
+**The words pass had to teach the highlighter too.** Half the catalogue's
+recordings are titled by whoever published them — the lecturer after the
+subject, the university only in the channel name — so a phrase search finds the
+catalogue's own titles and misses everybody else's. The fix is a conjunction:
+every word of the query has to land somewhere in the entry, and a word that
+lands nowhere refuses the row, which keeps a three-word query as precise as its
+rarest word. Two invariants hold it in place:
+
+- **A scattered match can never outrank a phrase.** The token score is the mean
+  of the words' scores times `TOKEN_FACTOR`, and the factor is chosen so that
+  the best possible token score (500) sits below the weakest phrase-at-a-word
+  score (600). The loose pass adds answers under the strict one instead of
+  rearranging it, and a one-word query skips it entirely — its ranking is
+  bit-for-bit what it was.
+- **A hit marks what it matched.** `matchRanges` gained the same second pass,
+  because an unmarked row reads as a bug — that is the whole reason `MarkedText`
+  exists. The one place it stays silent is a link: the id matched, nothing in
+  the title did, and the marker would have found something anyway (`com` and
+  `list` are substrings of plenty of real titles). There the row says «по
+  ссылке» instead.
+
+**And it had to be paid for before it was spent.** The loose pass is one more
+scan of 9160 entries per keystroke, on top of a search that already measured
+13–24 ms — `normalize` over every entry's display name, three regular
+expressions each, once per keystroke per variant. Memoising that in a `WeakMap`
+took the same searches to 5–10 ms *with* the second pass. The general shape:
+**before adding a pass over the whole index, look for the per-entry work the old
+one was repeating** — it is usually the same size as what is being added.
+
+Refused, with the reasons, so the next iteration does not re-derive them:
+
+- **A bare video id is not read as a link.** It is eleven characters of
+  base64url, and so is `Probability`. Inside an address it is unambiguous;
+  standing alone it would take a real query out of the search for a paste nobody
+  makes.
+- **Video links resolve to nothing, deliberately.** The index holds playlists;
+  the 239 890 videos live in 227 course shards totalling 33 MB, and a
+  video→playlist map is ~14 MB of JSON — not something to load on the chance
+  that somebody pastes a lecture. If `search_link` says people do, it wants its
+  own file sharded by a hash of the id, fetched only when a video link is
+  actually pasted.
+- **Channel links say «канал» and stop.** `providers.json` carries no
+  `channelId`, and a handle (`@name`) is not stored anywhere at all — the crawl
+  never asked for one. Resolving them means a build change and a crawl field,
+  which is a different iteration.

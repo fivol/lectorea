@@ -90,7 +90,7 @@ read, and it is the documentation. In outline:
 | | |
 |---|---|
 | **Reading** | `page_view`, `course_open` (with the course's level, field and how many recordings it has), `map_view`, `filter_apply` |
-| **Searching** | `search`, `search_no_results`, `search_select` |
+| **Searching** | `search`, `search_no_results`, `search_select`, `search_link` (a pasted address, by what it pointed at and whether the catalogue held it) |
 | **Watching** | `playlist_open`, `video_start`, `video_progress` at 10/25/50/75/90%, `video_complete` |
 | **Marking** | `lectures_marked`, `playlist_sealed`, `playlist_saved`, `course_status`, `course_goal` |
 | **The profile** | `profile_open`, `resume_continue`, `setting_change`, `profile_export`, `profile_import`, `profile_reset`, `copy` |

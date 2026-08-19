@@ -3,12 +3,15 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import type { SearchEntry } from '@shared/schema';
 import { matchedAlias, SEARCH_SECTION_ORDER } from '@shared/search';
+import type { YoutubeRef } from '@shared/youtube';
 import { useT } from '@/i18n';
 import { searchTerm, track } from '@/lib/analytics';
 import { useCatalog } from '@/lib/catalog';
 import { useEscape, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { EDGE, placeBy, samePlace, type Placement } from '@/lib/popover';
-import { suggestCourseUrl } from '@/lib/repo';
+import { suggestCourseUrl, suggestPlaylistUrl } from '@/lib/repo';
+// The same address the course panel sends a reader to — one builder, not two.
+import { watchUrl } from '@/lib/youtube';
 import { courseHref, fieldHref, useCatalogParams, useCourseSlice } from '@/lib/url';
 import type { SearchResults, SearchSection } from '@/lib/search';
 import Icon from './Icon';
@@ -500,6 +503,51 @@ export function SuggestCourse({ query, className = '' }: { query: string; classN
   );
 }
 
+/**
+ * What a pasted address answers when the catalogue does not hold it.
+ *
+ * A link is a narrower question than a query and deserves a narrower answer:
+ * «ничего не найдено» under a URL reads as "your link is wrong". Three of the
+ * four kinds are dead ends and say so — a recording, a channel and a list
+ * YouTube generated for one account are none of them a course of lectures the
+ * catalogue could contain. The fourth is a real playlist that is simply not
+ * here, and that is the one case where the reader is holding exactly what the
+ * form asks for: the link goes into it, and the button is the whole of what is
+ * left to do.
+ */
+function LinkMiss({ link, className = '' }: { link: YoutubeRef; className?: string }) {
+  const { t } = useT();
+  // Every key spelled out rather than assembled: `check:i18n` reads the source
+  // as text, and a computed key is one it reports as an orphan.
+  const message =
+    link.kind === 'playlist'
+      ? t('ui.search.linkMissing')
+      : link.kind === 'video'
+        ? t('ui.search.linkVideo')
+        : link.kind === 'channel'
+          ? t('ui.search.linkChannel')
+          : t('ui.search.linkPersonal');
+
+  return (
+    <div className={`px-3 py-4 text-center text-sm text-ink-faint ${className}`}>
+      <p>{message}</p>
+      {/* Only for a shape the pipeline could actually take — see `catalogable`. */}
+      {link.kind === 'playlist' && link.catalogable ? (
+        <a
+          href={suggestPlaylistUrl('', watchUrl(link.id))}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="mt-1 inline-flex items-center gap-1 text-xs text-ink-dim underline
+                     decoration-line underline-offset-2 transition-colors hover:text-accent"
+        >
+          {t('ui.course.suggestPlaylist')}
+          <Icon name="external" size={11} />
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 /** The rows themselves — the same list under a dropdown and inside the sheet. */
 function Results({
   results,
@@ -514,6 +562,8 @@ function Results({
 }) {
   const { t } = useT();
   const catalog = useCatalog();
+
+  if (results.empty && results.link) return <LinkMiss link={results.link} />;
 
   if (results.empty) {
     /* Nothing was asked for yet, so «ничего не найдено» would be answering a
@@ -558,12 +608,24 @@ function Results({
               >
                 <SectionMark type={entry.t} />
                 <span className="min-w-0 flex-1 truncate">
-                  <MarkedText text={entry.n} query={results.query} />
+                  {/*
+                    A link matched an id, not a word, so there is nothing in the
+                    title to mark — and the marker would find something anyway:
+                    `com` and `list` out of the address are substrings of plenty
+                    of real titles. The sentence beside the name does the job the
+                    highlight does everywhere else.
+                  */}
+                  <MarkedText text={entry.n} query={results.link ? '' : results.query} />
                   {/* Why this row is here at all, when the query was somebody
                       else's name for the same course. The alias carries the
                       highlight, so the connection is made by the mark rather
                       than by a sentence. */}
-                  {matchedAlias(entry, results.query) ? (
+                  {results.link ? (
+                    <span className="text-ink-faint">
+                      {' · '}
+                      {t('ui.search.byLink')}
+                    </span>
+                  ) : matchedAlias(entry, results.query) ? (
                     <span className="text-ink-faint">
                       {' · '}
                       <MarkedText
@@ -573,7 +635,7 @@ function Results({
                     </span>
                   ) : null}
                 </span>
-                <Secondary entry={entry} catalog={catalog} />
+                <Secondary entry={entry} catalog={catalog} withCourse={Boolean(results.link)} />
               </button>
             );
           })}
@@ -623,11 +685,26 @@ function SectionMark({ type }: { type: SearchEntry['t'] }) {
 function Secondary({
   entry,
   catalog,
+  withCourse = false,
 }: {
   entry: SearchEntry;
   catalog: ReturnType<typeof useCatalog>;
+  /**
+   * Name the course a recording belongs to. Only worth the width when a link
+   * was pasted: there is one row, and «what is this recording, here» is the
+   * question that was asked. In a list of five playlists the same label would
+   * repeat the section heading and cut the titles it sits beside.
+   */
+  withCourse?: boolean;
 }) {
   const { t, count } = useT();
+  if (entry.t === 'p') {
+    return withCourse && entry.c ? (
+      <span className="max-w-[45%] shrink-0 truncate text-xs text-ink-faint">
+        {t(`course.${entry.c}.title`)}
+      </span>
+    ) : null;
+  }
   if (entry.t === 'c') {
     const course = catalog.courseById.get(entry.id);
     if (!course) return null;

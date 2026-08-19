@@ -75,7 +75,9 @@ export const ANALYTICS_PARAMS: Record<string, ParamSpec> = {
   kind: {
     scope: 'dimension',
     label: 'Result kind',
-    note: 'course, domain, playlist, provider or lecturer — which row was chosen',
+    note:
+      'course, domain, playlist, provider or lecturer — which row was chosen; ' +
+      'playlist, video, channel or personal for a pasted link, which is what it pointed at',
   },
   item_id: { scope: 'dimension', label: 'Chosen id', note: 'Catalogue id of the chosen row' },
   suggested: {
@@ -128,6 +130,7 @@ export const ANALYTICS_EVENTS: Record<string, string> = {
   video_complete: 'A lecture ran to the end',
   search: 'A query, once it stopped being typed',
   search_no_results: 'A query that found nothing — a course the catalogue is missing',
+  search_link: 'A pasted YouTube address, and whether the catalogue held it',
   search_select: 'Which row of the results was chosen',
   filter_apply: 'One facet of the playlist filters moved',
   setting_change: 'A setting pressed in the profile',

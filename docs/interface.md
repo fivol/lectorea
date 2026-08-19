@@ -449,6 +449,25 @@ moves the columns to that field with the course still selected.
 The search box matches titles, abbreviations and slang (`теорвер`, `линал`),
 because morphology here is a list of forms, not a stemmer.
 
+**Words, not a phrase.** When what was typed is not in any title as it stands,
+every word of it has to land somewhere instead — the title, the channel, the
+keywords — and all of them have to land, which is what makes «мфти линейная
+алгебра» find five МФТИ recordings whose titles say neither «МФТИ» nor those two
+words in that order. Recordings are named by whoever published them, with the
+lecturer after the subject and the university only in the channel name, so a
+phrase search finds the catalogue's own titles and misses everybody else's. A
+row found this way marks the words it matched, the same way a phrase does.
+
+**A pasted YouTube link.** Anything YouTube issues an address for is understood:
+the playlist page, a lecture out of one with `list=` still on it, `youtu.be`,
+the mobile and music hosts, the share form's tracking parameter, an embed, or
+the bare id on its own. The catalogue already knows playlists by exactly that
+id, so the link is answered by the recording itself, with the course it belongs
+to beside it. A link it does not hold says so and offers the form to propose it,
+with the address already filled in — and a link to a single video, a channel or
+one of YouTube's personal lists (watch later, a mix) says which of those it is
+rather than pretending to have searched for it.
+
 It opens on focus rather than on the first keystroke, and before anything is
 typed it already holds rows.
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { SearchEntry } from '@shared/schema';
-import { groupBySection, searchEntries, type Scored } from '@shared/search';
+import { findPlaylist, groupBySection, searchEntries, type Scored } from '@shared/search';
+import { parseYoutubeRef, type YoutubeRef } from '@shared/youtube';
 import { searchTerm, track } from './analytics';
 import { useCatalog } from './catalog';
 import type { Catalog } from './data';
@@ -44,6 +45,16 @@ export type SearchResults = {
   empty: boolean;
   /** Nothing was typed: the sections are defaults rather than hits. */
   suggested: boolean;
+  /**
+   * What was pasted, when what was pasted is a YouTube address.
+   *
+   * A link is not a query and its empty answer is not «ничего не найдено»: the
+   * reader is not asking what the catalogue has about a subject, they are
+   * asking about one recording they already hold. So the panel needs to know
+   * that this is what happened — to say which of the four kinds of address it
+   * was, and to offer the one thing that helps when the answer is no.
+   */
+  link: YoutubeRef | null;
 };
 
 /*
@@ -105,6 +116,7 @@ function useSuggested(
       matchedDomains: new Set<string>(),
       empty: sections.length === 0,
       suggested: true,
+      link: null,
     };
   }, [catalog, kinds, courses]);
 }
@@ -123,9 +135,24 @@ export function useSearchResults(
   const found = useMemo(() => {
     if (!query.trim()) return null;
 
-    const hits = searchEntries(catalog.search, query).filter(({ entry }) =>
-      reachable(catalog, entry)
-    );
+    /*
+     * A pasted address is answered by its id and never by its words. Put
+     * through the ordinary search it is a handful of nonsense tokens —
+     * `https`, `www`, `com` — and the id itself would be lower-cased on the way
+     * in, which is how two different playlists become one. Everything after
+     * this point is the ordinary path either way: one hit or none, and the
+     * sections, the keyboard walk and the map's highlight are built from it as
+     * from any other result.
+     */
+    const link = parseYoutubeRef(query);
+    const linked =
+      link?.kind === 'playlist' ? findPlaylist(catalog.search, link.id) : null;
+
+    const hits = link
+      ? linked
+        ? [{ entry: linked, score: 1 }]
+        : []
+      : searchEntries(catalog.search, query).filter(({ entry }) => reachable(catalog, entry));
     const sections = groupBySection(hits, PER_SECTION);
     const flat = sections.flatMap((section) => section.items.map((item) => item.entry));
 
@@ -158,6 +185,7 @@ export function useSearchResults(
       matchedDomains,
       empty: hits.length === 0,
       suggested: false,
+      link,
     };
   }, [catalog, query]);
 
@@ -183,11 +211,19 @@ const SETTLE_MS = 900;
  * playlist did not match a course we have; this says somebody wanted a course
  * we do not — which is exactly the question `_gaps.ts` is run to answer, and
  * the only version of it that comes from readers rather than from the crawl.
+ *
+ * A pasted link is counted as `search_link` instead, and deliberately not as
+ * `search_no_results`. Its words are scrubbed to nothing on the way out — an
+ * address is exactly what `searchTerm` refuses — so it would arrive as a
+ * missing *course* with no name, in the one report that is read to decide which
+ * courses to add. What it is evidence of is a missing recording, and which kind
+ * of address people paste is the whole question behind indexing video links.
  */
 function useSearchReport(found: SearchResults | null): void {
   const last = useRef('');
   const query = found?.query ?? '';
   const hits = found?.hits.length ?? 0;
+  const link = found?.link?.kind ?? '';
 
   useEffect(() => {
     const term = query.trim();
@@ -197,8 +233,9 @@ function useSearchReport(found: SearchResults | null): void {
       last.current = term;
       const safe = searchTerm(term);
       track('search', { search_term: safe, results: hits });
-      if (hits === 0) track('search_no_results', { search_term: safe });
+      if (link) track('search_link', { kind: link, results: hits });
+      else if (hits === 0) track('search_no_results', { search_term: safe });
     }, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [query, hits]);
+  }, [query, hits, link]);
 }

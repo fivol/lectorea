@@ -24,9 +24,19 @@ function issueUrl(template: string, fields: Record<string, string> = {}): string
   return repoUrl(`/issues/new?${query}`);
 }
 
-/** «Предложить плейлист», with the course already named. */
-export function suggestPlaylistUrl(courseId: string): string {
-  return issueUrl('1-playlist.yml', { course: courseId });
+/**
+ * «Предложить плейлист», with whichever half the app already knows filled in.
+ *
+ * From a course panel that is the course; from the search box it is the address
+ * that was pasted and not found, which is the *required* field of the form —
+ * the one case where the reader arrives with nothing left to type but the
+ * button.
+ */
+export function suggestPlaylistUrl(courseId = '', url = ''): string {
+  return issueUrl('1-playlist.yml', {
+    ...(courseId ? { course: courseId } : {}),
+    ...(url ? { url } : {}),
+  });
 }
 
 /**
