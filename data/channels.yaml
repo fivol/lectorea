@@ -279,6 +279,46 @@
   providerId: mipt
   lang: ru
 
+# Named by the 2026-08-19 hunt, which found them behind the playlists it had
+# just paid for: each files one semester per playlist, with the lecturer and the
+# year in the title, which is the shape the rules read best.
+
+# The Independent University of Moscow: 42 playlists, and the mathematics is the
+# part of the curriculum this catalogue is deepest in — complex analysis under
+# four different lecturers, and analysis read every year since 2013.
+- id: UCpi8qkXE7-q3TY19lIgO_Kw
+  title: Видеозаписи Независимого Московского Университета
+  providerId: ium
+  lang: ru
+
+# MIPT's physics faculty, and the one that fills analytical mechanics and
+# mathematical physics — courses no English channel here covers.
+- id: UCz2yZ5qjglNEM7FxN-M8N1g
+  title: Лекторий ФОПФ
+  providerId: mipt
+  lang: ru
+
+# Students filming their own faculty: every playlist is an MSU course with an
+# MSU lecturer, and the ownership probe says the channel uploaded them rather
+# than mirroring somebody who had.
+- id: UC4E452Wqoiv-JU_lWHAQTWQ
+  title: Ёжик в матане
+  providerId: msu
+  lang: ru
+
+# MSU's computational mathematics faculty, course and semester in every title.
+- id: UCygPUoxwDqbmO3Yt1mB1e9w
+  title: ВМК МГУ
+  providerId: msu
+  lang: ru
+
+# HSE computer science, the distance-learning half — the `@cs_hse` channel above
+# does not carry these, and they are whole terms rather than single lectures.
+- id: UCV56iySuhfRQ1qSjXmAr1Yw
+  title: ФКН ВШЭ — дистанционные занятия
+  providerId: hse
+  lang: ru
+
 - id: UCFTNoZYjkg-3LZTHrHfV1nQ
   title: Deep Learning School
   providerId: mipt

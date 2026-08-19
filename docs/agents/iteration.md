@@ -132,6 +132,15 @@ at. So when the day is mostly untouched, aim it wide rather than deep —
 `--min=20 --variant=all --budget=<what is left>` is one command for a whole day's
 keys, and it skips whatever an earlier hunt already bought.
 
+**Check what is left to ask before planning a day around it.** The pool is one
+question per course, name, language and phrasing, and by the end of 2026-08-19
+the `playlist` side of it was **16 questions from empty** while the `channel`
+side had never been asked at all
+([harvest.md](../harvest.md#the-pool-of-questions-is-finite-and-as-of-2026-08-19-it-is-spent)).
+So the next day with quota to burn asks `--kind=channel`, or adds courses first
+— a hunt that finds nothing unasked spends nothing and reports nothing, which
+looks exactly like a hunt that found nothing.
+
 **And run it alone.** A hunt writes to `cache.db` on every call, and a second
 writer kills the crawl with `SQLITE_BUSY_SNAPSHOT`
 ([pitfalls.md](pitfalls.md#two-processes-wrote-to-cachedb-and-the-crawl-was-the-one-that-died)).

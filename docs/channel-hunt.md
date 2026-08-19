@@ -588,6 +588,53 @@ asking why the crawl had not reached it, which is
 [the other half](agents/iteration.md#when-somebody-sends-a-link) and where the
 day's real work turned out to be.
 
+## The eighth hunt, 2026-08-19 — the whole question pool, and what stood behind it
+
+The run that emptied the `playlist` side of the pool: 635 queries, 63 500 units,
+every phrasing of every one of 228 courses in both languages
+([harvest.md](harvest.md#the-pool-of-questions-is-finite-and-as-of-2026-08-19-it-is-spent)).
+It returned **12 821 playlists new to the cache** and 12 654 the crawl already
+had, and the filters then took it down to **3582 queued**:
+
+| dropped by | how many |
+|---|---|
+| named no course of this catalogue | 4332 |
+| somebody's collection (ownership probe) | 1837 |
+| a mirror of another channel (ownership probe) | 1157 |
+| under 8 videos | 1192 |
+| over 150 videos — a bin until a person says otherwise | 290 |
+| refused by `NOT_A_COURSE` | 430 |
+
+6576 ownership probes at a unit each said **3580 own their material, 1157
+mirror, 1837 collect** — 46% of what survived every free filter was not a
+course, and that is the number that justifies the unit.
+
+**And the channels were again the better half.** 2989 channels stood behind the
+candidates, and the five worth a line brought **824 playlists for 23 units** —
+the cheapest yield of the whole day, against 63 500 for the search that named
+them:
+
+| Channel | Own | What it is |
+|---|---|---|
+| Видеозаписи Независимого Московского Университета | 42 | complex analysis under four lecturers, analysis read every year since 2013 |
+| Лекторий ФОПФ | 38 | MIPT physics: analytical mechanics and mathematical physics, semester by semester |
+| Ёжик в матане | 17 | students filming their own MSU faculty — the probe says they uploaded it, not mirrored it |
+| ВМК МГУ | 13 | MSU computational mathematics, course and semester in every title |
+| ФКН ВШЭ — дистанционные занятия | 10 | HSE computer science, whole terms the `@cs_hse` channel does not carry |
+
+Refused, and each for a shape already in this file:
+
+- **GATE Wallah CSE & DA** (13 own) — «GATE 2026 Crash Course» on every
+  playlist. Exam prep, which `lib/rules.ts` refuses outright.
+- **FEARLESS INNOCENT MATH** (11 own) — «MATHEMATICS-4 (UNIT-1) | BAS303»: the
+  unit of a course, not the course, and an exam syllabus besides.
+- **OTUS** (11 own) — real courses mixed with «Открытые уроки», which are one
+  lesson each and are marketing for a paid one.
+- **ИНФОУРОК**, **Онлайн-Школа с 1 по 11 класс** (12 and 10 own) — filmed school
+  lessons, and genuinely courses, but most of them are «Математика 2 класс»:
+  primary-school years this catalogue's `stage: school-8…11` has nowhere to put.
+  Worth revisiting if the school end ever grows downwards.
+
 ## Doing it again
 
 `scripts/_vet.ts` and `scripts/_owners.ts` are the two throwaway scripts this

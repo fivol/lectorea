@@ -346,9 +346,28 @@ what a hand-read sample of 120 had estimated.
 
 2026-08-18 read the 2815 bindings a day of crawling had added, in 19 batches:
 **2025 ok, 686 not a course, 39 rebound, 65 unsure** — 28% refused, and the
-third round in a row to land in the 24–28% band. That the rate is *stable across
-seams and rounds* is the useful part: it makes a batch that comes back 100% `ok`
-a reason to re-read the batch rather than a good day.
+third round in a row to land in the 24–28% band.
+
+2026-08-19 broke the band, and the reason is the interesting part: **2404 ok,
+377 not a course, 60 rebound, 31 unsure** of 2872 — **15% refused**, against 24
+and 28 before it. The difference is not the reader, it is what was in front of
+them. Half that round came from five university channels added the same day
+(НМУ, ФОПФ, ВМК МГУ, ФКН ВШЭ), where every playlist is one named lecturer's
+semester, and the readers said so unprompted — batch after batch reported an
+unusually clean seam and gave the same reason. So **the rate tracks the seam,
+not the rules**: a wide search returns exam coaching and chapter-sized
+playlists, a faculty channel does not.
+
+The same day then ran the experiment. A second round, an hour later, read the
+**415 bindings the day's crawl had added** — the wide-search seam rather than the
+faculty one, same brief, same readers: **277 ok, 124 not a course, 12 rebound, 2
+unsure — 30% refused.** Two rounds, one day, one reader population, and twice
+the refusal rate on the seam that was not a university's own channel.
+
+Which sharpens rather than retires the check below. A batch that comes back 100%
+`ok` is still a reason to re-read it — but a *round* that comes back at 15% is a
+question about where the material came from, and it now has a measured answer:
+**a faculty channel is worth about twice a search result, per binding read.**
 
 **Why a reader rather than more rules.** The three dominant errors are all
 legible in the title and none is reachable by a keyword: a *unit* of a course

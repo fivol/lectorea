@@ -299,6 +299,31 @@ read 2796 new playlist links out of them at no cost — then 4278 more once the
 crawl had walked their videos. The expensive seam pays for the cheapest one, so
 run `data:mine` again before calling a hunt finished.
 
+### The pool of questions is finite, and as of 2026-08-19 it is spent
+
+A question asked is a question never asked again, so the seam has a **bottom**,
+and it is worth knowing where it is before planning a day around it. The pool is
+one question per (course × name × language × phrasing × kind), which for 228
+courses is **1494 per kind**:
+
+| | asked | left |
+|---|---|---|
+| `--kind=playlist` | 1478 | **16** |
+| `--kind=channel` | 0 | **1494** |
+
+The 2026-08-19 hunt is what closed the first row: 635 queries in one run,
+63 500 units, every phrasing of every course in both languages. So a *later* day
+with quota to burn has three moves and only three — **ask the channel side**,
+which is a different question about the same subjects and has never been asked;
+**add courses**, since each one arrives with six to eight questions of its own in
+each kind; or `--repeat`, which is the weakest of the three because search's
+first page barely moves from one week to the next.
+
+What the run bought: **12 821 playlists new to the cache** against 12 654 it
+already held — search returns what the crawl owns about half the time once the
+crawl is this large, and the free filter that drops them is what makes the rest
+affordable.
+
 ### A playlist is not a course because it is called one
 
 «Linguistics», 50 videos, by a channel called *A random human*. The title names

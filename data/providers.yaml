@@ -73,6 +73,12 @@
   country: RU
   site: https://www.hse.ru/
 
+- id: ium
+  title: НМУ
+  type: university
+  country: RU
+  site: https://ium.mccme.ru/
+
 - id: spbu
   title: СПбГУ
   type: university
