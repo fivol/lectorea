@@ -41,11 +41,18 @@ match before crawling, because matching is free and decides what the day buys.
 
 ## The nightly job crawls what the laptop published, not what the laptop has
 
-`refresh.yml` fires at **08:30 UTC** — half an hour after the quota resets — and
+`refresh.yml` fires at **08:30 UTC** — half an hour after the quota resets, and
+with GitHub's cron lag that has meant 09:00 both days it was watched — and it
 restores the `data-cache` release before it crawls. So a day of local crawling
 that was never published is invisible to it: it re-walks a queue the laptop has
-already paid for, out of the same three keys, and then publishes a snapshot
-*behind* the laptop.
+already paid for and then publishes a snapshot *behind* the laptop.
+
+**The runner has one key, not three.** `refresh.yml` passes
+`YOUTUBE_API_KEY2` and `3` as well, and both secrets are empty — the run log
+prints them blank and the job stops at `квота исчерпана, потрачено 9504`. So the
+night is worth **9500 units and about 3200 playlists walked**, which is the
+number to plan the morning around: the laptop's ten keys are ten times the
+night, and the queue the night cannot finish is the queue the day inherits.
 
 That was the state on 2026-08-19 at 08:00 UTC — release 63 077 playlists, laptop
 79 475 — and the fix is one command with a deadline:
