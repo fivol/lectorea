@@ -137,3 +137,15 @@
   stage: bachelor-2
   deps: [programming-intro]
   soft: [software-engineering]
+
+- id: human-computer-interaction
+  domains: [cs]
+  stage: bachelor-3
+  deps: [programming-intro]
+  soft: [cognitive-psychology, software-engineering]
+
+- id: game-development
+  domains: [cs]
+  stage: bachelor-2
+  deps: [programming-intro]
+  soft: [computer-graphics, linear-algebra]

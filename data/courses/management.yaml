@@ -67,3 +67,14 @@
   domains: [management]
   stage: bachelor-1
   soft: [management-intro]
+
+- id: supply-chain-management
+  domains: [management]
+  stage: bachelor-3
+  deps: [operations-management]
+
+- id: international-business
+  domains: [management]
+  stage: bachelor-3
+  deps: [management-intro]
+  soft: [macroeconomics]

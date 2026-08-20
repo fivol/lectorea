@@ -66,10 +66,30 @@ somebody writes the missing name down as an alias of it.
 | «Аналитическая геометрия» | `linear-algebra` |
 | «Методы математической физики» | `pde` |
 | «Тепломассообмен» | `transport-phenomena` |
+| «supply chain» / «логистика» | `operations-management` |
 
 So **adding a course means taking its name back**, from `aliases` and from
 `keywords` both, and the aliases are the half that is easy to miss because
-nothing about a keyword list mentions them. With the four moved, the same probe
+nothing about a keyword list mentions them.
+
+The last row is 2026-08-20 and shows the check is worth running every time: eight
+courses were added and exactly one of them collided, `supply-chain-management`
+against the two words `operations-management` had been holding for it. Two
+phrases moved, and the probe then read **+81, −1** — the one loss being a
+three-subject bin a reader had already refused. One query finds them before the
+probe has to:
+
+```bash
+pnpm exec tsx -e "
+import { buildKeywordIndex } from './scripts/lib/rules.ts';
+import { loadSources } from './scripts/lib/sources.ts';
+const by = new Map();
+for (const e of buildKeywordIndex(loadSources())) {
+  const s = by.get(e.phrase) ?? new Set(); s.add(e.courseId); by.set(e.phrase, s);
+}
+for (const [p, s] of by) if (s.size > 1) console.log('«' + p + '» → ' + [...s].join(', '));
+"
+``` With the four moved, the same probe
 read 364 gained, 8 lost, 37 rebound.
 
 The eight that stayed lost are the honest kind and were left alone: «Data

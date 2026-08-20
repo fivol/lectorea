@@ -121,3 +121,19 @@
   stage: bachelor-4
   deps: [analog-electronics]
   soft: [electrical-machines]
+
+- id: vlsi-design
+  domains: [engineering]
+  stage: bachelor-4
+  deps: [digital-logic, analog-electronics]
+
+- id: chemical-reaction-engineering
+  domains: [engineering, chemistry]
+  stage: bachelor-3
+  deps: [physical-chemistry, transport-phenomena]
+
+- id: materials-science
+  domains: [engineering, chemistry]
+  stage: bachelor-2
+  deps: [general-chemistry]
+  soft: [thermodynamics]

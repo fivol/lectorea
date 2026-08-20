@@ -151,3 +151,9 @@
   stage: master-1
   deps: [abstract-algebra]
   soft: [category-theory]
+
+- id: dynamical-systems
+  domains: [math]
+  stage: bachelor-3
+  deps: [differential-equations]
+  soft: [topology]

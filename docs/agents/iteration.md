@@ -45,6 +45,12 @@ from descriptions the crawl just brought in, and the seam keeps refilling for
 several rounds (2315 → 1853 → 1098 → 473 on 2026-08-14; 4797 → 6758 → 3387 on
 2026-08-18, on a day that started with 7127 already queued).
 
+**And it refills again after the day's crawl, not only before it.** On
+2026-08-20 a mining run before the crawl returned 624 — the seam looked spent —
+and the same command after it returned **3963**, because the crawl had just put
+that many fresh descriptions on disk. So the last free act of a spent day is
+`make mine`: it queues tomorrow's night out of what today already paid for.
+
 ```bash
 make mine && make refresh && make match
 ```

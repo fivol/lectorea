@@ -1210,5 +1210,29 @@
   "course.web-development.desc": "HTTP, фронтенд и бэкенд, фреймворки, развёртывание",
 
   "course.mobile-development.title": "Мобильная разработка",
-  "course.mobile-development.desc": "Android и iOS, интерфейс, жизненный цикл, публикация приложения"
+  "course.mobile-development.desc": "Android и iOS, интерфейс, жизненный цикл, публикация приложения",
+
+  "course.vlsi-design.title": "Проектирование СБИС",
+  "course.vlsi-design.desc": "МОП-транзисторы, стандартные ячейки, от RTL до топологии, тайминги",
+
+  "course.dynamical-systems.title": "Динамические системы",
+  "course.dynamical-systems.desc": "Фазовые портреты, устойчивость, бифуркации, хаос",
+
+  "course.chemical-reaction-engineering.title": "Химические реакторы",
+  "course.chemical-reaction-engineering.desc": "Кинетические законы, идеальные и реальные реакторы, катализ, расчёт реактора",
+
+  "course.materials-science.title": "Материаловедение",
+  "course.materials-science.desc": "Кристаллическая структура, дефекты, фазовые диаграммы, механические свойства",
+
+  "course.human-computer-interaction.title": "Человеко-машинное взаимодействие",
+  "course.human-computer-interaction.desc": "Проектирование интерфейсов, прототипирование, тестирование удобства, доступность",
+
+  "course.supply-chain-management.title": "Управление цепями поставок",
+  "course.supply-chain-management.desc": "Закупки, запасы, логистические сети, планирование спроса",
+
+  "course.game-development.title": "Разработка игр",
+  "course.game-development.desc": "Движки, игровой цикл, физика, сцены и спрайты, публикация",
+
+  "course.international-business.title": "Международный бизнес",
+  "course.international-business.desc": "Способы выхода на рынок, торговля и институты, кросс-культурный менеджмент"
 }

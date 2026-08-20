@@ -1210,5 +1210,29 @@
   "course.web-development.desc": "HTTP, frontend and backend, frameworks, deployment",
 
   "course.mobile-development.title": "Mobile development",
-  "course.mobile-development.desc": "Android and iOS, interface, lifecycle, publishing an app"
+  "course.mobile-development.desc": "Android and iOS, interface, lifecycle, publishing an app",
+
+  "course.vlsi-design.title": "VLSI design",
+  "course.vlsi-design.desc": "MOS transistors, standard cells, RTL to layout, timing closure",
+
+  "course.dynamical-systems.title": "Dynamical systems",
+  "course.dynamical-systems.desc": "Phase portraits, stability, bifurcations, chaos",
+
+  "course.chemical-reaction-engineering.title": "Chemical reaction engineering",
+  "course.chemical-reaction-engineering.desc": "Rate laws, ideal and real reactors, catalysis, reactor sizing",
+
+  "course.materials-science.title": "Materials science",
+  "course.materials-science.desc": "Crystal structure, defects, phase diagrams, mechanical properties",
+
+  "course.human-computer-interaction.title": "Human-computer interaction",
+  "course.human-computer-interaction.desc": "Interface design, prototyping, usability testing, accessibility",
+
+  "course.supply-chain-management.title": "Supply chain management",
+  "course.supply-chain-management.desc": "Sourcing, inventory, logistics networks, demand planning",
+
+  "course.game-development.title": "Game development",
+  "course.game-development.desc": "Engines, the game loop, physics, scenes and sprites, publishing",
+
+  "course.international-business.title": "International business",
+  "course.international-business.desc": "Entry modes, trade and institutions, cross-cultural management"
 }

@@ -424,7 +424,8 @@
     "operating system",
     "os",
     "linux",
-    "kernel"
+    "kernel",
+    "ops-class"
   ],
   "course.networks": [
     "computer networks",
@@ -878,7 +879,8 @@
     "investing",
     "corporate finance",
     "asset pricing",
-    "?portfolio"
+    "?portfolio",
+    "?valuation"
   ],
   "course.behavioral-economics": [
     "behavioural economics",
@@ -1382,7 +1384,6 @@
   ],
   "course.operations-management": [
     "operations management",
-    "supply chain",
     "inventory"
   ],
   "course.human-resource-management": [
@@ -1534,5 +1535,54 @@
     "flutter",
     "swiftui",
     "react native"
+  ],
+
+  "course.vlsi-design": [
+    "vlsi",
+    "vlsi design",
+    "vlsi testing",
+    "integrated circuit design"
+  ],
+
+  "course.dynamical-systems": [
+    "dynamical systems",
+    "nonlinear dynamics",
+    "chaos theory"
+  ],
+
+  "course.chemical-reaction-engineering": [
+    "reaction engineering",
+    "chemical reactors"
+  ],
+
+  "course.materials-science": [
+    "materials science",
+    "material science",
+    "materials engineering"
+  ],
+
+  "course.human-computer-interaction": [
+    "human computer interaction",
+    "human-computer interaction",
+    "hci",
+    "user interface design",
+    "usability"
+  ],
+
+  "course.supply-chain-management": [
+    "supply chain",
+    "supply chain management",
+    "logistics"
+  ],
+
+  "course.game-development": [
+    "game development",
+    "game programming",
+    "game engine"
+  ],
+
+  "course.international-business": [
+    "international business",
+    "global business"
   ]
 }
