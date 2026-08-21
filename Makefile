@@ -95,7 +95,7 @@ pipeline: require-key ## Everything the crawl does, in quota order, until the da
 
 .PHONY: publish
 publish: require-gh require-crawl ## Publish local state whole: validate → snapshot → release → deploy
-    git push
+	git push
 	@echo "▸ 1/4  what the deploy will actually build from"
 	@dirty="$$(git status --porcelain -- . $(PUBLISH_IGNORE) 2>/dev/null)"; \
 	if [ -n "$$dirty" ] && [ -z "$(FORCE)" ]; then \
