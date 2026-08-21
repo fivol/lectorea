@@ -35,3 +35,4 @@ dev-dist/
 .claude/worktrees/
 .idea
 CLAUDE.local.md
+keys/
