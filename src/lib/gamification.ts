@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { BuiltPlaylist, Video } from '@shared/schema';
 import { shiftDay, startOfWeek, useActivity, useDayGoal, useWeekGoal, weekOf } from './activity';
 import { unlocksOf, useCatalog } from './catalog';
@@ -245,6 +245,15 @@ export type PlanWeek = {
  * the week in hand takes nothing and the plan opens on «Следующая неделя» —
  * the mechanic's one statement about what has been done, made by going quiet
  * rather than by asking for an evening the goal never asked for.
+ *
+ * **And a remainder is never overflowed**, which is where the two rules above
+ * meet. A week that has been studied into is not an empty week: its budget is
+ * the tail of an evening somebody already had, so a lecture too long for it
+ * opens the next week rather than being dropped on top — the same answer the
+ * spent goal gets, arrived at before the goal is quite spent. The rule that
+ * takes a lecture whatever its length survives where it is needed: a week
+ * nobody has studied into yet, where refusing would print rules with nothing
+ * under them for as long as the lectures are longer than the goal.
  */
 export function weeksOf(
   videos: Video[],
@@ -257,8 +266,8 @@ export function weeksOf(
 
   const weeks: PlanWeek[] = [];
   const monday = startOfWeek(today);
-  let index = spentSeconds >= weekSeconds ? 1 : 0;
-  let budget = index === 0 ? weekSeconds - spentSeconds : weekSeconds;
+  let index = 0;
+  let budget = weekSeconds - spentSeconds;
   let open: PlanWeek | null = null;
 
   for (const [row, video] of videos.entries()) {
@@ -270,6 +279,17 @@ export function weeksOf(
       budget = weekSeconds;
     }
     if (!open) {
+      /*
+       * The week in hand, with time already spent into it, is the one week
+       * that does not take a lecture too long for its budget: what is left of
+       * a goal is not an evening to overflow. Skipping to the next week here
+       * also covers the goal being spent outright — the remainder is then
+       * nought or less, and nothing fits it.
+       */
+      if (index === 0 && spentSeconds > 0 && video.seconds > budget) {
+        index = 1;
+        budget = weekSeconds;
+      }
       if (weeks.length >= SCHEDULE_MAX_WEEKS) break;
       const from = shiftDay(monday, index * 7);
       open = { index, from, to: shiftDay(from, 6), at: row, lectures: 0, seconds: 0 };
@@ -295,6 +315,11 @@ export function weeksOf(
  * a rounded number of seconds, and a string of ones and noughts for which rows
  * are behind the reader. Strings compare by value, so the list is left alone
  * until a tick actually changes.
+ *
+ * And the plan itself is cut once a visit — the reason is on the cut below.
+ * The primitives keep being read after it, because a store snapshot has to
+ * answer the same for one store state however often it is asked; what stops is
+ * the cutting, not the reading.
  */
 export function useSchedule(videos: Video[], complete: boolean): Map<number, PlanWeek> {
   const minutes = useProfile((state) => state.profile.settings.dayGoal);
@@ -303,28 +328,63 @@ export function useSchedule(videos: Video[], complete: boolean): Map<number, Pla
     const week = weekOf(state.profile.days, localDay());
     return Math.floor(week.seconds / SCHEDULE_STEP_SECONDS) * SCHEDULE_STEP_SECONDS;
   });
+
+  /*
+   * **Cut once when the reader arrives, and left alone for the visit.**
+   *
+   * Both of the moving inputs move under the reader's own hand: `spent` grows a
+   * step at a time while a lecture plays, and `done` flips the moment one ends.
+   * Every move of either walks «Текущая неделя» *down* the list — the remainder
+   * shrinks, so the rule loses a lecture off its end; a row is ticked, so the
+   * rule opens a row further on. The reader who sat down to «2 лекции · 17
+   * минут» watches the rule slide past the row they were reaching for, and the
+   * week they had just decided to have get shorter as they have it. A plan that
+   * re-cuts itself while it is being read is not a plan — and this is the same
+   * trouble `SCHEDULE_STEP_SECONDS` was rounding the corners off, at a place
+   * where the answer turns out to be not to move at all.
+   *
+   * So the cut is keyed by what means *a different plan* — another recording,
+   * and the goal, which the reader can change from the panel this is drawn in
+   * and which is a deliberate act wanting an immediate answer. Not by the two
+   * that only mean the evening is going. The next visit to the list cuts again,
+   * from where the reader is standing then.
+   */
+  const cut = useRef<{ key: string; plan: Map<number, PlanWeek> } | null>(null);
+  const key = `${videos[0]?.id ?? ''}:${videos.length}:${complete}:${minutes}:${days}`;
+
+  /*
+   * Read on every write even though only the cutting render uses it, and that
+   * is deliberate: this is a `useSyncExternalStore` snapshot, and a selector
+   * that answered '' once the plan was cut would return two different values
+   * for one store state — which under `StrictMode`'s double render is exactly
+   * the "getSnapshot should be cached" trap. The saving would be five hundred
+   * lookups on a write; the price is a hook that can disagree with itself.
+   */
   const done = useProfile((state) => {
     // Nothing to divide and nothing to divide it into: the string is not worth
     // building on every write the player makes for a reader who set no goal.
     if (complete || !minutes) return '';
-    let key = '';
-    for (const video of videos) key += state.profile.videos[video.id]?.done ? '1' : '0';
-    return key;
+    let rows = '';
+    for (const video of videos) rows += state.profile.videos[video.id]?.done ? '1' : '0';
+    return rows;
   });
 
-  return useMemo(() => {
-    const plan = new Map<number, PlanWeek>();
-    if (!GAME.schedule || complete || !minutes || !days) return plan;
-    const weeks = weeksOf(
-      videos,
-      (row) => done[row] === '1',
-      minutes * 60 * days,
-      spent,
-      localDay()
-    );
-    for (const week of weeks) plan.set(week.at, week);
-    return plan;
-  }, [videos, complete, minutes, days, spent, done]);
+  let plan = cut.current?.key === key ? cut.current.plan : null;
+  if (!plan) {
+    plan = new Map<number, PlanWeek>();
+    if (GAME.schedule && !complete && minutes && days) {
+      const weeks = weeksOf(
+        videos,
+        (row) => done[row] === '1',
+        minutes * 60 * days,
+        spent,
+        localDay()
+      );
+      for (const week of weeks) plan.set(week.at, week);
+    }
+    cut.current = { key, plan };
+  }
+  return plan;
 }
 
 /* ────────────────────────────  3 · audience  ────────────────────────────

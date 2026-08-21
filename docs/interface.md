@@ -995,6 +995,37 @@ at every site.
   one thing this says about what has been done, and it says it by asking for
   nothing.
 
+  **And what is left of a goal is never overflowed.** A week takes at least one
+  lecture whatever its length, because a ninety-minute lecture against a
+  forty-five-minute goal would otherwise print a run of rules with nothing under
+  them — but that rule belongs to a week nobody has studied into yet. The week
+  in hand with an evening already behind it refuses instead: twenty-five minutes
+  left of a three-hour week take the 2:43 and the 14:36 under «Текущая неделя»
+  and hand the 9:14 to the next one, and when not even the first lecture fits
+  the remainder the plan opens on «Следующая неделя» — the same answer a fully
+  spent goal gets, arrived at before the goal is quite spent.
+
+  Which is why the panel can say «ещё 1 час» over a plan of seventeen minutes.
+  The two numbers are honest and they are about different things: the day is the
+  unit the goal was set in and it asks for the whole of today whatever the week
+  has come to, while the plan divides *the week's* goal and can only deal out
+  what is left of it. Flooring the week in hand at what today still asks was
+  considered and refused — it makes the plan hand out time the goal has already
+  been spent on, and the plan is the half of the pair that has to stay true to
+  the goal.
+
+  **The plan is cut once, when the reader opens the list, and stays put for the
+  visit.** Both of its moving inputs move under the reader's own hand — the
+  week's spent time grows while a lecture plays, a row is ticked the moment one
+  ends — and every move of either walks «Текущая неделя» *down* the list: the
+  remainder shrinks, so the rule sheds a lecture off its end, and the rows above
+  fall behind, so it opens further on. The reader who sat down to «2 лекции · 17
+  минут» would watch the rule slide past the row they were reaching for and the
+  evening they had just decided to have get shorter as they had it. So the cut
+  is keyed to what means a *different* plan — another recording, or the goal
+  changed from the panel it is drawn in — and the next visit cuts again from
+  where the reader is standing then.
+
   Only where a goal is set, and there is deliberately no measured fallback of
   the kind «Сколько это недель» below uses: a pace read off the last four weeks
   is an honest thing to report and a poor thing to draw a calendar from,

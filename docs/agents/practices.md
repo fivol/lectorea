@@ -1321,3 +1321,48 @@ Refused, with the reasons, so the next iteration does not re-derive them:
   `channelId`, and a handle (`@name`) is not stored anywhere at all — the crawl
   never asked for one. Resolving them means a build change and a crawl field,
   which is a different iteration.
+
+## A rule that cuts a list is probed at its boundary, not argued about
+
+«Почему в текущей неделе всего 2 видео» is not answerable by reading the code:
+`weeksOf` fills the week in hand with what fits, and every plausible story about
+the observed split — a wrong budget, a wrong step, an off-by-one at the boundary
+— reads as consistent with the source. What settled it in a minute was running
+the real function over the five durations visible in the screenshot, against
+every goal and every spent value the profile could hold:
+
+```
+days=3 week=180м spent=155м left=25м -> #0: 2л/1039s | #1: 3л/2077s
+days=5 week=300м spent=280м left=20м -> #0: 2л/1039s | #1: 3л/2077s
+```
+
+Only a remainder of 20–25 minutes produces that split, for any number of days.
+So the mechanic was right and the week was nearly spent — an answer with a
+number in it, where reading the code would have produced an opinion.
+
+**The obstacle is that app-side modules cannot be imported by bare `tsx`.**
+`src/lib/lang.ts` reads `import.meta.env.BASE_URL` and `window.location` at
+module scope, so anything importing from `src/lib/` throws before a line of the
+probe runs. The way in is a vitest config in the scratchpad — never a file in
+`tests/`, which is for build logic and which other sessions commit:
+
+```ts
+// scratchpad/probe.config.ts
+export default defineConfig({
+  resolve: { alias: { '@': …'/src', '@shared': …'/shared' } },
+  test: {
+    environment: 'node',
+    root: '/…/lectorea',                 // aliases and vite env resolve from here
+    setupFiles: ['…/probe.setup.ts'],    // window.location.pathname = '/ru/', .replace = () => {}
+    include: ['…/scratchpad/*.probe.ts'],
+  },
+});
+```
+
+Then the probe holds the *cases*, not the assertion: sweep the inputs, print
+what each produces, and read which ones match what the screen did. The same
+harness is what proves a change afterwards — the edge that had to keep working
+(a lecture longer than the whole goal still opens a week of its own) was one
+more case in the sweep, and it caught an expectation of mine that was wrong
+before the browser did.
+
