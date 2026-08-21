@@ -299,7 +299,7 @@ read 2796 new playlist links out of them at no cost — then 4278 more once the
 crawl had walked their videos. The expensive seam pays for the cheapest one, so
 run `data:mine` again before calling a hunt finished.
 
-### The pool of questions is finite, and as of 2026-08-19 it is spent
+### The pool of questions is finite, and as of 2026-08-21 the playlist side is empty
 
 A question asked is a question never asked again, so the seam has a **bottom**,
 and it is worth knowing where it is before planning a day around it. The pool is
@@ -308,8 +308,8 @@ courses is **1494 per kind**:
 
 | | asked | left |
 |---|---|---|
-| `--kind=playlist` | 1478 | **16** |
-| `--kind=channel` | 0 | **1494** |
+| `--kind=playlist` | 1542 | **0** |
+| `--kind=channel` | 731 | **811** |
 
 The 2026-08-19 hunt is what closed the first row: 635 queries in one run,
 63 500 units, every phrasing of every course in both languages. So a *later* day
@@ -319,10 +319,43 @@ which is a different question about the same subjects and has never been asked;
 each kind; or `--repeat`, which is the weakest of the three because search's
 first page barely moves from one week to the next.
 
-What the run bought: **12 821 playlists new to the cache** against 12 654 it
+On 2026-08-21 the last 64 playlist questions were asked — the eight courses
+added that morning had arrived carrying six to eight apiece — and the row closed
+at **1542 of 1542, all 236 courses, both languages, every phrasing**. There is
+no playlist question left to ask; the seam reopens only when a course is added.
+The same day put 731 questions into the channel row for 73 100 units. What that
+bought, and the shape it arrived in, is
+[below](#a-channel-search-answers-with-channels-and-nothing-else).
+
+What the 2026-08-19 run bought: **12 821 playlists new to the cache** against 12 654 it
 already held — search returns what the crawl owns about half the time once the
 crawl is this large, and the free filter that drops them is what makes the rest
 affordable.
+
+### A channel search answers with channels, and nothing else
+
+`--kind=channel` is a different question, not a cheaper one, and the answer
+arrives in a shape the playlist side never produces. A playlist hit carries a
+video count, an owner and a title the rule pass can judge; **a channel hit
+carries an id and a title and nothing else.** There is no `playlists` figure on
+it, because learning one costs a further call per channel — which is what
+`_vet.ts` is for, at a unit each.
+
+So the report cannot rank the channel side the way it ranks the playlist side,
+and what it ranks by instead is **how many different courses returned the same
+channel**. One subject returning a channel is a coincidence; three subjects
+returning it is a faculty channel. On 2026-08-21 the first 731 questions
+returned **21 011 distinct channels** the catalogue has never listed, of which
+only about one in twenty came back for more than a single course.
+
+That ordering is the whole value of the row, and it was very nearly not
+collected at all — see
+[pitfalls.md](agents/pitfalls.md#a-channel-hunt-was-run-wide-and-the-report-came-back-unranked).
+
+**Budget the vetting, not just the searching.** 731 questions cost 73 100 units
+and hand back a list whose next step costs one unit a line. A day that spends
+everything on search and nothing on `_vet.ts` buys a list it cannot read, and
+the list keeps: the ids do not go stale the way an unspent key does.
 
 ### A playlist is not a course because it is called one
 

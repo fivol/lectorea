@@ -300,6 +300,33 @@ as verified.
 
 ---
 
+### A channel hunt was run wide and the report came back unranked
+
+**Assumed:** `--kind=channel` is the same hunt pointed at a different index, so
+700 questions would come back ordered the way the playlist side comes back
+ordered, and the top of the list would be the channels worth vetting.
+
+**It was:** `channelCandidates` built every channel-search hit with `blank()` and
+dropped the query that found it — the loop destructured `{ hit }` out of a
+`{ hit, from }` and never read `from.courseId`. Every one of the **21 011**
+entries therefore carried `courses: []`, so the sort's tie-breaker
+(`b.courses.length - a.courses.length`) compared 0 against 0 for the whole file
+and the report came out in insertion order. The ids were sound; the *ordering*,
+which is the only thing that makes a list that long usable, was not there. The
+run cost **70 000 units**, and the attribution cannot be recovered afterwards —
+`searches` records that a question was asked and how many hits it had, not which
+channels came back, and `--from` re-reads candidates rather than hits. Re-asking
+would cost the 70 000 again.
+
+**How not to repeat it:** the fix is three lines and is in `_hunt.ts` now —
+fetch-or-create the entry and `courses.add(from.courseId)`, so a channel several
+subjects return outranks one a single query returned. The general form:
+**when a run is the expensive half, check that its cheap half is actually
+recording what makes the output usable — on one small run first.** A 3100-unit,
+31-question probe would have shown 50 multi-course channels at the top and cost
+one fortieth of what the wide run did. Anything paid for per query deserves a
+single query's worth of rehearsal before it is given a day's budget.
+
 ## Interface and styling
 
 ### An opacity modifier on a theme colour compiled to nothing

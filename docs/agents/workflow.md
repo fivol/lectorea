@@ -54,6 +54,20 @@ night is worth **9500 units and about 3200 playlists walked**, which is the
 number to plan the morning around: the laptop's ten keys are ten times the
 night, and the queue the night cannot finish is the queue the day inherits.
 
+**And the night is worth nothing if the queue is empty.** On 2026-08-20 the
+nightly restored the release, found **6** pending video jobs, spent **32 units**
+of its 9500 and was finished in 2m19s. Nothing was broken: the previous day had
+crawled the queue flat and published it that way, so the runner inherited an
+empty one. A published database is half of what the night needs; the other half
+is a published *queue*.
+
+So the last free act of a day is `make mine` — it costs no quota and no network,
+and it turns the descriptions the day's crawl just brought in into rows the
+runner can walk. On 2026-08-21 that was 3214 playlists queued after the crawl,
+against a night that can walk about 4100 on one key: roughly the right size, and
+the number to aim at. Queue far more than that and the surplus is simply
+backlog; queue nothing and 9500 units expire on a machine that is already awake.
+
 That was the state on 2026-08-19 at 08:00 UTC — release 63 077 playlists, laptop
 79 475 — and the fix is one command with a deadline:
 

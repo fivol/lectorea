@@ -669,10 +669,17 @@ function channelCandidates(
   // A channel search answers with channels directly; they have no playlists to
   // count yet, so they enter with zero and are ranked below anything the
   // playlist search actually found material on.
-  for (const { hit } of channelHits) {
+  //
+  // What ranks them against *each other* is the course that asked. Dropping the
+  // query here once cost a 70 000-unit hunt its whole ordering: every entry was
+  // built blank, so `courses.length` was 0 for all 21 011 of them and the sort
+  // fell through to insertion order. A channel three different subjects return
+  // is a faculty channel; one a single query returned is usually noise.
+  for (const { hit, from } of channelHits) {
     if (hit.kind !== 'channel') continue;
-    if (byChannel.has(hit.id)) continue;
-    byChannel.set(hit.id, blank(hit.id, hit.title));
+    const entry = byChannel.get(hit.id) ?? blank(hit.id, hit.title);
+    entry.courses.add(from.courseId);
+    byChannel.set(hit.id, entry);
   }
 
   return [...byChannel.values()]

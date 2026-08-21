@@ -524,6 +524,42 @@ Two consequences worth keeping:
   channels for free because they own their material — which is true and says
   nothing about whether what they publish is a semester.
 
+### The 2026-08-21 round, which was mined end to end
+
+181 bindings, every one of them `channel: mined`, refused **90** — 46% of the
+first batch and 68% of the second. That is not a new failure: it lands squarely
+inside the `mixed and mined` row above, and it is the number to expect whenever
+a day's new bindings come from `data:mine` rather than from a vetted channel.
+**Budget the reading accordingly** — a mined day produces roughly twice the
+review work per published binding that a channel day does.
+
+The three blind shapes all turned up, and the homonyms are worth keeping because
+they are funnier and more instructive than the definition:
+
+| Title | Bound to | On the word |
+|---|---|---|
+| «Самолет из бумаги. Сложность: Лёгкая» (paper aeroplanes, by difficulty) | `algorithms` | сложность |
+| «СИГНАЛИЗАЦИИ, ДАТЧИКИ ДВИЖЕНИЯ, БЕЗОПАСНОСТЬ» (burglar alarms) | `computer-security` | безопасность |
+| «Ремонт АКПП / МКПП … Гидравлика» (gearbox repair) | `fluid-mechanics` | гидравлика |
+| "Feedback — Full Stack App Development Mentorship" | `control-theory` | feedback |
+| "Law School Admissions — Personal Statement Review, Feedback" | `control-theory` | feedback |
+| "Medieval/Steampunk Music" | `medieval-history` | medieval |
+
+Note that **`feedback` produced two of the 181 on its own**, from two unrelated
+channels — a single-word English keyword general enough to name a business
+practice. That is the shape
+[the loose keyword](#the-other-loose-keyword-the-one-that-wins-wrongly) section
+describes, and `_noisy.ts` and `_markers.ts` are what price the fix; it was left
+for the next iteration rather than done here, because a keyword change drags a
+review round of its own behind it and the day's quota was already spent.
+
+The units were mostly one seam: Indian university syllabus modules
+(`BMATS201 Module 4 (Numerical Methods 1)`, `PG TRB MATHS — UNIT — 9`), where a
+numbered module of a semester wears the name of a whole course. The rule that
+separated them from the keepers: **a module whose name is the bound course's
+entire subject is a course** («Module 2 — Vector Calculus» → `calculus-3`),
+**a module explicitly numbered as a half of one is not** («Numerical Methods 1»).
+
 ## English plurals: store the singular, and only when the phrase has two words
 
 `findPhrase` tolerates three letters on the right edge for Russian inflection,
