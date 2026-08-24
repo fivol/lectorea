@@ -1850,3 +1850,56 @@
   title: Lalit Vashishtha
   providerId: lalitvashishtha
   lang: en
+# ─────────────────  The ninth hunt, 2026-08-24 — vetted from the channel side  ─────────────────
+# Ranked out of 22 017 candidates by how many of the asking courses share a field
+# rather than by how many asked at all; the count alone put talk shows on top.
+
+# Saarland databases, a term per playlist: «Database Systems 2024/25»,
+# «Informationssysteme (Flipped Classroom)», storage and SQL beside them.
+- id: UCC9zrtAkl6yY4dpcnWrCHjA
+  title: Prof. Dr. Jens Dittrich, Big Data Analytics
+  providerId: saarland
+  lang: en
+
+# One lecturer's own classes, filmed whole: «My Calculus I Class», «My Calculus
+# II Class», «Differential Equations» — 87 to 102 lectures each.
+- id: UCN7gB3yQ6hNsVHdPnSNl4Nw
+  title: The Math Tutor
+  providerId: themathtutor
+  lang: en
+
+# C++ by the semester — «Программирование на C++. 1-й семестр» and its second —
+# with computer graphics and AI systems read as courses beside them.
+- id: UCLGnAZ9l-3OxhMu40qTY8Fw
+  title: 32BIT Academy
+  providerId: 32bitacademy
+  lang: ru
+
+# Two courses and nothing else: algorithms and data structures in Python, and
+# data processing on top of it, 36 lectures apiece.
+- id: UCqv4YTBAbN1cI0wpsET20Rg
+  title: Сергей Вячеславович Макрушин
+  providerId: makrushin
+  lang: ru
+
+# «Предмет Языки программирования», «Предмет Программирование 1» — a lecturer
+# filing by the subject he teaches.
+- id: UCXALlEECHBhk1LOyYdYahuw
+  title: Александр Горовик
+  providerId: gorovik
+  lang: ru
+
+# The faculty channel, not the university one: «Cambridge Undergraduate BA
+# Tripos Law Degree» is 70 lectures. Half of what else it holds is CELS and
+# CIPIL event archive, which the rules refuse on their own.
+- id: UCKpz_4qERjwMB7oFMW1RmHw
+  title: Cambridge Law Faculty
+  providerId: cambridge
+  lang: en
+
+# «Fundamentals of Accounting [Full Playlist]» at 92 lectures, income taxation
+# at 83 — the accounting column is thin on anything filmed as a term.
+- id: UCQTpd_zYizpCpYX6uqn_Z5w
+  title: Sir Win - Accounting Lectures
+  providerId: sirwin
+  lang: en

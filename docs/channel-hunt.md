@@ -592,7 +592,7 @@ day's real work turned out to be.
 
 The run that emptied the `playlist` side of the pool: 635 queries, 63 500 units,
 every phrasing of every one of 228 courses in both languages
-([harvest.md](harvest.md#the-pool-of-questions-is-finite-and-as-of-2026-08-19-it-is-spent)).
+([harvest.md](harvest.md#the-pool-of-questions-is-finite-and-a-phrasing-is-what-reopens-it)).
 It returned **12 821 playlists new to the cache** and 12 654 the crawl already
 had, and the filters then took it down to **3582 queued**:
 
@@ -634,6 +634,87 @@ Refused, and each for a shape already in this file:
   lessons, and genuinely courses, but most of them are «Математика 2 класс»:
   primary-school years this catalogue's `stage: school-8…11` has nowhere to put.
   Worth revisiting if the school end ever grows downwards.
+
+## The ninth hunt, 2026-08-24 — the day the pool was empty, and four new words
+
+The morning began with **ten untouched keys and nothing to ask**: 3084 of 3084
+questions asked, 308 400 units spent over the previous fortnight, and a hunt that
+would have reported nothing while spending nothing. What reopened it was not a
+flag but four words — «семинары», «основы», `course`, `introduction` added to
+`QUALIFIERS`, chosen by counting how the catalogue's own published playlists are
+titled ([harvest.md](harvest.md#the-pool-of-questions-is-finite-and-a-phrasing-is-what-reopens-it)).
+The playlist row went from 0 questions to 972, and 600 of them were affordable:
+
+**60 000 units, 13 664 playlists new to the cache against 11 231 already held** —
+a better ratio than the run that emptied the pool, because a phrasing nobody has
+asked is a different question rather than the same one twice. The filters then
+took it to **1452 queued**:
+
+| dropped by | how many |
+|---|---|
+| named no course of this catalogue | 6789 |
+| somebody's collection (ownership probe) | 2156 |
+| a mirror of another channel (ownership probe) | 1123 |
+| under 8 videos | 1273 |
+| over 150 videos — a bin until a person says otherwise | 353 |
+| refused by `NOT_A_COURSE` | 513 |
+
+4731 ownership probes at a unit each, and again about half of what survived every
+free filter was somebody else's material or somebody's bookmarks.
+
+### The ranking was the change worth keeping
+
+The 810 channel questions of 08-22 and 08-23 had already been asked and their
+21 452 answers were still sitting unread in a report, ranked — as the script then
+ranked them — by **how many courses returned each channel**. Read that way the
+list is a chart of Russian YouTube: «ЛЕКЦИИ ДЛЯ СНА» (16 subjects, from
+electrodynamics to finance), «ТОПЛЕС», «МИНАЕВ LIVE», Курпатов. A channel
+everybody watches is returned by every subject.
+
+Re-ranked by **how many of the asking courses share a field of knowledge**, the
+same 22 017 candidates put Harvard's philosophy department, a Novosibirsk
+logician, TLMaths and a Saarland database professor in the first thirty. Nothing
+was filtered and nothing bought — `_hunt.ts` now sorts the channel side that way
+([practices.md](agents/practices.md#what-ranks-a-candidate-is-concentration-not-count)).
+
+342 of them were vetted at a unit each, after 22 were dropped by name alone for
+shapes this file has refused since the second hunt. Seven earned a line:
+
+| Channel | Course-like | What it is |
+|---|---|---|
+| Prof. Dr. Jens Dittrich, Big Data Analytics | 18 | Saarland databases, a term per playlist — «Database Systems 2024/25» |
+| The Math Tutor | 23 | one lecturer's own classes: «My Calculus I Class» 87, Calculus II 92, ODE 102 |
+| Cambridge Law Faculty | 28 | «Cambridge Undergraduate BA Tripos Law Degree», 70 lectures |
+| Sir Win - Accounting Lectures | 29 | «Fundamentals of Accounting [Full Playlist]» 92, income taxation 83 |
+| 32BIT Academy | 3 | C++ by the semester, with computer graphics and AI systems beside it |
+| Александр Горовик | 2 | «Предмет Языки программирования» 38, «Программирование 1» 21 |
+| Сергей Вячеславович Макрушин | 2 | two courses and nothing else, 36 lectures apiece, Python |
+
+### What this hunt refused
+
+**The vetted list is mostly one shape, and it is the exam.** Sorted by how many
+course-like playlists a channel owns, the top of 342 is IFAS (CSIR-NET), Atif
+Ahmad (11th/12th class physics), Canvas Classes (JEE/NEET crash courses),
+Mathsmerizing («JEE Advanced Delight», 335 videos), Mehlmanmedical (USMLE),
+Bharat Panchal, SBTechMath, RG LECTURES, UV Physics («Quantum Mechanics for
+CSIR-NET / IIT-JAM / JEST»). All of them teach, none of them publishes a term.
+
+- **TLMaths** — 291 playlists, 160 course-like, and the biggest are «TEACHING
+  A-Level Maths» at 1138 videos and «TEACHING GCSE Maths» at 853. A curriculum
+  bin rather than a course, and the expensive end of one.
+- **Harvard Philosophy Department**, **Tech Lecture Series**, **Professor May**,
+  **Sergey Sudoplatov** — the concentration ranking's own top, and the probe
+  says **0 playlists** on each. A channel that publishes only loose videos has
+  nothing a course can point at, however right the subject is.
+- **Philosophy Lectures ON DEMAND** (one playlist, «Ethics», 10) and **Cascade
+  Psychology** (one, «Psychology Lectures», 14) — the ordinary answer for a good
+  playlist on a thin channel is `pnpm playlist:add`, at one unit.
+- **Психолог Вероника Степанова**, **Савромат**, **StarTalk**, **Александр
+  Панчин** — popular science and blogging, refused in every hunt since the first.
+- **Mathematics** (11 playlists, «Lectures in Complex Analysis», «Lectures in
+  Linear Algebra») — the material is right and the attribution is not: a provider
+  called *Mathematics* tells a reader nothing, and the site shows the provider
+  under every recording.
 
 ## Doing it again
 

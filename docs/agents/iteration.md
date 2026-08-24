@@ -139,15 +139,28 @@ at. So when the day is mostly untouched, aim it wide rather than deep —
 keys, and it skips whatever an earlier hunt already bought.
 
 **Check what is left to ask before planning a day around it.** The pool is one
-question per course, name, language and phrasing, and as of 2026-08-21 the
-`playlist` side is **empty** — 1542 of 1542, all 236 courses, both languages,
-every phrasing — while the `channel` side stands at 731 asked and **811 left**
-([harvest.md](../harvest.md#the-pool-of-questions-is-finite-and-as-of-2026-08-21-the-playlist-side-is-empty)).
-So a day with quota to burn now has two moves and only two: **ask the channel
-side**, or **add courses first** — each new course arrives carrying six to eight
-questions of its own in each kind, which is where the last 64 playlist questions
-came from. A hunt that finds nothing unasked spends nothing and reports nothing,
-which looks exactly like a hunt that found nothing.
+question per course, name, language, phrasing and kind, and by the morning of
+2026-08-24 **all 3084 of it had been asked** — both languages, both kinds, every
+course, every one of the three phrasings, 308 400 units in all. A hunt in that
+state spends nothing and reports nothing, which looks exactly like a hunt that
+found nothing, and the run says so in its second line: `N questions skipped —
+already bought`.
+
+So a day with quota to burn has one move that scales, and it is not a flag:
+**add a phrasing to `QUALIFIERS`**. One word per language is 472 playlist
+questions — 236 courses × 2 — and 47 200 units, so two of them are a day, and
+2026-08-24 is what that looks like («семинары», «основы», `course`,
+`introduction` → 972 questions, of which 600 were asked for 60 000 units and
+13 664 playlists new to the cache). Adding a *course* also reopens six to eight
+questions of its own in each kind, and `--repeat` is still the weakest of the
+three because search's first page barely moves from one week to the next.
+
+**Choose the phrasing by measurement.** `pnpm tsx scripts/_yield.ts` reads the
+saved search bodies and prints what each phrasing already asked has bought — the
+third one asked still returned 5000 ids the first two had not, which is why a
+fourth was worth buying, and every `--kind=channel` row bought zero bindings,
+which is why the playlist side goes first
+([harvest.md](../harvest.md#the-pool-of-questions-is-finite-and-a-phrasing-is-what-reopens-it)).
 
 And a channel answer is not a playlist answer: it is an id and a title, ranked
 only by how many courses returned it, and every line of it costs a further unit
@@ -434,6 +447,8 @@ that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
 | `_winners.ts` | free | which keyword won each confident binding, and what it dragged in |
 | `_markers.ts [word]` | free | how much of the queue a refusal word would clear, and how much of the catalogue it would cost |
 | `_columns.ts [worst]` | free | what a drawing option on the columns screen costs over all 197 chains — replays every screen headlessly |
+| `_merge.ts <snapshot.db> [--apply]` | free | what this cache and the release each hold alone — and the union of the two, when both have moved |
+| `_yield.ts [ru\|en]` | free | what each *phrasing* of the hunt bought, out of the saved search bodies: marginal ids, bindings, published |
 
 None are wired into `pnpm`: they are read once or twice a year and the useful
 half of the work is the judgement, not the script. Reach for them in price

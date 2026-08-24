@@ -98,6 +98,34 @@ replaced**: `MERGED` in `cache-snapshot.ts` unions by primary key with the newer
 normal state and not a conflict. The shape that qualifies is a single-column key
 plus a `checked_at`, which is what `verdicts` and `ownership` already are.
 
+**And the crawl tables are the same shape, which was found the second time**
+(2026-08-24). The `MERGED` list was read as "judgements are merged, crawl state
+is replaced", and the sentence that justifies it is true of a *fact* — a
+playlist's video count is a fact about YouTube, and the newest copy of it wins.
+It is not true of the row's other half. **A crawl row is a fact and a
+discovery**, and a discovery cannot be replaced by its absence: the release had
+never heard of 265 playlists this cache had bought with 100-unit searches, so
+`DELETE FROM playlists` was not "take the fresher copy", it was "throw them
+away" — and the questions that found them are in `searches`, which *is* merged,
+so nothing would ever ask for them again.
+
+The state that showed it is worth recognising, because both directions of the
+existing pair lose something and neither says so:
+
+| | here | on the release |
+|---|---|---|
+| videos | — | **+93 134** three nights of the runner |
+| matches | — | +3158 |
+| channels | — | +370 |
+| playlists | **+265** three days of hunting | — |
+| searches | +810 | — (merged, so safe either way) |
+
+`make pull` would have dropped the left column, `make publish` the right — CI
+takes the release over its own Actions cache by design, so the nights would have
+gone too. **Before either, ask whether both sides hold rows the other lacks**;
+it is one query per table, and `pnpm tsx scripts/_merge.ts <snapshot.db>` prints
+exactly that table and writes nothing until `--apply`.
+
 ---
 
 ### A day was moved by adding 86 400 000 milliseconds

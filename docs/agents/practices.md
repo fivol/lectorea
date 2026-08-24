@@ -64,6 +64,40 @@ default. Writing is a separate explicit flag. That is what makes it possible to
 run an expensive step, read the result unhurriedly and decide — rather than
 discover the decision already taken.
 
+## A pool that has emptied is a dimension, not a wall
+
+The hunt's questions ran out on 2026-08-24: 3084 of 3084 asked, 308 400 units,
+and the next run reported nothing because there was nothing left to ask. That
+reads as the end of a seam and is not one. The pool is a product — course × name
+× language × **phrasing** × kind — so it has as many dimensions as the product
+has factors, and the question is which of them is cheapest to extend. Adding a
+course brings 6–8 questions; adding one word to `QUALIFIERS` brings 472, and the
+word costs nothing to add.
+
+**Generally:** when something countable is exhausted, write out what defines the
+count before concluding it is finished. A limit that is a product of four things
+is four different problems, and usually only one of them is expensive.
+
+## What ranks a candidate is concentration, not count
+
+The channel side of a hunt returns thousands of channels ranked by how many
+courses asked for them, and that ranking puts «ЛЕКЦИИ ДЛЯ СНА» — sixteen
+subjects, from electrodynamics to finance — above every university on the list.
+It is not a bug in the count: a channel everybody watches really is returned by
+every subject, which is precisely what makes the count a popularity signal.
+
+Ranking the same 22 017 candidates by **how many of the asking courses share a
+field of knowledge** put Harvard's philosophy department, a Novosibirsk
+logician, TLMaths and a big-data professor in the first thirty. Nothing was
+filtered and nothing was bought — it is the same list, sorted by a signal that
+means what the reader needs it to mean.
+
+**Generally:** a candidate returned by many *unrelated* askers is popular; one
+returned by several *related* askers is specialised, and specialisation is what
+a catalogue of courses is shopping for. Where a ranking exists, ask what the
+ranked-by quantity is a proxy for, and whether the thing you want has a
+narrower one.
+
 ## A rule change is probed against the whole catalogue
 
 `_probe.ts` shows what an edit to the rules would do to all ~38 000 live

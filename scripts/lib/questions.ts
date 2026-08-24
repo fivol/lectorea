@@ -26,10 +26,33 @@ import type { Course } from '../../shared/schema.js';
  * More than one, because a course already asked about is not asked again by
  * repeating the question: search ranks by relevance and returns the same first
  * page for the same words, while «поэтика курс» and «поэтика лекции» do not.
+ *
+ * **This list is the only lever left once the pool of questions is empty.** The
+ * pool is one question per course, name, language, phrasing and kind, and by
+ * 2026-08-24 every one of the 3084 slots the first three phrasings define had
+ * been asked and paid for. A phrasing added here reopens 472 playlist questions
+ * — 236 courses in two languages — which is 47 200 units, and that is the
+ * arithmetic a day with untouched keys is planned against
+ * ([harvest.md](../../docs/harvest.md#the-pool-of-questions-is-finite-and-a-phrasing-is-what-reopens-it)).
+ *
+ * The last two of each row were added that day, and chosen by measurement
+ * rather than by ear: `_yield.ts` reads the saved search bodies and says what
+ * each phrasing bought, and a count over the titles of the 9333 published
+ * playlists says which words a course names itself with. «семинары» is in 136
+ * of them and «основы» in 39; `course` is in 550 and `introduction` in 490, and
+ * neither English word had ever been asked on its own — the catalogue had been
+ * asking for `full course` and `lecture series` and never for the plain word
+ * that half its own material is titled with. Words that score badly on the same
+ * count were left out for it: «полный курс» is in six published titles,
+ * `university course` in two.
+ *
+ * The order is the order they are asked in, so anything added goes at the end:
+ * the run is variant-major, and the first phrasing of every course is worth
+ * more than the fourth phrasing of a third of them.
  */
 export const QUALIFIERS: Record<string, string[]> = {
-  ru: ['лекции', 'курс', 'видеолекции'],
-  en: ['lectures', 'full course', 'lecture series'],
+  ru: ['лекции', 'курс', 'видеолекции', 'семинары', 'основы'],
+  en: ['lectures', 'full course', 'lecture series', 'course', 'introduction'],
 };
 
 /**

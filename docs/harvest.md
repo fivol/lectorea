@@ -299,38 +299,81 @@ read 2796 new playlist links out of them at no cost — then 4278 more once the
 crawl had walked their videos. The expensive seam pays for the cheapest one, so
 run `data:mine` again before calling a hunt finished.
 
-### The pool of questions is finite, and as of 2026-08-21 the playlist side is empty
+### The pool of questions is finite, and a phrasing is what reopens it
 
 A question asked is a question never asked again, so the seam has a **bottom**,
 and it is worth knowing where it is before planning a day around it. The pool is
-one question per (course × name × language × phrasing × kind), which for 228
-courses is **1494 per kind**:
+one question per (course × name × language × phrasing × kind), which for 236
+courses and three phrasings is **1542 per kind**. On the morning of 2026-08-24,
+with ten untouched keys and 95 000 units to spend, it stood like this:
 
-| | asked | left |
-|---|---|---|
-| `--kind=playlist` | 1542 | **0** |
-| `--kind=channel` | 731 | **811** |
+| | asked | left | and after two phrasings were added |
+|---|---|---|---|
+| `--kind=playlist` | 1542 | **0** | 972 |
+| `--kind=channel` | 1541 | **1** | 973 |
 
-The 2026-08-19 hunt is what closed the first row: 635 queries in one run,
-63 500 units, every phrasing of every course in both languages. So a *later* day
-with quota to burn has three moves and only three — **ask the channel side**,
-which is a different question about the same subjects and has never been asked;
-**add courses**, since each one arrives with six to eight questions of its own in
-each kind; or `--repeat`, which is the weakest of the three because search's
-first page barely moves from one week to the next.
+The 2026-08-19 hunt closed the first row — 635 queries in one run, 63 500 units,
+every phrasing of every course in both languages — and the nights of 08-22 and
+08-23 closed the second. By the morning of 2026-08-24 **the whole pool as it was
+then defined had been asked**: 3084 questions, 308 400 units, nothing left to
+buy. A hunt in that state spends nothing and reports nothing, which looks
+exactly like a hunt that found nothing, so the check comes before the plan:
 
-On 2026-08-21 the last 64 playlist questions were asked — the eight courses
-added that morning had arrived carrying six to eight apiece — and the row closed
-at **1542 of 1542, all 236 courses, both languages, every phrasing**. There is
-no playlist question left to ask; the seam reopens only when a course is added.
-The same day put 731 questions into the channel row for 73 100 units. What that
-bought, and the shape it arrived in, is
-[below](#a-channel-search-answers-with-channels-and-nothing-else).
+```bash
+pnpm tsx scripts/_hunt.ts /tmp/probe.json --min=999 --variant=all   # prints "N questions skipped"
+```
 
-What the 2026-08-19 run bought: **12 821 playlists new to the cache** against 12 654 it
-already held — search returns what the crawl owns about half the time once the
-crawl is this large, and the free filter that drops them is what makes the rest
-affordable.
+**The lever that reopens it is a phrasing, and it is the only one that scales.**
+Adding a course brings six to eight questions with it; adding one word to
+[`QUALIFIERS`](../scripts/lib/questions.ts) brings **472** — 236 courses in two
+languages — which is 47 200 units, and two of them are a day. That is the
+arithmetic 2026-08-24 was planned around: `семинары`, `основы`, `course` and
+`introduction` went into the file and the playlist row went from 0 to 972.
+
+**Choose the word by measurement, not by ear.** Two free counts decide it:
+
+```bash
+pnpm tsx scripts/_yield.ts        # what every phrasing already asked has bought
+```
+
+`_yield.ts` reads the saved search bodies — the ids are all still on disk — and
+says what each phrasing returned that no earlier phrasing had, and how much of
+it became a binding:
+
+| phrasing | queries | ids no earlier phrasing returned | bound | published | bound per 100u |
+|---|---|---|---|---|---|
+| en `lectures` | 315 | 10 362 | 6199 | 2900 | **19.7** |
+| en `lecture series` | 243 | 5680 | 2825 | 1106 | 11.6 |
+| en `full course` | 264 | 5393 | 2660 | 1029 | 10.1 |
+| ru `лекции` | 317 | 9487 | 3384 | 2018 | 10.7 |
+| ru `курс` | 266 | 6274 | 1503 | 686 | 5.7 |
+| ru `видеолекции` | 245 | 5376 | 988 | 533 | 4.0 |
+| *every* `--kind=channel` row | 1541 | — | **0** | **0** | **0** |
+
+Two things follow, and both are worth more than the ranking itself. The
+phrasings **do not saturate** — the third one asked still returned five thousand
+ids the first two never had, at four to twelve bindings per hundred units — so a
+fourth is worth buying. And the channel side buys no binding at all *by
+construction*: it answers with channels, which have to be vetted and then added
+by hand, so a day that wants material rather than candidates spends on
+`--kind=playlist` and leaves the other row alone.
+
+The second count says which word to add: how the catalogue's own material is
+titled. Over the 9333 published playlists, «семинары» appears in 136 titles and
+«основы» in 39; `course` in 550 and `introduction` in 490 — and neither English
+word had ever been asked on its own, the hunt having always attached `full` or
+`lecture` to it. The words that scored badly were left out for the same reason:
+«полный курс» is in six published titles, `university course` in two,
+`online course` in four.
+
+What that bought, against the run that emptied the pool in the first place:
+2026-08-19 asked 635 old-phrasing questions and returned **12 821 playlists new
+to the cache against 12 654 the crawl already had**; 2026-08-24 asked 600 in the
+two new phrasings and returned **13 664 new against 11 231 known**. Search
+returns what the crawl owns about half the time once the crawl is this large,
+and the free filter that drops them is what makes the rest affordable — but a
+phrasing nobody has asked before is a different question rather than the same
+one again, and the ratio says so.
 
 ### A channel search answers with channels, and nothing else
 

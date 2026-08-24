@@ -1355,3 +1355,31 @@
   title: Lalit Vashishtha
   type: individual
   country: IN
+- id: saarland
+  title: Saarland University
+  type: university
+  country: DE
+  site: https://www.uni-saarland.de/
+
+- id: themathtutor
+  title: The Math Tutor
+  type: individual
+
+- id: 32bitacademy
+  title: 32BIT Academy
+  type: individual
+  country: RU
+
+- id: makrushin
+  title: Сергей Макрушин
+  type: individual
+  country: RU
+
+- id: gorovik
+  title: Александр Горовик
+  type: individual
+
+- id: sirwin
+  title: Sir Win
+  type: individual
+  country: PH

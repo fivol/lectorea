@@ -91,6 +91,22 @@ hunting, never after. A laptop that hunts first and pulls second throws the
 searches away; one that publishes over the release without pulling throws the
 night away.
 
+**And when both sides have moved, neither command is the answer.** Three days of
+hunting here against three nights of crawling there is not "one of us is stale":
+`pull` deletes the playlists a search bought and `publish` deletes the videos the
+nights walked, and both do it silently. The third move is a union — it reads the
+release's snapshot and inserts what this cache lacks, deleting nothing:
+
+```bash
+gh release download data-cache --pattern cache.db.gz -D /tmp --clobber && gunzip -f /tmp/cache.db.gz
+pnpm tsx scripts/_merge.ts /tmp/cache.db            # the table of what each side holds alone
+pnpm tsx scripts/_merge.ts /tmp/cache.db --apply    # ~90 s, then publish so the release has it too
+```
+
+It stamps this cache with the generation it merged, so the next `make pull`
+compares against the right one. What it cost to learn is in
+[pitfalls.md](pitfalls.md#a-restore-was-read-as-take-what-is-newer-and-it-is-replace-what-is-there).
+
 ## What to run in the background
 
 The crawl comfortably outlives the `Bash` timeout of 600 s; `data:refresh` on a

@@ -141,7 +141,9 @@ the snapshot deliberately does not carry, by swapping the tables that travelled
 instead of replacing the file.
 
 `make cache-push` is `publish`'s middle step on its own: the cache to the
-release, no git guard and no deploy.
+release, no git guard and no deploy. When both this machine and the release have
+crawled since they last agreed, neither direction is right and the union is —
+[`scripts/_merge.ts`](../pipeline.md#both-directions-from-a-laptop).
 
 ### `make stats`
 

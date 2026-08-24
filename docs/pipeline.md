@@ -721,6 +721,22 @@ want to spend its own evening on the crawl gets the night the nightly job did.
 It stops rather than overwrite local crawling the release has not seen, and it
 keeps this machine's raw bodies either way.
 
+**When both sides have moved, neither command is the answer.** A laptop that
+hunted for three days while the nightly crawled for three nights holds rows the
+release has never seen, and the release holds rows it has never seen: on
+2026-08-24 that was 265 playlists and 810 questions here against 93 134 videos,
+3158 matches and 370 channels there. `pull` deletes the first column, `publish`
+the second, and both do it without a word — a restore replaces a table whole,
+which is right for a stale copy of a row and wrong for a row that exists in one
+place. The union is a third move, and it belongs to whoever is holding both:
+
+```bash
+gh release download data-cache --pattern cache.db.gz -D /tmp --clobber && gunzip -f /tmp/cache.db.gz
+pnpm tsx scripts/_merge.ts /tmp/cache.db            # what each side holds alone
+pnpm tsx scripts/_merge.ts /tmp/cache.db --apply    # insert what is missing, delete nothing
+make publish                                        # so the release has the union too
+```
+
 **What counts as "material" is the load-bearing part.** `openDb` writes the whole
 schema before the first request, and `seedManualMatches` fills `playlists` from
 `overrides.yaml` before that too, so a run that dies on a missing key leaves a

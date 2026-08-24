@@ -127,6 +127,29 @@ type Target = {
   names: Array<{ lang: string; name: string }>;
 };
 
+/** The built catalogue — the brief, and the domains the channel side ranks by. */
+function builtCourses(): Array<{
+  id: string;
+  playlistCount: number;
+  stage?: string;
+  domains?: string[];
+}> {
+  const file = path.join(paths.outData, 'courses.json');
+  if (!fs.existsSync(file)) {
+    throw new Error(`${file} is missing — run \`make data\` first: the brief is written by it.`);
+  }
+  return (
+    JSON.parse(fs.readFileSync(file, 'utf8')) as {
+      courses: Array<{ id: string; playlistCount: number; stage?: string; domains?: string[] }>;
+    }
+  ).courses;
+}
+
+/** course → its fields of knowledge, for ranking the channel side. */
+function courseDomains(): Map<string, string[]> {
+  return new Map(builtCourses().map((course) => [course.id, course.domains ?? ['?']]));
+}
+
 /**
  * Which courses to ask about, and under what names.
  *
@@ -138,15 +161,7 @@ type Target = {
  * the fields it is thinnest in are the ones English lists never cover.
  */
 function brief(args: Args): Target[] {
-  const file = path.join(paths.outData, 'courses.json');
-  if (!fs.existsSync(file)) {
-    throw new Error(`${file} is missing — run \`make data\` first: the brief is written by it.`);
-  }
-  const built = (
-    JSON.parse(fs.readFileSync(file, 'utf8')) as {
-      courses: Array<{ id: string; playlistCount: number; stage?: string }>;
-    }
-  ).courses;
+  const built = builtCourses();
   const counts = new Map(built.map((course) => [course.id, course.playlistCount]));
   const stages = new Map(built.map((course) => [course.id, course.stage]));
 
@@ -610,12 +625,41 @@ function alreadyListed(db: Db, sources: Sources): Set<string> {
   return listed;
 }
 
+/**
+ * How concentrated in one field of knowledge the courses that returned a
+ * channel are — the count in its commonest domain, and how many domains it
+ * spans in all.
+ *
+ * This is what separates a faculty from a phenomenon. Ranked by the *number* of
+ * courses that returned it, the 2026-08-23 channel hunt put «ЛЕКЦИИ ДЛЯ СНА»
+ * (16 courses: philosophy, finance, electrodynamics, biology, programming) and
+ * «ТОПЛЕС» above every university on the list, because a channel everybody
+ * watches is returned by every subject. Concentration inverts that: Harvard's
+ * philosophy department, Sudoplatov's logic, TLMaths and a big-data professor
+ * came to the top of the same 22 017 candidates, and the first thirty of them
+ * were readable instead of being a chart of Russian YouTube.
+ */
+function domainSpread(
+  courses: Set<string> | string[],
+  domains: Map<string, string[]>
+): { inDomain: number; domain: string; spread: number } {
+  const counted = new Map<string, number>();
+  for (const courseId of courses) {
+    for (const domain of domains.get(courseId) ?? ['?']) {
+      counted.set(domain, (counted.get(domain) ?? 0) + 1);
+    }
+  }
+  const top = [...counted.entries()].sort((a, b) => b[1] - a[1])[0];
+  return { inDomain: top?.[1] ?? 0, domain: top?.[0] ?? '?', spread: counted.size };
+}
+
 function channelCandidates(
   db: Db,
   candidates: Candidate[],
   mirrors: Candidate[],
   channelHits: Found[],
-  sources: Sources
+  sources: Sources,
+  domains: Map<string, string[]>
 ): Array<{
   id: string;
   title: string;
@@ -623,6 +667,9 @@ function channelCandidates(
   courses: string[];
   titles: string[];
   viaMirror: number;
+  inDomain: number;
+  domain: string;
+  spread: number;
 }> {
   const listed = alreadyListed(db, sources);
   const byChannel = new Map<
@@ -684,10 +731,19 @@ function channelCandidates(
 
   return [...byChannel.values()]
     .filter((entry) => !listed.has(entry.id.toLowerCase()))
-    .map((entry) => ({ ...entry, courses: [...entry.courses] }))
+    .map((entry) => ({
+      ...entry,
+      courses: [...entry.courses],
+      ...domainSpread(entry.courses, domains),
+    }))
     .sort(
       (a, b) =>
         b.playlists + b.viaMirror - (a.playlists + a.viaMirror) ||
+        // Concentration before count, and the narrower spread breaks the tie:
+        // five subjects of one faculty is a channel to vet, five subjects of
+        // five faculties is a channel everybody happens to watch.
+        b.inDomain - a.inDomain ||
+        a.spread - b.spread ||
         b.courses.length - a.courses.length
     );
 }
@@ -831,12 +887,12 @@ async function main(): Promise<void> {
   // Counted off the accepted candidates only: a channel is a candidate because
   // it owns courses, and the playlists that named no course of this catalogue
   // are exactly the ones that say nothing about whether it does.
-  const channels = channelCandidates(db, accepted, mirrors, found, sources);
+  const channels = channelCandidates(db, accepted, mirrors, found, sources, courseDomains());
   console.log(`\n▸ channels not in channels.yaml — ${channels.length}`);
   for (const channel of channels.slice(0, 40)) {
     console.log(
       `   ${String(channel.playlists).padStart(3)} own · ${String(channel.viaMirror).padStart(3)} mirrored · ` +
-        `${channel.courses.length} subjects · ${channel.title}  [${channel.id}]`
+        `${channel.inDomain}/${channel.courses.length} ${channel.domain} · ${channel.title}  [${channel.id}]`
     );
   }
 
