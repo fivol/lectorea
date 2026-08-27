@@ -38,3 +38,6 @@ CLAUDE.local.md
 keys/
 # Product Hunt launch pictures. Rebuildable with `pnpm ph:assets`.
 .launch/
+
+# Local launch worksheet — the data typed into a submission form, not documentation.
+docs/product-hunt.md

@@ -41,8 +41,6 @@ import { ensureDir, paths } from './lib/config.js';
  * pnpm ph:assets                      # the live site
  * PH_BASE=http://localhost:5173 pnpm ph:assets   # a dev server
  * ```
- *
- * Every other field of the submission form: [docs/product-hunt.md](../docs/product-hunt.md).
  */
 
 const WIDTH = 1270;
