@@ -298,6 +298,16 @@ sync has actually happened and a fresh load would otherwise say "no account
 here" and load nothing. That is the `catalog.sync.returning` key, and it is why
 `getRedirectResult` is called at all.
 
+**That key comes off as soon as the call has been made, and `connecting` has a
+fifteen-second deadline.** Firebase defers the first `onAuthStateChanged` until
+it has resolved a pending redirect, so a `getRedirectResult` that never settles
+takes the whole auth state down with it — and that is not hypothetical: it is
+Safari with third-party storage walled off, and the in-app browsers that blocked
+the popup in the first place. Which is to say, the very population the redirect
+branch exists to serve. Without the deadline the profile shows a spinner that
+never stops; without the eager clear, every future visit from that browser loads
+the SDK for somebody who is not signed in and never will be.
+
 ## What is deliberately not here
 
 - **No anonymous accounts.** An account nobody chose is an identity attached to

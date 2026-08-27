@@ -95,6 +95,23 @@ const COLLECTION = 'profiles';
 const PUSH_DEBOUNCE = 4_000;
 const PUSH_FLOOR = 60_000;
 
+/**
+ * How long `connecting` is allowed to mean anything.
+ *
+ * Firebase defers the first auth state until it has resolved a pending
+ * redirect, so a `getRedirectResult` that never settles takes
+ * `onAuthStateChanged` down with it and the interface waits for a callback that
+ * is not coming. That is not hypothetical and not only a sandbox: it is Safari
+ * with third-party storage walled off, and the in-app browsers that blocked the
+ * popup in the first place — which is to say, exactly the population the
+ * redirect exists to serve.
+ *
+ * A promise with no timeout is a spinner with no end, so the deadline is here
+ * rather than a fix to the call: nothing this side can make the redirect
+ * resolve, and everything this side can stop pretending it will.
+ */
+const CONNECT_DEADLINE = 15_000;
+
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
@@ -301,12 +318,22 @@ export function attach(): void {
   if (attached) return;
   attached = true;
 
-  // The other half of a redirect sign-in. It resolves to `null` on an ordinary
-  // load, which is why the flag is cleared either way rather than on success.
-  if (isReturning()) {
-    void getRedirectResult(auth)
-      .catch((error: unknown) => fault(classify(error, 'signin')))
-      .finally(() => markReturning(false));
+  const returning = isReturning();
+  if (returning) {
+    /*
+     * The other half of a redirect sign-in, and the flag comes off **now**
+     * rather than when the promise settles.
+     *
+     * It used to be cleared in a `.finally`, which reads as the careful choice
+     * and is the opposite: a `getRedirectResult` that never resolves then pins
+     * the flag forever, and every future visit — for the rest of that browser's
+     * life — loads 168 KB of authentication for somebody who is not signed in
+     * and never will be. The flag's whole job is "load the engine on *this*
+     * load", and it has done that by the time this line runs. A sign-in that
+     * does complete writes a mark, which is what boots the engine afterwards.
+     */
+    markReturning(false);
+    void getRedirectResult(auth).catch((error: unknown) => fault(classify(error, 'signin')));
   }
 
   onAuthStateChanged(auth, (user) => {
@@ -328,7 +355,24 @@ export function attach(): void {
     const email = rememberedEmail();
     if (email) void finishLink(email);
     else useSync.setState({ status: 'connecting', pending: { kind: 'confirm' } });
+    return;
   }
+
+  /*
+   * And if nothing has answered by the deadline, say so instead of spinning.
+   *
+   * Guarded on there still being no account, so a connection that is merely
+   * slow — auth answered, Firestore has not — is left alone: `follow` sets the
+   * account before anything can take this long, and it overwrites the status
+   * again if the answer turns up late. A reader who came back from a redirect
+   * is told the sign-in failed, because that is what a redirect that never
+   * returned is; anybody else is told the network did.
+   */
+  setTimeout(() => {
+    const state = useSync.getState();
+    if (state.account || state.status !== 'connecting' || state.pending) return;
+    fault(returning ? 'signin' : 'network');
+  }, CONNECT_DEADLINE);
 }
 
 function follow(user: User): void {

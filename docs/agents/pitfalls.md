@@ -648,6 +648,36 @@ when the whole config is complete: this pair is filled in first, so it is wrong
 first, and a check that waits for 4/4 is a check that stays quiet through the
 exact window the mistake lives in.
 
+### A flag was cleared in a `.finally`, and the promise never settled
+
+**Assumed:** clearing state in `.finally` is the careful version of clearing it
+on success — it runs whether the call worked or not.
+**It was:** it runs whether the call *finishes* or not, and `getRedirectResult`
+does not always finish. Firebase defers the first `onAuthStateChanged` until it
+has resolved a pending redirect, so one hung promise took the whole auth state
+with it: the profile sat on «Синхронизация…» forever, and the flag that says
+"load the engine on this load" was pinned on — meaning **every future visit, for
+the life of that browser, downloaded 168 KB of authentication for somebody who
+was not signed in and never would be.**
+
+Reproduced by accident and worth the accident: the popup was blocked in the
+preview browser, the redirect fallback fired for real, and coming back showed a
+spinner that six polls at 1.5 s apart never moved. It is not a sandbox
+curiosity either — a redirect that cannot resolve is Safari with third-party
+storage walled off and the in-app browsers that blocked the popup in the first
+place, which is precisely the population the redirect branch exists to serve.
+
+Two fixes, and the first is the general one. **Clear a flag when it has done its
+job, not when some promise agrees.** The flag meant "load the engine on this
+load"; by the time the call had been made it had done that, so it comes off
+there. A sign-in that does complete writes its own mark, which is what boots the
+engine on later visits.
+
+The second: **every `connecting` needs a deadline.** Nothing on this side can
+make a hung promise resolve, and everything on this side can stop pretending it
+will. Fifteen seconds, guarded on there still being no account, so a merely slow
+connection is left alone and a late answer overwrites the verdict.
+
 ### A production build was checked, and it was another session's
 
 **Assumed:** `pnpm build && vite preview` shows the bundle just built.
