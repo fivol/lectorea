@@ -182,6 +182,9 @@ What each one does and why in that order:
 - [setup.md](setup.md) — API keys, quota, and the environment variables
 - [hosting.md](hosting.md) — the domain and its DNS, what the build knows about
   where it lives, and the static pages the crawlers are given
+- [product-hunt.md](product-hunt.md) — the Product Hunt launch worksheet: every
+  field of the submission form answered in advance, the assets and their sizes,
+  the timeline, and what a launch of this particular site runs into
 - [scripts/](scripts/README.md) — every command, in four pages:
   [catalogue](scripts/catalogue.md), [map](scripts/map.md),
   [crawl](scripts/crawl.md), [matching](scripts/matching.md)

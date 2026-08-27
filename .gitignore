@@ -36,3 +36,5 @@ dev-dist/
 .idea
 CLAUDE.local.md
 keys/
+# Product Hunt launch pictures. Rebuildable with `pnpm ph:assets`.
+.launch/
