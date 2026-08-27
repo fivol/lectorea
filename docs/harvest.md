@@ -299,6 +299,24 @@ read 2796 new playlist links out of them at no cost — then 4278 more once the
 crawl had walked their videos. The expensive seam pays for the cheapest one, so
 run `data:mine` again before calling a hunt finished.
 
+### A course thin in one language is invisible in the total
+
+`playlistCount` is what the brief ranks by, and it cannot see the shape that
+matters to a reader who speaks one language: a course with forty Russian
+recordings and none in English is full by that number and empty to half the
+audience. The build now writes `playlistsByLang` beside it, and
+`_hunt.ts --lang=en` makes the brief mean **thin in English** — choosing the
+courses by their English count and asking only English questions, so a day is
+not half spent on the language already covered.
+
+Measured on 2026-08-27, over 12 566 published playlists: **8 809 English (70%)
+against 3 702 Russian**, with two courses holding no English recording at all
+(`poetics`, `classical-philology`) and nine holding fewer than four. So the
+English half is already the larger one and the work is depth on named courses
+rather than a general tilt — which is exactly what `--lang=en --min=4` asks for.
+
+`pnpm tsx scripts/_day.ts` prints the coverage and the holes for nothing.
+
 ### The pool of questions is finite, and a phrasing is what reopens it
 
 A question asked is a question never asked again, so the seam has a **bottom**,
