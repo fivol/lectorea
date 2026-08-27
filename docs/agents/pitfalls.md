@@ -672,6 +672,15 @@ something, run the generator; if the generator cannot be run, the check has to
 wait, because a patched artefact answers a question about itself rather than
 about the source.
 
+And the same rule has a second edge, met immediately afterwards: **do not edit
+the source while the generator is reading it.** `data:build` takes three minutes
+over a 32 GB cache, and it loads the content language's dictionary at startup
+and every other language inside the loop — so a key added in between landed in
+`en.json` and not in `ru.json`, and the log said so in a way easy to read past:
+`ru — 1238 keys, en — 1239`. A generator that runs for minutes is a window, and
+a window in a shared worktree is a race. Start it, then keep off its inputs
+until it prints its total.
+
 ### An error's catch-all was the answer that says "do not worry"
 
 **Assumed:** an unrecognised Firestore error during a read or a write is a
