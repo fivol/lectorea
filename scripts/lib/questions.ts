@@ -65,10 +65,55 @@ import type { Course } from '../../shared/schema.js';
  * phrasing, and everything measured says a vague phrasing returns the topic bin
  * rather than the semester. «курс лекций» is in 47 published titles and `class`
  * in 87, and neither is a word order the first five ever asked in.
+ *
+ * The seventh of the English row is 2026-08-28, and it was chosen on a count the
+ * earlier rounds did not have: **how much material a phrasing could name that no
+ * existing phrasing already names.** A word is redundant when the titles carrying
+ * it also carry one of the six — the query is then a re-ask of one already bought.
+ * `complete course` reads well and is in 49 published titles, and **nought** of
+ * them are free of the six, because every one of them contains «course»; it was
+ * rejected on that alone. `semester` is in 90, and 70 of those carry none of the
+ * six — the largest such count of any word that names a lecture hall rather than
+ * a mood. The two larger counts, `learn` at 217 and `program` at 116, are also
+ * the two vaguest words on the list, and the measured shape of this table is that
+ * yield falls with vagueness, so they were left where `course` and «основы» are.
+ *
+ * **A provider's name is not a phrasing.** `nptel`, `mit`, `iit` and `yale` were
+ * considered as the specific, lecture-hall words they plainly are, and refused
+ * for a reason that has nothing to do with wording: those channels are already in
+ * data/channels.yaml and are crawled whole, so the answers would be ids this
+ * cache already holds. A source word is only worth 100 units when the source is
+ * one the crawl cannot reach.
+ *
+ * The eighth is the same day, and it carries a warning about the count itself:
+ * **the title count must be word-bounded, or it measures the wrong word.** Read
+ * as a substring, `learn` is in 217 published titles and `program` in 116, which
+ * would have made them the two largest candidates on the list — and nearly every
+ * hit is «machine **learn**ing», «deep **learn**ing» and «C++ **program**ming».
+ * Bounded, they are 12 and 5. Two phrasings were nearly bought on an artefact of
+ * `String.includes`.
+ *
+ * That left `playlist` at 79 and `university` at 40, both real. `university` was
+ * taken on the seam rather than the count: its titles are Princeton, Stanford,
+ * UNSW, Waterloo and NUS, and the refusal rate of a reader round tracks the seam
+ * it came from — a faculty channel comes back at 15%, a wide search at 30–46%
+ * ([harvest skill](../../.claude/skills/harvest/SKILL.md)). The metric the launch
+ * is judged on is *published* English playlists, not queued ones, so a phrasing
+ * that names lecture halls is worth more than a larger one that names formats.
+ * `playlist` is the runner-up and the first thing to try when this pool empties.
  */
 export const QUALIFIERS: Record<string, string[]> = {
   ru: ['лекции', 'курс', 'видеолекции', 'семинары', 'основы', 'курс лекций'],
-  en: ['lectures', 'full course', 'lecture series', 'course', 'introduction', 'class'],
+  en: [
+    'lectures',
+    'full course',
+    'lecture series',
+    'course',
+    'introduction',
+    'class',
+    'semester',
+    'university',
+  ],
 };
 
 /**

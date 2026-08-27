@@ -301,6 +301,29 @@ another window moved it by 50 bindings while this was being measured.
 [harvest.md](../harvest.md#the-bar). Numbers shortlist candidates; the decision
 belongs to whoever read the titles.
 
+### `_noisy.ts` was asked about a keyword the matcher had never run
+
+**Assumed:** `_noisy.ts` recomputes the rule pass, so it can judge a keyword
+added five minutes ago — and it said «database» claimed 52 clauses and won none,
+and «11785» claimed 28 and won none. Both looked like noise to revert.
+
+**It was:** the script computes *claims* live from `data/keywords/`, and reads
+*wins* out of the stored `matches` table. A keyword `make match` has never run
+therefore scores every claim and no win, whatever it is worth — its own header
+warns that "a keyword that is genuinely a course's whole name will look noisy
+here if the course simply has no material yet", and this is the same sentence
+from the other end. «11785» was in fact worth 14 bindings and was nearly thrown
+away on the reading.
+
+**How not to repeat it:** `_noisy.ts` judges the keywords that were in the file
+the last time the matcher ran. **A keyword you just wrote is judged by
+`_probe.ts`**, which replays the pass in memory, or by `_noisy.ts` *after* a
+`make match FORCE=1`. What settled «database» in the end was neither: the
+arithmetic in `confidenceFor` — eight characters of a 28-character segment score
+0.6 against a 0.75 bar, so the phrase could not have bound «Database Modeling
+and Design» however many times it claimed it. **A coverage sum is cheaper than
+either tool and does not go stale.**
+
 ---
 
 ## Reports and repeat runs
@@ -375,6 +398,29 @@ recording what makes the output usable — on one small run first.** A 3100-unit
 31-question probe would have shown 50 multi-course channels at the top and cost
 one fortieth of what the wide run did. Anything paid for per query deserves a
 single query's worth of rehearsal before it is given a day's budget.
+
+### A review batch was exported before the crawl, and the reader lost two of its three signals
+
+**Assumed:** exporting the reader's batches before starting a crawl is free
+parallelism — the readers only touch files, the crawl only touches the database,
+so both halves of the day can run at once.
+
+**It was:** true about the locking and wrong about the data. A playlist that
+search found and nothing has walked yet has no video count and no channel: it
+exports as `videos: 0` and `channel: "searched"`. The brief tells the reader to
+judge "on the title, the video count and the channel", and four of the eight
+agents on 2026-08-27 volunteered, unprompted, that every row had arrived with two
+of the three blank and their verdicts rested on the title alone. The batch that
+was mostly walked material refused 15%; the batches that were mostly unwalked
+search hits refused 43% and 50%, and part of that gap is missing evidence rather
+than worse material — the 8-video floor cannot be applied to a row that says 0.
+
+**How not to repeat it:** **crawl first, export second.** The order that looks
+slower is the one that gives the reader the count that decides a third of the
+brief's rules. Where the day genuinely cannot afford the wait, say so in the
+report and treat that round's refusal rate as unusable for comparing seams —
+`_yield.ts` reads it again out of the saved bodies the next day, by which time
+the walk has happened and the counts are real.
 
 ## Interface and styling
 

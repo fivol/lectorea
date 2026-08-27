@@ -124,6 +124,20 @@
   providerId: stanford
   lang: en
 
+# Both were found by `_holes.ts` rather than by hand: the catalogue had already
+# bound 10 playlists of the first and 7 of the second out of search answers,
+# without ever crawling either. A channel the matcher keeps choosing has passed
+# the bar by demonstration.
+- id: UC-EnprmCZ3OXyAoG7vjVNCA
+  title: Stanford
+  providerId: stanford
+  lang: en
+
+- id: UCngehmCV-65FikHYUV1_qXA
+  title: UCI Open
+  providerId: uci
+  lang: en
+
 - id: UClMJeVIVyGp-3_kWtspkS0Q
   title: EPFL
   providerId: epfl

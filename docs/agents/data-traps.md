@@ -307,6 +307,37 @@ away. Two consequences:
   separates them, and the separation is the whole diagnosis: one is a phrasing
   in `lib/questions.ts`, the other a keyword.
 
+## Counting how a catalogue words itself: two ways to count it wrong
+
+A new `QUALIFIERS` phrasing is 24 300 units in English, and the count that picks
+it — how many of the catalogue's own confirmed titles carry the word — is a
+one-line query that lies in two different directions.
+
+**A substring is not a word.** Counted with `includes`, `learn` is in 217
+published English titles and `program` in 116, which made them the two largest
+candidates on the 2026-08-27 list by a wide margin. Bounded with
+`(?<![a-z])word(?![a-z])` they are 12 and 5: nearly every hit was «machine
+**learn**ing», «deep **learn**ing» and «C++ **program**ming». Two phrasings were
+within one decision of being bought on an artefact of string search. Any count
+over titles in this repository wants word boundaries, and the check costs
+nothing — run both and look at the ratio.
+
+**A word already inside another phrasing buys nothing.** `complete course` is in
+49 published titles and reads like the specific, lecture-hall wording the yield
+table rewards. Every one of those 49 also contains «course», which has been asked
+of every course in the catalogue since 2026-08-24 — the query is a re-ask, not a
+new question. So the number to rank by is not the count but the count *of titles
+carrying none of the phrasings already asked*: `semester` is in 90 titles and 70
+of them are free of the other six, and that is what made it the seventh entry.
+
+**And a provider's name is not a phrasing at all.** `nptel`, `mit`, `iit` and
+`yale` are as specific as a word can be, and all four are worthless as questions
+for a reason that has nothing to do with wording: those channels are already in
+`data/channels.yaml` and are crawled whole, so search would answer with ids the
+cache already holds. A source word is worth 100 units only when the source is one
+the crawl cannot reach — which, for the sources this catalogue already knows, is
+never.
+
 ## A playlist added by hand waits behind everything the crawl mined
 
 `seedManualMatches` makes a hand-bound playlist *due* immediately and its own

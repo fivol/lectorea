@@ -825,7 +825,8 @@
     "neural networks",
     "transformers",
     "backpropagation",
-    "neural network"
+    "neural network",
+    "11785"
   ],
   "course.nlp": [
     "nlp",
@@ -1243,7 +1244,8 @@
   "course.world-literature": [
     "world literature",
     "western canon",
-    "comparative literature"
+    "comparative literature",
+    "shakespeare"
   ],
   "course.art-history-intro": [
     "art history",
@@ -1416,7 +1418,8 @@
     "analog electronics",
     "transistors",
     "operational amplifier",
-    "analog electronic"
+    "analog electronic",
+    "electronic circuit"
   ],
   "course.metrology": [
     "metrology",
