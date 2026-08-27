@@ -648,6 +648,48 @@ when the whole config is complete: this pair is filled in first, so it is wrong
 first, and a check that waits for 4/4 is a check that stays quiet through the
 exact window the mistake lives in.
 
+### A generated file was hand-patched, and another session regenerated it
+
+**Assumed:** `public/data/i18n/ru.json` can be patched by hand to see a new
+string in the preview, since it is gitignored and rebuilt by CI anyway.
+**It was:** patched twice, regenerated once by another session in between, and
+what reached the screen was `ui.sync.state.error` — the key itself, rendered as
+text, in a screenshot from the user. The second patch had read the file *after*
+the regeneration and put back only its own keys, so the first patch's key was
+the one that vanished. Twenty-nine of thirty.
+
+The patching was a reasonable-looking dodge: a crawl was writing `cache.db` and
+`data:build` reads it, so running the generator felt unsafe. It was not — the
+build opens the database `readonly` and a second *reader* alongside a writer is
+explicitly fine ([workflow.md](workflow.md#what-to-run-in-the-background)); only
+a second writer kills a crawl. So the dodge was unnecessary as well as wrong.
+
+**A generated file has one source of truth, and hand-editing it creates a
+second.** In a worktree several sessions share, the second one loses — silently,
+at whatever moment somebody else runs the generator, which is not a moment
+anybody is watching. If a generated artefact has to be current in order to check
+something, run the generator; if the generator cannot be run, the check has to
+wait, because a patched artefact answers a question about itself rather than
+about the source.
+
+### An error's catch-all was the answer that says "do not worry"
+
+**Assumed:** an unrecognised Firestore error during a read or a write is a
+network problem — that is what it usually is, and it is the failure that fixes
+itself.
+**It was:** `permission-denied`, because the rules had not been published. The
+reader was told «нет связи с сервером, всё уедет само, как только связь
+появится» about a write that would be refused identically forever.
+
+A wrong diagnosis is bad. **A wrong diagnosis that tells somebody to stop
+worrying is worse, because it is the one they act on** — and it is the one that
+stops the operator looking, since the message names a cause outside the project.
+The default is `unknown` now — "try again", which is true of anything — and
+every reassurance has to be earned by a code that actually means it.
+`permission-denied` gets a message of its own saying it is a misconfiguration
+rather than the reader's doing, which is both true and the fastest route to
+somebody fixing it.
+
 ### A flag was cleared in a `.finally`, and the promise never settled
 
 **Assumed:** clearing state in `.finally` is the careful version of clearing it

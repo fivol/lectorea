@@ -516,6 +516,7 @@
   "ui.sync.sendAgain": "Send it again",
   "ui.sync.error.email": "Check the address — that is not the one the letter went to",
   "ui.sync.error.link": "That link did not work: they are single-use and short-lived. Ask for a new one",
+  "ui.sync.error.denied": "The server refused the write. That is a misconfiguration on our side rather than anything you did: what you marked is safe in this browser, but it is not reaching the cloud",
   "ui.sync.nudge": "All of this is in this browser only",
   "ui.sync.nudgeAction": "Sync it",
   "ui.sync.nudgeDismiss": "Do not show this again",

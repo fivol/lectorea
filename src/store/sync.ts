@@ -45,6 +45,12 @@ export type SyncFault =
   | 'email'
   /** A sign-in link that has expired or has already been used. */
   | 'link'
+  /**
+   * The rules refused. Never transient and never the reader's doing — it is a
+   * Firebase project set up wrong, so it says so instead of asking them to try
+   * again at something that will fail identically forever.
+   */
+  | 'denied'
   /** The cloud copy was written by a newer build of the site. */
   | 'newer'
   /** The profile has outgrown what one document may hold. */

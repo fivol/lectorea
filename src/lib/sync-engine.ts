@@ -150,21 +150,30 @@ function fault(kind: SyncFault): void {
 /**
  * Which of ours a Firebase error is.
  *
- * Everything unrecognised is `network` rather than `unknown` when it happened
- * during a read or a write, because that is what it almost always is and it is
- * the one failure that resolves itself: the listener reconnects, the mark still
- * says the device is dirty, and the work goes up when the train leaves the
- * tunnel.
+ * `network` is claimed rather than assumed, and that is the whole point of this
+ * function. It used to be the catch-all for anything unrecognised during a
+ * transfer — on the reasoning that it usually is one, and that it is the
+ * failure which resolves itself. What that produced the first time the rules
+ * were not published was «нет связи с сервером, всё уедет само, как только
+ * связь появится» over a `permission-denied` that would be refused identically
+ * forever. A wrong diagnosis is bad; a wrong diagnosis that tells somebody to
+ * stop worrying is worse, because it is the one they act on.
+ *
+ * So the default is `unknown` — «попробуйте ещё раз», which is true of anything
+ * — and every reassurance has to be earned by a code that means it.
  */
-function classify(error: unknown, during: 'signin' | 'transfer'): SyncFault {
+function classify(error: unknown): SyncFault {
   const code = String((error as { code?: string })?.code ?? '');
+  // The rules refusing. Never a reader's fault and never transient: it is a
+  // project set up wrong, and it is worth its own message for that reason.
+  if (code === 'permission-denied') return 'denied';
   if (code.includes('popup') || code.includes('cancelled') || code.includes('redirect')) {
     return 'signin';
   }
   if (code.includes('network') || code === 'unavailable' || code.includes('deadline')) {
     return 'network';
   }
-  return during === 'signin' ? 'unknown' : 'network';
+  return 'unknown';
 }
 
 // ---------------------------------------------------------------------------
@@ -204,7 +213,7 @@ export async function signIn(): Promise<void> {
       return;
     }
     markReturning(false);
-    fault(classify(error, 'signin'));
+    fault(classify(error));
     track('sync_signin', { kind: 'popup', ok: false });
   }
 }
@@ -234,7 +243,7 @@ export async function sendLink(email: string): Promise<void> {
     track('sync_signin', { kind: 'email', ok: true });
   } catch (error) {
     const code = String((error as { code?: string })?.code ?? '');
-    fault(code.includes('email') ? 'email' : classify(error, 'signin'));
+    fault(code.includes('email') ? 'email' : classify(error));
     track('sync_signin', { kind: 'email', ok: false });
   }
 }
@@ -260,7 +269,7 @@ export async function finishLink(email: string): Promise<void> {
       // back to the start, because the next guess is usually the right one.
       fault('email');
     } else {
-      fault(classify(error, 'signin'));
+      fault(classify(error));
     }
   } finally {
     cleanLinkUrl();
@@ -296,7 +305,7 @@ export async function forget(): Promise<void> {
     try {
       await deleteDoc(doc(db, COLLECTION, user.uid));
     } catch (error) {
-      fault(classify(error, 'transfer'));
+      fault(classify(error));
       return;
     }
   }
@@ -333,7 +342,7 @@ export function attach(): void {
      * does complete writes a mark, which is what boots the engine afterwards.
      */
     markReturning(false);
-    void getRedirectResult(auth).catch((error: unknown) => fault(classify(error, 'signin')));
+    void getRedirectResult(auth).catch((error: unknown) => fault(classify(error)));
   }
 
   onAuthStateChanged(auth, (user) => {
@@ -412,7 +421,7 @@ function follow(user: User): void {
       }
       reconcile(user.uid, snapshot.data() ?? null);
     },
-    (error: unknown) => fault(classify(error, 'transfer'))
+    (error: unknown) => fault(classify(error))
   );
 }
 
@@ -589,7 +598,7 @@ async function push(uid?: string): Promise<void> {
     useSync.setState({ status: 'synced', fault: null });
     if (moved) schedulePush();
   } catch (error) {
-    fault(classify(error, 'transfer'));
+    fault(classify(error));
   } finally {
     pushing = false;
     if (deferred !== undefined) {
