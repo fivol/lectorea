@@ -341,38 +341,44 @@ function copyArchive(out: Database.Database): void {
     `INSERT INTO main.raw_responses (id, endpoint, request_key, body, fetched_at)
      VALUES (?, ?, ?, ?, ?)`
   );
-  const rows = out
-    .prepare(
-      `SELECT id, endpoint, request_key, body, fetched_at FROM src.raw_responses
-       WHERE body IS NOT NULL AND NOT (${EXPIRING} AND fetched_at < ?)`
-    )
-    .iterate(...KEPT, cutoff) as Iterable<{
-    id: number;
-    endpoint: string;
-    request_key: string;
-    body: string;
-    fetched_at: string;
-  }>;
+  // The surviving bodies are streamed off a second, read-only connection rather
+  // than through the attached `src`. While an iterator of a better-sqlite3
+  // connection is stepping, that connection is busy and refuses every other
+  // statement — so reading and writing down one handle is not "slow", it throws
+  // "this database connection is busy executing a query". Two handles is the
+  // whole fix, and it keeps the walk streaming instead of materialising 3.5 GB
+  // of bodies to get the cursor closed.
+  const source = new Database(TARGET, { readonly: true });
+  const select = source.prepare(
+    `SELECT id, endpoint, request_key, body, fetched_at FROM raw_responses
+     WHERE body IS NOT NULL AND NOT (${EXPIRING} AND fetched_at < ?)`
+  );
 
+  // One transaction around the whole walk. The journal is off on this file, so
+  // holding it open costs nothing and saves a commit per row.
   let carried = 0;
-  const carry = out.transaction((batch: Array<[number, string, string, string | null, string]>) => {
-    for (const row of batch) insert.run(...row);
-  });
-
-  let batch: Array<[number, string, string, string | null, string]> = [];
-  for (const row of rows) {
-    batch.push([row.id, row.endpoint, row.request_key, restripStored(row.endpoint, row.body), row.fetched_at]);
-    if (batch.length >= 2000) {
-      carry(batch);
-      carried += batch.length;
-      batch = [];
-      process.stdout.write(`\r  raw_responses    ${ledger.changes} ledger, ${carried} bodies`);
+  out.transaction(() => {
+    for (const row of select.iterate(...KEPT, cutoff) as Iterable<{
+      id: number;
+      endpoint: string;
+      request_key: string;
+      body: string;
+      fetched_at: string;
+    }>) {
+      insert.run(
+        row.id,
+        row.endpoint,
+        row.request_key,
+        restripStored(row.endpoint, row.body),
+        row.fetched_at
+      );
+      carried += 1;
+      if (carried % 2000 === 0)
+        process.stdout.write(`\r  raw_responses    ${ledger.changes} ledger, ${carried} bodies`);
     }
-  }
-  if (batch.length) {
-    carry(batch);
-    carried += batch.length;
-  }
+  })();
+  source.close();
+
   console.log(`\r  raw_responses    ${ledger.changes} ledger, ${carried} bodies carried`);
 }
 

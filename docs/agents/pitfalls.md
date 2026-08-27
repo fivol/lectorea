@@ -865,6 +865,35 @@ free. `VACUUM INTO`, or a rebuild that applies the policy as it copies, needs
 room for the *result* instead. Reach for the bound long before this, but if you
 are already here, that is the way out.
 
+### A fixture of six rows never reached the batch at two thousand
+
+**Assumed:** a rebuild verified end to end on a synthetic cache — right rows
+emptied, right rows carried, rowids preserved, indexes back, journal mode back —
+is a rebuild that works.
+
+**It was:** verified on six rows, and the copy loop commits every two thousand.
+The batching path was never entered, so the check passed on a database too small
+to contain the bug, and the bug surfaced on the 32 GB one after twenty minutes
+of copying: **`TypeError: This database connection is busy executing a query`.**
+
+Two things to keep, and the second is the general one.
+
+**better-sqlite3 makes the whole connection busy for the length of an
+iteration.** Not just "do not begin a transaction" — *no* statement of that
+connection may run while its `.iterate()` is stepping, writes included. Reading
+a table and writing rows derived from it is therefore two connections, not one;
+the alternative is materialising the read, which for this archive is 3.5 GB held
+to get a cursor closed. Both attempts at one handle failed, the second more
+confusingly than the first, because moving the transaction outside the loop
+looks like it fixes exactly this.
+
+**A fixture has to be bigger than every threshold in the code it exercises.**
+The batch size, the page size, the chunk the retry ladder gives up at — each is a
+branch, and a fixture below it tests the other side of an `if` that production
+always takes. Grep the code under test for numeric literals before believing a
+green run: here it was one `>= 2000` against a seed of six. The seed is now
+5000 rows, which is the cheapest possible statement of what the code branches on.
+
 ## The service worker was still serving the app shell for every address
 
 Found on 2026-08-18, moving the languages into `/ru/` and `/en/`.
