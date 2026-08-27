@@ -27,6 +27,7 @@ export default function SyncSection() {
   const signOut = useSync((state) => state.signOut);
   const forget = useSync((state) => state.forget);
   const pending = useSync((state) => state.pending);
+  const retry = useSync((state) => state.retry);
   const [confirming, setConfirming] = useState(false);
 
   if (!SYNC_AVAILABLE) return null;
@@ -67,7 +68,16 @@ export default function SyncSection() {
           </div>
 
           {status === 'error' ? (
-            <p className="mt-2 text-xs text-danger">{t(`ui.sync.error.${fault ?? 'unknown'}`)}</p>
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="text-xs text-danger">{t(`ui.sync.error.${fault ?? 'unknown'}`)}</p>
+              {/* Not a timer. A project set up wrong would be refused a million
+                  times over, and a network that is gone is Firestore's own job
+                  to wait out — but neither should leave a reader with a dead
+                  panel whose only exit is knowing to reload the page. */}
+              <Button variant="ghost" small disabled={busy} onClick={retry}>
+                {t('ui.sync.retry')}
+              </Button>
+            </div>
           ) : null}
 
           <p className="mt-2 text-xs text-ink-faint">{t('ui.sync.onHint')}</p>

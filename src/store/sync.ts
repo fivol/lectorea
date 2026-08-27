@@ -100,6 +100,8 @@ type SyncStore = {
   /** Spend a link with an address typed on a device that did not send it. */
   finishLink: (email: string) => void;
   cancelLink: () => void;
+  /** Re-attach after a failure — the listener does not survive one. */
+  retry: () => void;
   signOut: () => void;
   /** Sign out **and** delete the cloud copy. The local profile is untouched. */
   forget: () => void;
@@ -136,6 +138,7 @@ export const useSync = create<SyncStore>((set) => ({
   // Abandoning a link in hand is also abandoning the sign-in it belongs to, so
   // the status goes back to `off` rather than staying on `connecting` forever.
   cancelLink: () => set({ pending: null, fault: null, status: 'off' }),
+  retry: () => void run(async (mod) => mod.retry()),
   signOut: () => void run((mod) => mod.signOut()),
   forget: () => void run((mod) => mod.forget()),
 }));

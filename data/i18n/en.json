@@ -502,6 +502,7 @@
   "ui.sync.optional": "Signing in unlocks nothing and locks nothing: the catalogue is complete without it, and it always will be",
   "ui.sync.signIn": "Sign in with Google",
   "ui.sync.signOut": "Sign out",
+  "ui.sync.retry": "Try again",
   "ui.sync.onHint": "Marks, favourites, history, goals and settings travel to every device on this account. The width of the panel stays with the screen it was measured on. Signing out deletes nothing — neither here nor in the cloud",
   "ui.sync.state.synced": "Synced",
   "ui.sync.state.working": "Syncing…",

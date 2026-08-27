@@ -425,6 +425,27 @@ function follow(user: User): void {
   );
 }
 
+/**
+ * Attach the listener again after a failure that has since been dealt with.
+ *
+ * A snapshot listener does not survive an error: Firestore terminates it, and
+ * a `permission-denied` from rules that were never published therefore leaves
+ * the sync dead for the rest of the session. Reloading fixes it, which is a
+ * thing a reader has to *know* — and a state whose only exit is undocumented is
+ * a dead end, not an error.
+ *
+ * Deliberately a press rather than a timer. The two failures that get here are
+ * a project set up wrong and a network that is gone; retrying the first on a
+ * loop is a request per second that will be refused a million times, and the
+ * second is already Firestore's own job.
+ */
+export function retry(): void {
+  const user = auth?.currentUser;
+  if (!user) return;
+  useSync.setState({ fault: null });
+  follow(user);
+}
+
 function detach(): void {
   unsubscribe?.();
   unsubscribe = undefined;
