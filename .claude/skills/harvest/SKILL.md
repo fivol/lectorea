@@ -309,6 +309,15 @@ crawls *that*. It has **one** key — 9500 units, about 3200 playlists — so ai
 crawling that was never published is invisible to it, and an empty queue makes
 the night worth nothing at all.
 
+**And it never mines** — `cache:restore → data:discover → data:refresh` is the
+whole job, so the queue it walks is exactly the one you publish. Once the queue
+is down to about 3200, **stop crawling**: local units buy questions and discovery,
+the night's key buys nothing but a queue that already exists. Walking those
+playlists yourself and refilling by mining does not work — mining halves every
+round (2695 → 1326 → 685 → 343 on 2026-08-27), and that day handed the night
+1000 units of work against a 9500-unit key
+([pitfalls.md](../../../docs/agents/pitfalls.md#the-nights-key-was-left-with-nothing-to-spend-it-on)).
+
 **Check the release once more, immediately before publishing.** The quota resets
 at 07:00 UTC and the nightly runs at 08:30, so a run that starts at the reset and
 takes three hours has the night landing *in the middle of it* — the union done in

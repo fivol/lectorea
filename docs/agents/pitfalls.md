@@ -217,6 +217,28 @@ answer.
 1-unit endpoints the queue is enough; for a 100-unit one, a retry on a rate limit
 is not optional.
 
+### The night's key was left with nothing to spend it on
+
+**Assumed:** local quota and the nightly key are two ways of buying the same
+thing, so a day should walk the video queue flat and let mining put back whatever
+the night needs.
+
+**It was:** `refresh.yml` runs `cache:restore → data:discover → data:refresh` and
+**never mines**. The night's queue is exactly what the day published, and mining
+halves every round — 2 695, then 1 326, then 685, then 343. On 2026-08-27 the day
+spent its last 7 000 units walking 2 156 playlists the night's own key would have
+walked for free, then could not refill: the night was left 343 playlists and about
+1 000 units of work against a 9 500-unit key. Roughly 700 playlists across the two
+machines, thrown away by doing the work twice on one of them.
+
+**How not to repeat it:** **the two budgets are not fungible.** Local quota buys
+questions, discovery and crawls; the night's key buys *only* a queue that already
+exists at 08:30 UTC, and nothing the night does can create one. So when the queue
+falls to about the night's capacity (≈3 200 playlists), **stop crawling** — spend
+what is left on questions, or let it expire, and publish the queue intact. Walking
+a playlist yourself that the night was going to walk is not a saving; it is the
+one unit of work that cannot be moved back.
+
 ---
 
 ## Rules and matching
