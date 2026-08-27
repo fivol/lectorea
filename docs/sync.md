@@ -254,6 +254,26 @@ file, so a checked-out `.env` cannot override what the workflow hands in.
 the auth domain agree. A partial config is treated as none: sync stays off
 rather than half-working.
 
+That answers whether the variables are *present*. Whether what they point at
+exists is a different question, and the gap between the two is where an
+afternoon goes — a complete-looking `.env` against a project with no
+Authentication and no database fails at the last possible moment, in a popup,
+with a code nobody can look up. So:
+
+```bash
+pnpm exec tsx scripts/_firebase.ts
+```
+
+Read-only, signs nobody in, sends no letter, creates nothing: three public
+endpoints with the web key, and every answer is one a stranger could get. It
+says whether Authentication is switched on, whether `lectorea.org` is in the
+authorized domains, and — the one worth having on its own — whether Firestore
+refuses an unauthenticated read of `profiles/`. A **403** there is the rules
+working. A 200 or a 404 means an unauthenticated stranger can read the
+collection, which is every reader's profile, and the probe says so in those
+words. Worth running once after the setup below and again whenever signing in
+breaks for no reason anybody can see.
+
 **All four empty is a working site with no accounts.** The section does not
 appear in the profile, `bootSync` returns before loading anything, and the SDK
 is never fetched. That is what a fork gets, and it is deliberate: a fork must
