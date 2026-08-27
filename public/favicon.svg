@@ -15,9 +15,16 @@
     «Lectorea» rather than «send this to someone».
 
     Colours are the design system's own (`src/index.css`): the dark canvas,
-    ink for what is done, accent green for what is now open. The gap between
-    the cells is the seam between two territories on the map, and it is what
-    keeps three shapes from fusing into one blob at 16 px.
+    ink for what is done, accent green for what is now open.
+
+    The gap between the cells is the seam between two territories on the map,
+    and it is the one measurement here that is set by the smallest size rather
+    than the largest. It is 4.2 of this 64 grid, which is a whole device pixel
+    in a browser tab; the first cut of the mark used 1.6, and at 16 px that is
+    four tenths of a pixel — antialiasing spent it, and three cells came out as
+    one pale blob. Cell centres sit 25.6 apart and the cells themselves are
+    24.7 across the flats: the difference is the seam, and it is the same on
+    all three sides because they are neighbours on one hex grid.
 
     This file is the source of the mark. Every raster beside it — the .ico, the
     PWA sizes, the touch icon — is rendered from it by `pnpm icons:build`;
@@ -39,10 +46,10 @@
     on the shape itself — the simpler rasterisers that turn this file into the
     .ico do not inherit them from a group.
   -->
-  <path d="M20.37 31.98 L29.11 37.03 L29.11 47.11 L20.37 52.16 L11.63 47.11 L11.63 37.03 Z"
-        fill="#E6EBF2" stroke="#E6EBF2" stroke-width="4.8" stroke-linejoin="round" />
-  <path d="M43.63 31.98 L52.37 37.03 L52.37 47.11 L43.63 52.16 L34.89 47.11 L34.89 37.03 Z"
-        fill="#E6EBF2" stroke="#E6EBF2" stroke-width="4.8" stroke-linejoin="round" />
-  <path d="M32 11.84 L40.74 16.89 L40.74 26.97 L32 32.02 L23.26 26.97 L23.26 16.89 Z"
-        fill="#34C98A" stroke="#34C98A" stroke-width="4.8" stroke-linejoin="round" />
+  <path d="M19.2 32.74 L28.17 37.91 L28.17 48.27 L19.2 53.45 L10.23 48.27 L10.23 37.91 Z"
+        fill="#E6EBF2" stroke="#E6EBF2" stroke-width="4" stroke-linejoin="round" />
+  <path d="M44.8 32.74 L53.77 37.91 L53.77 48.27 L44.8 53.45 L35.83 48.27 L35.83 37.91 Z"
+        fill="#E6EBF2" stroke="#E6EBF2" stroke-width="4" stroke-linejoin="round" />
+  <path d="M32 10.57 L40.97 15.74 L40.97 26.10 L32 31.28 L23.03 26.10 L23.03 15.74 Z"
+        fill="#34C98A" stroke="#34C98A" stroke-width="4" stroke-linejoin="round" />
 </svg>
