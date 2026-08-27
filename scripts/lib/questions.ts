@@ -1,3 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { paths } from './config.js';
+import type { Db } from './db.js';
+import { loadAliases, loadDictionary } from './sources.js';
 import type { Course } from '../../shared/schema.js';
 
 /**
@@ -49,10 +54,21 @@ import type { Course } from '../../shared/schema.js';
  * The order is the order they are asked in, so anything added goes at the end:
  * the run is variant-major, and the first phrasing of every course is worth
  * more than the fourth phrasing of a third of them.
+ *
+ * The sixth of each row is 2026-08-27, and it was chosen by the same two counts
+ * *and* by the shape the first five had already shown: yield falls with
+ * vagueness. `lectures` bought 19.7 bindings per 100 units, `full course` 10.1,
+ * the bare `course` 3.9 and «основы» 2.7 — so the words worth adding are the
+ * specific, lecture-hall ones, and the tempting large dimension is the wrong
+ * one. **A bare course name with no qualifier at all was considered and left
+ * out for exactly that:** it is 472 unasked questions and the vaguest possible
+ * phrasing, and everything measured says a vague phrasing returns the topic bin
+ * rather than the semester. «курс лекций» is in 47 published titles and `class`
+ * in 87, and neither is a word order the first five ever asked in.
  */
 export const QUALIFIERS: Record<string, string[]> = {
-  ru: ['лекции', 'курс', 'видеолекции', 'семинары', 'основы'],
-  en: ['lectures', 'full course', 'lecture series', 'course', 'introduction'],
+  ru: ['лекции', 'курс', 'видеолекции', 'семинары', 'основы', 'курс лекций'],
+  en: ['lectures', 'full course', 'lecture series', 'course', 'introduction', 'class'],
 };
 
 /**
@@ -132,4 +148,181 @@ export function searchNames(
     }
   }
   return names;
+}
+
+/* ───────────────────────────  The pool of questions  ─────────────────────── */
+
+/**
+ * One course, and every name it is worth asking about it under.
+ *
+ * The brief is written by the holes in the catalogue rather than by hand, so
+ * the only thing a caller chooses is where the line between thin and not is.
+ */
+export type QuestionTarget = {
+  courseId: string;
+  playlists: number;
+  /** From the built catalogue: what phrasing the material is published under. */
+  stage?: string;
+  names: Array<{ lang: string; name: string }>;
+};
+
+/** One paid question: 100 units of `search.list`, billed under `questionKey`. */
+export type Question = {
+  courseId: string;
+  lang: string;
+  kind: 'playlist' | 'channel';
+  q: string;
+};
+
+/** The built catalogue — the brief, and the domains the channel side ranks by. */
+export function builtCourses(): Array<{
+  id: string;
+  playlistCount: number;
+  playlistsByLang?: Record<string, number>;
+  stage?: string;
+  domains?: string[];
+}> {
+  const file = path.join(paths.outData, 'courses.json');
+  if (!fs.existsSync(file)) {
+    throw new Error(`${file} is missing — run \`make data\` first: the brief is written by it.`);
+  }
+  return (
+    JSON.parse(fs.readFileSync(file, 'utf8')) as {
+      courses: Array<{
+        id: string;
+        playlistCount: number;
+        playlistsByLang?: Record<string, number>;
+        stage?: string;
+        domains?: string[];
+      }>;
+    }
+  ).courses;
+}
+
+/**
+ * Which courses to ask about, and under what names.
+ *
+ * `playlistCount` comes from the built catalogue rather than from `matches`,
+ * because that is the number the site actually shows: a course with nine weak
+ * guesses against it is empty to a reader. The names come from the same
+ * dictionaries the rule pass reads, so a course is searched for in every
+ * language it has a name in — which for this catalogue is the whole point, as
+ * the fields it is thinnest in are the ones English lists never cover.
+ */
+export function questionBrief(opts: {
+  min: number;
+  courses?: string[];
+  /**
+   * Ask in this language only, and count the holes in it only.
+   *
+   * `playlistCount` is the total, and a course with forty Russian recordings and
+   * no English one is full by that number and empty to anybody who does not read
+   * Russian. `--lang=en` makes the brief mean "thin **in English**" and stops it
+   * spending half the day's questions on the language that is already covered.
+   */
+  lang?: string;
+}): QuestionTarget[] {
+  const built = builtCourses();
+  const held = (course: (typeof built)[number]): number =>
+    opts.lang ? (course.playlistsByLang?.[opts.lang] ?? 0) : course.playlistCount;
+  const counts = new Map(built.map((course) => [course.id, held(course)]));
+  const stages = new Map(built.map((course) => [course.id, course.stage]));
+
+  const chosen = opts.courses?.length
+    ? opts.courses
+    : built
+        .filter((course) => held(course) < opts.min)
+        .sort((a, b) => held(a) - held(b))
+        .map((course) => course.id);
+
+  const languages = opts.lang ? [opts.lang] : ['ru', 'en'];
+  const dictionaries = languages.map((lang) => ({
+    lang,
+    i18n: loadDictionary(lang),
+    aliases: loadAliases(lang),
+  }));
+
+  return chosen.map((courseId) => {
+    const names: Array<{ lang: string; name: string }> = [];
+    const stage = stages.get(courseId);
+    for (const { lang, i18n, aliases } of dictionaries) {
+      for (const name of searchNames(
+        i18n[`course.${courseId}.title`],
+        aliases[`course.${courseId}`] ?? [],
+        stage
+      )) {
+        names.push({ lang, name });
+      }
+    }
+    return { courseId, playlists: counts.get(courseId) ?? 0, stage, names };
+  });
+}
+
+/**
+ * Every question the brief defines, in the order they are worth asking.
+ *
+ * Variant-major, and that is the whole reason `all` is not a loop around the
+ * caller: the first phrasing of every course is worth more than the second
+ * phrasing of a third of them, so a run cut short by the budget is cut where
+ * the answers are already thinnest.
+ */
+export function questionsFor(
+  targets: QuestionTarget[],
+  kinds: Array<'playlist' | 'channel'>,
+  variant: number | 'all'
+): Question[] {
+  const widest = Math.max(
+    ...targets.flatMap((target) =>
+      target.names.map(({ lang }) => qualifiersFor(lang, target.stage).length)
+    ),
+    0
+  );
+  const rounds = variant === 'all' ? [...Array(widest).keys()] : [variant];
+  const seen = new Set<string>();
+  const list: Question[] = [];
+  for (const round of rounds) {
+    for (const target of targets) {
+      for (const { lang, name } of target.names) {
+        for (const kind of kinds) {
+          const phrasings = qualifiersFor(lang, target.stage);
+          if (round >= phrasings.length) continue;
+          const q = `${name} ${phrasings[round]}`.trim();
+          const key = `${kind}:${q.toLowerCase()}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          list.push({ courseId: target.courseId, lang, kind, q });
+        }
+      }
+    }
+  }
+  return list;
+}
+
+/** The id a question is billed under — see the `searches` table in lib/db.ts. */
+export function questionKey(question: Question): string {
+  return `${question.kind}:${question.q.toLowerCase()}`;
+}
+
+/**
+ * Drops the questions some earlier run already paid a hundred units for.
+ *
+ * Search returns a ranked first page that barely moves from one week to the
+ * next, so the second copy of an answer carries no information and costs
+ * exactly what the first did. Before this, the only thing standing between a
+ * hunt and re-buying its predecessor's answers was whoever ran it remembering
+ * which courses the last one covered and passing a different `--variant`.
+ *
+ * It is also what makes the pool *countable* without spending anything, which
+ * is how a day is planned: `_day.ts` asks this the same way the hunt does, so
+ * the two cannot drift.
+ */
+export function unaskedQuestions(
+  db: Db,
+  list: Question[]
+): { fresh: Question[]; skipped: number } {
+  const asked = new Set(
+    (db.prepare(`SELECT id FROM searches`).all() as Array<{ id: string }>).map((row) => row.id)
+  );
+  const fresh = list.filter((question) => !asked.has(questionKey(question)));
+  return { fresh, skipped: list.length - fresh.length };
 }

@@ -4,6 +4,7 @@
  *   pnpm tsx scripts/_hunt.ts out.json [--min=4] [--budget=6000] [--kind=playlist]
  *   pnpm tsx scripts/_hunt.ts out.json --courses=poetics,ancient-art --apply
  *   pnpm tsx scripts/_hunt.ts out.json --variant=all --min=99 --budget=40000
+ *   pnpm tsx scripts/_hunt.ts out.json --lang=en --min=8 --variant=all --apply
  *
  * `search.list` costs 100 units — a hundred crawled playlists, or forty walked
  * ones — which is why every other seam in docs/harvest.md comes first and why
@@ -46,13 +47,19 @@
  * day's quota.
  */
 import fs from 'node:fs';
-import path from 'node:path';
-import { paths } from './lib/config.js';
 import { openDb, type Db, type PlaylistRow } from './lib/db.js';
 import { queuePlaylists } from './lib/queue.js';
 import { buildKeywordIndex, cleanTitle, isNotACourse, judgeByRules } from './lib/rules.js';
-import { qualifiersFor, searchNames } from './lib/questions.js';
-import { loadAliases, loadDictionary, loadSources, type Sources } from './lib/sources.js';
+import {
+  builtCourses,
+  questionBrief,
+  questionKey,
+  questionsFor,
+  unaskedQuestions,
+  type Question,
+  type QuestionTarget,
+} from './lib/questions.js';
+import { loadSources, type Sources } from './lib/sources.js';
 import {
   createClient,
   QuotaExceededError,
@@ -96,6 +103,8 @@ type Args = {
   repeat: boolean;
   /** An earlier report to carry on from, instead of asking search again. */
   from?: string;
+  /** Ask in one language only, and count the holes in that language only. */
+  lang?: string;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -114,154 +123,36 @@ function parseArgs(argv: string[]): Args {
     variant: flag('variant') === 'all' ? 'all' : Number(flag('variant') ?? 0),
     repeat: argv.includes('--repeat'),
     from: flag('from'),
+    lang: flag('lang'),
   };
 }
 
 /* ─────────────────────────────  The brief  ──────────────────────────────── */
 
-type Target = {
-  courseId: string;
-  playlists: number;
-  /** From the built catalogue: what phrasing the material is published under. */
-  stage?: string;
-  names: Array<{ lang: string; name: string }>;
-};
-
-/** The built catalogue — the brief, and the domains the channel side ranks by. */
-function builtCourses(): Array<{
-  id: string;
-  playlistCount: number;
-  stage?: string;
-  domains?: string[];
-}> {
-  const file = path.join(paths.outData, 'courses.json');
-  if (!fs.existsSync(file)) {
-    throw new Error(`${file} is missing — run \`make data\` first: the brief is written by it.`);
-  }
-  return (
-    JSON.parse(fs.readFileSync(file, 'utf8')) as {
-      courses: Array<{ id: string; playlistCount: number; stage?: string; domains?: string[] }>;
-    }
-  ).courses;
-}
+/**
+ * The brief, the questions it defines and the ledger of what has already been
+ * asked all live in `lib/questions.ts`, beside the phrasings themselves — so
+ * the pool this run spends and the pool a report counts are one definition and
+ * cannot drift apart.
+ */
 
 /** course → its fields of knowledge, for ranking the channel side. */
 function courseDomains(): Map<string, string[]> {
   return new Map(builtCourses().map((course) => [course.id, course.domains ?? ['?']]));
 }
 
-/**
- * Which courses to ask about, and under what names.
- *
- * `playlistCount` comes from the built catalogue rather than from `matches`,
- * because that is the number the site actually shows: a course with nine weak
- * guesses against it is empty to a reader. The names come from the same
- * dictionaries the rule pass reads, so a course is searched for in every
- * language it has a name in — which for this catalogue is the whole point, as
- * the fields it is thinnest in are the ones English lists never cover.
- */
-function brief(args: Args): Target[] {
-  const built = builtCourses();
-  const counts = new Map(built.map((course) => [course.id, course.playlistCount]));
-  const stages = new Map(built.map((course) => [course.id, course.stage]));
-
-  const chosen = args.courses.length
-    ? args.courses
-    : built
-        .filter((course) => course.playlistCount < args.min)
-        .sort((a, b) => a.playlistCount - b.playlistCount)
-        .map((course) => course.id);
-
-  const dictionaries = ['ru', 'en'].map((lang) => ({
-    lang,
-    i18n: loadDictionary(lang),
-    aliases: loadAliases(lang),
-  }));
-
-  return chosen.map((courseId) => {
-    const names: Array<{ lang: string; name: string }> = [];
-    const stage = stages.get(courseId);
-    for (const { lang, i18n, aliases } of dictionaries) {
-      for (const name of searchNames(
-        i18n[`course.${courseId}.title`],
-        aliases[`course.${courseId}`] ?? [],
-        stage
-      )) {
-        names.push({ lang, name });
-      }
-    }
-    return { courseId, playlists: counts.get(courseId) ?? 0, stage, names };
-  });
-}
-
 /* ──────────────────────────────  The search  ────────────────────────────── */
 
-type Query = { courseId: string; lang: string; kind: 'playlist' | 'channel'; q: string };
-
-function queries(targets: Target[], kinds: Args['kinds'], variant: Args['variant']): Query[] {
-  const widest = Math.max(
-    ...targets.flatMap((target) =>
-      target.names.map(({ lang }) => qualifiersFor(lang, target.stage).length)
-    ),
-    0
-  );
-  const rounds = variant === 'all' ? [...Array(widest).keys()] : [variant];
-  const seen = new Set<string>();
-  const list: Query[] = [];
-  // Variant-major, and that is the whole reason `all` is not a loop around the
-  // script: the first phrasing of every course is worth more than the second
-  // phrasing of a third of them, so a run cut short by the budget is cut where
-  // the answers are already thinnest.
-  for (const round of rounds) {
-    for (const target of targets) {
-      for (const { lang, name } of target.names) {
-        for (const kind of kinds) {
-          const phrasings = qualifiersFor(lang, target.stage);
-          if (round >= phrasings.length) continue;
-          const q = `${name} ${phrasings[round]}`.trim();
-          const key = `${kind}:${q.toLowerCase()}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          list.push({ courseId: target.courseId, lang, kind, q });
-        }
-      }
-    }
-  }
-  return list;
-}
-
-/** The id a query is billed under — see the `searches` table in lib/db.ts. */
-function askedKey(query: Query): string {
-  return `${query.kind}:${query.q.toLowerCase()}`;
-}
-
-/**
- * Drops the questions some earlier run already paid a hundred units for.
- *
- * Search returns a ranked first page that barely moves from one week to the
- * next, so the second copy of an answer carries no information and costs
- * exactly what the first did. Before this, the only thing standing between a
- * hunt and re-buying its predecessor's answers was whoever ran it remembering
- * which courses the last one covered and passing a different `--variant`.
- */
-function unasked(db: Db, list: Query[]): { fresh: Query[]; skipped: number } {
-  const asked = new Set(
-    (db.prepare(`SELECT id FROM searches`).all() as Array<{ id: string }>).map((row) => row.id)
-  );
-  const fresh = list.filter((query) => !asked.has(askedKey(query)));
-  return { fresh, skipped: list.length - fresh.length };
-}
-
 /** Writes down a question that has now been paid for, whatever it returned. */
-function recordSearch(db: Db, query: Query, hits: number): void {
+function recordSearch(db: Db, query: Question, hits: number): void {
   db.prepare(
     `INSERT INTO searches (id, q, kind, lang, course_id, hits, checked_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET hits = excluded.hits, checked_at = excluded.checked_at`
-  ).run(askedKey(query), query.q, query.kind, query.lang, query.courseId, hits, new Date().toISOString());
+  ).run(questionKey(query), query.q, query.kind, query.lang, query.courseId, hits, new Date().toISOString());
 }
 
-type Found = { hit: SearchHit; from: Query };
+type Found = { hit: SearchHit; from: Question };
 
 /**
  * Runs the queries until the budget, the quota or the list runs out.
@@ -272,7 +163,7 @@ type Found = { hit: SearchHit; from: Query };
 async function runQueries(
   db: Db,
   api: YoutubeClient,
-  list: Query[],
+  list: Question[],
   budget: number
 ): Promise<{ found: Found[]; spent: number; ran: number }> {
   const found: Found[] = [];
@@ -413,7 +304,7 @@ async function vet(
   );
 
   /** id → the query that found it first; a hit found by two queries is one id. */
-  const wanted = new Map<string, Query>();
+  const wanted = new Map<string, Question>();
   let known = 0;
   for (const { hit, from } of found) {
     if (hit.kind !== 'playlist') continue;
@@ -764,7 +655,7 @@ async function main(): Promise<void> {
    * asking search the same 46 questions again to obtain the same 46 answers is
    * the one thing quota must never be spent on twice.
    */
-  let targets: Target[];
+  let targets: QuestionTarget[];
   let candidates: Candidate[];
   let found: Found[] = [];
   let spent = 0;
@@ -775,7 +666,7 @@ async function main(): Promise<void> {
 
   if (args.from) {
     const earlier = JSON.parse(fs.readFileSync(args.from, 'utf8')) as {
-      targets: Target[];
+      targets: QuestionTarget[];
       candidates: Candidate[];
     };
     targets = earlier.targets;
@@ -786,11 +677,11 @@ async function main(): Promise<void> {
         `${changed ? `; the rules moved ${changed} of them` : ''}`
     );
   } else {
-    targets = brief(args);
-    const all = queries(targets, args.kinds, args.variant);
+    targets = questionBrief({ min: args.min, courses: args.courses, lang: args.lang });
+    const all = questionsFor(targets, args.kinds, args.variant);
     const { fresh, skipped } = args.repeat
       ? { fresh: all, skipped: 0 }
-      : unasked(db, all);
+      : unaskedQuestions(db, all);
     const list = fresh;
     const affordable = Math.min(args.budget, api.remaining());
     console.log(

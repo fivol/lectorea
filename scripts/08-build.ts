@@ -158,6 +158,11 @@ async function main(): Promise<void> {
       level: levels.get(id) ?? 0,
       row: layout.row.get(id) ?? 0,
       playlistCount: playlists.length,
+      playlistsByLang: playlists.reduce<Record<string, number>>((counts, playlist) => {
+        const lang = playlist.lang || 'unknown';
+        counts[lang] = (counts[lang] ?? 0) + 1;
+        return counts;
+      }, {}),
       hours: playlists.length
         ? Math.round((median(playlists.map((p) => p.totalSeconds)) / 3600) * 10) / 10
         : 0,

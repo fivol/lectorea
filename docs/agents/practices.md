@@ -78,6 +78,43 @@ word costs nothing to add.
 count before concluding it is finished. A limit that is a product of four things
 is four different problems, and usually only one of them is expensive.
 
+## What a run spends and what a report counts are one definition
+
+`_hunt.ts` held the brief, the phrasings-into-questions expansion and the
+`searches` lookup as private functions, and the only way to learn how much of
+the pool was left was to *start a hunt* and read its first line. That is a
+question asked of the thing being planned, by the thing being planned, and it
+is the shape that produces two counters of one quantity — the failure
+[a tenth key](pitfalls.md#a-tenth-key-was-in-env-and-the-crawler-read-nine)
+already cost a day of quota to.
+
+`questionBrief`, `questionsFor`, `questionKey` and `unaskedQuestions` now live
+in [lib/questions.ts](../../scripts/lib/questions.ts) beside `QUALIFIERS`
+itself, so the pool a hunt spends and the pool `_day.ts` reports are the same
+lines of code. A phrasing added to the file shows up in the report as questions
+to buy, without anybody teaching the report about it.
+
+**Generally:** when a plan is made from a number, the number and the thing it
+plans are one definition or they will drift. The tell is a report that has to
+reimplement what it reports on — or, worse, one that has to *run* it.
+
+## A day begins with the same five questions, so it is one command
+
+Quota left and the hours left on it; what is queued and what that costs;
+whether the release holds a generation this cache does not descend from; how
+many search questions are unasked; how many bindings wait on a reader. Every
+iteration asked all five, in five different one-liners, and getting any of them
+wrong costs the whole day: a hunt against an empty pool spends nothing and
+reports nothing — which looks exactly like a hunt that found nothing — and a
+`make pull` over a machine that has been hunting deletes the searches silently.
+
+`pnpm tsx scripts/_day.ts --release` answers all five and names the next move.
+It opens the database **read-only** on purpose, so it is the one report that can
+be run beside a crawl, which is when the answer matters most.
+
+**Generally:** a decision made from the same inputs every time is a command, not
+a habit — and the moment it becomes a command, something unattended can make it.
+
 ## What ranks a candidate is concentration, not count
 
 The channel side of a hunt returns thousands of channels ranked by how many

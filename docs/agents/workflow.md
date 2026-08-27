@@ -54,6 +54,16 @@ night is worth **9500 units and about 3200 playlists walked**, which is the
 number to plan the morning around: the laptop's ten keys are ten times the
 night, and the queue the night cannot finish is the queue the day inherits.
 
+**And two nights running is what it costs when nobody publishes.** The laptop
+published at 08-24T09:11, spent the rest of that day crawling and hunting, and
+published nothing further. The nights of 08-25 and 08-26 therefore restored a
+generation the laptop was already 7598 playlists past, walked what it had walked
+before, and between them left **five videos** the laptop did not have — measured
+by `_merge.ts` on the morning of 08-27, which is the only thing that could have
+noticed. Two nights, 19 000 units, five videos. The laptop's own ledger was
+untouched on both days as well, so the real bill is **190 000 units that expired
+where nobody was looking.**
+
 **And the night is worth nothing if the queue is empty.** On 2026-08-20 the
 nightly restored the release, found **6** pending video jobs, spent **32 units**
 of its 9500 and was finished in 2m19s. Nothing was broken: the previous day had

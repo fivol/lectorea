@@ -16,6 +16,13 @@ a minute, and repeating one mistake from them is an hour to a day of quota.
 | **[practices.md](practices.md)** | the approaches adopted here, each with the case it came from |
 | **[workflow.md](workflow.md)** | the environment: quota, what runs for hours, what must not be committed |
 
+The day itself is a skill: **`/harvest`** in
+[.claude/skills/harvest](../../.claude/skills/harvest/SKILL.md) is these pages
+reduced to what to run, in what order, and when to stop — written to be safe
+under a loop that wakes after the quota resets. It carries the reader's brief
+with it. Read it when the task is "spend today"; read the pages below when the
+question is *why* it says what it says.
+
 ## What belongs here, and what belongs in `docs/`
 
 The line is **who needs to know it**.

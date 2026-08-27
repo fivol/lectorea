@@ -11,12 +11,12 @@
 [![site](https://img.shields.io/badge/site-lectorea.org-2ea043)](https://lectorea.org/)
 [![deploy](https://github.com/fivol/lectorea/actions/workflows/deploy.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/deploy.yml)
 [![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
-[![courses](https://img.shields.io/badge/courses-225_in_39_fields-4c8eda)](https://lectorea.org/)
+[![courses](https://img.shields.io/badge/courses-236_in_39_fields-4c8eda)](https://lectorea.org/)
 
 [![The map](docs/images/map.webp)](https://lectorea.org/)
 
-225 courses across 39 fields of knowledge, each one knowing what it depends on,
-and some 5800 recordings of them from 320 universities and channels. That
+236 courses across 39 fields of knowledge, each one knowing what it depends on,
+and some 12 500 recordings of them from 309 universities and channels. That
 is the difference from a search engine: YouTube can find you a lecture on tensor
 analysis, but it cannot tell you that you will not understand it without linear
 algebra. Lectorea answers the two questions that actually come up:
@@ -27,8 +27,8 @@ algebra. Lectorea answers the two questions that actually come up:
 No registration, no ads, nothing to pay for. Everything you mark stays in your
 browser — and if you want it on your phone as well, one optional sign-in
 carries it there and nothing else changes. The catalogue re-crawls itself every
-night. The interface is Russian and English; most of the catalogue is Russian
-for now.
+night. The interface is Russian and English, and so is the catalogue — about
+seven recordings in ten are in English.
 
 ## Who it is for
 

@@ -14,7 +14,21 @@ the next piece of work. What the work keeps turning up is
 ## The iteration
 
 Four phases. Each is worth finishing before starting the next, because each one
-changes what the next should do.
+changes what the next should do. `/harvest` is the same four phases as a skill —
+what to run under a loop that wakes after the reset; this page is the reasoning
+behind it.
+
+Start by asking what today has, because the answer changes which phase is worth
+doing at all:
+
+```bash
+pnpm tsx scripts/_day.ts --release
+```
+
+Free, read-only and safe beside a running crawl: the ledger and the hours left
+on it, what is queued and what that costs, how many search questions are still
+unasked, how many bindings wait on a reader, and whether the nightly job has
+published a generation this cache does not descend from.
 
 ### 1. Run the pipeline
 
@@ -433,6 +447,7 @@ that has not read it will propose Smarthistory, ICTS and TutorialsPoint again.
 
 | Command | Cost | What it answers |
 |---|---|---|
+| `_day.ts [--release]` | free | what is left of the day, and what to spend it on — quota, queue, unasked questions, review debt, and whether the release has moved |
 | `_refusals.ts [bucket] [out.json]` | free | why were these playlists refused |
 | `_gaps.ts [course-id]` | free | is a course worth adding — what waits for it, and what it would take from its neighbours |
 | `_noisy.ts [min]` | free | which keywords claim and never win |

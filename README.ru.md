@@ -11,12 +11,12 @@
 [![сайт](https://img.shields.io/badge/%D1%81%D0%B0%D0%B9%D1%82-lectorea.org-2ea043)](https://lectorea.org/)
 [![deploy](https://github.com/fivol/lectorea/actions/workflows/deploy.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/deploy.yml)
 [![ci](https://github.com/fivol/lectorea/actions/workflows/ci.yml/badge.svg)](https://github.com/fivol/lectorea/actions/workflows/ci.yml)
-[![курсов](https://img.shields.io/badge/%D0%BA%D1%83%D1%80%D1%81%D0%BE%D0%B2-225_%D0%B2_39_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8F%D1%85-4c8eda)](https://lectorea.org/)
+[![курсов](https://img.shields.io/badge/%D0%BA%D1%83%D1%80%D1%81%D0%BE%D0%B2-236_%D0%B2_39_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8F%D1%85-4c8eda)](https://lectorea.org/)
 
 [![Карта](docs/images/map.webp)](https://lectorea.org/)
 
-225 курсов в 39 областях знания, каждый знает, на что он опирается, и около 5800
-записей к ним из 320 вузов и каналов. Этим каталог и отличается от поиска:
+236 курсов в 39 областях знания, каждый знает, на что он опирается, и около
+12 500 записей к ним из 309 вузов и каналов. Этим каталог и отличается от поиска:
 YouTube найдёт лекцию по тензорному анализу, но не скажет, что без линейной
 алгебры её слушать бесполезно. Lectorea отвечает на два вопроса, которые
 возникают на самом деле:

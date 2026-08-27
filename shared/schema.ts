@@ -125,6 +125,17 @@ export const BuiltCourseSchema = CourseSchema.extend({
   level: z.number(), // column: longest `deps` chain ending here, computed globally
   row: z.number(), // position inside the column, from the barycentric ordering
   playlistCount: z.number(),
+  /**
+   * The same count split by the language of the recording — `{ en: 12, ru: 3 }`,
+   * languages with nothing in them absent.
+   *
+   * `playlistCount` alone hides the shape that matters to a reader who speaks
+   * one language: a course with forty Russian recordings and none in English is
+   * full by the total and empty to half the audience. It is what lets the hunt
+   * aim at the thin half rather than at the thin course
+   * ([lib/questions.ts](../scripts/lib/questions.ts), `questionBrief`).
+   */
+  playlistsByLang: z.record(z.string(), z.number()),
   hours: z.number(), // median totalSeconds of the course playlists, in hours
   /**
    * A course with nothing to watch and nothing standing on it: it stays in the
