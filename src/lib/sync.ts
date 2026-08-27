@@ -193,3 +193,69 @@ export function isReturning(): boolean {
     return false;
   }
 }
+
+/**
+ * The address a sign-in link was sent to, kept until the link is opened.
+ *
+ * Firebase requires the address again when the link is used, and will not take
+ * it out of the link itself: a link is a bearer token, and one intercepted in
+ * transit would otherwise be a complete sign-in. Remembering it here is what
+ * makes the ordinary case — send from this browser, open the letter in this
+ * browser — a single press. Opening it anywhere else asks for the address, and
+ * that is the check working rather than failing.
+ */
+const EMAIL_KEY = 'catalog.sync.email';
+
+export function rememberEmail(email: string | null): void {
+  try {
+    if (email) localStorage.setItem(EMAIL_KEY, email);
+    else localStorage.removeItem(EMAIL_KEY);
+  } catch {
+    // Then the link asks for the address on the way back, which is the same
+    // path a link opened on another device takes anyway.
+  }
+}
+
+export function rememberedEmail(): string | null {
+  try {
+    return localStorage.getItem(EMAIL_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Whether this address is Firebase handing a sign-in link back.
+ *
+ * Asked before the SDK is loaded, and answered without it, because the whole
+ * point of the lazy import is that nothing downloads it speculatively — and a
+ * link opened on a phone that has never seen this site has no mark and no
+ * returning flag to go on. `mode=signIn` with an `oobCode` is what the handler
+ * appends, and nothing else on this site uses either name.
+ */
+export function looksLikeEmailLink(search: string): boolean {
+  const params = new URLSearchParams(search);
+  return params.get('mode') === 'signIn' && Boolean(params.get('oobCode'));
+}
+
+/** The parameters Firebase appends, which have no business outliving the sign-in. */
+const LINK_PARAMS = ['apiKey', 'oobCode', 'mode', 'lang', 'continueUrl', 'tenantId'];
+
+/**
+ * Take the sign-in link's parameters out of the address bar.
+ *
+ * Not for tidiness: an `oobCode` in the address is a credential in the address,
+ * and an address is the thing people copy, bookmark and paste into a chat. It
+ * never reaches the analytics — `pageView` builds its path out of catalogue ids
+ * and rebuilds the query from an allowlist — but a reader can still hand it to
+ * somebody by accident, and there is no reason for it to be there once used.
+ *
+ * `replaceState` rather than a navigation: none of these names is read by any
+ * screen, so there is nothing to re-render and no history entry to add.
+ */
+export function cleanLinkUrl(): void {
+  const url = new URL(window.location.href);
+  if (!LINK_PARAMS.some((name) => url.searchParams.has(name))) return;
+  for (const name of LINK_PARAMS) url.searchParams.delete(name);
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}

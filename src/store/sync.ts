@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { isReturning, readMark } from '@/lib/sync';
+import { isReturning, looksLikeEmailLink, readMark } from '@/lib/sync';
 
 /**
  * What the interface knows about syncing, and nothing that Firebase knows.
@@ -41,11 +41,30 @@ export type SyncFault =
   | 'network'
   /** The sign-in window was blocked or closed. */
   | 'signin'
+  /** The address was refused, or is not the one the link was sent to. */
+  | 'email'
+  /** A sign-in link that has expired or has already been used. */
+  | 'link'
   /** The cloud copy was written by a newer build of the site. */
   | 'newer'
   /** The profile has outgrown what one document may hold. */
   | 'too-big'
   | 'unknown';
+
+/**
+ * What the sign-in-by-email flow is waiting for, when it is waiting.
+ *
+ * Three steps rather than a boolean, because they are three different screens
+ * and the middle one can be arrived at without the first: `confirm` is a link
+ * opened on a device that never sent it, which is the flow working as intended
+ * — press send on the laptop, tap the link on the phone.
+ */
+export type SyncPending =
+  /** The address field is open and nothing has been sent. */
+  | { kind: 'compose' }
+  | { kind: 'sent'; email: string }
+  /** A link is in hand and this browser does not know which address it went to. */
+  | { kind: 'confirm' };
 
 /**
  * Who is signed in, in the two fields the interface shows.
@@ -67,7 +86,14 @@ type SyncStore = {
   fault: SyncFault | null;
   /** An action the reader pressed is still running — the buttons wait for it. */
   busy: boolean;
+  pending: SyncPending | null;
   signIn: () => void;
+  /** Open the address field. No network, no SDK — this is one press of state. */
+  openLink: () => void;
+  sendLink: (email: string) => void;
+  /** Spend a link with an address typed on a device that did not send it. */
+  finishLink: (email: string) => void;
+  cancelLink: () => void;
   signOut: () => void;
   /** Sign out **and** delete the cloud copy. The local profile is untouched. */
   forget: () => void;
@@ -90,13 +116,20 @@ async function run(action: (mod: Awaited<ReturnType<typeof engine>>) => Promise<
   }
 }
 
-export const useSync = create<SyncStore>(() => ({
+export const useSync = create<SyncStore>((set) => ({
   status: 'off',
   account: null,
   fault: null,
   busy: false,
+  pending: null,
 
   signIn: () => void run((mod) => mod.signIn()),
+  openLink: () => set({ pending: { kind: 'compose' }, fault: null }),
+  sendLink: (email) => void run((mod) => mod.sendLink(email)),
+  finishLink: (email) => void run((mod) => mod.finishLink(email)),
+  // Abandoning a link in hand is also abandoning the sign-in it belongs to, so
+  // the status goes back to `off` rather than staying on `connecting` forever.
+  cancelLink: () => set({ pending: null, fault: null, status: 'off' }),
   signOut: () => void run((mod) => mod.signOut()),
   forget: () => void run((mod) => mod.forget()),
 }));
@@ -110,7 +143,11 @@ export const useSync = create<SyncStore>(() => ({
  */
 export function bootSync(): void {
   if (!SYNC_AVAILABLE) return;
-  if (!readMark() && !isReturning()) return;
+  // Three reasons to load the engine, and no fourth: this browser has synced
+  // before, a sign-in redirect is on its way back, or the address is a sign-in
+  // link — which is the one that arrives on a device that has never seen the
+  // site, so neither of the other two can speak for it.
+  if (!readMark() && !isReturning() && !looksLikeEmailLink(window.location.search)) return;
   useSync.setState({ status: 'connecting' });
   void engine().then((mod) => mod.attach());
 }

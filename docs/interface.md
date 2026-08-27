@@ -1444,11 +1444,16 @@ and it is still the only thing on this screen that does. The same JSON also goes
 straight to the clipboard, for a phone with nowhere to put a download.
 
 Above the file sits the other answer to the same question: **Синхронизация**, an
-optional Google sign-in that copies the profile into a document of its own so a
-laptop and a phone share one. Signed out it is a sentence and a button; signed
-in it is the account, one word of status, «Выйти», and — set apart, in red —
-«Удалить копию в облаке», which is the only thing on the site that removes data
-from a server, and removes all of it. The two buttons are two questions:
+optional sign-in that copies the profile into a document of its own so a laptop
+and a phone share one. Two ways in, side by side — Google, and a link sent to an
+email address. The second is not a fallback: it is for anybody without a Google
+account, and for the thing a popup handles worst, which is a phone. The letter
+can be opened on a different device from the one that asked for it, so «войти на
+телефоне» becomes «press send on the laptop, tap the link on the phone».
+
+Signed in it is the account, one word of status, «Выйти», and — set apart, in
+red — «Удалить копию в облаке», which is the only thing on the site that removes
+data from a server, and removes all of it. The two buttons are two questions:
 signing out stops this device syncing and deletes nothing, anywhere.
 
 The order on the screen is deliberate. The account is the answer for almost
@@ -1458,11 +1463,17 @@ build with no Firebase configured shows none of this and is a complete site —
 which is what a fork gets, and what `pnpm dev` gets. How the two copies are
 reconciled, and the one thing a merge cannot carry, is [sync.md](sync.md).
 
-Outside that section an account shows itself in exactly one place: the profile
-disc in the header carries its initial instead of the anonymous glyph. Not an
-avatar — it would be the only request this site makes to a third party for a
-picture, on the screen whose whole argument is that nothing about a reader
-leaves the browser.
+Outside that section an account shows itself in two places, both inside the
+profile. The disc in the header carries its initial instead of the anonymous
+glyph — not an avatar, which would be the only request this site makes to a
+third party for a picture, on the screen whose whole argument is that nothing
+about a reader leaves the browser.
+
+And one line under the numbers on **Обучение**: «Всё это есть только в этом
+браузере», with a way to the section and a way to dismiss it for good. It is the
+only place on the site that mentions an account unasked, and it waits for three
+separate days with study on them before it says anything — one afternoon of
+marking things is not yet something worth being warned about losing.
 
 And a third button copies a **prompt**: the same profile written out for a
 reader that is not this site. An assistant handed the JSON has to guess its way

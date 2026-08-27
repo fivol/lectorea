@@ -47,7 +47,8 @@ export type IconName =
   | 'google'
   | 'cloud'
   | 'cloud-off'
-  | 'sync';
+  | 'sync'
+  | 'mail';
 
 /** One inline sprite instead of an icon package — twenty glyphs is not a dependency. */
 const PATHS: Record<IconName, string> = {
@@ -129,6 +130,7 @@ const PATHS: Record<IconName, string> = {
   cloud: 'M7 19a4.5 4.5 0 01-.4-9 6.5 6.5 0 0112.5 2A3.6 3.6 0 0118.4 19z',
   'cloud-off': 'M7 19a4.5 4.5 0 01-.4-9 6.5 6.5 0 019.6-2.2M4 4l16 16M18.6 12.2A3.6 3.6 0 0118.4 19h-6',
   sync: 'M20 12a8 8 0 01-13.7 5.6M4 12a8 8 0 0113.7-5.6M4 20v-4h4M20 4v4h-4',
+  mail: 'M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1zM3.4 6.7l8.6 6 8.6-6',
 };
 
 const FILLED: IconName[] = ['star-filled', 'play', 'half', 'grid', 'flame'];

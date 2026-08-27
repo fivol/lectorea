@@ -11,6 +11,7 @@ import { useProfileNavigation } from './navigate';
 import { PlaylistGrid, PlaylistsExpanded, useFavoritePlaylists } from './PlaylistsSection';
 import ProfileStats from './ProfileStats';
 import RecentSection, { ClearRecent } from './RecentSection';
+import SyncNudge from './SyncNudge';
 import Section, { ExpandedSection } from './Section';
 
 /**
@@ -33,7 +34,7 @@ const PREVIEW = { studying: 4, favorite: 4, playlists: 3, recent: 3, done: 4 } a
 
 type SectionKey = keyof typeof PREVIEW;
 
-export default function LearningTab() {
+export default function LearningTab({ onOpenData }: { onOpenData: () => void }) {
   const catalog = useCatalog();
   const { t } = useT();
   const profile = useProfile((state) => state.profile);
@@ -122,6 +123,9 @@ export default function LearningTab() {
       ) : (
         <div className="space-y-8">
           <ProfileStats />
+          {/* Under the numbers rather than over them: the line is a footnote to
+              «вот ваш прогресс», and it only has a point once there is one. */}
+          <SyncNudge onOpenData={onOpenData} />
           <ContinueCard />
 
           {groups.studying.length ? (

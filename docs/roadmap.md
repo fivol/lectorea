@@ -59,7 +59,11 @@ feature — or download a single byte of the code that would have signed them in
 The profile is still `localStorage` first and the identity is still not its
 primary key: the cloud copy is a copy.
 
-What is left of this item: a second way in for people without a Google account.
+Two ways in, and neither is a fallback: Google, and a link sent to an email
+address — which also solves the case a popup handles worst, since the letter can
+be opened on a device other than the one that asked for it. What is left of the
+item is Apple sign-in, and what is stopping it is a paid developer account
+rather than any part of the design.
 
 ## 2. Progress kept off the browser
 

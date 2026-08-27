@@ -3,7 +3,10 @@ import {
   getAuth,
   getRedirectResult,
   GoogleAuthProvider,
+  isSignInWithEmailLink,
   onAuthStateChanged,
+  sendSignInLinkToEmail,
+  signInWithEmailLink,
   signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
@@ -24,11 +27,14 @@ import { track } from '@/lib/analytics';
 import { mergeProfiles } from '@/lib/profile-merge';
 import {
   CLOUD_LIMIT,
+  cleanLinkUrl,
   decideSync,
   isReturning,
   markReturning,
   readCloud,
   readMark,
+  rememberedEmail,
+  rememberEmail,
   settingsFor,
   writeCloud,
   writeMark,
@@ -186,14 +192,73 @@ export async function signIn(): Promise<void> {
   }
 }
 
+/**
+ * The other way in: a link in an email, and no password anywhere.
+ *
+ * For readers with no Google account, and for the case Google's popup is worst
+ * at — a phone. The letter can be opened on a different device from the one
+ * that asked for it, which turns "sign in on my phone" into "press send on the
+ * laptop and tap the link on the phone", with nothing typed on the small screen
+ * but an address.
+ */
+export async function sendLink(email: string): Promise<void> {
+  const { auth } = ensure();
+  attach();
+  try {
+    await sendSignInLinkToEmail(auth, email, {
+      // Back to the page they were reading, not to a landing page of ours.
+      // Firebase appends its parameters to this, and `cleanLinkUrl` takes them
+      // off again once they have been spent.
+      url: `${window.location.origin}${window.location.pathname}`,
+      handleCodeInApp: true,
+    });
+    rememberEmail(email);
+    useSync.setState({ pending: { kind: 'sent', email }, fault: null });
+    track('sync_signin', { kind: 'email', ok: true });
+  } catch (error) {
+    const code = String((error as { code?: string })?.code ?? '');
+    fault(code.includes('email') ? 'email' : classify(error, 'signin'));
+    track('sync_signin', { kind: 'email', ok: false });
+  }
+}
+
+/** Spend the link, with the address it was sent to. */
+export async function finishLink(email: string): Promise<void> {
+  const { auth } = ensure();
+  useSync.setState({ status: 'connecting', fault: null });
+  try {
+    await signInWithEmailLink(auth, email, window.location.href);
+    rememberEmail(null);
+    useSync.setState({ pending: null });
+  } catch (error) {
+    const code = String((error as { code?: string })?.code ?? '');
+    // A link is single-use and expires. Both come back as the same code, and
+    // both have the same answer — ask for another one — so they are one fault.
+    if (code.includes('action-code') || code.includes('expired')) {
+      rememberEmail(null);
+      useSync.setState({ pending: null });
+      fault('link');
+    } else if (code.includes('email')) {
+      // Wrong address for this link: keep the field up rather than sending them
+      // back to the start, because the next guess is usually the right one.
+      fault('email');
+    } else {
+      fault(classify(error, 'signin'));
+    }
+  } finally {
+    cleanLinkUrl();
+  }
+}
+
 export async function signOut(): Promise<void> {
   const { auth } = ensure();
   await flush();
   detach();
   writeMark(null);
   markReturning(false);
+  rememberEmail(null);
   await firebaseSignOut(auth).catch(() => undefined);
-  useSync.setState({ status: 'off', account: null, fault: null });
+  useSync.setState({ status: 'off', account: null, fault: null, pending: null });
   track('sync_off', { mode: 'signout' });
 }
 
@@ -220,8 +285,9 @@ export async function forget(): Promise<void> {
   }
   writeMark(null);
   markReturning(false);
+  rememberEmail(null);
   await firebaseSignOut(auth).catch(() => undefined);
-  useSync.setState({ status: 'off', account: null, fault: null });
+  useSync.setState({ status: 'off', account: null, fault: null, pending: null });
   track('sync_off', { mode: 'forget' });
 }
 
@@ -250,12 +316,26 @@ export function attach(): void {
       useSync.setState({ status: 'off', account: null });
     }
   });
+
+  /*
+   * A sign-in link being opened. The address is asked for again — Firebase
+   * insists, and rightly: a link is a bearer token, and one intercepted in
+   * transit would otherwise be a complete sign-in — so this is a single press
+   * when the letter is opened in the browser that asked for it, and a field
+   * when it is opened anywhere else, which is the common and intended case.
+   */
+  if (isSignInWithEmailLink(auth, window.location.href)) {
+    const email = rememberedEmail();
+    if (email) void finishLink(email);
+    else useSync.setState({ status: 'connecting', pending: { kind: 'confirm' } });
+  }
 }
 
 function follow(user: User): void {
   useSync.setState({
     status: 'connecting',
     fault: null,
+    pending: null,
     account: {
       uid: user.uid,
       email: user.email,

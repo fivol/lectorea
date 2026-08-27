@@ -21,9 +21,37 @@ the two cheaper shapes.
 
 ## What a reader sees
 
-**Профиль → Данные → Синхронизация.** Signed out it is one sentence and a
-button. Signed in it is the account, one word of status, «Выйти», and — set
+**Профиль → Данные → Синхронизация.** Signed out it is one sentence and two
+buttons. Signed in it is the account, one word of status, «Выйти», and — set
 apart, in red — «Удалить копию в облаке».
+
+Two ways in, side by side rather than one behind the other:
+
+| | |
+|---|---|
+| **Войти через Google** | one press, and the accented one — it is what most people will use |
+| **По ссылке в почте** | an address, a letter, a link. No password exists to be forgotten or stolen |
+
+The second is not a fallback, whatever its position suggests, and for the reader
+who needs it there is no first. It also handles the case Google's popup is worst
+at: **the letter can be opened on a different device from the one that asked for
+it.** Press send on the laptop, tap the link on the phone, and the phone is
+signed in with nothing typed on the small screen at all.
+
+A link is a bearer token, so Firebase asks for the address again when it is
+spent, and refuses to take it out of the link itself. On the browser that sent
+it that is invisible — the address is remembered. Anywhere else it is a field
+saying «Подтвердите адрес, на который пришло письмо», which looks like a failure
+and is the check working. Links are single-use and short-lived; a spent or stale
+one says so and offers a new one.
+
+The link comes back to **the page the reader was on**, with Firebase's
+parameters appended, and `cleanLinkUrl` strips them the moment they are spent.
+Not for tidiness: an `oobCode` in the address bar is a credential in the address
+bar, and an address is the thing people copy and paste into a chat. It never
+reaches the analytics either way — `pageView` builds its path out of catalogue
+ids and rebuilds the query from an allowlist — but there is no reason for it to
+survive the sign-in.
 
 Two buttons rather than one, because they are two different questions:
 
@@ -35,11 +63,26 @@ Two buttons rather than one, because they are two different questions:
 The second is the only way anything is removed from the server, and it removes
 all of it: there is no backup, no tombstone and no other copy.
 
-Outside that section syncing shows itself in exactly one place — the profile
-disc in the header carries the account's initial instead of the anonymous
-glyph. There is no avatar: it would be the only request this site makes to a
-third party for a picture, on a screen whose argument is that nothing about a
-reader leaves the browser.
+Outside that section syncing shows itself in exactly two places, and both are
+inside the profile.
+
+The **profile disc** in the header carries the account's initial instead of the
+anonymous glyph. There is no avatar: it would be the only request this site
+makes to a third party for a picture, on a screen whose argument is that nothing
+about a reader leaves the browser.
+
+And **one line, once**, under the numbers on the **Обучение** tab: «Всё это есть
+только в этом браузере», with a way to the section and a way to dismiss it for
+good. It is the only thing on the whole site that mentions an account unasked,
+and it is deliberately not on the catalogue, where a reader who came to find a
+lecture would meet it.
+
+Its condition is a habit rather than a click — **three separate days with study
+on them**. One afternoon of marking things is not yet a year of work, and a site
+that asks for an account before a reader has decided they are using it is the
+thing that line exists not to be. The dismissal is a `localStorage` key rather
+than a profile setting, because it belongs to this browser: the profile of
+somebody who signs in later will be read on machines that never saw the line.
 
 ## How it works
 
@@ -156,8 +199,14 @@ only, and Firebase Hosting is not one of them.
 1. **A project.** [console.firebase.google.com](https://console.firebase.google.com/)
    → *Add project*. Google Analytics for it can be declined — the site has its
    own ([analytics.md](analytics.md)).
-2. **Authentication → Sign-in method → Google.** Set the support email. That is
-   the only provider wired up; see *What is deliberately not here* below.
+2. **Authentication → Sign-in method.** Two providers:
+   - **Google** — set the support email, and that is all it needs.
+   - **Email/Password**, with **Email link (passwordless sign-in)** switched on.
+     The password half stays unused; the site never offers one. Firebase's
+     default letter is sent from `noreply@<project>.firebaseapp.com` and can be
+     reworded under *Authentication → Templates → Email address sign-in*, which
+     is worth doing once — it is the only message this project ever sends
+     anybody.
 3. **Authentication → Settings → Authorized domains.** Add `lectorea.org` and
    keep `localhost`. A domain that is not on this list gets
    `auth/unauthorized-domain` and nothing else — it is the first thing to check
@@ -220,10 +269,12 @@ here" and load nothing. That is the `catalog.sync.returning` key, and it is why
 
 - **No anonymous accounts.** An account nobody chose is an identity attached to
   a browser, which is the thing the profile is designed not to have.
-- **No second provider, yet.** Google is one button and covers most of the
-  audience. Apple needs a paid developer account; email links need a mail
-  template and a second flow to explain. Adding one is a line in the engine when
-  there is a reason.
+- **No Apple sign-in.** It would be expected on iOS, and required if this ever
+  became an App Store app, but it needs a paid Apple Developer account. The code
+  for it is one provider object; the bill is the reason it is not there.
+- **No password anywhere.** The email provider is switched on for its link half
+  only. A password is a thing to store, reset, leak and support, and the link
+  does the same job with none of that.
 - **No Firebase Hosting.** The site is built and deployed by
   [deploy.yml](../.github/workflows/deploy.yml) to GitHub Pages and there is no
   reason for a second host — see [hosting.md](hosting.md).

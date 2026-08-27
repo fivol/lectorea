@@ -78,7 +78,7 @@ export const ANALYTICS_PARAMS: Record<string, ParamSpec> = {
     note:
       'course, domain, playlist, provider or lecturer — which row was chosen; ' +
       'playlist, video, channel or personal for a pasted link, which is what it pointed at; ' +
-      'popup or redirect for a sign-in, first or linked for a device meeting a cloud copy',
+      'popup, redirect or email for a sign-in; first or linked for a device meeting a cloud copy',
   },
   item_id: { scope: 'dimension', label: 'Chosen id', note: 'Catalogue id of the chosen row' },
   suggested: {
@@ -159,7 +159,7 @@ export const ANALYTICS_EVENTS: Record<string, string> = {
    * the last one, because a `merge` means somebody really did study on both.
    * A push counted every minute would answer nothing and cost the quota.
    */
-  sync_signin: 'A sign-in attempted, by popup or by redirect, and whether it took',
+  sync_signin: 'A sign-in attempted — popup, redirect or a link in an email — and whether it took',
   sync_join: 'A device met the cloud copy: pushed, pulled, merged or found nothing to do',
   sync_off: 'Signed out, or signed out with the cloud copy deleted',
   sync_error: 'Syncing failed, as which of the four kinds it was',

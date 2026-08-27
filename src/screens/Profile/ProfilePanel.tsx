@@ -89,7 +89,7 @@ export default function ProfilePanel() {
         </nav>
 
         <div className="panel-scroll min-h-0 flex-1" role="tabpanel">
-          {tab === 'learning' ? <LearningTab /> : null}
+          {tab === 'learning' ? <LearningTab onOpenData={() => setTab('data')} /> : null}
           {tab === 'settings' ? <SettingsTab /> : null}
           {tab === 'data' ? <DataTab /> : null}
         </div>
