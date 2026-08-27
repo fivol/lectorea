@@ -24,6 +24,8 @@
   "seo.heading.fieldCourses": "Курсы в порядке изучения",
   "seo.home.desc": "Бесплатный каталог университетских видеолекций: {courses}, {fields}, в порядке изучения — что нужно знать до курса и что он открывает дальше.",
   "seo.home.descEmpty": "Бесплатный каталог университетских видеолекций в порядке изучения: что нужно знать до курса и что он открывает дальше.",
+  "seo.learn.title": "Моё обучение — Lectorea",
+  "seo.learn.desc": "Что вы смотрите сейчас, что уже пройдено и что можно начать дальше. Всё это хранится в вашем браузере.",
   "seo.courses.desc": "{courses}, {fields}: видеозаписи лекций, порядок изучения и связи между курсами.",
   "seo.courses.descEmpty": "Университетские курсы по областям знаний: видеозаписи лекций, порядок изучения и связи между курсами.",
   "seo.notFound.title": "Страница не найдена | Lectorea",
@@ -114,6 +116,9 @@
   "ui.plural.week.many": "недель",
   "ui.nav.backTo.domains": "Области",
   "ui.nav.profile": "Профиль",
+  "ui.nav.learn": "Обучение",
+  "ui.nav.catalog": "Каталог",
+  "ui.nav.places": "Разделы сайта",
   "ui.view.map": "Карта",
   "ui.view.blocks": "Список",
   "ui.view.switch": "Переключить вид",
@@ -408,8 +413,8 @@
   "ui.recent.clearConfirm": "Удалить всю историю?",
   "ui.recent.clearDo": "Удалить",
   "ui.recent.remove": "Убрать из истории",
-  "ui.profile.tab.learning": "Обучение",
   "ui.profile.tab.settings": "Настройки",
+  "ui.profile.tab.account": "Аккаунт",
   "ui.profile.tab.data": "Данные",
   "ui.profile.empty": "Отметьте первый курс — здесь появится прогресс",
   "ui.profile.stats.title": "Ваш прогресс",
@@ -452,6 +457,10 @@
   "ui.profile.remaining": "осталось ≈{hours} ч",
   "ui.profile.noGoal": "Добавьте курс в избранное на карте — он станет целью, и здесь появится прогресс по его пути",
   "ui.home.title": "Ваше обучение",
+  "ui.learn.next": "Можно начать сейчас",
+  "ui.learn.next.hint": "У этих курсов всё, что нужно знать заранее, уже отмечено пройденным",
+  "ui.learn.next.opens": "откроет ещё {n}",
+  "ui.learn.next.onPath": "На пути к избранному",
   "ui.home.hide": "Скрыть до следующего захода",
   "ui.home.next": "Следующее начатое",
   "ui.home.prev": "Предыдущее начатое",
@@ -500,6 +509,7 @@
   "ui.sync.title": "Синхронизация",
   "ui.sync.offHint": "Профиль хранится только в этом браузере. Войдите — и отметки, избранное, цели и дни появятся на телефоне, а очистка браузера перестанет быть концом года занятий",
   "ui.sync.optional": "Вход ничего не открывает и не закрывает: без него каталог работает целиком, и так будет всегда",
+  "ui.sync.unavailable": "В этой сборке синхронизация не настроена: профиль живёт только в этом браузере. Перенести его можно файлом — вкладка «Данные»",
   "ui.sync.signIn": "Войти через Google",
   "ui.sync.signOut": "Выйти",
   "ui.sync.retry": "Повторить",
@@ -520,7 +530,8 @@
   "ui.sync.error.denied": "Сервер отклонил запись. Это ошибка настройки на нашей стороне, а не ваша: отмеченное цело в этом браузере, но в облако сейчас не уедет",
   "ui.sync.nudge": "Всё это есть только в этом браузере",
   "ui.sync.nudgeAction": "Синхронизировать",
-  "ui.sync.nudgeDismiss": "Больше не показывать",
+  "ui.sync.elsewhere": "Уже занимались на другом устройстве? Войдите — прогресс появится здесь",
+  "ui.sync.elsewhereAction": "Войти",
   "ui.sync.forget": "Удалить копию в облаке",
   "ui.sync.forgetConfirm": "Удалить профиль с сервера и выйти? В этом браузере всё останется на месте — исчезнет облачная копия и связь с ней других устройств",
   "ui.sync.forgetDo": "Удалить",
@@ -1181,91 +1192,62 @@
   "link.ocean-engineering.oceanography": "Океанография описывает волны, течения и дно, а морская инженерия превращает эту среду в нагрузки и ограничения конструкции.",
   "course.artificial-intelligence.title": "Искусственный интеллект",
   "course.artificial-intelligence.desc": "Поиск, эвристики, представление знаний, планирование, вывод в условиях неопределённости",
-
   "course.analytic-geometry.title": "Аналитическая геометрия",
   "course.analytic-geometry.desc": "Прямые и плоскости, кривые и поверхности второго порядка в координатах",
-
   "course.algebraic-geometry.title": "Алгебраическая геометрия",
   "course.algebraic-geometry.desc": "Аффинные и проективные многообразия, пучки, схемы",
-
   "course.lie-theory.title": "Группы и алгебры Ли",
   "course.lie-theory.desc": "Непрерывные симметрии: группы Ли, алгебры Ли и их представления",
-
   "course.homological-algebra.title": "Гомологическая алгебра",
   "course.homological-algebra.desc": "Комплексы, точные последовательности, функторы Ext и Tor",
-
   "course.mathematical-physics.title": "Методы математической физики",
   "course.mathematical-physics.desc": "Специальные функции, функции Грина, интегральные преобразования",
-
   "course.fluid-mechanics.title": "Механика жидкости и газа",
   "course.fluid-mechanics.desc": "Уравнения Навье — Стокса, пограничный слой, турбулентность, гидравлика",
-
   "course.heat-transfer.title": "Теплопередача",
   "course.heat-transfer.desc": "Теплопроводность, конвекция, излучение, расчёт теплообменников",
-
   "course.electrical-machines.title": "Электрические машины",
   "course.electrical-machines.desc": "Трансформаторы, машины постоянного и переменного тока, электропривод",
-
   "course.power-systems.title": "Электроэнергетические системы",
   "course.power-systems.desc": "Генерация, передача и распределение энергии, режимы и защита сетей",
-
   "course.communication-systems.title": "Системы связи",
   "course.communication-systems.desc": "Модуляция, помехоустойчивость, цифровая передача данных",
-
   "course.microprocessors.title": "Микропроцессоры и встраиваемые системы",
   "course.microprocessors.desc": "Архитектура микроконтроллеров, периферия, программирование на низком уровне",
-
   "course.engineering-drawing.title": "Инженерная графика",
   "course.engineering-drawing.desc": "Начертательная геометрия, проекции, чертёж и стандарты оформления",
-
   "course.data-science.title": "Наука о данных",
   "course.data-science.desc": "Сбор, очистка и разведочный анализ данных, визуализация, выводы",
-
   "course.high-performance-computing.title": "Высокопроизводительные вычисления",
   "course.high-performance-computing.desc": "Параллельное программирование, MPI, OpenMP, CUDA, масштабирование",
-
   "course.accounting.title": "Бухгалтерский учёт",
   "course.accounting.desc": "Двойная запись, финансовая отчётность, учёт затрат",
-
   "course.entrepreneurship.title": "Предпринимательство",
   "course.entrepreneurship.desc": "Как устроен запуск компании: идея, бизнес-модель, деньги, рост",
-
   "course.business-communication.title": "Деловая коммуникация",
   "course.business-communication.desc": "Переговоры, презентации, деловая переписка",
-
   "course.power-electronics.title": "Силовая электроника",
   "course.power-electronics.desc": "Преобразователи, выпрямители и инверторы, ШИМ, управление ключами",
-
   "course.cloud-computing.title": "Облачные вычисления",
   "course.cloud-computing.desc": "Виртуализация, контейнеры, оркестрация, облачные сервисы",
-
   "course.web-development.title": "Веб-разработка",
   "course.web-development.desc": "HTTP, фронтенд и бэкенд, фреймворки, развёртывание",
-
   "course.mobile-development.title": "Мобильная разработка",
   "course.mobile-development.desc": "Android и iOS, интерфейс, жизненный цикл, публикация приложения",
-
   "course.vlsi-design.title": "Проектирование СБИС",
   "course.vlsi-design.desc": "МОП-транзисторы, стандартные ячейки, от RTL до топологии, тайминги",
-
   "course.dynamical-systems.title": "Динамические системы",
   "course.dynamical-systems.desc": "Фазовые портреты, устойчивость, бифуркации, хаос",
-
   "course.chemical-reaction-engineering.title": "Химические реакторы",
   "course.chemical-reaction-engineering.desc": "Кинетические законы, идеальные и реальные реакторы, катализ, расчёт реактора",
-
   "course.materials-science.title": "Материаловедение",
   "course.materials-science.desc": "Кристаллическая структура, дефекты, фазовые диаграммы, механические свойства",
-
   "course.human-computer-interaction.title": "Человеко-машинное взаимодействие",
   "course.human-computer-interaction.desc": "Проектирование интерфейсов, прототипирование, тестирование удобства, доступность",
-
   "course.supply-chain-management.title": "Управление цепями поставок",
   "course.supply-chain-management.desc": "Закупки, запасы, логистические сети, планирование спроса",
-
   "course.game-development.title": "Разработка игр",
   "course.game-development.desc": "Движки, игровой цикл, физика, сцены и спрайты, публикация",
-
   "course.international-business.title": "Международный бизнес",
   "course.international-business.desc": "Способы выхода на рынок, торговля и институты, кросс-культурный менеджмент"
 }

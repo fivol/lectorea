@@ -24,6 +24,8 @@
   "seo.heading.fieldCourses": "Courses in the order you learn them",
   "seo.home.desc": "A free catalogue of university video lectures: {courses}, {fields}, in the order you learn them — what you need before a course and what it opens up.",
   "seo.home.descEmpty": "A free catalogue of university video lectures in the order you learn them: what you need before a course and what it opens up.",
+  "seo.learn.title": "Your learning — Lectorea",
+  "seo.learn.desc": "What you are watching now, what you have finished, and what you can start next. All of it stays in your browser.",
   "seo.courses.desc": "{courses}, {fields}: video lectures, the order to take them in, and how the courses connect.",
   "seo.courses.descEmpty": "University courses by field of knowledge: video lectures, the order to take them in, and how the courses connect.",
   "seo.notFound.title": "Page not found | Lectorea",
@@ -114,6 +116,9 @@
   "ui.plural.week.many": "weeks",
   "ui.nav.backTo.domains": "Fields",
   "ui.nav.profile": "Profile",
+  "ui.nav.learn": "Learning",
+  "ui.nav.catalog": "Catalogue",
+  "ui.nav.places": "Sections of the site",
   "ui.view.map": "Map",
   "ui.view.blocks": "List",
   "ui.view.switch": "Switch view",
@@ -408,8 +413,8 @@
   "ui.recent.clearConfirm": "Delete the whole history?",
   "ui.recent.clearDo": "Delete",
   "ui.recent.remove": "Remove from history",
-  "ui.profile.tab.learning": "Learning",
   "ui.profile.tab.settings": "Settings",
+  "ui.profile.tab.account": "Account",
   "ui.profile.tab.data": "Data",
   "ui.profile.empty": "Mark your first course — progress will show up here",
   "ui.profile.stats.title": "Your progress",
@@ -452,6 +457,10 @@
   "ui.profile.remaining": "≈{hours} h left",
   "ui.profile.noGoal": "Add a course to favourites on the map — it becomes a goal, and progress along its path shows up here",
   "ui.home.title": "Your learning",
+  "ui.learn.next": "Ready to start",
+  "ui.learn.next.hint": "Everything these courses need is already marked done",
+  "ui.learn.next.opens": "opens {n} more",
+  "ui.learn.next.onPath": "On the way to a favourite",
   "ui.home.hide": "Hide until next visit",
   "ui.home.next": "Next in progress",
   "ui.home.prev": "Previous in progress",
@@ -500,6 +509,7 @@
   "ui.sync.title": "Sync",
   "ui.sync.offHint": "This profile lives in this browser and nowhere else. Sign in and your marks, favourites, goals and days turn up on your phone — and clearing the browser stops being the end of a year's studying",
   "ui.sync.optional": "Signing in unlocks nothing and locks nothing: the catalogue is complete without it, and it always will be",
+  "ui.sync.unavailable": "This build has no sync configured: the profile lives in this browser alone. The Data tab is how it travels — as a file",
   "ui.sync.signIn": "Sign in with Google",
   "ui.sync.signOut": "Sign out",
   "ui.sync.retry": "Try again",
@@ -520,7 +530,8 @@
   "ui.sync.error.denied": "The server refused the write. That is a misconfiguration on our side rather than anything you did: what you marked is safe in this browser, but it is not reaching the cloud",
   "ui.sync.nudge": "All of this is in this browser only",
   "ui.sync.nudgeAction": "Sync it",
-  "ui.sync.nudgeDismiss": "Do not show this again",
+  "ui.sync.elsewhere": "Already studying on another device? Sign in and the progress turns up here",
+  "ui.sync.elsewhereAction": "Sign in",
   "ui.sync.forget": "Delete the cloud copy",
   "ui.sync.forgetConfirm": "Delete the profile from the server and sign out? Everything in this browser stays where it is — the cloud copy goes, and with it the link to your other devices",
   "ui.sync.forgetDo": "Delete",
@@ -1181,91 +1192,62 @@
   "link.ocean-engineering.oceanography": "Oceanography describes waves, currents and the seabed; ocean engineering turns that environment into loads and design constraints.",
   "course.artificial-intelligence.title": "Artificial intelligence",
   "course.artificial-intelligence.desc": "Search, heuristics, knowledge representation, planning, reasoning under uncertainty",
-
   "course.analytic-geometry.title": "Analytic geometry",
   "course.analytic-geometry.desc": "Lines and planes, conics and quadric surfaces in coordinates",
-
   "course.algebraic-geometry.title": "Algebraic geometry",
   "course.algebraic-geometry.desc": "Affine and projective varieties, sheaves and schemes",
-
   "course.lie-theory.title": "Lie groups and Lie algebras",
   "course.lie-theory.desc": "Continuous symmetry: Lie groups, Lie algebras and their representations",
-
   "course.homological-algebra.title": "Homological algebra",
   "course.homological-algebra.desc": "Complexes, exact sequences, the Ext and Tor functors",
-
   "course.mathematical-physics.title": "Mathematical physics",
   "course.mathematical-physics.desc": "Special functions, Green's functions and integral transforms",
-
   "course.fluid-mechanics.title": "Fluid mechanics",
   "course.fluid-mechanics.desc": "Navier–Stokes, boundary layers, turbulence and hydraulics",
-
   "course.heat-transfer.title": "Heat transfer",
   "course.heat-transfer.desc": "Conduction, convection, radiation and heat exchangers",
-
   "course.electrical-machines.title": "Electrical machines",
   "course.electrical-machines.desc": "Transformers, DC and AC machines, electric drives",
-
   "course.power-systems.title": "Power systems",
   "course.power-systems.desc": "Generation, transmission and distribution, network operation and protection",
-
   "course.communication-systems.title": "Communication systems",
   "course.communication-systems.desc": "Modulation, noise, digital transmission",
-
   "course.microprocessors.title": "Microprocessors and embedded systems",
   "course.microprocessors.desc": "Microcontroller architecture, peripherals, low-level programming",
-
   "course.engineering-drawing.title": "Engineering drawing",
   "course.engineering-drawing.desc": "Descriptive geometry, projections and technical drawing",
-
   "course.data-science.title": "Data science",
   "course.data-science.desc": "Collecting, cleaning and exploring data, visualisation and inference",
-
   "course.high-performance-computing.title": "High-performance computing",
   "course.high-performance-computing.desc": "Parallel programming with MPI, OpenMP and CUDA, and how algorithms scale",
-
   "course.accounting.title": "Accounting",
   "course.accounting.desc": "Double entry, financial statements, cost accounting",
-
   "course.entrepreneurship.title": "Entrepreneurship",
   "course.entrepreneurship.desc": "Starting a company: the idea, the business model, the money, the growth",
-
   "course.business-communication.title": "Business communication",
   "course.business-communication.desc": "Negotiation, presentations and business writing",
-
   "course.power-electronics.title": "Power electronics",
   "course.power-electronics.desc": "Converters, rectifiers and inverters, PWM and switch control",
-
   "course.cloud-computing.title": "Cloud computing",
   "course.cloud-computing.desc": "Virtualisation, containers, orchestration, cloud services",
-
   "course.web-development.title": "Web development",
   "course.web-development.desc": "HTTP, frontend and backend, frameworks, deployment",
-
   "course.mobile-development.title": "Mobile development",
   "course.mobile-development.desc": "Android and iOS, interface, lifecycle, publishing an app",
-
   "course.vlsi-design.title": "VLSI design",
   "course.vlsi-design.desc": "MOS transistors, standard cells, RTL to layout, timing closure",
-
   "course.dynamical-systems.title": "Dynamical systems",
   "course.dynamical-systems.desc": "Phase portraits, stability, bifurcations, chaos",
-
   "course.chemical-reaction-engineering.title": "Chemical reaction engineering",
   "course.chemical-reaction-engineering.desc": "Rate laws, ideal and real reactors, catalysis, reactor sizing",
-
   "course.materials-science.title": "Materials science",
   "course.materials-science.desc": "Crystal structure, defects, phase diagrams, mechanical properties",
-
   "course.human-computer-interaction.title": "Human-computer interaction",
   "course.human-computer-interaction.desc": "Interface design, prototyping, usability testing, accessibility",
-
   "course.supply-chain-management.title": "Supply chain management",
   "course.supply-chain-management.desc": "Sourcing, inventory, logistics networks, demand planning",
-
   "course.game-development.title": "Game development",
   "course.game-development.desc": "Engines, the game loop, physics, scenes and sprites, publishing",
-
   "course.international-business.title": "International business",
   "course.international-business.desc": "Entry modes, trade and institutions, cross-cultural management"
 }

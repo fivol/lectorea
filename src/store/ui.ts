@@ -13,6 +13,17 @@ import { reporting, type Report } from '@/lib/analytics';
 export type MapView = 'map' | 'blocks';
 
 /**
+ * What is left in the modal once studying has a page of its own: the account
+ * the profile is carried between devices by, the settings, and the file.
+ *
+ * The account is first because it is the one thing in here somebody comes
+ * looking for on a *second* device — the laptop's progress, wanted on a phone
+ * — and it used to be a section halfway down a tab called «Данные», which is
+ * the last place a reader would go to look for a sign-in.
+ */
+export type ProfileTab = 'account' | 'settings' | 'data';
+
+/**
  * A course the panel is pointing at, and the course it was named from.
  *
  * Both ends, because a name in the panel is one end of a relation and the panel
@@ -33,7 +44,20 @@ export type UiStore = {
    * reading that then holds still.
    */
   echo: Echo | null;
+  /**
+   * The settings layer — what is left of the profile panel now that studying
+   * has a page of its own.
+   *
+   * The split is the reader's question rather than the data's: «что я прошёл»
+   * is a place, with an address, a back button and a link somebody can send
+   * themselves; «какая тема и куда экспортировать» is a drawer opened over
+   * whatever was on screen and closed again. They were one modal, and the
+   * half that was a place could not be linked to, could not be reached by a
+   * back button, and could not be what a home-screen icon opened on.
+   */
   profileOpen: boolean;
+  /** Which of the three tabs the layer opens on. */
+  profileTab: ProfileTab;
   /** Bumped when a course should be scrolled into view. */
   focusRequest: { courseId: string; nonce: number } | null;
   /**
@@ -75,7 +99,7 @@ export type UiStore = {
   hideSummary: () => void;
   /** Claim the keyboard for a layer; the returned function gives it back. */
   holdKeyboard: () => () => void;
-  openProfile: () => void;
+  openProfile: (tab?: ProfileTab) => void;
   closeProfile: () => void;
   requestFocus: (courseId: string) => void;
   setMapView: (next: MapView) => void;
@@ -93,13 +117,14 @@ export type UiStore = {
  */
 const UI_EVENTS: Partial<Record<keyof UiStore, Report<UiStore>>> = {
   setMapView: ({ after }) => ['map_view', { view: after.mapView }],
-  openProfile: () => ['profile_open', {}],
+  openProfile: ({ after }) => ['profile_open', { kind: after.profileTab }],
   hideSummary: () => ['summary_hidden', {}],
 };
 
 export const useUi = create<UiStore>((set, get) => reporting({
   echo: null,
   profileOpen: false,
+  profileTab: 'account',
   focusRequest: null,
   mapView: 'map',
   keyboardHeld: 0,
@@ -116,7 +141,7 @@ export const useUi = create<UiStore>((set, get) => reporting({
       set({ keyboardHeld: Math.max(0, get().keyboardHeld - 1) });
     };
   },
-  openProfile: () => set({ profileOpen: true }),
+  openProfile: (tab = 'account') => set({ profileOpen: true, profileTab: tab }),
   closeProfile: () => set({ profileOpen: false }),
   requestFocus: (courseId) =>
     set({ focusRequest: { courseId, nonce: (get().focusRequest?.nonce ?? 0) + 1 } }),

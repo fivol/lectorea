@@ -14,6 +14,7 @@ import GlobalFilters from '@/components/GlobalFilters';
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ViewSwitch from '@/components/ViewSwitch';
+import BottomNav, { PlaceSwitch } from '@/components/PlaceNav';
 import ProfileButton from '@/components/ProfileButton';
 import ProfileSummary, { useHighlights } from '@/components/ProfileSummary';
 import { Plate, PlateDivider } from '@/components/ui';
@@ -145,12 +146,22 @@ export default function MapScreen() {
             also what everything floating below it is measured against — it
             publishes its width as `--rail`; see the corner card. */}
         <div ref={rail} className="flex items-center gap-2">
+          {/* Where you are, then how this place is drawn: the desk and the
+              catalogue are two rooms, and map or list is a choice inside one of
+              them. Neither is in this row on a phone — the places are a bar
+              under the thumb, and the map/list switch rides under the search
+              field where it is part of the screen it changes. */}
+          {isMobile ? null : <PlaceSwitch />}
           {isMobile ? null : <ViewSwitch value={mapView} onChange={setMapView} />}
           <Plate row>
             <LangToggle />
             <ThemeToggle />
-            <PlateDivider />
-            <ProfileButton label />
+            {isMobile ? null : (
+              <>
+                <PlateDivider />
+                <ProfileButton label />
+              </>
+            )}
           </Plate>
         </div>
       </header>
@@ -180,6 +191,17 @@ export default function MapScreen() {
             variant={showMap ? 'floating' : 'inline'}
           />
         </div>
+        {/* On a phone the map/list switch stands here, under the field, rather
+            than floating over the foot of the screen: it changes what this
+            screen *is*, which is a question about the view and not about where
+            in the site you are — and the foot now belongs to the places. */}
+        {isMobile ? (
+          <ViewSwitch
+            value={mapView}
+            onChange={setMapView}
+            className="pointer-events-auto shadow-[var(--shadow-pop)]"
+          />
+        ) : null}
         <GlobalFilters className="pointer-events-auto justify-center" />
         {query.trim() && results.empty ? (
           <p
@@ -271,27 +293,21 @@ export default function MapScreen() {
         */}
         {isMobile || showSummary ? (
           <FloatingFoot>
-            {/* Where the corner card cannot fit. At the foot of the screen
-                rather than the top: it is the one thing here that is pressed
-                rather than read, and on a phone that is the band a thumb
-                reaches without the hand moving. */}
-            {showSummary ? (
+            {/* Between the phone's two windows and the wide one's: a window
+                too narrow for the corner card and too wide for the bar of
+                places still has a reader who stopped somewhere. It is gone on
+                a phone, where the desk is one of the three tabs below. */}
+            {showSummary && !isMobile ? (
               <ProfileSummary
                 variant="bar"
                 className="pointer-events-auto shadow-[var(--shadow-pop)] xl:hidden"
               />
             ) : null}
-            {isMobile ? (
-              <ViewSwitch
-                large
-                value={mapView}
-                onChange={setMapView}
-                className="pointer-events-auto shadow-[var(--shadow-pop)]"
-              />
-            ) : null}
-            {isMobile && showMap ? (
-              <ContributeBar floating>{t('ui.footer.contribute')}</ContributeBar>
-            ) : null}
+            {/* The one thing floating over the foot of a phone. It used to be
+                four: the zoom controls, the resume bar, the map/list switch
+                and the contribute line, in the band a thumb covers entirely.
+                See `PlaceNav`. */}
+            {isMobile ? <BottomNav /> : null}
           </FloatingFoot>
         ) : null}
       </main>

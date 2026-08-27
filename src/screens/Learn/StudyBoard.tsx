@@ -3,19 +3,24 @@ import type { BuiltCourse } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { useGoals } from '@/lib/goals';
+import { useResumeList } from '@/lib/progress';
 import { useProfile } from '@/store/profile';
+import { ContinueOffer } from '@/components/ContinueBlock';
+import { ResumeStepper, useResumeCarousel } from '@/components/ResumeCard';
+import TodayLine from '@/components/game/TodayLine';
 import EmptyState from '@/components/EmptyState';
-import ContinueCard from './ContinueCard';
 import CourseCard from './CourseCard';
 import { useProfileNavigation } from './navigate';
+import NextUp from './NextUp';
 import { PlaylistGrid, PlaylistsExpanded, useFavoritePlaylists } from './PlaylistsSection';
 import ProfileStats from './ProfileStats';
 import RecentSection, { ClearRecent } from './RecentSection';
-import SyncNudge from './SyncNudge';
+import AccountRow from './AccountRow';
 import Section, { ExpandedSection } from './Section';
 
 /**
- * Everything a reader has done here, on one screen.
+ * The desk: everything a reader has done here, and the one press that carries
+ * it on.
  *
  * Courses and playlists used to be two tabs, and they answered the same
  * question twice: a saved playlist is a course you meant to watch, and a course
@@ -23,18 +28,25 @@ import Section, { ExpandedSection } from './Section';
  * anywhere said what somebody was actually in the middle of — you had to know
  * which half of your own studying you were looking for before you could look.
  *
- * So: one tab, read top to bottom as the routine it describes. The numbers, the
- * lecture that was playing when you stopped, what you are studying, what you
- * are aiming at, what you saved for later, what you had open lately, what is
- * behind you. Each shelf shows a handful and opens into the whole of itself —
- * without leaving the profile, because none of this is a different place.
+ * So: one page, read top to bottom as the routine it describes. What was
+ * playing when you stopped, what today has come to, what the catalogue has
+ * opened up for you, the numbers, then the shelves — what you are studying,
+ * what you are aiming at, what you saved for later, what you had open lately,
+ * what is behind you. Each shelf shows a handful and opens into the whole of
+ * itself without leaving the page, because none of that is a different place.
+ *
+ * The order is the three horizons, in the order a reader meets them: **the
+ * day** at the top, where the press that answers it is; **the week** in the
+ * numbers, where looking back is the point; and the objects — courses,
+ * recordings, paths — on the shelves under both. See
+ * `docs/agents/practices.md`, "which horizon a number belongs to".
  */
 
 const PREVIEW = { studying: 4, favorite: 4, playlists: 3, recent: 3, done: 4 } as const;
 
 type SectionKey = keyof typeof PREVIEW;
 
-export default function LearningTab({ onOpenData }: { onOpenData: () => void }) {
+export default function StudyBoard() {
   const catalog = useCatalog();
   const { t } = useT();
   const profile = useProfile((state) => state.profile);
@@ -44,10 +56,13 @@ export default function LearningTab({ onOpenData }: { onOpenData: () => void }) 
   const rootRef = useRef<HTMLDivElement>(null);
 
   // Opening a shelf is a move, and a move that lands halfway down the previous
-  // page is a move nobody can follow. The scroller belongs to the panel, so it
-  // is found rather than held.
+  // page is a move nobody can follow. The scroller is the page itself now that
+  // this is one; `closest` still finds a panel's own if it is ever put in one.
   useEffect(() => {
-    rootRef.current?.closest('.panel-scroll')?.scrollTo({ top: 0 });
+    if (!open) return;
+    const scroller = rootRef.current?.closest('.panel-scroll');
+    if (scroller) scroller.scrollTo({ top: 0 });
+    else window.scrollTo({ top: 0 });
   }, [open]);
 
   const goals = useGoals();
@@ -105,13 +120,18 @@ export default function LearningTab({ onOpenData }: { onOpenData: () => void }) 
   };
 
   return (
-    <div ref={rootRef} className="p-4">
+    <div ref={rootRef}>
       {empty ? (
-        <EmptyState
-          icon="star"
-          text={t('ui.profile.empty')}
-          action={{ label: t('ui.profile.toMap'), onClick: toMap }}
-        />
+        <div className="space-y-6">
+          <EmptyState
+            icon="star"
+            text={t('ui.profile.empty')}
+            action={{ label: t('ui.profile.toMap'), onClick: toMap }}
+          />
+          {/* The other reason a desk is empty: this is the phone, and the
+              studying is on the laptop. See `AccountRow`. */}
+          <AccountRow empty />
+        </div>
       ) : open ? (
         <ExpandedSection
           title={sections[open].title}
@@ -122,11 +142,13 @@ export default function LearningTab({ onOpenData }: { onOpenData: () => void }) 
         </ExpandedSection>
       ) : (
         <div className="space-y-8">
+          <ContinueSection />
+          <NextUp />
           <ProfileStats />
-          {/* Under the numbers rather than over them: the line is a footnote to
-              «вот ваш прогресс», and it only has a point once there is one. */}
-          <SyncNudge onOpenData={onOpenData} />
-          <ContinueCard />
+          {/* Under the numbers rather than over them: it is a footnote to «вот
+              ваш прогресс» — where that progress is kept, and how to have it on
+              the other device. See `AccountRow`. */}
+          <AccountRow />
 
           {groups.studying.length ? (
             <Section
@@ -196,6 +218,40 @@ export default function LearningTab({ onOpenData }: { onOpenData: () => void }) 
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The offer, and the day it belongs to, at the top of the page.
+ *
+ * One decision in one block: «Продолжить» is the press, and «ещё 20 минут» is
+ * the ask that press answers. They were three screens apart before the card on
+ * the map put them together, and this is the same pair on the page that card
+ * is a shortcut into — the same components reading the same log, so the two
+ * cannot disagree about tonight.
+ *
+ * The arrows are here for the same reason they are on the card: a reader with
+ * three recordings on the go was being offered one of them and told nothing
+ * about the other two.
+ */
+function ContinueSection() {
+  const { t } = useT();
+  const resumes = useResumeList();
+  const { current, index, count, prev, next } = useResumeCarousel(resumes);
+
+  if (!current) return null;
+
+  return (
+    <section className="surface p-3 sm:p-4">
+      <header className="mb-2 flex items-center gap-2">
+        <h3 className="mono-label min-w-0 flex-1 truncate text-ink-dim">{t('ui.home.title')}</h3>
+        <ResumeStepper index={index} count={count} onPrev={prev} onNext={next} />
+      </header>
+      <ContinueOffer resume={current} />
+      {/* Indented to the offer's own padding, so the sentence starts under the
+          word «Продолжить» rather than under the still beside it. */}
+      <TodayLine className="mt-1 px-1" />
+    </section>
   );
 }
 

@@ -78,7 +78,8 @@ export const ANALYTICS_PARAMS: Record<string, ParamSpec> = {
     note:
       'course, domain, playlist, provider or lecturer — which row was chosen; ' +
       'playlist, video, channel or personal for a pasted link, which is what it pointed at; ' +
-      'popup, redirect or email for a sign-in; first or linked for a device meeting a cloud copy',
+      'popup, redirect or email for a sign-in; first or linked for a device meeting a cloud copy; ' +
+      'settings or data for the profile layer',
   },
   item_id: { scope: 'dimension', label: 'Chosen id', note: 'Catalogue id of the chosen row' },
   suggested: {

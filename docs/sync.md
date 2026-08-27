@@ -4,7 +4,7 @@
 laptop and a phone
 
 Everything a reader marks lives in one `localStorage` key and always will
-([interface.md](interface.md#the-profile)). That is what makes the catalogue
+([interface.md](interface.md#the-desk)). That is what makes the catalogue
 usable with no account, no password and no server that can read anybody's
 history — and it costs exactly one thing, which readers hit immediately: **the
 profile is trapped in one browser.** Study on a laptop, open the site on a
@@ -21,9 +21,20 @@ the two cheaper shapes.
 
 ## What a reader sees
 
-**Профиль → Данные → Синхронизация.** Signed out it is one sentence and two
-buttons. Signed in it is the account, one word of status, «Выйти», and — set
-apart, in red — «Удалить копию в облаке».
+**Профиль → Аккаунт.** Signed out it is one sentence and two buttons. Signed in
+it is the account, one word of status, «Выйти», and — set apart, in red —
+«Удалить копию в облаке».
+
+It is the drawer's first tab, and it used to be a section halfway down «Данные»,
+under the heading about exporting a file. The reader who wants it is almost
+always at a *second* device — the laptop holds the year of study, the phone in
+their hand holds nothing — and asking that person to guess which tab the word
+«войти» is filed under is asking them to give up. The same thing is said once
+more, on the desk, as a line under the numbers: signed out it offers the
+sign-in, signed in it names the account and whether the last write went through.
+On a desk with nothing on it the line asks the question that actually fits an
+empty desk — «уже занимались на другом устройстве?» — since that is what an
+empty desk usually is.
 
 Two ways in, side by side rather than one behind the other:
 

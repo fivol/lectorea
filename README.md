@@ -113,19 +113,22 @@ Watching promotes a course on its own, and pressing the status button yourself
 takes the wheel back.
 See [docs/interface.md](docs/interface.md#progress-down-to-the-lecture).
 
-## What the profile holds
+## What the desk holds
 
 ![The profile: the numbers, the run of days, and what to carry on with](docs/images/profile.webp)
 
-There is no account and nothing to sign up for — the profile is a modal over
-whatever you were looking at, and it reads top to bottom as the routine it
-describes.
+There is no account and nothing to sign up for. The desk is a page of its own,
+and it reads top to bottom as the routine it describes.
 
 - **The numbers.** Hours watched, lectures behind you, courses finished, days in
   a row — then the last four weeks as a strip of days, and the path to
   everything you marked as a goal, as one bar with the hours still to spend.
 - **Продолжить.** The last thing you opened that is not finished, at the lecture
-  and the second you left it at, one press away.
+  and the second you left it at, one press away — with the arrows to leaf
+  through everything else you have on the go.
+- **Можно начать сейчас.** The courses every prerequisite of which you have
+  already marked done: what the graph has unlocked, with anything on the way to
+  a favourite first.
 - **The shelves.** What you are studying now, your goals, the playlists you
   saved, what you had open lately, what is behind you. Each shows a handful and
   opens into the whole of itself without leaving the profile.
@@ -136,17 +139,24 @@ describes.
 not the course alone, so the bar moves while you are still three prerequisites
 away.
 
-**The front page remembers you.** Come back and the map carries the lecture you
-stopped at and the three numbers that say whether the habit is alive — days in a
-row, lectures watched, courses done. One press to carry on, one to open the
-profile.
+**Come back and it opens where you were.** The map is the front page for
+somebody who has never been here; for anybody who has, the site opens on their
+own desk instead — the lecture that was playing, what today came to, what the
+graph has just opened up, and the shelves of everything marked. The map is one
+press away and the wordmark still leads to it.
 
-**Your data is yours.** Everything lives in your browser, and there is no server
-to hold it. The **Данные** tab exports it all as one JSON file and imports it
-back on another machine — replacing what is there or merging it, keeping the
-further-along status on a conflict, and taking the union of the days you
-studied. That is today's whole sync story; the [roadmap](docs/roadmap.md) is
-about making it less manual.
+**Your data is yours, and it can follow you.** Everything lives in your browser
+and there is no server holding it. If you study on a laptop in the evening and
+on a phone in the morning, **Профиль → Аккаунт** is the sign-in that carries the
+same profile to both — Google, or a link sent to an email address, which can be
+opened on whichever device is missing the progress. It is a setting and never a
+wall: the catalogue is complete without it, and a reader who never signs in does
+not download a byte of the code that would have signed them in.
+
+Underneath it, the answer that needs nobody's server at all: the **Данные** tab
+exports the profile as one JSON file and imports it back on another machine —
+replacing what is there or merging it, keeping the further-along status on a
+conflict, and taking the union of the days you studied.
 
 The site does count how it is used — which courses get opened, and above all
 which searches come back empty, because a search with no results is a course

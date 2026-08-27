@@ -5,7 +5,7 @@ import { useCatalog } from '@/lib/catalog';
 import { loadMapGround, loadMapSvg, type MapVariant } from '@/lib/data';
 import { parseMapSvg, type MapShape, type ParsedMap } from '@/lib/map';
 import { fieldHref, useCatalogParams } from '@/lib/url';
-import { useReducedMotion } from '@/lib/hooks';
+import { useIsMobile, useReducedMotion } from '@/lib/hooks';
 import { DomainGlyph } from '@/components/DomainIcon';
 import { useFoot } from '@/components/FloatingFoot';
 import { useResolvedTheme } from '@/store/profile';
@@ -419,6 +419,7 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
   const navigate = useNavigate();
   const { t, count } = useT();
   const reducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const scheme = useResolvedTheme();
 
   const [map, setMap] = useState<ParsedMap | null>(null);
@@ -1054,7 +1055,19 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
           moving the map is a matrix on seven thousand nodes rather than seven
           thousand nodes reconsidered.
         */}
-        <g transform={viewport.transform}>{drawing}</g>
+        {/*
+          `will-change` because this is the one attribute a gesture changes and
+          the thing under it is thousands of paths: told in advance, the browser
+          rasterises the group once and answers a drag by moving that raster,
+          instead of repainting the relief every frame. It is set for the life
+          of the map rather than for the length of a gesture — promoting a layer
+          *at* the moment a thumb goes down is the frame a reader feels, and the
+          layer is the size of the window, which is what the scenery is already
+          clipped to (`SCENERY_MARGIN`).
+        */}
+        <g transform={viewport.transform} style={{ willChange: 'transform' }}>
+          {drawing}
+        </g>
       </svg>
 
       {/* Kept clear of the plate in the other corner, which on a narrow window
@@ -1089,21 +1102,32 @@ export default function MapView({ matched, searchActive, allowed, variant }: Pro
         className="absolute right-4"
         style={{ bottom: `calc(var(--foot, 0px) + ${CONTROLS_GAP})` }}
       >
-        <IconButton
-          icon="minus"
-          label={t('ui.map.zoomOut')}
-          disabled={viewport.fitted}
-          className="disabled:pointer-events-none disabled:opacity-35"
-          onClick={() => viewport.zoomBy(1 / ZOOM_STEP)}
-        />
-        <IconButton
-          icon="plus"
-          label={t('ui.map.zoomIn')}
-          disabled={viewport.deepest}
-          className="disabled:pointer-events-none disabled:opacity-35"
-          onClick={() => viewport.zoomBy(ZOOM_STEP)}
-        />
-        <PlateDivider />
+        {/*
+          A phone keeps one of the three, and it is the one a gesture cannot
+          replace. Pinching goes in and out; nothing on a touch screen puts the
+          world back where it started, and a reader three fingers deep into the
+          humanities has no other way home. The other two were a plate of
+          buttons over a drawing on the screen with the least room for either.
+        */}
+        {isMobile ? null : (
+          <>
+            <IconButton
+              icon="minus"
+              label={t('ui.map.zoomOut')}
+              disabled={viewport.fitted}
+              className="disabled:pointer-events-none disabled:opacity-35"
+              onClick={() => viewport.zoomBy(1 / ZOOM_STEP)}
+            />
+            <IconButton
+              icon="plus"
+              label={t('ui.map.zoomIn')}
+              disabled={viewport.deepest}
+              className="disabled:pointer-events-none disabled:opacity-35"
+              onClick={() => viewport.zoomBy(ZOOM_STEP)}
+            />
+            <PlateDivider />
+          </>
+        )}
         <IconButton
           icon="fit"
           label={t('ui.map.fit')}

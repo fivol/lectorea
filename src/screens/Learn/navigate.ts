@@ -3,14 +3,16 @@ import { courseHref, useCourseSlice } from '@/lib/url';
 import { useUi } from '@/store/ui';
 
 /**
- * The three ways out of the profile.
+ * The three ways off the desk.
  *
- * Every one of them closes the panel first — the profile is a layer over a
- * screen, and leaving it standing over the thing it just navigated to would
- * hide the answer behind the question. Courses are opened into their own
- * fields rather than onto the whole catalogue: the panel is opened over either
- * screen, and «продолжить путь» that lands on a hundred and eighty unrelated
+ * Courses are opened into their own fields rather than onto the whole
+ * catalogue: «продолжить путь» that lands on a hundred and eighty unrelated
  * cards has answered a different question.
+ *
+ * Each one also closes the settings drawer, which is not redundant now that
+ * the desk is a page: the drawer opens over it — the account, the file — and a
+ * layer left standing over the course it just navigated to would hide the
+ * answer behind the question.
  */
 export function useProfileNavigation(): {
   openCourse: (courseId: string) => void;

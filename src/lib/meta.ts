@@ -4,7 +4,8 @@ import { APP_BASE } from './lang';
 
 /**
  * The head of the page for the view that is on screen: the tab's name, the
- * description a search result quotes, and the canonical link.
+ * description a search result quotes, the canonical link, and — where a screen
+ * asks for it — the instruction not to index the thing at all.
  *
  * Every URL is already served from a static file that carries all three —
  * `scripts/prerender.ts` writes one per course — but the app navigates without
@@ -16,7 +17,14 @@ import { APP_BASE } from './lang';
  *
  * @param canonical Path inside the site, no leading slash — `courses/calculus-1`.
  */
-export function useDocumentMeta(title: string, description: string, canonical: string): void {
+export function useDocumentMeta(
+  title: string,
+  description: string,
+  canonical: string,
+  options: { index?: boolean } = {}
+): void {
+  const index = options.index !== false;
+
   useEffect(() => {
     if (title) document.title = title;
 
@@ -36,7 +44,30 @@ export function useDocumentMeta(title: string, description: string, canonical: s
     // canonical address of an English page is the English one, and naming the
     // Russian page instead would ask search to drop half the site.
     link.href = new URL(canonical, `${location.origin}${APP_BASE}`).href;
-  }, [title, description, canonical]);
+
+    /*
+     * A page whose entire content comes out of the reader's own browser has
+     * nothing to offer a crawler but an empty invitation, and the prerendered
+     * file for it says so already. This is the same statement for the copy the
+     * app renders after boot — kept in step with the file rather than left to
+     * disagree with it — and it is removed again on the way out, because the
+     * next screen is an ordinary page and the tag would follow it there.
+     */
+    const robots = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (index) {
+      if (robots?.dataset.owner === 'app') robots.remove();
+      return;
+    }
+    if (robots) {
+      robots.content = 'noindex, follow';
+      return;
+    }
+    const made = document.createElement('meta');
+    made.name = 'robots';
+    made.content = 'noindex, follow';
+    made.dataset.owner = 'app';
+    document.head.append(made);
+  }, [title, description, canonical, index]);
 
   /*
    * And the same fact, counted.

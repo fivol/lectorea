@@ -31,7 +31,7 @@ export default function ProfileButton({
     <button
       type="button"
       className={`profile-btn ${label ? 'pr-3' : ''} ${className}`}
-      onClick={openProfile}
+      onClick={() => openProfile()}
       aria-label={t('ui.nav.profile')}
     >
       <span className="profile-disc">

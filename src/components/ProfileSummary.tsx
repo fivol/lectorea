@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useActivity, useDayGoal, useWeekGoal, type DayGoal, type Week } from '@/lib/activity';
 import { useCatalog } from '@/lib/catalog';
-import { useResumeList, useResumeProgress, type ResumePointer } from '@/lib/progress';
-import { courseHref, useCourseSlice } from '@/lib/url';
+import { useResumeList, type ResumePointer } from '@/lib/progress';
 import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
+import { LEARN_PATH } from '@/lib/entry';
 import Icon from './Icon';
 import { CountTile } from './Facts';
 import TodayLine from './game/TodayLine';
-import { LectureThumb, ResumeCard, ResumeStepper, useResumeCarousel } from './ResumeCard';
+import { ContinueOffer, useOpenResume } from './ContinueBlock';
+import { LectureThumb, ResumeStepper, useResumeCarousel } from './ResumeCard';
 import { WeekGoalBar } from './WeekGoal';
 import { Button, IconButton } from './ui';
 
@@ -166,7 +167,7 @@ function SummaryCard({
           lecture" rather than "anything at all tonight". [game:today]
         */}
         <div className={`min-w-0 space-y-1 ${floating ? '' : 'sm:flex-1'}`}>
-          {resume ? <ResumeButton resume={resume} /> : null}
+          {resume ? <ContinueOffer resume={resume} /> : null}
           {/* Indented to the offer's own padding, so the sentence starts under
               the word «Продолжить» rather than under the still beside it. */}
           <TodayLine className="px-1" />
@@ -221,7 +222,9 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
   const { t, count, plural, span } = useT();
   const catalog = useCatalog();
   const { resume, week, streak } = highlights;
-  const openProfile = useUi((state) => state.openProfile);
+  // Both presses that are not the lecture lead to the desk rather than to the
+  // settings drawer: a run of days is a report, and the report is a place now.
+  const toDesk = useDesk();
   const openResume = useOpenResume();
   const day = useDayGoal();
 
@@ -229,7 +232,7 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
     return (
       <button
         type="button"
-        onClick={openProfile}
+        onClick={toDesk}
         className={`plate tap-soft flex max-w-[92vw] items-center gap-2 py-1.5 pl-1.5 pr-3
                     text-xs text-ink-dim transition-colors duration-fast ease-out
                     hover:text-ink ${className}`}
@@ -273,7 +276,7 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
           <span className="plate-divider" aria-hidden="true" />
           <button
             type="button"
-            onClick={openProfile}
+            onClick={toDesk}
             // The whole sentence, not the caption: the tile's «{noun} подряд»
             // is written to stand under a number, and read out on its own it
             // was announcing the word «{noun}». The day joins it in words,
@@ -306,27 +309,6 @@ function SummaryBar({ highlights, className }: { highlights: Highlights; classNa
   );
 }
 
-/** Where you stopped, one press from the front page. */
-function ResumeButton({ resume, className = '' }: { resume: ResumePointer; className?: string }) {
-  const { t } = useT();
-  const catalog = useCatalog();
-  const openResume = useOpenResume();
-  const progress = useResumeProgress(resume);
-  const course = catalog.courseById.get(resume.entry.courseId);
-
-  return (
-    <ResumeCard
-      videoId={resume.lastVideoId}
-      title={resume.entry.title}
-      subtitle={course ? t(`course.${course.id}.title`) : resume.entry.courseId}
-      progress={progress}
-      onClick={() => openResume(resume)}
-      className={className}
-    />
-  );
-}
-
-
 /**
  * «Поставить цель» — offered only to somebody who already has the habit it
  * would describe.
@@ -352,7 +334,7 @@ function GoalInvite() {
   const { t } = useT();
   const goal = useWeekGoal();
   const activity = useActivity();
-  const openProfile = useUi((state) => state.openProfile);
+  const toDesk = useDesk();
 
   const studied = activity.recent.filter((day) => day.studied).length;
   if (goal || studied < GOAL_INVITE_MIN_DAYS) return null;
@@ -367,7 +349,7 @@ function GoalInvite() {
       small
       icon="target"
       className="inline-flex items-center gap-1.5"
-      onClick={openProfile}
+      onClick={toDesk}
     >
       {t('ui.profile.goal.set')}
     </Button>
@@ -428,14 +410,8 @@ function DayRing({ goal }: { goal: DayGoal }) {
   );
 }
 
-/** Back into the playlist that was open, with its own field behind it. */
-function useOpenResume(): (resume: ResumePointer) => void {
+/** The desk, from anywhere a number on this card is pressed. */
+function useDesk(): () => void {
   const navigate = useNavigate();
-  const sliceAround = useCourseSlice();
-
-  return (resume) => {
-    const query = new URLSearchParams(sliceAround(resume.entry.courseId));
-    query.set('playlist', resume.entry.id);
-    navigate(courseHref(resume.entry.courseId, `?${query.toString()}`));
-  };
+  return () => navigate(LEARN_PATH);
 }

@@ -11,7 +11,7 @@ in, and the reasoning is more useful than the order.
 The site is static and there is no backend. Everything a reader marks —
 lectures, playlists, courses, favourites, the days they studied — lives in one
 `localStorage` key, and the **Данные** tab exports it as a JSON file and imports
-one back, replacing or merging ([interface.md](interface.md#the-profile)).
+one back, replacing or merging ([interface.md](interface.md#the-desk)).
 
 ![The Данные tab: download the profile, restore it from a file](images/data.webp)
 
@@ -29,7 +29,7 @@ up what it bought.
 
 The same profile on a laptop, a phone and a tablet, without either of them being
 the master copy. It shipped as **a sync account**: sign in with Google in
-**Профиль → Данные**, and the profile lives in a Firestore document under that
+**Профиль → Аккаунт**, and the profile lives in a Firestore document under that
 identity. How it works, what it costs and how to set the project up is
 [sync.md](sync.md).
 
@@ -128,8 +128,13 @@ keywords and the search forms that make `linalg` find linear algebra the way
 - **Recordings that are not on YouTube.** University media portals hold courses
   that exist nowhere else. Every one of them is its own crawler, so this waits
   until a specific gap justifies it ([harvest.md](harvest.md)).
-- **"What can I start now", as a screen.** The graph knows which courses have
-  every prerequisite behind you. Nothing shows that list on its own yet.
+- **"What can I start now" — done, as a shelf rather than a screen.** The graph
+  knows which courses have every prerequisite behind you, and «Можно начать
+  сейчас» on [the desk](interface.md#the-desk) is that list: what is unlocked,
+  goals first, ranked by what each one opens up. A screen of its own was
+  rejected — the answer is only interesting next to what you are already
+  studying, and on its own it would be a second catalogue with a different
+  filter.
 - **Sharing a path.** A link that carries a plan, so one person can hand another
   a route through a subject.
 

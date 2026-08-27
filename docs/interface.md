@@ -2,7 +2,42 @@
 
 [← docs](README.md) · [the live site](https://lectorea.org/)
 
-Three screens, and the profile is the thread running through them.
+Two places, and the screens inside them.
+
+**The catalogue** answers "what is there" — the map, the list, the columns, a
+course. **The desk** answers "where was I" — what was playing, what today came
+to, what the graph has opened up, and the shelves of everything marked. They
+share no address and no chrome: which one a visit opens on is decided by
+whether the profile has anything in it (see [the two front doors](#the-two-front-doors)),
+and the switch between them is a control of its own — a pair of words in the
+header on a wide window, a bar of three along the foot of a phone.
+
+The settings are neither. The account the profile travels on, the theme, the
+language and the file it exports as are a drawer opened over whichever place
+you were in, and closed again.
+
+## The two front doors
+
+`/` is the map for a reader with an empty profile — a stranger, a shared link,
+a crawler — and a redirect to `/learn` for one with a past here. The decision is
+made during the render rather than corrected afterwards: the profile is read
+from `localStorage` when the store is created, so it is already in memory and
+nothing flashes ([`src/lib/entry.ts`](../src/lib/entry.ts)).
+
+It fires on **arrival** and never again, which is what keeps the wordmark
+working. Home is the map, and a rule saying "a reader with history never sees
+the front page" would take that door away: press it, and the desk you had just
+left would come back. The distinction is read off the router's own location key
+— React Router stamps the entry a session opens on `default` and gives every
+later one a key of its own — rather than kept as a flag somebody claims, which
+`StrictMode`'s double render would eat.
+
+What was there before was one door and a badge on it: the map for everybody,
+with the answer for the returning reader folded into a plate in the corner and,
+on a phone, into a bar one line tall — under the zoom controls, the map/list
+switch and the contribute line, in a band a thumb covers entirely. A catalogue's
+front page and a reader's own study are two questions, and the second one was
+being answered in forty pixels.
 
 ## The map — `/`
 
@@ -77,15 +112,20 @@ names.
 ![The map with the resume plate in the corner](images/home.webp)
 
 A front page answers "what is there"; somebody who has been here before is
-asking "where was I", and that answer used to be two presses away behind an
-avatar in the corner. So for a reader with a past here the front page carries
+asking "where was I". That reader now gets [the desk](#the-desk) on
+arrival, and this is what is left on the map for the visit that goes back to
 it: the lecture that was playing, what today has come to, and the numbers that
 say whether the habit is alive — days in a row, lectures this week, the hours
 of it where nothing else is already saying them — and, for anybody who has set
-one, how far into the week's goal that is. On a wide window it is a plate in
-the corner, on a narrower one a bar at the foot of the screen — where a thumb
-reaches it — and on the list view the first section of the page. A profile with
-nothing in it yet shows none of it.
+one, how far into the week's goal that is.
+
+Three windows, three shapes, and the narrowest of them has none. On a wide
+window it is a plate in the corner and on the list view the first section of the
+page; between the two — a window too narrow for the corner and too wide for a
+bar of places — it is one row at the foot of the screen. On a phone it is
+nothing at all, because the desk is one of the three tabs down there and the
+same offer twice would cost the map its own foot again. A profile with nothing
+in it shows none of it anywhere.
 
 **Three horizons, and each of them said once.** A card in the corner of a map
 can carry three kinds of number and they answer three different questions, so
@@ -667,21 +707,32 @@ The rules, and where each is argued in full:
 | | On a wide window | On a phone |
 |---|---|---|
 | The map | three continents ranged, fitted whole | a second drawing with them stacked, opening close in — [two shapes of paper](#two-shapes-of-paper) |
-| Map or list | a switch in the header | a thumb-sized switch floating at the foot of both views |
-| Where you were | a plate in the corner | a bar along the bottom, where a thumb reaches it — the day as a ring round the run of days |
+| Desk or catalogue | two words on a plate in the header | three tabs along the foot of the screen: обучение, каталог, профиль |
+| Map or list | a switch in the header | a switch under the search field, on the screen it changes |
+| Where you were | a plate in the corner, a bar between the breakpoints | nothing on the map — the desk is a tab, one thumb away |
+| The map's controls | zoom in, zoom out, fit | fit alone: pinching goes in and out, and nothing but a button puts the world back |
 | The catalogue | columns that scroll sideways | one column of rows, folded by difficulty |
 | A course | a panel beside the columns | a sheet over the list, dragged up for the whole card — [the course panel](#the-course-panel) |
 | Links and path | three sections, always open | folded into one **Связи и путь** line, and the fold is remembered |
 | Search | a field in the header | its own screen, full width and full height — [search](#search) |
-| The profile | a modal over the page | the same modal, the numbers in two columns instead of four |
+| The desk | a page, at `max-w-4xl` | the same page, its shelves one card wide |
+| The drawer | a modal, reached by the disc in the corner | a sheet, reached by the third tab |
 
-The bar has one row and no line to spend on a sentence, so the one thing it
-carries beyond the lecture is the disc at its end: the run of days, with today's
-goal drawn as a ring round it where there is one. A run is kept by closing
-today, so the two belong on the same mark rather than on two — and the bar is
-exactly as wide as it was before, the ring standing where the flame stands
-without a goal. What a ring cannot say it says in the label a screen reader
-reads out: «3 дня подряд · Сегодня — 25 из 45 минут».
+**One thing floats over the foot of a phone, and it is the places.** There were
+four: the zoom controls, the resume bar, the map/list switch and the contribute
+line, stacked in the band a thumb covers entirely, with the most important of
+them — where you had stopped — drawn smallest. Two are gone, one moved up beside
+the search field, and what is left is a bar that says the same thing in the same
+place on every screen it appears on. The switch between map and list went *up*
+rather than away on purpose: it changes what the screen is, which is a question
+about the view, and the foot is now about where in the site you are.
+
+Between the two windows there is still a bar: a window too narrow for the corner
+plate and too wide for the tabs gets the lecture in one row, with the run of
+days at its end and today's goal as a ring round it. A run is kept by closing
+today, so the two belong on the same mark rather than on two. What a ring cannot
+say it says in the label a screen reader reads out: «3 дня подряд · Сегодня — 25
+из 45 минут».
 
 The header is the one place something has to give. On the map there is room for
 the wordmark and the search field itself; above the columns the row is a way
@@ -1063,7 +1114,7 @@ at every site.
   front page — which is to say nowhere near the moment the decision they are
   about gets made. Nobody decides whether to watch one more lecture while
   looking at the map. The **day** rather than the week, which is why the goal
-  is stored as one ([the profile](#the-profile)): a week's remainder read from
+  is stored as one ([the desk](#the-desk)): a week's remainder read from
   inside a lecture is a number about a plan, and «ещё 20 минут» is a decision
   about the lecture that just ended. With no goal set it is the plain report it
   was — «Сегодня — 2 лекции, 1,5 часа» — and with nothing behind today it is
@@ -1260,21 +1311,45 @@ losing the session after the first lecture. Reopening a part-watched lecture
 picks up where it stopped, and «Место остановки» in the settings turns that off
 without turning off which lectures are behind you.
 
-## The profile
+## The desk
+
+`/learn` — everything a reader has done here, on a page of its own.
 
 ![The profile](images/profile.webp)
 
-A modal, not a page — it opens over whatever you were looking at. Three tabs:
-**Обучение**, **Настройки**, **Данные**.
+It was the first tab of a modal, and a modal is the one thing it could not be.
+A place has an address to send somebody, a back button that behaves, a page a
+home-screen icon can open on and a line in the analytics saying it was looked
+at; a layer over the map has none of those, and this is the screen a returning
+reader's whole visit is about. So studying moved out and got the address, and
+what stayed behind is [the drawer](#the-drawer) — the account, the settings and
+the file, which really are opened over something and closed again.
 
-Everything a reader has done here is on the first of them. It used to be three —
-courses, playlists, history — and they answered the same question three times: a
-saved playlist is a course you meant to watch, and a course in progress is a
-playlist you are watching. Split up, nothing anywhere said what somebody was
-actually in the middle of; you had to know which half of your own studying you
-were looking for before you could look.
+It used to be three tabs — courses, playlists, history — and they answered the
+same question three times: a saved playlist is a course you meant to watch, and
+a course in progress is a playlist you are watching. Split up, nothing anywhere
+said what somebody was actually in the middle of; you had to know which half of
+your own studying you were looking for before you could look.
 
 So it reads top to bottom as the routine it describes:
+
+- **Продолжить**, first, with the day under it. The recording that was playing,
+  the still, the bar, and the arrows through everything else on the go — the
+  same component the map's corner card carries, reading the same log, so the
+  two screens cannot disagree about tonight. The line under it is the day
+  («Сегодня — 25 из 45 минут»), because the day is the horizon with a press
+  that answers it and the press is directly above.
+- **Можно начать сейчас** — the courses whose every prerequisite is already
+  ticked off. The graph could always answer this and nothing ever asked it: it
+  is the one shelf on the page that is about the catalogue rather than about
+  the reader, and it is what keeps the desk from being a diary. Courses on the
+  way to a favourite come first — by a whole rank, not as a tie-break, since
+  somebody with a goal is not asking what else the catalogue could offer — then
+  by what each one opens up, which is the difference between a course eleven
+  others wait on and the leaf beside it. A course with no recordings is never
+  offered: honest on the map, where the gap is the point, and useless as an
+  invitation. Empty for a reader who has finished nothing, which is right — a
+  list of every level-0 course is the map's job.
 
 - **The numbers.** Hours watched, lectures behind you, courses finished, days in
   a row — then four weeks of days as a shaded strip with the week in hand under
@@ -1387,10 +1462,6 @@ So it reads top to bottom as the routine it describes:
   favourite course — which is a goal of an entirely different kind, with its own
   bar three lines below — and one glyph carrying both is how a reader learns to
   trust neither.
-- **Продолжить** — the last thing opened that is not finished, at the lecture
-  and the second it was left at, one press away. The only card in the profile
-  about right now; everything under it is a shelf of things decided at some
-  point.
 - **Сейчас изучаю**, **Избранное**, **Сохранённые плейлисты**, **Недавно
   открытые**, **Пройдено**. A favourite course is a goal — the word is
   «избранное» because that is the button that makes one, and its card counts the
@@ -1408,8 +1479,8 @@ So it reads top to bottom as the routine it describes:
 ![The shelves: saved playlists, what was open lately, what is done](images/profile-shelves.webp)
 
 Each shelf shows a handful and opens into the whole of itself — a back button in
-the corner, the tabs still above it, because a longer list of the same things is
-not a different place. The way in appears only when there is something behind
+the corner, the page still around it, because a longer list of the same things
+is not a different place. The way in appears only when there is something behind
 it: a section showing everything it has needs no door, and a row of dead
 «показать все» links teaches people to stop reading them.
 
@@ -1425,7 +1496,35 @@ touched: somebody who has opened forty courses should not pay ten megabytes to
 be told roughly how long they have spent. History carries a bar for its most
 recent rows and no further, for the same reason.
 
-Light and dark also have a one-click toggle in the header of both screens — that
+### The drawer
+
+What the desk left behind: a modal over whatever you were looking at, with
+three tabs — **Аккаунт**, **Настройки**, **Данные**. It is reached by the disc
+in the corner of a wide window and by the third tab at the foot of a phone.
+
+**Аккаунт is first, and that is the whole point of the tab existing.** Signing
+in used to be a section halfway down «Данные», under the heading about
+exporting a file — which is the last place anybody looks for it, and the reader
+who needs it most is the one least able to hunt: somebody sitting at a *second*
+device, wanting last night's progress on it. Studying happens on a laptop in
+the evening and on a phone on the way to work, and the site's answer to that
+was three presses and a scroll deep.
+
+It is said in one more place, and only one: a line on the desk, under the
+numbers. Signed out it says where the profile is kept and offers the other
+option; signed in it names the account and whether the last write went through.
+Both open this tab. On a desk with **nothing on it** the line asks the question
+that fits an empty desk — «Уже занимались на другом устройстве?» — because an
+empty desk is more often the second device than a first visit, and «всё это
+есть только в этом браузере» is a warning about nothing when there is nothing.
+
+That line replaces what was there before: the same sentence, shown once, after
+three separate days with study on them, with a way to dismiss it for good. The
+threshold was the right instinct about nagging and the wrong answer for the
+reader who came looking — it is a status line now rather than a plea, and it
+never asks twice.
+
+Light and dark have a one-click toggle in the header of every screen — that
 choice is about the room you are sitting in, not about your account, and behind
 a modal most people put up with the wrong one; «Авто» stays in the settings.
 
@@ -1443,7 +1542,7 @@ histories interleave by time. That works between browsers with no server at all,
 and it is still the only thing on this screen that does. The same JSON also goes
 straight to the clipboard, for a phone with nowhere to put a download.
 
-Above the file sits the other answer to the same question: **Синхронизация**, an
+On its own tab sits the other answer to the same question: **Синхронизация**, an
 optional sign-in that copies the profile into a document of its own so a laptop
 and a phone share one. Two ways in, side by side — Google, and a link sent to an
 email address. The second is not a fallback: it is for anybody without a Google
@@ -1456,24 +1555,19 @@ red — «Удалить копию в облаке», which is the only thing o
 data from a server, and removes all of it. The two buttons are two questions:
 signing out stops this device syncing and deletes nothing, anywhere.
 
-The order on the screen is deliberate. The account is the answer for almost
-everybody and the file is the answer that needs nobody's server, so the account
-goes first and the file stays underneath it rather than being replaced by it. A
-build with no Firebase configured shows none of this and is a complete site —
-which is what a fork gets, and what `pnpm dev` gets. How the two copies are
+The order of the tabs is deliberate, and it is the order the two answers are
+wanted in. The account is the answer for almost everybody and the file is the
+answer that needs nobody's server, so the account leads and the file keeps its
+own tab rather than being replaced by it. A build with no Firebase configured
+shows the reason instead of an empty tab and is a complete site — which is what
+a fork gets, and what `pnpm dev` gets. How the two copies are
 reconciled, and the one thing a merge cannot carry, is [sync.md](sync.md).
 
-Outside that section an account shows itself in two places, both inside the
-profile. The disc in the header carries its initial instead of the anonymous
+Outside these tabs an account shows itself twice: the line on the desk above,
+and the disc in the header, which carries its initial instead of the anonymous
 glyph — not an avatar, which would be the only request this site makes to a
 third party for a picture, on the screen whose whole argument is that nothing
 about a reader leaves the browser.
-
-And one line under the numbers on **Обучение**: «Всё это есть только в этом
-браузере», with a way to the section and a way to dismiss it for good. It is the
-only place on the site that mentions an account unasked, and it waits for three
-separate days with study on them before it says anything — one afternoon of
-marking things is not yet something worth being warned about losing.
 
 And a third button copies a **prompt**: the same profile written out for a
 reader that is not this site. An assistant handed the JSON has to guess its way

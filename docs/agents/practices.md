@@ -1527,3 +1527,96 @@ pushing — and hand it back to the scheduler instead of writing. It was caught 
 tracing what happens *after* a successful write rather than by testing, which is
 the general lesson: a subscription that is both the input and the output of a
 loop needs one read of the whole cycle, out loud, before it is believed.
+
+## Two questions on one address is two front doors, not one screen with a badge
+
+The front page answered "what is there" — a map of thirty-nine fields — and a
+reader who had watched a lecture the night before arrives asking "where was I".
+That answer had been fitted onto the same screen three times, each time smaller:
+a plate in the corner on a wide window, one row at the foot of a narrower one,
+and on a phone a bar forty pixels tall, sharing the band a thumb covers with the
+zoom controls, the map/list switch and the contribute line. The most important
+thing on the screen for that reader was the smallest thing on it, and it was
+still the map that had been paid for — six thousand SVG nodes drawn to answer a
+question nobody was asking.
+
+The move is to stop deciding *what to put on the screen* and decide *which
+screen*. `/` renders the map for an empty profile and redirects to `/learn` for
+one with a past in it; both are real pages, and the second one has room for the
+offer, the day, what the graph has unlocked and the shelves.
+
+Three things make that safe, and each one is the general form of a trap:
+
+- **Decide during the render, never in an effect.** The profile is already in
+  memory — the store reads `localStorage` when it is created — so the branch is
+  a `useMemo`, not a `navigate` in a `useEffect` that paints the wrong screen
+  first. Same rule as deriving a default from the address rather than correcting
+  it afterwards, and it fails the same way when broken: a visible lurch.
+- **"Once per load" is a fact about the location, not a flag.** The first cut
+  was a module-level `claimColdStart()` — first caller gets `true`. `StrictMode`
+  renders twice, the second call sees `false`, and React keeps the second
+  answer, so the redirect silently never fired. React Router stamps the entry a
+  session opens on with the key `default`; reading that is pure, survives the
+  double render, and says exactly what was meant — *arrived at* rather than
+  *navigated to*. **Anything a render "claims" is claimed twice; put the
+  distinction in the input.**
+- **Leave the other door open.** The wordmark leads home and home is the map. A
+  rule saying "a reader with history never sees the front page" takes that door
+  away — press it and the desk you just left reappears — which is why the
+  redirect is bound to arrival rather than to the reader.
+
+**Generally:** when one address is serving two questions and the second one is
+being answered in a corner, the corner is not too small — the answer is in the
+wrong room. Give it an address. What it gains beyond space is everything an
+address is: a link, a back button, a home-screen target, and a line in the
+analytics saying it was looked at.
+
+## A modal is a drawer; a place needs an address
+
+The same change split the profile modal, and the line that split it was not
+"which of these is bigger" but **what a reader does with it**. Everything
+studied — the shelves, the numbers, the run of days — is somewhere a reader
+*goes*, comes back to, and would send themselves a link to. The theme, the
+language, the export file and the account are opened over whatever was on
+screen and closed again, leaving the screen where it was.
+
+The first of those cannot be a modal, and the tell is not aesthetic: it has no
+URL, so it has no back button, no share, no home-screen target, and it is
+invisible to `page_view`, which counts addresses. The second should not be a
+page, for the mirror reason: sending somebody to a full screen to change the
+theme loses their place.
+
+**And the drawer's tab order is a claim about who opens it.** Signing in lived
+as a section halfway down the tab called «Данные», under a heading about
+exporting a file. It is the one thing in there a reader comes looking for on a
+*second* device — the laptop has the year of study, the phone in their hand has
+nothing — so it is now the first tab, and the empty desk asks the question that
+fits it: not «всё это есть только в этом браузере», which warns about losing
+nothing, but «уже занимались на другом устройстве?».
+
+**Generally:** classify a panel by the verb. *Go* → a route. *Adjust* → a layer.
+A panel holding both is two panels, and the half that is a place will be the one
+nobody can link to.
+
+## One floating layer per thumb
+
+The foot of a phone screen had four things floating in it: the map's zoom
+controls, the resume bar, the map/list switch and the contribute line. Each
+arrived reasonably — every one of them is easiest to reach there — and together
+they were a stack over the drawing, in the band a thumb covers without the hand
+moving, with the two most important of them competing for the same tap.
+
+The rule that unpicks it: **the thumb band holds exactly one control, and it is
+the one that decides where in the site you are.** Everything else is re-asked as
+"which layer does this belong to":
+
+- the map/list switch changes *what this screen is drawn as*, so it went up
+  beside the search field, onto the screen it changes;
+- zoom in and out are what a pinch already does, so they left; «показать всё»
+  stayed, because nothing on a touch screen puts the world back;
+- the resume bar became a tab — it is a place now, not a badge;
+- the contribute line is a footnote and lives in the flow.
+
+**Generally:** when a screen accumulates floating chrome, do not shrink it.
+Rank each piece by the question it answers — *where am I* / *what is this
+screen* / *what does this control do* — and give only the first the thumb.

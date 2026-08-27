@@ -753,6 +753,37 @@ function pagesIn(lang: UiLang) {
     };
   }
 
+  /**
+   * The desk — a file that exists so the address answers with 200 rather than
+   * with the 404 page Pages hands every path it has no file for.
+   *
+   * Out of search, and not because it is thin: everything on it comes out of
+   * the reader's own `localStorage`, so to anybody who is not that reader it is
+   * an empty invitation, and to the reader it is a page search could never
+   * have shown them anyway. `follow`, because the link back to the map on it is
+   * a real link.
+   */
+  function learnPage(): Page {
+    const description = clip(tr('seo.learn.desc'));
+
+    return {
+      lang,
+      file: `${langBase(lang)}learn.html`,
+      pathname: 'learn',
+      title: tr('seo.learn.title', {}, 'Lectorea'),
+      description,
+      canonical: false,
+      noindex: true,
+      body: [
+        '      <article>',
+        `        <h1>${escapeHtml(tr('seo.learn.title', {}, 'Lectorea'))}</h1>`,
+        `        <p>${escapeHtml(description)}</p>`,
+        `        ${mapLink}`,
+        '      </article>',
+      ].join('\n'),
+    };
+  }
+
   function homePage(): Page {
     const description = clip(
       empty
@@ -813,7 +844,7 @@ function pagesIn(lang: UiLang) {
     };
   }
 
-  return { coursePage, fieldPage, coursesPage, homePage, tr, count, domainTitle };
+  return { coursePage, fieldPage, coursesPage, homePage, learnPage, tr, count, domainTitle };
 }
 
 /** Every path the site never claimed — served by Pages with the status to match. */
@@ -1112,6 +1143,7 @@ function main(): void {
     const pages = pagesIn(lang);
     write(pages.homePage());
     write(pages.coursesPage());
+    write(pages.learnPage());
     for (const domain of fieldsWithCourses) write(pages.fieldPage(domain));
     for (const course of courses) write(pages.coursePage(course));
   }
@@ -1143,6 +1175,11 @@ function main(): void {
     'courses',
     tr('seo.courses.title', {}, 'Lectorea'),
     fallbackPages.coursesPage().description
+  );
+  writeRedirect(
+    'learn',
+    tr('seo.learn.title', {}, 'Lectorea'),
+    fallbackPages.learnPage().description
   );
   for (const domain of fieldsWithCourses) {
     writeRedirect(
