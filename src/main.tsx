@@ -5,6 +5,7 @@ import App from './App';
 import { APP_BASE } from '@/lib/lang';
 import { initAnalytics, setAnalyticsConsent } from '@/lib/analytics';
 import { useProfile } from '@/store/profile';
+import { bootSync } from '@/store/sync';
 import './index.css';
 
 /*
@@ -21,6 +22,15 @@ useProfile.subscribe((state, previous) => {
   const now = state.profile.settings.analytics;
   if (now !== previous.profile.settings.analytics) setAnalyticsConsent(now);
 });
+
+/*
+ * Reconnect a reader who already has an account, before they ask for anything.
+ *
+ * Loads nothing at all unless this browser has synced before — the Firebase
+ * SDK is behind a dynamic import and stays there for everybody else. See
+ * `store/sync.ts`.
+ */
+bootSync();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -1,0 +1,31 @@
+rules_version = '2';
+
+/*
+ * One document per reader, readable and writable by that reader alone.
+ *
+ * This is the whole of the server side: there is no function, no admin path and
+ * nothing that reads across accounts. The web config in the bundle is public by
+ * construction — every Firebase web app ships its keys — so what protects a
+ * profile is this file and only this file. `request.auth.uid == uid` is not a
+ * convenience; it is the entire security model, and there is nowhere else to
+ * put one.
+ *
+ * Deployed by hand, once, and again whenever it changes:
+ *
+ *   firebase deploy --only firestore:rules --project <id>
+ *
+ * — or pasted into the Rules tab of the Firestore console. See docs/sync.md.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /profiles/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Nothing else exists. Stated rather than left to the default, so that a
+    // collection added later is closed until somebody decides otherwise.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

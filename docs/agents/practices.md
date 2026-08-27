@@ -1400,3 +1400,93 @@ harness is what proves a change afterwards — the edge that had to keep working
 more case in the sweep, and it caught an expectation of mine that was wrong
 before the browser did.
 
+
+## A union merge cannot carry an erasure, so it is the exception rather than the rule
+
+The profile's merge is a union — a lecture watched on either machine is watched,
+a day studied on either is studied — and that is what makes it safe to run on a
+device that cannot know whether it has already run: merging in either order
+gives the same answer, and merging twice changes nothing. It was written for the
+file import, where two profiles arriving is a rare event with a human pressing
+the button, and it is exactly right there.
+
+Reaching for it as *the* operation of a sync is the trap, and it is a quiet one,
+because the first hundred things it does are correct. A union has no way to
+express **removal**. Untick a lecture on the phone, and the laptop — which still
+holds the tick — unions it straight back on and pushes the result; the phone
+receives its own untick undone. Nothing errors, nothing is lost, and the feature
+is broken in the one direction nobody tests.
+
+The answer is git's, and it fits in four words. Keep, per device, which revision
+of the shared copy it is standing on and whether it has written anything since,
+and read those two facts before deciding:
+
+- the cloud moved and this device did not → **pull**, wholesale. Erasures travel.
+- both moved → **merge**, and accept that this is where an erasure can be lost.
+- this device moved and the cloud did not → **push**.
+- a device that has never seen this account → **merge**, whatever the numbers
+  say: two independent histories, and dropping either is unrecoverable.
+
+The union survives, in the one case where losing an erasure is cheaper than
+losing the work. What made it affordable was extracting it as a pure function of
+two profiles first (`src/lib/profile-merge.ts`) — the store's `mergeProfile` had
+it as a draft mutation, and a decision this consequential has to be testable
+with two literals and no browser.
+
+## A lazy import is not lazy once a service worker precaches the build
+
+The Firebase SDK is 165 KB gzipped and only a reader with an account should pay
+for it, so it sits behind `import()` and its own chunk. That is the whole answer
+on the web, and it is half an answer here: `vite-plugin-pwa` precaches
+`**/*.{js,…}`, so an installed app downloads every chunk in `dist/` on first
+run — including the one that was carefully arranged never to be requested.
+
+Two lines fix it, and neither is discoverable from the failure, because there is
+no failure: the site is correct, fast on a laptop, and quietly 300 KB heavier
+for every installed reader.
+
+```ts
+build: { rollupOptions: { output: { manualChunks: … ? 'firebase' : undefined } } }
+workbox: { globIgnores: ['**/firebase-*.js'] }
+```
+
+The chunk has to be *named* before it can be excluded — a hashed anonymous chunk
+has no pattern to write down. And the check is one grep, worth running whenever
+something is deliberately kept out of the main bundle:
+
+```bash
+grep -o 'assets/[a-zA-Z0-9_-]*\.js' dist/sw.js | sort -u
+```
+
+## A per-keystroke store is a per-keystroke write once it has a server behind it
+
+Every write to the profile store was free while the profile lived in
+`localStorage`, and the player leans on that: `recordPosition` fires **every
+five seconds** for as long as a lecture runs. Point a Firestore document at the
+same subscription and an afternoon of watching is two thousand document writes,
+against a free tier of twenty thousand a day for every reader together. The
+number is not visible from the code — it is visible from knowing what calls the
+store, which is why the first thing to do after wiring a store to a network is
+to list its callers and ask which one is in a loop.
+
+The shape that fixed it is a debounce **and** a floor: 4 seconds so a
+shift-click over forty lectures is one write, 60 seconds minimum between writes
+so a running player is one a minute, and a flush on `pagehide` and on
+`visibilitychange → hidden` so the last minute is not the one that is lost. Not
+`beforeunload`: it does not fire when an installed app on iOS is swiped away,
+which is precisely the reader this feature exists for.
+
+**And a live listener will route around the floor if you let it.** Firestore
+answers a write with a snapshot, including the write you just made. Reconcile
+that snapshot the same way as one from another device and the loop closes: the
+confirmation arrives, the reader is still watching so the profile is still
+dirty, the reconciliation decides to push, the push is confirmed, and round it
+goes — at whatever rate the server can confirm rather than at the one write a
+minute the floor was written for. The throttle is intact the whole time and
+never consulted, because nothing on that path goes through it.
+
+The fix is to name the echo — same account, same revision this device recorded
+pushing — and hand it back to the scheduler instead of writing. It was caught by
+tracing what happens *after* a successful write rather than by testing, which is
+the general lesson: a subscription that is both the input and the output of a
+loop needs one read of the whole cycle, out loud, before it is believed.

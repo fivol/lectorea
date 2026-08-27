@@ -4,8 +4,10 @@ import { formatDate } from '@/lib/format';
 import { downloadProfile, parseProfile, profileJson, type ImportPreview } from '@/lib/profile-io';
 import { useProfilePrompt } from '@/lib/profile-prompt';
 import { useProfile } from '@/store/profile';
+import { SYNC_AVAILABLE } from '@/store/sync';
 import Icon from '@/components/Icon';
 import { Button, CopyButton, Textarea } from '@/components/ui';
+import SyncSection from './SyncSection';
 
 export default function DataTab() {
   const { t, plural, lang } = useT();
@@ -43,7 +45,13 @@ export default function DataTab() {
 
   return (
     <div className="max-w-lg space-y-8 p-4">
-      <section>
+      {/* The account first, the file under it: one of them is the answer for
+          almost everybody, and the other is the answer that needs nobody's
+          server. The rule stays the file's, though — it is the only one of the
+          two that works with no account at all. */}
+      <SyncSection />
+
+      <section className={SYNC_AVAILABLE ? 'border-t border-line pt-6' : ''}>
         <h3 className="text-sm font-medium">{t('ui.profile.data.export')}</h3>
         <p className="mt-1 text-xs text-ink-faint">{t('ui.profile.data.exportHint')}</p>
         <div className="mt-2 flex flex-wrap gap-2">

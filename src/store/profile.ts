@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { reporting, type Report } from '@/lib/analytics';
 import { useMediaQuery } from '@/lib/hooks';
+import { mergeProfiles } from '@/lib/profile-merge';
 import {
   DAYS_LIMIT,
   migrateProfile,
@@ -137,7 +138,6 @@ function persist(profile: Profile, blocked: boolean): void {
 }
 
 const STATUS_CYCLE: Array<CourseStatus | null> = [null, 'in_progress', 'done'];
-const STATUS_RANK: Record<string, number> = { done: 2, in_progress: 1, null: 0 };
 
 /**
  * Which playlist a lecture belongs to, and which course that playlist is for.
@@ -247,6 +247,8 @@ export type ProfileStore = {
   ) => void;
   replaceProfile: (next: Profile) => void;
   mergeProfile: (incoming: Profile) => void;
+  /** Used by the sync only — see the action for why it reports nothing. */
+  applyRemote: (next: Profile) => void;
   resetProfile: () => void;
 };
 
@@ -600,87 +602,21 @@ export const useProfile = create<ProfileStore>((set, get) => {
     /** Merge by id; on a status conflict the more advanced one wins. */
     mergeProfile: (incoming) =>
       update((draft) => {
-        for (const [id, entry] of Object.entries(incoming.courses)) {
-          const existing = draft.courses[id];
-          if (!existing) {
-            draft.courses[id] = entry;
-            continue;
-          }
-          const existingRank = STATUS_RANK[String(existing.status)] ?? 0;
-          const incomingRank = STATUS_RANK[String(entry.status)] ?? 0;
-          const incomingWins = incomingRank > existingRank;
-          draft.courses[id] = {
-            status: incomingWins ? entry.status : existing.status,
-            favorite: existing.favorite || entry.favorite,
-            // The claim travels with the status it was made about: a course
-            // finished by hand on one machine must not be walked back by the
-            // automation on the other.
-            manual: incomingWins ? entry.manual : existing.manual,
-            at: entry.at > existing.at ? entry.at : existing.at,
-          };
-        }
-        for (const [id, entry] of Object.entries(incoming.playlists)) {
-          const existing = draft.playlists[id];
-          draft.playlists[id] = existing
-            ? {
-                watched: existing.watched || entry.watched,
-                favorite: existing.favorite || entry.favorite,
-                lastVideoId:
-                  entry.at > existing.at
-                    ? (entry.lastVideoId ?? existing.lastVideoId)
-                    : (existing.lastVideoId ?? entry.lastVideoId),
-                courseId: existing.courseId ?? entry.courseId,
-                at: entry.at > existing.at ? entry.at : existing.at,
-              }
-            : entry;
-        }
-        // A lecture watched on either machine is watched; short of that, the
-        // further-along position is the useful one to come back to.
-        for (const [id, entry] of Object.entries(incoming.videos)) {
-          const existing = draft.videos[id];
-          if (!existing) {
-            draft.videos[id] = entry;
-            continue;
-          }
-          const done = existing.done || entry.done;
-          draft.videos[id] = done
-            ? { done: true }
-            : { done: false, sec: Math.max(existing.sec ?? 0, entry.sec ?? 0) };
-        }
-
-        // History interleaves by time and keeps the later visit of a repeat.
-        const byId = new Map(draft.recent.map((item) => [item.id, item]));
-        for (const item of incoming.recent) {
-          const existing = byId.get(item.id);
-          if (!existing || item.at > existing.at) byId.set(item.id, item);
-        }
-        draft.recent = [...byId.values()]
-          .sort((a, b) => b.at.localeCompare(a.at))
-          .slice(0, RECENT_LIMIT);
-
-        /*
-         * A day studied on either machine is a day studied — the union, which
-         * is the only merge that cannot break a streak somebody really kept.
-         *
-         * What a shared day was worth is the larger of the two rather than the
-         * sum: the usual reason for a merge is the same profile arriving back
-         * from another browser, and adding those together would double every
-         * hour on it. Two machines genuinely used on one day lose the smaller
-         * half, which is the cheaper of the two mistakes.
-         */
-        const byDay = new Map(draft.days.map((entry) => [entry.day, entry]));
-        for (const entry of incoming.days) {
-          const existing = byDay.get(entry.day);
-          byDay.set(entry.day, {
-            day: entry.day,
-            sec: Math.max(existing?.sec ?? 0, entry.sec),
-            lectures: Math.max(existing?.lectures ?? 0, entry.lectures),
-          });
-        }
-        draft.days = [...byDay.values()]
-          .sort((a, b) => a.day.localeCompare(b.day))
-          .slice(-DAYS_LIMIT);
+        Object.assign(draft, mergeProfiles(draft, incoming));
       }),
+
+    /**
+     * A profile handed over by the sync, which is not an import.
+     *
+     * Deliberately absent from `PROFILE_EVENTS`: `profile_import` counts a
+     * reader carrying their file from one machine to another, and a sync that
+     * reported itself would drown that number in its own housekeeping — every
+     * device, every reconnection, forever.
+     */
+    applyRemote: (next) => {
+      persist(next, get().locked);
+      set({ profile: next, outcome: 'ok' });
+    },
 
     resetProfile: () => {
       try {

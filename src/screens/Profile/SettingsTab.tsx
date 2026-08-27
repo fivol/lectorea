@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { UI_LANGS, UiLang } from '@shared/schema';
 import { useT } from '@/i18n';
 import { useProfile } from '@/store/profile';
+import { useSync } from '@/store/sync';
 import { Button, Segmented, Select } from '@/components/ui';
 
 export default function SettingsTab() {
@@ -9,6 +10,7 @@ export default function SettingsTab() {
   const settings = useProfile((state) => state.profile.settings);
   const setSetting = useProfile((state) => state.setSetting);
   const resetProfile = useProfile((state) => state.resetProfile);
+  const signedIn = useSync((state) => Boolean(state.account));
   const [confirming, setConfirming] = useState(false);
 
   return (
@@ -89,7 +91,13 @@ export default function SettingsTab() {
       <div className="border-t border-line pt-4">
         {confirming ? (
           <div className="surface border-danger/40 p-3">
-            <p className="mb-3 text-sm text-ink-dim">{t('ui.profile.settings.resetConfirm')}</p>
+            <p className="mb-3 text-sm text-ink-dim">
+              {t('ui.profile.settings.resetConfirm')}
+              {/* The reset travels like any other write, so an account turns it
+                  into a reset of every device. Said before the press rather
+                  than discovered on the phone afterwards. */}
+              {signedIn ? `. ${t('ui.profile.settings.resetSynced')}` : null}
+            </p>
             <div className="flex gap-2">
               <Button
                 variant="danger"

@@ -1,0 +1,7 @@
+{
+  "comment": "Firestore only. The site itself is static and deployed to GitHub Pages by .github/workflows/deploy.yml; Firebase Hosting is deliberately not used — docs/sync.md.",
+  "firestore": {
+    "rules": "firebase/firestore.rules",
+    "indexes": "firebase/firestore.indexes.json"
+  }
+}

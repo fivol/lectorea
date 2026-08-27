@@ -94,6 +94,7 @@ read, and it is the documentation. In outline:
 | **Watching** | `playlist_open`, `video_start`, `video_progress` at 10/25/50/75/90%, `video_complete` |
 | **Marking** | `lectures_marked`, `playlist_sealed`, `playlist_saved`, `course_status`, `course_goal` |
 | **The profile** | `profile_open`, `resume_continue`, `setting_change`, `profile_export`, `profile_import`, `profile_reset`, `copy` |
+| **The account** | `sync_signin`, `sync_join` (pushed, pulled, merged or nothing to do), `sync_off`, `sync_error` — four for the whole of syncing, and none of them per write |
 | **Everything else** | `outbound_click` (the host, never the URL), `app_error` |
 
 `video_start` and friends keep GA4's own names rather than better ones of ours,

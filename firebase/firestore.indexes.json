@@ -1,0 +1,5 @@
+{
+  "comment": "No indexes. The profile is fetched by document id and never queried, which is the point of storing it as one opaque string — see docs/sync.md.",
+  "indexes": [],
+  "fieldOverrides": []
+}

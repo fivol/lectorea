@@ -25,8 +25,10 @@ algebra. Lectorea answers the two questions that actually come up:
 - **What can I study right now, with what I already know?**
 
 No registration, no ads, nothing to pay for. Everything you mark stays in your
-browser, and the catalogue re-crawls itself every night. The interface is
-Russian and English; most of the catalogue is Russian for now.
+browser — and if you want it on your phone as well, one optional sign-in
+carries it there and nothing else changes. The catalogue re-crawls itself every
+night. The interface is Russian and English; most of the catalogue is Russian
+for now.
 
 ## Who it is for
 

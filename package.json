@@ -34,6 +34,7 @@
     "cache:publish": "tsx scripts/cache-snapshot.ts publish",
     "cache:restore": "tsx scripts/cache-snapshot.ts restore",
     "og:build": "tsx scripts/og-image.ts",
+    "ph:assets": "tsx scripts/ph-assets.ts",
     "fonts:build": "tsx scripts/fonts.ts",
     "map:preview": "tsx scripts/map-poc.ts",
     "map:import": "tsx scripts/map-import.ts",
@@ -56,6 +57,7 @@
     ]
   },
   "dependencies": {
+    "firebase": "^12.18.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",

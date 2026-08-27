@@ -13,6 +13,12 @@ pipeline of scripts and served as files; the user profile lives in
 `localStorage`. The live site is [lectorea.org](https://lectorea.org/),
 deployed from `main` by [deploy.yml](../.github/workflows/deploy.yml).
 
+The one exception is a reader who asks for one: signing in copies that same
+profile into a Firestore document so a laptop and a phone can share it
+([sync.md](sync.md)). It is a setting and not a wall — the catalogue is
+complete with no account, a build with no Firebase configured has no sign-in at
+all, and the SDK is never downloaded by anybody who does not use it.
+
 It also keeps itself current without anybody pressing anything: a nightly job
 re-crawls what is already known, drops what has died, and the deploy runs off
 the back of it ([pipeline.md](pipeline.md#automation)).
@@ -88,6 +94,7 @@ Scripts are `tsx` + better-sqlite3; tests are vitest over the build logic.
 | zod schemas in `shared/schema.ts` | one schema for the scripts, the build and the frontend |
 | CSS variables behind Tailwind | one palette the map screen can swap wholesale at runtime |
 | One UI kit in `src/components/ui/` | every button, chip, field and switch cut from the same plate, in one file |
+| Firebase behind a dynamic import | 165 KB gzipped that only a reader with an account should ever pay for |
 | Own barycentric column ordering, at build time | dagre cannot express domain bands, and ranks nodes by edge length rather than by level |
 | Plain scrollable columns; arrows only for the selected chain | over 200 cards, arrows were noise |
 
@@ -148,6 +155,8 @@ What each one does and why in that order:
   what is deliberately not planned
 - [analytics.md](analytics.md) — the one thing that leaves the browser: what is
   counted, what is refused, and the switch that stops it
+- [sync.md](sync.md) — the optional account: what a merge can and cannot carry,
+  what a write costs, and how to set the Firebase project up
 
 **The data**
 

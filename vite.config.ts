@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
@@ -34,6 +34,43 @@ const basePath = process.env.BASE_PATH || `/${repo.split('/')[1]}/`;
  */
 const ga4Id = process.env.VITE_GA4_ID ?? '';
 const ga4Debug = process.env.VITE_GA4_DEBUG ?? '';
+
+/**
+ * The Firebase project the optional sync account lives in — docs/sync.md.
+ *
+ * Empty is the meaningful default, exactly as it is for the analytics stream: a
+ * fork and every `pnpm dev` then have no sync at all, the section does not
+ * appear in the profile, and not a byte of the SDK is downloaded. Passed
+ * through the environment rather than committed, so that turning the feature on
+ * for this deploy is four repository secrets and no code change.
+ */
+const FIREBASE_KEYS = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_APP_ID',
+] as const;
+
+/**
+ * Read from the environment, and from `.env` when the environment is silent.
+ *
+ * The environment alone is right for CI and wrong for a laptop: everything else
+ * this project needs a credential for — ten YouTube keys, the OpenAI key —
+ * already lives in `.env`, and asking for these four to be exported by hand in
+ * every shell instead is the kind of difference nobody remembers and everybody
+ * debugs once. CI still wins, because it is the one that must: a secret passed
+ * by the workflow overrides whatever a checked-out file happens to say.
+ *
+ * Deliberately not extended to `VITE_GA4_ID`. A local build picking analytics
+ * up out of `.env` would send an afternoon of development into the readers'
+ * reports, which is exactly what that variable is documented not to do.
+ */
+function firebaseEnv(mode: string): Record<string, string> {
+  const file = loadEnv(mode, process.cwd(), 'VITE_FIREBASE');
+  return Object.fromEntries(
+    FIREBASE_KEYS.map((key) => [key, process.env[key] ?? file[key] ?? ''])
+  );
+}
 
 /**
  * Restart the dev server when the styling config changes.
@@ -72,6 +109,32 @@ export default defineConfig(({ mode }) => ({
     'import.meta.env.VITE_REPO': JSON.stringify(repo),
     'import.meta.env.VITE_GA4_ID': JSON.stringify(ga4Id),
     'import.meta.env.VITE_GA4_DEBUG': JSON.stringify(ga4Debug),
+    ...Object.fromEntries(
+      Object.entries(firebaseEnv(mode)).map(([key, value]) => [
+        `import.meta.env.${key}`,
+        JSON.stringify(value),
+      ])
+    ),
+  },
+
+  /**
+   * The Firebase SDK, in a chunk with a name that can be written down.
+   *
+   * It is loaded by `import()` from `store/sync.ts` and would get a hashed
+   * chunk name of its own anyway; naming it is what lets the service worker
+   * below refuse to precache it. Without that the lazy import buys nothing on
+   * an installed app, which pulls every `.js` in the build down on first run —
+   * 300 KB of authentication code for a reader who never signs in.
+   */
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id: string) =>
+          id.includes('/node_modules/@firebase/') || id.includes('/node_modules/firebase/')
+            ? 'firebase'
+            : undefined,
+      },
+    },
   },
 
   plugins: [
@@ -136,6 +199,9 @@ export default defineConfig(({ mode }) => ({
         // rings for the reason it exists: the one moment it is needed is the
         // one moment nobody is at the machine to notice a failed request.
         globPatterns: ['**/*.{js,css,html,svg,woff2,webp,png,mp3}'],
+        // Everything the sync needs, and nothing anybody else does. Signing in
+        // requires a network by definition, so there is nothing to cache it for.
+        globIgnores: ['**/firebase-*.js'],
         runtimeCaching: [
           {
             urlPattern: /\/data\/.*\.json$/,

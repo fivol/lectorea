@@ -25,35 +25,41 @@ marks is gone with no way back.
 Everything at the top of this list is about paying that cost down without giving
 up what it bought.
 
-## 1. Sync between devices
+## 1. Sync between devices — done
 
 The same profile on a laptop, a phone and a tablet, without either of them being
-the master copy.
+the master copy. It shipped as **a sync account**: sign in with Google in
+**Профиль → Данные**, and the profile lives in a Firestore document under that
+identity. How it works, what it costs and how to set the project up is
+[sync.md](sync.md).
 
-Half of it already exists: the import merges rather than overwrites, and its
-rules were written for exactly this — on a conflict the more advanced status
-wins, days union, a lecture watched on either machine is watched, and histories
-interleave by time (`mergeProfile` in
-[`store/profile.ts`](../src/store/profile.ts)). Merging two profiles in either
-order gives the same answer, and merging twice changes nothing — which is what
-makes syncing them safe. What is missing is a way for two devices to hand each
-other the file without a human carrying it.
+Half of it already existed, which is why this was the affordable one: the file
+import merges rather than overwrites, and its rules were written for exactly
+this — on a conflict the more advanced status wins, days union, a lecture
+watched on either machine is watched, and histories interleave by time. Merging
+two profiles in either order gives the same answer, and merging twice changes
+nothing, which is what makes syncing them safe. What the sync added was a
+revision counter and one distinction the file import never needed: a union
+cannot carry an erasure, so a device that has written nothing since it last
+synced takes the cloud copy **wholesale** instead of merging it. Without that,
+unticking a lecture on a phone could never reach a laptop.
 
-Three shapes it could take, in increasing order of what they cost:
+Three shapes were on the table:
 
-| | How it works | Cost |
+| | How it works | Why not |
 |---|---|---|
-| **A sync code** | one device shows a short code, the other types it, the profile passes through a relay and is never stored | a tiny service; nothing at rest; both devices have to be to hand at the same time |
-| **A sync account** | sign in with an existing account (GitHub, Google) and the profile lives in object storage under that identity | a real backend, an OAuth app, and somebody's data to look after |
-| **A folder you own** | the profile syncs into a file in the reader's own Dropbox / iCloud / WebDAV | no server at all, but every provider is its own integration and its own login flow |
+| **A sync code** | one device shows a short code, the other types it, the profile passes through a relay and is never stored | still needs a service to relay through, and both devices have to be to hand at the same moment — which is not what "my phone knows what I watched" means |
+| **A folder you own** | the profile syncs into a file in the reader's own Dropbox / iCloud / WebDAV | no server at all, but every provider is its own integration and its own login flow, and the cheapest of them is still more work than all of Firestore |
+| **A sync account** ✅ | sign in with an existing account and the profile lives under that identity | chosen |
 
-The constraint that decides it: **the site must keep working with no account at
-all.** Sync is a thing you turn on, never a wall in front of the catalogue, and
-a reader who never signs in must not lose a single feature. That rules out
-anything that makes an identity the primary key of the profile, and it is why a
-sync code is the likely first step even though an account is the better
-long-term answer — the code can ship without changing anything about how the
-profile works.
+The constraint that decided it, and that has not moved: **the site must keep
+working with no account at all.** Sync is a thing you turn on, never a wall in
+front of the catalogue, and a reader who never signs in must not lose a single
+feature — or download a single byte of the code that would have signed them in.
+The profile is still `localStorage` first and the identity is still not its
+primary key: the cloud copy is a copy.
+
+What is left of this item: a second way in for people without a Google account.
 
 ## 2. Progress kept off the browser
 
@@ -61,12 +67,13 @@ Sync solves "two devices"; it does not solve "I cleared my cookies". Those are
 the same mechanism from the outside and different problems underneath: the
 second one needs a copy that survives the device, not a copy on another device.
 
-The cheap version is a reminder — the profile knows when it was last exported,
-and a profile with three hundred marks and no backup in six months could say so
-once. The full version is the sync account above, with the cloud copy as the one
-that outlives everything. A middle step worth having on its own: an export that
-is one press rather than three, and an import that takes a dropped file
-anywhere on the page.
+The account above answers it for anybody who has one — the cloud copy is what
+outlives the browser — and leaves it exactly where it was for everybody else.
+So what remains is for the readers who will never sign in, and it is small: the
+profile knows when it was last exported, and one with three hundred marks and no
+backup in six months could say so once. A middle step worth having on its own:
+an export that is one press rather than three, and an import that takes a
+dropped file anywhere on the page.
 
 ## 3. A plan with dates in it
 
@@ -129,7 +136,9 @@ Saying no to these once is cheaper than reconsidering them every few months.
 - **No ads, no paid tier, no "premium" anything.** The catalogue is a list of
   links to free lectures; charging for a view of it would be charging for
   somebody else's work.
-- **No account required to read.** Sync, if it lands, is a setting.
+- **No account required to read.** Sync landed, and it is a setting: nothing is
+  behind it, nothing is withheld without it, and a reader who never signs in
+  downloads none of it. That is not a transitional state — it is the shape.
 - **No analytics that follow a reader.** The site does count what happens on it
   — which courses are opened, and above all which searches find nothing, since a
   search with no results is a course the catalogue is missing and there is no

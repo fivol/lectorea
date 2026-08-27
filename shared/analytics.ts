@@ -65,7 +65,7 @@ export const ANALYTICS_PARAMS: Record<string, ParamSpec> = {
   },
   done: { scope: 'dimension', label: 'Marked done', note: '1 when lectures were ticked, 0 unticked' },
   on: { scope: 'dimension', label: 'Switched on', note: '1 when a toggle ended up on' },
-  ok: { scope: 'dimension', label: 'Succeeded', note: '1 when the clipboard accepted the write' },
+  ok: { scope: 'dimension', label: 'Succeeded', note: '1 when the attempt went through — a clipboard write, a sign-in' },
   video_provider: { scope: 'dimension', label: 'Video provider', note: 'Always youtube for now' },
   search_term: {
     scope: 'dimension',
@@ -77,7 +77,8 @@ export const ANALYTICS_PARAMS: Record<string, ParamSpec> = {
     label: 'Result kind',
     note:
       'course, domain, playlist, provider or lecturer — which row was chosen; ' +
-      'playlist, video, channel or personal for a pasted link, which is what it pointed at',
+      'playlist, video, channel or personal for a pasted link, which is what it pointed at; ' +
+      'popup or redirect for a sign-in, first or linked for a device meeting a cloud copy',
   },
   item_id: { scope: 'dimension', label: 'Chosen id', note: 'Catalogue id of the chosen row' },
   suggested: {
@@ -88,7 +89,11 @@ export const ANALYTICS_PARAMS: Record<string, ParamSpec> = {
   facet: { scope: 'dimension', label: 'Filter facet', note: 'Which of the playlist filters moved' },
   value: { scope: 'dimension', label: 'Value', note: 'What the facet or setting was set to' },
   setting: { scope: 'dimension', label: 'Setting', note: 'Which setting was pressed' },
-  mode: { scope: 'dimension', label: 'Import mode', note: 'replace or merge' },
+  mode: {
+    scope: 'dimension',
+    label: 'Import mode',
+    note: 'replace or merge for a file; push, pull, merge or idle for a sync; signout or forget',
+  },
   view: { scope: 'dimension', label: 'Front page view', note: 'map or blocks' },
   what: { scope: 'dimension', label: 'Copied', note: 'profile, profile-prompt, lecture-prompt' },
   link_domain: { scope: 'dimension', label: 'Outbound host', note: 'Host of a link leaving the site' },
@@ -146,6 +151,18 @@ export const ANALYTICS_EVENTS: Record<string, string> = {
   profile_export: 'The profile downloaded or copied out',
   profile_import: 'A profile file read back in',
   profile_reset: 'The profile erased',
+  /*
+   * Four events for the whole of syncing, and none of them per write.
+   *
+   * What is worth knowing is whether anybody turns it on, whether signing in
+   * works, and how often two devices genuinely diverge — `sync_join` answers
+   * the last one, because a `merge` means somebody really did study on both.
+   * A push counted every minute would answer nothing and cost the quota.
+   */
+  sync_signin: 'A sign-in attempted, by popup or by redirect, and whether it took',
+  sync_join: 'A device met the cloud copy: pushed, pulled, merged or found nothing to do',
+  sync_off: 'Signed out, or signed out with the cloud copy deleted',
+  sync_error: 'Syncing failed, as which of the four kinds it was',
   copy: 'Something copied to the clipboard',
   outbound_click: 'A link followed off the site',
   app_error: 'An uncaught error, as a count rather than a stack',

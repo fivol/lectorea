@@ -14,6 +14,17 @@ interface ImportMetaEnv {
   readonly VITE_GA4_ID: string;
   /** `1` sends from a development build too, marked as debug. Off by default. */
   readonly VITE_GA4_DEBUG: string;
+  /*
+   * The Firebase project the optional sync account lives in. All four are empty
+   * in a fork and in a local checkout, and the sync section then does not exist
+   * — see `src/store/sync.ts` and docs/sync.md. None of them is a secret: a web
+   * config ships inside the bundle by construction, and what protects a profile
+   * is the security rule in `firebase/firestore.rules`, not the key.
+   */
+  readonly VITE_FIREBASE_API_KEY: string;
+  readonly VITE_FIREBASE_AUTH_DOMAIN: string;
+  readonly VITE_FIREBASE_PROJECT_ID: string;
+  readonly VITE_FIREBASE_APP_ID: string;
 }
 
 interface ImportMeta {

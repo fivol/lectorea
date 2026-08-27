@@ -43,7 +43,11 @@ export type IconName =
   | 'hourglass'
   | 'captions'
   | 'list'
-  | 'flag';
+  | 'flag'
+  | 'google'
+  | 'cloud'
+  | 'cloud-off'
+  | 'sync';
 
 /** One inline sprite instead of an icon package — twenty glyphs is not a dependency. */
 const PATHS: Record<IconName, string> = {
@@ -118,6 +122,13 @@ const PATHS: Record<IconName, string> = {
   list: 'M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01',
   // A finish flag: how many of the people who started are still there at the end.
   flag: 'M5.5 21V4m0 .5h11.2l-1.9 3.6 1.9 3.6H5.5',
+  // A G drawn the way every other glyph here is drawn — one open stroke — since
+  // the multicoloured mark is four filled paths and would be the only thing on
+  // the site that is not made of this line.
+  google: 'M19.3 8.6A8 8 0 1 0 20 12h-6.4',
+  cloud: 'M7 19a4.5 4.5 0 01-.4-9 6.5 6.5 0 0112.5 2A3.6 3.6 0 0118.4 19z',
+  'cloud-off': 'M7 19a4.5 4.5 0 01-.4-9 6.5 6.5 0 019.6-2.2M4 4l16 16M18.6 12.2A3.6 3.6 0 0118.4 19h-6',
+  sync: 'M20 12a8 8 0 01-13.7 5.6M4 12a8 8 0 0113.7-5.6M4 20v-4h4M20 4v4h-4',
 };
 
 const FILLED: IconName[] = ['star-filled', 'play', 'half', 'grid', 'flame'];

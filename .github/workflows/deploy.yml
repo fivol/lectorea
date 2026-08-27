@@ -99,6 +99,15 @@ jobs:
           VITE_REPO: ${{ github.repository }}
           BASE_PATH: ${{ github.repository == 'fivol/lectorea' && '/' || '' }}
           VITE_GA4_ID: ${{ github.repository == 'fivol/lectorea' && 'G-5N7EE7KHVS' || '' }}
+          # The optional sync account — docs/sync.md. Kept as repository secrets
+          # rather than written here, not because a Firebase web config is
+          # secret (it ships inside the bundle either way) but because a fork
+          # must not build against this project's Firestore: an unset secret is
+          # an empty string, and an empty string is a site with no accounts.
+          VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

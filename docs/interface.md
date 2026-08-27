@@ -1436,12 +1436,33 @@ theme button it shows where the click leads rather than where you are. Only the
 interface is translated — course titles and descriptions stay in the language
 the catalogue is written in.
 
-There is no account and no backend: it all lives in `localStorage`. The **Data**
-tab exports it as a JSON file and imports one back, either replacing what is
-there or merging it — on a conflict the more advanced status wins, and histories
-interleave by time. That is the whole sync story, and it works between browsers
-without a server. The same JSON also goes straight to the clipboard, for a phone
-with nowhere to put a download.
+It all lives in `localStorage`, and no account is needed for any of it. The
+**Data** tab exports it as a JSON file and imports one back, either replacing
+what is there or merging it — on a conflict the more advanced status wins, and
+histories interleave by time. That works between browsers with no server at all,
+and it is still the only thing on this screen that does. The same JSON also goes
+straight to the clipboard, for a phone with nowhere to put a download.
+
+Above the file sits the other answer to the same question: **Синхронизация**, an
+optional Google sign-in that copies the profile into a document of its own so a
+laptop and a phone share one. Signed out it is a sentence and a button; signed
+in it is the account, one word of status, «Выйти», and — set apart, in red —
+«Удалить копию в облаке», which is the only thing on the site that removes data
+from a server, and removes all of it. The two buttons are two questions:
+signing out stops this device syncing and deletes nothing, anywhere.
+
+The order on the screen is deliberate. The account is the answer for almost
+everybody and the file is the answer that needs nobody's server, so the account
+goes first and the file stays underneath it rather than being replaced by it. A
+build with no Firebase configured shows none of this and is a complete site —
+which is what a fork gets, and what `pnpm dev` gets. How the two copies are
+reconciled, and the one thing a merge cannot carry, is [sync.md](sync.md).
+
+Outside that section an account shows itself in exactly one place: the profile
+disc in the header carries its initial instead of the anonymous glyph. Not an
+avatar — it would be the only request this site makes to a third party for a
+picture, on the screen whose whole argument is that nothing about a reader
+leaves the browser.
 
 And a third button copies a **prompt**: the same profile written out for a
 reader that is not this site. An assistant handed the JSON has to guess its way
