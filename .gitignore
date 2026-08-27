@@ -12,6 +12,10 @@ public/images/courses/
 data/cache.db
 data/cache.db-shm
 data/cache.db-wal
+# `cache:prune --compact` vacuums into this beside the original, so for a few
+# minutes a 5 GB file sits untracked in a working tree several sessions share.
+data/cache.db.compact
+data/cache.db.compact-journal
 data/proposed-courses.yaml
 
 .env
