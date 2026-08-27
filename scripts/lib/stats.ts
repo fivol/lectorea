@@ -891,7 +891,10 @@ function collectCrawl(notes: string[], context: CrawlContext): CrawlStats | null
         {
           label: 'Ответов API',
           value: fmt(raw),
-          hint: 'сохранены целиком, чтобы не тратить квоту на повтор',
+          // The count is of questions asked, which is what the row records and
+          // what never expires. The bodies behind them do — counting those
+          // would mean a full scan of the largest table for one tile.
+          hint: 'запросов к API; тела хранятся, пока не выйдут из окна',
         },
         { label: 'Размер cache.db', value: `${dbSizeMb.toFixed(0)} МБ` },
         {

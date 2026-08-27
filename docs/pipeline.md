@@ -225,9 +225,10 @@ worked, and every counter this pipeline prints agreed the day had been spent —
 only the ratio of units to playlists gave it away. Anything that loops per
 request wants a bound that does not depend on the API agreeing to end it.
 
-`raw_responses` keeps every API body verbatim. With a daily quota this is the
-difference between "fix the parser and re-run" and "fix the parser and wait
-until tomorrow".
+`raw_responses` keeps every API body. With a daily quota this is the difference
+between "fix the parser and re-run" and "fix the parser and wait until tomorrow"
+— for as long as the body is kept, which is three days for the bulk endpoints
+and for ever for the dear ones. See [the raw archive is bounded](#the-raw-archive-is-bounded).
 
 ### An id that cannot exist still costs four requests
 
@@ -543,6 +544,59 @@ That test also asserts the thing the whole design rests on: every piece of marku
 the map draws from the saved plan is the same string as the one it draws without
 it.
 
+## The raw archive is bounded
+
+Every API body is kept in `raw_responses` with the time it arrived, so a parser
+bug costs an afternoon instead of a day of quota. Left at that it also costs the
+machine: on 2026-08-27 the table was **28.2 GB of a 32 GB cache**, sixteen days
+of crawling at 1.8 GB a day, and the scheduled harvest was going to keep adding.
+
+The bound comes from noticing that the row holds two facts with different
+lifetimes — *that the question was asked*, and *what came back*:
+
+- **The ledger** — `endpoint`, `request_key`, `fetched_at` — is never deleted.
+  It is a few hundred bytes, and it is what `_found.ts` reconstructs first
+  sightings from and what says where the quota went.
+- **The body** expires. `videos` and `playlistItems` keep theirs for
+  **three days**; `search`, `playlists` and `channels` keep theirs for good —
+  482 MB between them, against a search page that costs 100 units and a
+  `playlists` body that first-sighting reconstruction reads.
+
+So a body is emptied, not a row deleted, and everything that reads the archive
+by key goes on working over a cache with the expensive part gone.
+
+**What is dropped from the bodies that stay** is measured rather than guessed,
+and it is in [`scripts/lib/raw.ts`](../scripts/lib/raw.ts):
+
+| field | share of the `videos` archive | why it goes |
+|---|---|---|
+| `snippet.localized` | 36.9% — 9.1 GB | identical to the `title` and `description` beside it in 9336 of 9336 sampled. `hl` is never sent, so YouTube echoes the default locale |
+| `snippet.thumbnails` | 8.7% — 2.1 GB | all 44 651 URLs sampled were `https://i.ytimg.com/vi/<the item's own id>/…` |
+| `snippet.tags` | 6.2% — 1.5 GB | read by nothing here |
+| `etag`, `kind` | 60.7% of a `playlistItems` body | HTTP envelope |
+
+`snippet.description` stays: it is the seam [`data:mine`](harvest.md) reads for
+playlists the crawl paid for and never noticed, and no table holds it.
+
+**A body is only allowed to expire because everything durable has left it** —
+`found_at` at insert time, linked playlist ids by `data:mine`. The second is a
+separate command, so it is interlocked rather than trusted: `data:mine` stamps
+`meta.mined_through`, and a prune whose window opens after that stamp refuses.
+
+```bash
+pnpm cache:prune            # what would go, and what it would free
+make prune                  # empty it. Runs as step 11 of `make pipeline` anyway
+make prune COMPACT=1        # ...and rebuild the file, so the disk gets it back
+```
+
+The routine form does not shrink the file and does not need to: SQLite hands the
+emptied pages back to itself, so tomorrow's crawl writes into the space
+yesterday's gave up and the archive stops growing. `COMPACT=1` rewrites the
+database beside the old one and swaps, which is for the day the file is already
+too big — and it is the only option then, because a plain `VACUUM` writes a
+second copy of the whole database before it frees anything, and the disk that
+made compaction necessary is the disk that refuses it.
+
 ## Automation
 
 The catalogue is meant to stay current with nobody touching it. Two workflows do
@@ -669,7 +723,7 @@ irreversible direction:
 
 And two things it does without being asked. The first: **keeps this machine's
 `raw_responses`.** The snapshot deliberately leaves them out, so replacing the
-file would cost a laptop its 3.5 GB archive of verbatim API bodies on every
+file would cost a laptop its archive of API bodies on every
 pull — the archive that makes "fix the parser and re-run" possible instead of
 "fix the parser and wait until tomorrow". So a cache that already holds material
 is updated table by table instead of overwritten: the 190 MB that travelled is
@@ -691,8 +745,9 @@ the merged set by having a single-column key and a `checked_at`; adding one to
 `MERGED` in `cache-snapshot.ts` is the whole of it, and the day to do it is the
 day the table is created.
 
-The snapshot leaves out `raw_responses`, which is 3.5 GB of the 3.6 and read only
-by `11-mine` and `stats`, both local. What travels is 190 MB, 65 compressed.
+The snapshot leaves out `raw_responses` — the largest thing in the cache by far,
+and read only by `11-mine`, `_found`, `_yield` and `stats`, all local. What
+travels is 190 MB, 65 compressed.
 
 ### Both directions, from a laptop
 

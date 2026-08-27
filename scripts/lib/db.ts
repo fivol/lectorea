@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import Database from 'better-sqlite3';
 import { paths, nowIso, env } from './config.js';
+import { serializeBody } from './raw.js';
 
 /**
  * `data/cache.db` is not the source of truth — it is the cache and the working
@@ -428,6 +429,33 @@ export function snapshotStamp(file: string = paths.cacheDb): string | null {
   }
 }
 
+/**
+ * The moment `data:mine` last read the archive to the end.
+ *
+ * The interlock that makes a retention window safe. A body is allowed to expire
+ * because everything durable in it has already been taken out — `found_at` by
+ * the insert that wrote the row, linked playlist ids by `11-mine` — and the
+ * second of those is a separate command that a person can forget to run.
+ * `cache:prune` refuses to expire anything fetched after this stamp, so
+ * forgetting costs a message rather than a seam.
+ */
+export const MINED_THROUGH = 'mined_through';
+
+/** A scalar the cache remembers between runs. Null when it was never written. */
+export function getMeta(db: Db, key: string): string | null {
+  const row = db.prepare(`SELECT value FROM meta WHERE key = ?`).get(key) as
+    | { value: string }
+    | undefined;
+  return row?.value ?? null;
+}
+
+export function setMeta(db: Db, key: string, value: string): void {
+  db.prepare(
+    `INSERT INTO meta (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+  ).run(key, value);
+}
+
 export function writeSnapshotStamp(file: string, stamp: string): void {
   const db = new Database(file);
   try {
@@ -475,20 +503,49 @@ export function workSince(stamp: string | null): string | null {
 /* ─────────────────────────────  Raw responses  ─────────────────────────── */
 
 /**
- * Every API body is kept verbatim. With a daily quota this is the difference
- * between "fix the parser and re-run" and "fix the parser and wait until
- * tomorrow" — it is not an archival luxury.
+ * The answer is kept so a parser can be fixed and re-run instead of waiting for
+ * tomorrow's quota — but only the newest answer, and only the part of it that
+ * is information. What is dropped and why: [raw.ts](raw.ts).
+ *
+ * **The row is kept, the older body is emptied.** These are two facts wearing
+ * one row: that the question was asked at a moment, and what came back. Only
+ * the second is ever re-read — `readRaw` has always taken the newest and
+ * nothing else — while the first is the ledger `_found.ts` reconstructs first
+ * sightings out of, and deleting it would rewrite the history of what the
+ * quota bought. So a re-crawl retires its predecessor's body and leaves its
+ * predecessor's row alone.
+ *
+ * A blind insert instead cost 27 000 duplicate `videos` bodies and 121 000
+ * duplicate `playlistItems` ones by 2026-08-27 — about 5 GB of answers that the
+ * code reading them had already decided were superseded.
  */
 export function saveRaw(db: Db, endpoint: string, requestKey: string, body: unknown): void {
-  db.prepare(
-    `INSERT INTO raw_responses (endpoint, request_key, body, fetched_at) VALUES (?, ?, ?, ?)`
-  ).run(endpoint, requestKey, JSON.stringify(body), nowIso());
+  // One transaction, because the two halves are retire-then-replace: a crash
+  // between them would leave the request with its old body emptied and no new
+  // one, which is the one outcome worse than keeping both.
+  db.transaction(() => {
+    db.prepare(
+      `UPDATE raw_responses SET body = NULL
+       WHERE endpoint = ? AND request_key = ? AND body IS NOT NULL`
+    ).run(endpoint, requestKey);
+    db.prepare(
+      `INSERT INTO raw_responses (endpoint, request_key, body, fetched_at) VALUES (?, ?, ?, ?)`
+    ).run(endpoint, requestKey, serializeBody(endpoint, body), nowIso());
+  })();
 }
 
+/**
+ * The newest body still held for a request, or null.
+ *
+ * Null is now an ordinary answer rather than "never asked": a body outside its
+ * retention window is emptied and its ledger row stays, so a caller that means
+ * "has this ever been fetched" must ask the row, not the body.
+ */
 export function readRaw<T>(db: Db, endpoint: string, requestKey: string): T | null {
   const row = db
     .prepare(
-      `SELECT body FROM raw_responses WHERE endpoint = ? AND request_key = ?
+      `SELECT body FROM raw_responses
+       WHERE endpoint = ? AND request_key = ? AND body IS NOT NULL
        ORDER BY id DESC LIMIT 1`
     )
     .get(endpoint, requestKey) as { body: string } | undefined;

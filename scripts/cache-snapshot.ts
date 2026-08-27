@@ -70,7 +70,7 @@ const STAMP_ASSET = 'cache.db.stamp';
 type Stamp = { published_at: string; playlists: number; videos: number };
 
 /**
- * `raw_responses` is 3.5 of the 3.6 GB and none of the value.
+ * `raw_responses` is almost the whole of the cache and none of the value.
  *
  * It is every API body kept verbatim, so a parser can be fixed and re-run
  * without spending the quota again — worth its weight on the machine that
@@ -191,9 +191,9 @@ async function publish(): Promise<void> {
 /**
  * Table by table into a fresh database, rather than a copy of the file.
  *
- * `VACUUM INTO` would want 3.6 GB of free disk to produce a 240 MB result, and
- * the whole point of the exercise is that most of those gigabytes are not
- * coming. Copying the schema out of `sqlite_master` keeps this honest as the
+ * `VACUUM INTO` would want a copy of the whole cache in free disk to produce a
+ * 240 MB result, and the whole point of the exercise is that most of those
+ * gigabytes are not coming. Copying the schema out of `sqlite_master` keeps this honest as the
  * schema grows: a table added to `lib/db.ts` lands in the snapshot without
  * anyone remembering to add it here.
  */
@@ -417,7 +417,7 @@ function fetchStamp(): Stamp | null {
  * `raw_responses`, which stays.
  *
  * Replacing the file would be simpler and would throw away the reason the raw
- * bodies are kept at all. They are 3.5 GB of API answers this machine paid for,
+ * bodies are kept at all. They are the API answers this machine paid for,
  * they are what makes "fix the parser and re-run" possible instead of "fix the
  * parser and wait for tomorrow", and they are deliberately left out of the
  * snapshot — so a plain file swap silently costs a laptop its archive every

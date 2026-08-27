@@ -82,7 +82,7 @@ That was the state on 2026-08-19 at 08:00 UTC — release 63 077 playlists, lapt
 79 475 — and the fix is one command with a deadline:
 
 ```bash
-pnpm cache:publish            # ~4 minutes: 24 GB on disk → 686 MB → 210 MB uploaded
+pnpm cache:publish            # ~4 minutes: the whole cache → 686 MB → 210 MB uploaded
 ```
 
 **If the laptop has crawled since the last publish, publish before 08:30 UTC.**
@@ -140,7 +140,8 @@ pnpm exec tsx -e "import {openDb} from './scripts/lib/db.ts'; const db=openDb({r
 
 ## The dashboard is a file, not a page you can open in the preview
 
-`pnpm stats` recomputes everything from an 18 GB `cache.db` — about 35 seconds,
+`pnpm stats` recomputes everything from a `cache.db` measured in gigabytes —
+about 35 seconds,
 most of it one group-by over the 1.8 million rows of `videos` — and `--serve`
 does the whole thing again on every request. Reading it through the browser
 preview did not work on 2026-08-18: the same server answered `curl` in 30 s
@@ -159,14 +160,19 @@ can simply be read when what is being checked is a number rather than a colour.
 
 ## The order that must not be rearranged
 
-`import → discover → mine → match → refresh → subscribers → match → authors → embeds → build`.
-The reasons are in [scripts/README.md](../scripts/README.md#make-pipeline); two
+`import → discover → mine → match → refresh → subscribers → match → authors → embeds → build → prune`.
+The reasons are in [scripts/README.md](../scripts/README.md#make-pipeline); three
 of them matter to an agent:
 
 - **match before the crawl** — otherwise the day goes on playlists nothing will
   show;
 - **match again after it** — the crawl gave titles to playlists that had none,
-  and the rule pass reads nothing but the title.
+  and the rule pass reads nothing but the title;
+- **prune last, and never before `mine`** — it empties API bodies past their
+  three-day window, and a description that has not been mined is the only copy
+  of the playlists it links to. `mine` stamps `meta.mined_through` and `prune`
+  refuses without it, so the order is enforced rather than remembered
+  ([pipeline.md](../pipeline.md#the-raw-archive-is-bounded)).
 
 When the spend has to be aimed rather than "however much it takes": `data:refresh`
 spends everything there is, while `data:playlists` buys metadata only (1 unit per

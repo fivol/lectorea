@@ -1,5 +1,5 @@
 import { parseLimit, reportRemaining } from './lib/config.js';
-import { openDb } from './lib/db.js';
+import { MINED_THROUGH, openDb, setMeta } from './lib/db.js';
 import { PLAYLIST_ID_IN_TEXT } from './lib/playlist-id.js';
 import { queuePlaylists } from './lib/queue.js';
 import { reportRunError } from './lib/exit.js';
@@ -9,9 +9,13 @@ import { reportRunError } from './lib/exit.js';
  *
  * Lecturers link their own courses: "full playlist here", "part 2 of the
  * series", "prerequisites in my linear algebra course". Those links sit in
- * video and playlist descriptions, and `raw_responses` keeps every API body
- * verbatim — so they are already on disk. This costs **no quota and no
- * network**: it is a regex over a table.
+ * video and playlist descriptions, and `raw_responses` keeps the API bodies — so
+ * they are already on disk. This costs **no quota and no network**: it is a
+ * regex over a table.
+ *
+ * It is also what makes those bodies disposable. A description nobody has mined
+ * is the only copy of the playlists it links to, so this run stamps
+ * `meta.mined_through` and `cache:prune` refuses to expire anything newer.
  *
  * Worth re-running after every crawl. Each newly walked playlist arrives with
  * the descriptions of its videos attached, so the seam refills itself; see
@@ -24,6 +28,11 @@ const PLAYLIST_ID = PLAYLIST_ID_IN_TEXT;
 function main(): void {
   const limit = parseLimit();
   const db = openDb();
+
+  // Stamped from before the scan, not after: everything already on disk is
+  // about to be read, and a body that arrives mid-run has not been. This is
+  // what lets `cache:prune` expire a body — see MINED_THROUGH.
+  const scanningFrom = new Date().toISOString();
 
   const known = new Set(
     (db.prepare(`SELECT id FROM playlists`).all() as Array<{ id: string }>).map((row) => row.id)
@@ -54,6 +63,7 @@ function main(): void {
     scan(row.description, 'playlist description');
 
   if (!found.size) {
+    setMeta(db, MINED_THROUGH, scanningFrom);
     console.log('✓ data:mine: nothing new in what is already stored');
     db.close();
     return;
@@ -71,6 +81,7 @@ function main(): void {
     limit
   );
 
+  setMeta(db, MINED_THROUGH, scanningFrom);
   db.close();
   console.log(`✓ data:mine: ${added} new playlists queued, ${found.size} found`);
   if (rejected) console.log(`· ${rejected} refused as malformed ids`);

@@ -12,8 +12,10 @@ Running out of every key prints `квота исчерпана, продолжу
 **exits 0** — it is the normal end of a working day, not a failure, and CI stays
 green.
 
-Every response body is kept verbatim in `raw_responses`, so a parser bug is
-fixed and re-run locally instead of costing another day of quota.
+Response bodies are kept in `raw_responses`, so a parser bug is fixed and re-run
+locally instead of costing another day of quota — for three days for the bulk
+endpoints, and for good for the dear ones
+([the raw archive is bounded](../pipeline.md#the-raw-archive-is-bounded)).
 
 State lives in `cache.db`, including the job queue, so any of these can be killed
 and restarted. Costs, retry policy and refresh periods: [pipeline.md](../pipeline.md).
@@ -115,8 +117,9 @@ pnpm data:mine
 The one command here that spends nothing at all — no quota, no network. It
 re-reads what the crawl already stored, looking for playlists it linked to and
 never followed: lecturers put "full course here" in a video description, and
-`raw_responses` keeps every API body verbatim, so those links are already on
-disk.
+`raw_responses` keeps the API bodies, so those links are already on disk.
+That is also the reason this runs before `cache:prune` and not after: a
+description nobody has mined is the only copy of what it links to.
 
 Run it after every crawl. Each newly walked playlist arrives with the
 descriptions of its videos attached, so the seam refills itself. Its first run

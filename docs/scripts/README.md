@@ -37,10 +37,10 @@ the same `pnpm` script CI runs. What it adds is the ordering and the guards.
 Everything the crawl does, in the order that buys the most for the day's quota:
 
 ```
-import → discover → mine → match → refresh → subscribers → match → authors → embeds → build
+import → discover → mine → match → refresh → subscribers → match → authors → embeds → build → prune
 ```
 
-Two things about that order are worth stating, because they are the reason the
+Three things about that order are worth stating, because they are the reason the
 sequence exists at all rather than being written out by hand each time.
 
 **Matching comes before the crawl.** Matching is free and needs only a title;
@@ -84,8 +84,18 @@ is the one step allowed to fail without stopping the run — it is the only one
 that needs the open web, and a `raw.githubusercontent.com` that is having a bad
 morning is not a reason to leave the quota unspent.
 
-It ends with `data:build`, so what the day bought is visible in `pnpm dev` and
-validated before anybody thinks about publishing it.
+`data:build` is the last step that produces anything, so what the day bought is
+visible in `pnpm dev` and validated before anybody thinks about publishing it.
+
+**And then the housekeeping the schedule needs.** `prune` empties the API bodies
+that have passed their three-day window, which is the only reason a cache under
+a daily harvest does not fill the disk — it reached 28.2 GB of 32 before there
+was a bound
+([pipeline.md](../pipeline.md#the-raw-archive-is-bounded)). It costs no quota
+and no network, it deletes no rows, and it runs last because it must run after
+`mine`: a description nobody has mined is the only copy of the playlists it
+links to. It refuses rather than relying on the order, so running the steps by
+hand in the wrong sequence costs a message.
 
 **And it always reaches that end.** A step that fails does not stop the
 sequence: it is remembered, named in the last line, and the run exits non-zero
@@ -238,6 +248,7 @@ already work one item at a time by hand.
 | [`pnpm data:images`](crawl.md#pnpm-dataimages) | `07-images.ts` | — | `public/images/` |
 | [`pnpm data:import`](crawl.md#pnpm-dataimport) | `09-import.ts` | network | `data/proposed-courses.yaml` |
 | [`pnpm data:mine`](crawl.md#pnpm-datamine) | `11-mine.ts` | — | `cache.db` |
+| [`pnpm cache:prune`](../pipeline.md#the-raw-archive-is-bounded) | `cache-prune.ts` | `cache.db` | `cache.db` |
 | [`pnpm data:match`](matching.md#pnpm-datamatch) | `05-match.ts` | `cache.db` | `cache.db` |
 | [`pnpm data:review`](matching.md#pnpm-datareview) | `06-review.ts` | `cache.db` | `data/overrides.yaml` |
 
@@ -263,7 +274,7 @@ make pipeline
 ```
 
 Which is `import → discover → mine → match → refresh → subscribers → match →
-authors → embeds → build`, in that order for the reasons
+authors → embeds → build → prune`, in that order for the reasons
 [above](#the-three-sequences-with-a-shorter-name). Spelled out, a day of it is:
 
 ```bash

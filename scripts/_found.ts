@@ -22,7 +22,9 @@
  *
  * The last two never touch a row: `idx_raw_key` covers `(endpoint, request_key)`
  * and rowid comes with every index, so two hundred thousand keys are read
- * straight out of the index and the 18 GB of bodies beside them stays on disk.
+ * straight out of the index and the bodies beside them stay on disk — including
+ * the ones `cache:prune` has since emptied, which is why this still works over a
+ * pruned archive: only the `playlists` pass reads a body, and those are kept.
  * `fetched_at` is not in that index, and reading it would mean pulling every
  * body it sits behind — hence the day boundaries below, binary-searched by
  * rowid, which is exact because the table is only ever appended to.

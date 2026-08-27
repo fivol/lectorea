@@ -70,8 +70,9 @@ finished until the rubbish it brings has a rule that refuses it.
 
 Lecturers link their own courses. "Full playlist here", "part 2 of this series",
 "prerequisites in my linear algebra course" — these sit in video and playlist
-descriptions, and `raw_responses` keeps every API body verbatim, so they are
-already on disk, already paid for.
+descriptions, and `raw_responses` keeps the API bodies, so they are already on
+disk, already paid for — for three days, after which `cache:prune` empties them,
+which is why this is run after every crawl rather than when there is time.
 
 ```bash
 pnpm data:mine

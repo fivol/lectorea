@@ -298,7 +298,7 @@ day the column was added, instead of one that starts empty.
 Two details are worth copying, both about **not paying for the reconstruction**.
 The keys of `raw_responses` are indexed and the bodies are not: asking only for
 `(endpoint, request_key)` is answered out of `idx_raw_key` and never touches the
-18 GB beside it, which is why the video pass reads 108 000 request keys in
+bodies beside it, which is why the video pass reads 108 000 request keys in
 seconds. And `fetched_at` *is* behind the bodies — so the day each row belongs
 to is binary-searched by rowid instead, which is exact because the table is only
 ever appended to.
@@ -307,6 +307,52 @@ ever appended to.
 nobody had when it was written. Before concluding that history is lost, ask what
 was written down at the time — and reach for it through an index rather than a
 scan.
+
+## A store a schedule writes to is bounded by splitting the row, not by deleting rows
+
+The practice above is why `raw_responses` exists, and it is also how it reached
+28.2 GB of a 32 GB cache with a week of disk left
+([pitfalls.md](pitfalls.md#the-raw-archive-was-designed-to-grow-and-nothing-was-watching-the-disk)).
+Both halves of that are correct at once, which is the interesting part: the
+archive was never storing the wrong thing, it was storing two things whose
+lifetimes differ by three orders of magnitude in one row.
+
+| | what it is | how long it is worth it |
+|---|---|---|
+| the ledger | `endpoint`, `request_key`, `fetched_at` — which question was asked, and when | for ever: it is what `_found.ts` rebuilds first sightings out of, and the record of what the quota bought |
+| the body | what the answer said | 145 KB a row, and worthless the moment nobody would re-run a parser over it |
+
+Stored together, the permanent half keeps the temporary half alive. So the bound
+is not a retention policy over *rows* — deleting rows is what would have cost
+the reconstruction — it is **emptying the column that expires and keeping the row
+that does not**. `cache:prune` writes `body = NULL` and never a `DELETE`;
+`_found.ts` reads request keys out of `idx_raw_key` and bodies only for the one
+endpoint that keeps them, so it goes on working over an archive with the
+expensive 88% of it gone.
+
+Three things make the split safe, and each is a general move:
+
+- **Take the durable residue out before the window closes.** A body is only
+  disposable because everything lasting has left it: `found_at` at insert time,
+  linked playlist ids by `data:mine`. The one extraction that a person can
+  forget is the one that is a separate command, so it is interlocked —
+  `cache:prune` reads `meta.mined_through` and refuses rather than trusting the
+  running order.
+- **Apply the policy at write time as well as at prune time.** A cleanup that is
+  only a cleanup is a cleanup that is due again next week. `saveRaw` strips and
+  de-duplicates as it writes, so the prune is maintenance rather than rescue.
+- **Free pages, not disk, for the routine case.** SQLite hands emptied pages
+  back to itself, so tomorrow's crawl writes into the space yesterday's gave up
+  and the file simply stops growing. Rewriting the file is a separate flag for
+  the day it is already too big — and on a full disk it is the *only* option,
+  because `VACUUM` needs a second copy of what it is shrinking.
+
+**Generally:** before a store goes under a schedule, ask what bounds it, and if
+the answer is "how much there is to fetch", look at the row for two facts with
+different lifetimes. Costing it is one `GROUP BY` with `sum(length(…))` and one
+pass parsing twenty values field by field — which is how 9.1 GB of a duplicated
+field and 2.1 GB of derivable URLs were found in a table everyone had only ever
+read as an opaque blob.
 
 ## A channel takes three files, not one
 

@@ -71,20 +71,22 @@ pipeline: require-key ## Everything the crawl does, in quota order, until the da
 	  if [ -n "$${3:-}" ]; then echo "$$3"; fi; \
 	  $(MAKE) "$$1" || failed="$$failed $$1"; \
 	}; \
-	echo "▸ 1/10 import       · playlists named by the catalogues in data/sources.yaml"; \
+	echo "▸ 1/11 import       · playlists named by the catalogues in data/sources.yaml"; \
 	$(MAKE) import || echo "·· import failed — carrying on; it is the one step that needs the open web"; \
-	step discover    "2/10 discover     · channels → their playlists (skips any scanned in the last 30 days)"; \
-	step mine        "3/10 mine         · playlists linked from bodies already on disk — no quota, no network"; \
-	step match       "4/10 match        · before the crawl on purpose: matching is free and decides" \
+	step discover    "2/11 discover     · channels → their playlists (skips any scanned in the last 30 days)"; \
+	step mine        "3/11 mine         · playlists linked from bodies already on disk — no quota, no network"; \
+	step match       "4/11 match        · before the crawl on purpose: matching is free and decides" \
 	                 "                      which playlists the expensive video step walks first"; \
-	step refresh     "5/10 refresh      · metadata → videos → liveness, until the queue or the quota drains"; \
-	step subscribers "6/10 subscribers  · single digits of quota; without it the rating has no room size"; \
-	step match       "7/10 match        · again: the refresh gave titles to playlists that had none," \
+	step refresh     "5/11 refresh      · metadata → videos → liveness, until the queue or the quota drains"; \
+	step subscribers "6/11 subscribers  · single digits of quota; without it the rating has no room size"; \
+	step match       "7/11 match        · again: the refresh gave titles to playlists that had none," \
 	                 "                      and a title is the whole of what the rule pass reads"; \
-	step authors     "8/10 authors      · who made the videos under each new binding — the one question" \
+	step authors     "8/11 authors      · who made the videos under each new binding — the one question" \
 	                 "                      a title cannot answer. 1 unit, once per playlist, never again"; \
-	step embeds      "9/10 embeds       · which playlists the player refuses as list= (oEmbed, no quota)"; \
-	step data        "10/10 build       · data/ + cache.db → public/data, and the validator with it"; \
+	step embeds      "9/11 embeds       · which playlists the player refuses as list= (oEmbed, no quota)"; \
+	step data        "10/11 build       · data/ + cache.db → public/data, and the validator with it"; \
+	step prune       "11/11 prune       · the raw archive back inside its window — no quota, no network," \
+	                 "                      and the reason a scheduled harvest cannot fill the disk"; \
 	echo; \
 	if [ -n "$$failed" ]; then \
 	  echo "✗ pipeline reached the end, but these steps failed:$$failed"; \
@@ -227,6 +229,10 @@ authors: require-key ## Who made the videos under each published binding. 1 unit
 .PHONY: pull
 pull: require-gh ## The release → data/cache.db, when the release is the newer generation
 	@$(PNPM) cache:restore
+
+.PHONY: prune
+prune: ## Raw API bodies past their window → emptied. Frees pages; COMPACT=1 frees disk
+	@$(PNPM) cache:prune --apply $(if $(COMPACT),--compact,)
 
 .PHONY: cache-push
 cache-push: require-gh require-crawl ## Local cache.db → the release, and nothing else. `publish` does this and more

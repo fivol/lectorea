@@ -812,11 +812,58 @@ The way out, when it is needed, keeps the shared tree untouched:
 git worktree add --detach "$SCRATCH/build-head" HEAD
 ```
 
-then symlink `data/cache.db` (and `-shm`, `-wal` — it is 18 GB, never copy it)
+then symlink `data/cache.db` (and `-shm`, `-wal` — it is tens of gigabytes,
+never copy it)
 and `node_modules` into the worktree, copy across any `data/` files you have
 edited yourself, build there, and copy `public/data` back. `git stash` on their
 files would have been the faster fix and the wrong one: it edits the tree they
 are working in.
+
+### The raw archive was designed to grow, and nothing was watching the disk
+
+**Assumed:** `raw_responses` is expensive but bounded by how much there is to
+crawl, and "never delete a paid answer" is the safe default in a place where
+answers cost quota.
+
+**It was:** unbounded by construction, and the scheduled harvest is what turned
+that from a footnote into a deadline. On 2026-08-27 the cache was **32 GB, of
+which 28.2 GB was `raw_responses`** — sixteen days of crawling at 1.8 GB a day,
+on a laptop with 14 GB of disk left, which is about a week. Nothing was wrong
+with any single day; the shape was wrong.
+
+Three things were inside those 28 GB, and none of them had ever been looked at:
+
+- **9.1 GB of a field copied from the field beside it.** `snippet.localized` was
+  36.9% of the `videos` archive and identical to `title` and `description` in
+  9336 of 9336 items sampled. It has to be: `hl` is never sent, so YouTube
+  echoes the default locale back.
+- **2.1 GB of URLs spelled out of an id.** Every one of 44 651 thumbnail URLs
+  was `https://i.ytimg.com/vi/<the item's own id>/…`.
+- **5 GB of superseded copies.** `saveRaw` was a blind `INSERT` while `readRaw`
+  took `ORDER BY id DESC LIMIT 1` — so the code had already decided the older
+  bodies were dead and went on storing 27 000 of them for `videos` and 121 000
+  for `playlistItems`.
+
+And the archive's own justification had never been implemented: `readRaw` had
+**no callers at all**. "Fix the parser and re-run" was a property of the data,
+not a path anything could take.
+
+**How not to repeat it:** a store that a schedule writes to needs a stated bound
+before the schedule is switched on, and the bound belongs in the same file as
+the write — [scripts/lib/raw.ts](../../scripts/lib/raw.ts). The general form is
+in [practices.md](practices.md#a-store-a-schedule-writes-to-is-bounded-by-splitting-the-row-not-by-deleting-rows).
+
+The measuring is the cheap part and it is where all three of these came from:
+group the table by whatever it is keyed on and sum `length(body)`, then parse
+twenty bodies and total the bytes **per field**. A table read only as an opaque
+blob is a table nobody has costed.
+
+**And a full `VACUUM` is not available at the end of this road.** It writes a
+second copy of the database before it frees anything, so the disk that made
+compaction necessary is the disk that refuses it — 32 GB needed against 14 GB
+free. `VACUUM INTO`, or a rebuild that applies the policy as it copies, needs
+room for the *result* instead. Reach for the bound long before this, but if you
+are already here, that is the way out.
 
 ## The service worker was still serving the app shell for every address
 

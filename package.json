@@ -33,6 +33,7 @@
     "map:ground": "tsx scripts/map-ground.ts",
     "cache:publish": "tsx scripts/cache-snapshot.ts publish",
     "cache:restore": "tsx scripts/cache-snapshot.ts restore",
+    "cache:prune": "tsx scripts/cache-prune.ts",
     "og:build": "tsx scripts/og-image.ts",
     "icons:build": "tsx scripts/icons.ts",
     "ph:assets": "tsx scripts/ph-assets.ts",

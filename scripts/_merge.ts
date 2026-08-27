@@ -36,7 +36,7 @@ import fs from 'node:fs';
 import Database from 'better-sqlite3';
 import { paths } from './lib/config.js';
 
-/** Never in a snapshot, and 3.5 GB of this machine's own API bodies. */
+/** Never in a snapshot, and the largest thing this machine holds. */
 const HEAVY = 'raw_responses';
 
 /**
