@@ -1,28 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <!--
-    The mark: two courses already behind you, and the one they open up.
+    The mark: two cells of the map already behind you, and the one they open.
 
     It is the catalogue in a glyph — the whole product is «what has to come
-    first» drawn as a graph, so the icon is a piece of that graph rather than a
-    letter. It reads upwards for the same reason the map does: the vertical
-    axis is the direction of the dependency, prerequisites underneath what they
-    unlock. Colours are the design system's own (src/index.css) — the dark
-    canvas, ink for what is done, accent green for what is now open.
+    first», so the icon is a piece of the graph rather than a letter. It reads
+    upwards for the same reason the map does: the vertical axis is the
+    direction of the dependency, prerequisites underneath what they unlock.
 
-    This file is the source of the mark. The .ico and the PNGs beside it are
-    rendered from it; edit here and re-render, never the other way round.
+    Drawn in hexagons, and that is the part that changed. The mark used to be
+    three circles joined by two lines, which is stroke for stroke the system
+    «share» glyph — at the size a browser tab gives it, that is what it read
+    as. Hexagons are the material the map itself is tiled from
+    (`shared/tiles/hex.ts`, pointy-top, same grid), so the icon now says
+    «Lectorea» rather than «send this to someone».
+
+    Colours are the design system's own (`src/index.css`): the dark canvas,
+    ink for what is done, accent green for what is now open. The gap between
+    the cells is the seam between two territories on the map, and it is what
+    keeps three shapes from fusing into one blob at 16 px.
+
+    This file is the source of the mark. Every raster beside it — the .ico, the
+    PWA sizes, the touch icon — is rendered from it by `pnpm icons:build`;
+    edit here and re-render, never the other way round.
   -->
-  <rect width="64" height="64" rx="14" fill="#0B0F17" />
-  <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="#243044" stroke-width="1" />
+  <!--
+    The plate the mark sits on. `data-tile` is how `scripts/icons.ts` finds it:
+    a browser tab wants the rounded plate, a home screen and an Android mask
+    want the mark bleeding to the edge, so the renderer drops these two rects
+    and paints the ground itself. Nothing else in this file carries it.
+  -->
+  <rect data-tile="ground" width="64" height="64" rx="14" fill="#0B0F17" />
+  <rect data-tile="edge" x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="#243044" stroke-width="1" />
 
-  <!-- Edges first: the nodes are opaque and cover the ends, so a line can be
-       drawn centre to centre and still stop cleanly at the circle. Every
-       attribute sits on the shape itself — the simpler rasterisers that turn
-       this file into the .ico do not inherit them from a group. -->
-  <path d="M18 45.5 L32 20" fill="none" stroke="#E6EBF2" stroke-width="5" stroke-linecap="round" />
-  <path d="M46 45.5 L32 20" fill="none" stroke="#E6EBF2" stroke-width="5" stroke-linecap="round" />
-
-  <circle cx="18" cy="45.5" r="6.5" fill="#E6EBF2" />
-  <circle cx="46" cy="45.5" r="6.5" fill="#E6EBF2" />
-  <circle cx="32" cy="20" r="9" fill="#34C98A" />
+  <!--
+    Each cell is a pointy-top hexagon whose corners are rounded by a stroke of
+    its own colour: fill and stroke are the same paint, so the outline grows by
+    half the stroke width and the joins come back round. Every attribute sits
+    on the shape itself — the simpler rasterisers that turn this file into the
+    .ico do not inherit them from a group.
+  -->
+  <path d="M20.37 31.98 L29.11 37.03 L29.11 47.11 L20.37 52.16 L11.63 47.11 L11.63 37.03 Z"
+        fill="#E6EBF2" stroke="#E6EBF2" stroke-width="4.8" stroke-linejoin="round" />
+  <path d="M43.63 31.98 L52.37 37.03 L52.37 47.11 L43.63 52.16 L34.89 47.11 L34.89 37.03 Z"
+        fill="#E6EBF2" stroke="#E6EBF2" stroke-width="4.8" stroke-linejoin="round" />
+  <path d="M32 11.84 L40.74 16.89 L40.74 26.97 L32 32.02 L23.26 26.97 L23.26 16.89 Z"
+        fill="#34C98A" stroke="#34C98A" stroke-width="4.8" stroke-linejoin="round" />
 </svg>

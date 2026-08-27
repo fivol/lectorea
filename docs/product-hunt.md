@@ -48,7 +48,7 @@ is the safe one.
 | Name | name only, no emoji, no descriptor | yes | `Lectorea` |
 | Tagline | max 60 characters | yes | see below |
 | Topics / launch tags | a few, most relevant only (guides: up to 3) | yes | Education, Open Source, Productivity |
-| Thumbnail | square, 240×240, <3 MB, GIF allowed | yes | `.launch/thumbnail.png` from `pnpm ph:assets` |
+| Thumbnail | square, 240×240, <3 MB, GIF allowed | yes | `.launch/thumbnail.png` from `pnpm ph:assets` — the app icon, see below |
 | Pricing tag | free · paid · free trial/plan | yes | **Free** |
 | Status | beta / not yet released | no | leave empty — it is live and has been for months |
 | Gallery | 1270×760, ≥2 images, <3 MB each, first is the social preview | in practice yes | six slides from `pnpm ph:assets` |
@@ -110,6 +110,14 @@ reason it exists rather than a folder of hand-made pictures:
 - **It shoots `/en/`.** Every screenshot in `docs/images` is of the Russian
   interface. A gallery of Russian screenshots tells an English reader the site
   is not for them before they have read the tagline.
+- **The thumbnail is the app icon, not a picture of its own.** It is
+  `public/pwa-512.png` cut down to 240, and that PNG is itself rendered from
+  `public/favicon.svg` by `pnpm icons:build`
+  ([hosting.md](hosting.md#the-mark-and-the-icons-cut-from-it)). So the tile in
+  the Product Hunt feed, the icon in a browser tab and the one on a home screen
+  are the same drawing, and changing the mark changes all three at once — but
+  run `icons:build` before `ph:assets`, or the launch goes out with the icon
+  the site had yesterday.
 - **It seeds a profile first.** The screens worth showing are the ones that know
   who is looking: seven of twelve courses done, a streak, something to carry on
   with. It writes that into `localStorage` before the page loads — built out of

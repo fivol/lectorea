@@ -4,6 +4,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import type { BuiltDomain } from '../shared/schema.js';
 import { paths } from './lib/config.js';
+import { downscale, findChrome } from './lib/chrome.js';
 
 /**
  * The card a shared link unfolds into — `public/og.png`, 1200×630.
@@ -32,28 +33,6 @@ const COAST = 'rgb(230 243 249 / 0.42)';
 const BORDER = 'rgb(230 243 249 / 0.5)';
 const WASH = 0.82;
 const INK = '#eaf3f8';
-
-const CHROMES = [
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  '/Applications/Chromium.app/Contents/MacOS/Chromium',
-  '/usr/bin/google-chrome',
-  '/usr/bin/chromium',
-  '/usr/bin/chromium-browser',
-];
-
-function chrome(): string {
-  const found = [process.env.CHROME_PATH, ...CHROMES].find(
-    (candidate) => candidate && fs.existsSync(candidate)
-  );
-  if (!found) {
-    console.error(
-      '✗ no Chrome found — install it, or point CHROME_PATH at one.\n' +
-        '  It is only needed to redraw the card; nothing else uses it.'
-    );
-    process.exit(1);
-  }
-  return found;
-}
 
 /**
  * The map with its colours put back on.
@@ -195,7 +174,7 @@ function main(): void {
 
   try {
     execFileSync(
-      chrome(),
+      findChrome('redraw the link card'),
       [
         '--headless=new',
         '--disable-gpu',
@@ -215,29 +194,13 @@ function main(): void {
     );
 
     if (!fs.existsSync(shot)) throw new Error('Chrome produced no screenshot');
-    downscale(shot);
+    downscale(shot, WIDTH, HEIGHT);
     fs.copyFileSync(shot, OUT);
     const kb = Math.round(fs.statSync(OUT).size / 1024);
     console.log(`✓ ${path.relative(paths.root, OUT)} — ${WIDTH}×${HEIGHT}, ${kb} KB`);
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
-}
-
-/** Back to 1200×630, with whatever the machine has. Neither tool is required. */
-function downscale(file: string): void {
-  for (const [command, args] of [
-    ['magick', [file, '-resize', `${WIDTH}x${HEIGHT}`, '-strip', file]],
-    ['sips', ['-Z', String(WIDTH), file]],
-  ] as Array<[string, string[]]>) {
-    try {
-      execFileSync(command, args, { stdio: 'pipe' });
-      return;
-    } catch {
-      // Try the next one; a 2× card is oversized, not broken.
-    }
-  }
-  console.warn('! neither magick nor sips is here — the card stays at 2×');
 }
 
 main();

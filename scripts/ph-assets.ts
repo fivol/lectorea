@@ -91,6 +91,15 @@ const SHOTS: Shot[] = [
     name: 'map',
     page: '/en/',
     caption: '39 fields of knowledge, drawn as a map',
+    // The seeded profile puts the resume bar at the foot of the map, and at
+    // 1270 the window is nine pixels short of the width that would have put it
+    // in the corner instead — so it lands exactly where the caption does and
+    // comes out half-swallowed. On the one slide that is also the social
+    // preview, that reads as a broken render rather than as a feature. Climb
+    // from the bar's own label to the sticky band it rides and drop the band.
+    prepare: `document.querySelectorAll('.sticky.bottom-0').forEach(
+      (band) => band.style.setProperty('display', 'none')
+    )`,
   },
   {
     name: 'columns',

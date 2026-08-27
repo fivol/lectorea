@@ -178,6 +178,42 @@ the page it screenshots rather than linked — headless Chrome renders one frame
 and a font that arrives after it is a card set in the wrong face. CI never runs
 this and does not need to.
 
+### The mark, and the icons cut from it
+
+`public/favicon.svg` is the mark, and the source of every raster beside it: the
+`.ico` a tab reads, the two PWA sizes, the maskable icon Android crops and the
+touch icon iOS puts on a home screen. `index.html` had said exactly that for a
+year and nothing enforced it — the five files were made once by hand, and the
+next person to change the mark would have had to find all of them and match
+them by eye.
+
+```bash
+pnpm icons:build
+```
+
+[scripts/icons.ts](../scripts/icons.ts) renders the SVG once at 1024 and cuts
+the rest out of it. Two shapes come from the one file. **The plate** is the
+rounded tile with its corners transparent — what a tab, a bookmark and the
+Product Hunt thumbnail want, because each puts it on a background of its own.
+**The bleed** is the same mark with the plate dropped and the ground painted to
+the edge, shrunk to sit inside the mask its platform will cut: Android clips a
+maskable icon to a circle of 80% of the width and crops whatever is outside it,
+iOS rounds the corners itself and shows the wallpaper through a transparent
+one, so the two get different scales. The plate is found by `data-tile` on its
+rects, and that convention is written down in the SVG rather than here.
+
+The mark itself is three hexagons — two cells of the map already behind you and
+the one they open. It used to be three circles joined by two lines, which is
+stroke for stroke the system «share» glyph: at the size a tab gives it, that is
+what it read as, and it said nothing about this site in particular. Hexagons
+are the material the map is tiled from
+([shared/tiles/hex.ts](../shared/tiles/hex.ts)), pointy-top on the same grid,
+so the icon is now a piece of the product rather than a stock graph.
+
+`favicon.ico` is the one output that needs ImageMagick. Without it the script
+says so and leaves the file alone, because half an icon set is worse than an
+old one.
+
 Once the app has booted it takes the head over itself — `useDocumentMeta` in
 [src/lib/meta.ts](../src/lib/meta.ts). Two reasons: navigation inside the app
 never reloads the document, and one file still serves several views — the older
