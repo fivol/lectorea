@@ -222,8 +222,17 @@ only, and Firebase Hosting is not one of them.
    firebase deploy --only firestore:rules --project <project-id>
    ```
 
-6. **The web config.** *Project settings → Your apps → Web app*. Four of its
-   fields become the environment variables below.
+6. **The web config.** *Project settings → General → Your apps*. If there is no
+   web app yet, *Add app → Web*, a nickname, and **leave Firebase Hosting
+   unticked** — the site is deployed to GitHub Pages and a second host would
+   only be a second place for it to be stale. Four fields of the snippet it
+   shows become the environment variables below.
+
+   **Copy the id rather than assuming it.** Firebase appends a suffix to any
+   project id somebody has already taken — `lectorea` becomes `lectorea-54b38` —
+   and the auth domain is built from the id, not from the name that was typed.
+   Guessing it gives `auth/unauthorized-domain` on every sign-in, reported in a
+   popup and nowhere else. `make doctor` checks that the two agree.
 
 ### The environment variables
 
@@ -240,6 +249,10 @@ repository secrets named without the `VITE_` prefix (`FIREBASE_API_KEY` and so
 on), passed to the build by
 [deploy.yml](../.github/workflows/deploy.yml); the environment wins over the
 file, so a checked-out `.env` cannot override what the workflow hands in.
+
+`make doctor` prints how many of the four are set and whether the project id and
+the auth domain agree. A partial config is treated as none: sync stays off
+rather than half-working.
 
 **All four empty is a working site with no accounts.** The section does not
 appear in the profile, `bootSync` returns before loading anything, and the SDK

@@ -297,6 +297,19 @@ doctor: ## What this machine has: tools, keys (counted, never printed), cache, b
 		if grep -qE '^[[:space:]]*OPENAI_API_KEY[[:space:]]*=[[:space:]]*[^[:space:]#]' .env; then \
 			echo "openai      set (optional: LLM matching, domain images)"; \
 		else echo "openai      unset — rules matching and procedural art still work"; fi; \
+		fb=$$(grep -cE '^[[:space:]]*VITE_FIREBASE_(API_KEY|AUTH_DOMAIN|PROJECT_ID|APP_ID)[[:space:]]*=[[:space:]]*[^[:space:]#]' .env || true); \
+		if [ "$$fb" = "4" ]; then echo "firebase    4/4 — the profile can sync (docs/sync.md)"; \
+		elif [ "$$fb" = "0" ]; then echo "firebase    unset — the site works, with no accounts and no SDK downloaded"; \
+		else echo "firebase    $$fb/4 — a partial config is the same as none: sync stays off"; fi; \
+		id=$$(grep -E '^[[:space:]]*VITE_FIREBASE_PROJECT_ID[[:space:]]*=[[:space:]]*[^[:space:]#]' .env | head -1 | cut -d= -f2 | tr -d ' '); \
+		dom=$$(grep -E '^[[:space:]]*VITE_FIREBASE_AUTH_DOMAIN[[:space:]]*=[[:space:]]*[^[:space:]#]' .env | head -1 | cut -d= -f2 | tr -d ' '); \
+		if [ -n "$$id" ] && [ -n "$$dom" ] && [ "$$dom" != "$$id.firebaseapp.com" ]; then \
+			echo "            !! auth domain is $$dom, but the project is $$id"; \
+			echo "               it is built from the id, suffix and all. Checked whenever both"; \
+			echo "               are present, not only at 4/4 — this pair is filled in first and"; \
+			echo "               is wrong first, and the failure it causes names the domain in a"; \
+			echo "               popup nobody reads and nothing else at all."; \
+		fi; \
 	else echo ".env        missing — cp .env.example .env, then docs/setup.md"; fi
 	@if [ -f data/cache.db ]; then \
 		echo "cache.db    $$(du -h data/cache.db | cut -f1)"; \

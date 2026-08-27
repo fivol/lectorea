@@ -328,6 +328,27 @@ as verified.
 
 ---
 
+### A rehearsal of a new phrasing was compared with the last run's numbers
+
+**Assumed:** fifty questions of a new `QUALIFIERS` word, priced against the
+previous hunt's playlists-per-question, says whether the word is worth the
+other 43 600 units.
+**It was:** a measurement of the *courses*, not of the word. The brief is sorted
+thinnest-course-first, and a phrasing nobody has asked before is unasked for
+every course at once — so its first fifty questions all go to `poetics`,
+`ethnomusicology`, `field-archaeology`, `typology`, the four the catalogue
+already records as having almost nothing on YouTube. The previous round's 312
+questions were the *leftovers* of a run that had already worked through the thin
+end, so they fell on `econ-intro`, `genetics`, `molecular-biology`. 0.84 against
+4.12, and most of the gap was which courses were asked.
+
+**How not to repeat it:** a rehearsal is compared with the same slice or with
+nothing. When the population is ordered by the very quantity being measured,
+"the first N" is a biased sample by construction, and the bias is largest
+exactly when the thing under test is new. Here the honest instrument is
+`_yield.ts` the next day: it reads the saved search bodies, attributes ids and
+bindings to the phrasing that returned them, and costs nothing.
+
 ### A channel hunt was run wide and the report came back unranked
 
 **Assumed:** `--kind=channel` is the same hunt pointed at a different index, so
@@ -602,6 +623,30 @@ when a value has to agree in two files, one of them reads the other.
 ---
 
 ## Environment
+
+### An example file's placeholder was copied as if it were a value
+
+**Assumed:** a commented line in `.env.example` reading
+`VITE_FIREBASE_AUTH_DOMAIN=lectorea.firebaseapp.com` reads as an illustration.
+**It was:** read as the answer, and pasted in whole. The real project is
+`lectorea-54b38`, because Firebase appends a suffix to any project id somebody
+else has ever wanted, and the auth domain is built from the id rather than from
+the name that was typed. Every sign-in against `lectorea.firebaseapp.com` would
+have failed with `auth/unauthorized-domain`, which names the domain in a popup
+and reports nothing anywhere else.
+
+The lesson is not about Firebase. **A placeholder that is shaped exactly like a
+real value will be used as one**, and an example file is read by somebody in a
+hurry with a console open in another tab. Placeholders in `.env.example` are
+`<project-id>` now, in angle brackets, because that shape cannot be pasted
+anywhere and work.
+
+The second half is that nothing on the machine could have said so. Two variables
+that have to agree, in a file no code validates, is a class of bug — so
+`make doctor` now checks the pair whenever **both** are present rather than only
+when the whole config is complete: this pair is filled in first, so it is wrong
+first, and a check that waits for 4/4 is a check that stays quiet through the
+exact window the mistake lives in.
 
 ### A production build was checked, and it was another session's
 
