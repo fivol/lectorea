@@ -80,6 +80,18 @@ async function main(): Promise<void> {
     process.exitCode = 1;
   } else if (store.status === 403) {
     ok('Firestore отвечает и правила закрывают чужой профиль');
+    /*
+     * And that is as far as a stranger can see. «Deny everything», which is what
+     * a database created in production mode ships with, refuses this request in
+     * exactly the same words as the rule that allows a reader their own
+     * document — so a project with the rules never published looks identical
+     * here and then denies every *signed-in* write too. The distinction needs a
+     * request with a uid on it, which this probe deliberately cannot make, so
+     * it says so rather than reporting a pass it has not earned.
+     */
+    console.log('        403 не отличает наши правила от «запрещено всё», с которым');
+    console.log('        база создаётся. Опубликованы ли firebase/firestore.rules,');
+    console.log('        покажет только первый вход: без них откажут и своему.');
   } else if (store.status === 404) {
     warn('Firestore пускает неаутентифицированного читателя — правила не те, см. firebase/firestore.rules');
     process.exitCode = 1;
