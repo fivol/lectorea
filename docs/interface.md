@@ -6,11 +6,18 @@ Two places, and the screens inside them.
 
 **The catalogue** answers "what is there" — the map, the list, the columns, a
 course. **The desk** answers "where was I" — what was playing, what today came
-to, what the graph has opened up, and the shelves of everything marked. They
-share no address and no chrome: which one a visit opens on is decided by
-whether the profile has anything in it (see [the two front doors](#the-two-front-doors)),
-and the switch between them is a control of its own — a pair of words in the
-header on a wide window, a bar of three along the foot of a phone.
+to, what the graph has opened up, and the shelves of everything marked. Which
+one a visit opens on is decided by whether the profile has anything in it (see
+[the two front doors](#the-two-front-doors)).
+
+Getting from one to the other is one control each way and no switch at all. On
+a wide window the disc in the corner leads to the desk and the wordmark leads
+back to the catalogue — the two things every site has in those two places. A
+segmented **Обучение | Каталог** was tried there first and taken out: beside the
+map/list switch and the language-and-theme plate it made three near-identical
+pills in one corner, and a reader has to read all three to find out which is
+which. On a phone the two places are a bar under the thumb, which is the one
+window where a switch earns its space.
 
 The settings are neither. The account the profile travels on, the theme, the
 language and the file it exports as are a drawer opened over whichever place
@@ -707,8 +714,8 @@ The rules, and where each is argued in full:
 | | On a wide window | On a phone |
 |---|---|---|
 | The map | three continents ranged, fitted whole | a second drawing with them stacked, opening close in — [two shapes of paper](#two-shapes-of-paper) |
-| Desk or catalogue | two words on a plate in the header | three tabs along the foot of the screen: обучение, каталог, профиль |
-| Map or list | a switch in the header | a switch under the search field, on the screen it changes |
+| Desk or catalogue | the disc in the corner, and the wordmark back | two tabs along the foot of the screen |
+| Map or list | a two-word switch in the header | one glyph beside the search field, showing where the press leads |
 | Where you were | a plate in the corner, a bar between the breakpoints | nothing on the map — the desk is a tab, one thumb away |
 | The map's controls | zoom in, zoom out, fit | fit alone: pinching goes in and out, and nothing but a button puts the world back |
 | The catalogue | columns that scroll sideways | one column of rows, folded by difficulty |
@@ -716,7 +723,7 @@ The rules, and where each is argued in full:
 | Links and path | three sections, always open | folded into one **Связи и путь** line, and the fold is remembered |
 | Search | a field in the header | its own screen, full width and full height — [search](#search) |
 | The desk | a page, at `max-w-4xl` | the same page, its shelves one card wide |
-| The drawer | a modal, reached by the disc in the corner | a sheet, reached by the third tab |
+| The drawer | a modal, reached by the sliders in the desk's header | a sheet, with the bar of places lying on top of it |
 
 **One thing floats over the foot of a phone, and it is the places.** There were
 four: the zoom controls, the resume bar, the map/list switch and the contribute
@@ -726,6 +733,17 @@ the search field, and what is left is a bar that says the same thing in the same
 place on every screen it appears on. The switch between map and list went *up*
 rather than away on purpose: it changes what the screen is, which is a question
 about the view, and the foot is now about where in the site you are.
+
+Two things follow from the bar belonging to the app rather than to a screen, and
+both were bugs before they were rules. It is **fixed to the window**, so it does
+not inherit whatever a screen keeps under its scroller — the desk had a
+contribute line there and the map did not, and the bar sat forty-one pixels
+higher on one tab than on the other and jumped as a reader crossed between them.
+The line went inside the scrolling column on both. And it is drawn **above the
+settings sheet** rather than under it: a modal is a layer over a screen, not a
+reason to lose the way out of one, and a reader who opened the account and wants
+the catalogue back should not have to find the × first. Pressing a place from
+in there closes the sheet on the way.
 
 Between the two windows there is still a bar: a window too narrow for the corner
 plate and too wide for the tabs gets the lecture in one row, with the run of
@@ -1499,8 +1517,10 @@ recent rows and no further, for the same reason.
 ### The drawer
 
 What the desk left behind: a modal over whatever you were looking at, with
-three tabs — **Аккаунт**, **Настройки**, **Данные**. It is reached by the disc
-in the corner of a wide window and by the third tab at the foot of a phone.
+three tabs — **Аккаунт**, **Настройки**, **Данные**. It is reached by one control on one screen: the
+sliders in the desk's own header. The disc in the corner of every other screen
+leads to the desk instead — one door, one glyph, and the settings a layer over
+the room they belong to.
 
 **Аккаунт is first, and that is the whole point of the tab existing.** Signing
 in used to be a section halfway down «Данные», under the heading about

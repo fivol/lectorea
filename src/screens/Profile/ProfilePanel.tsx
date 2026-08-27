@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useT } from '@/i18n';
-import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
+import { useEscape, useFocusTrap, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { useUi, type ProfileTab } from '@/store/ui';
 import { IconButton, Segmented } from '@/components/ui';
 import AccountTab from './AccountTab';
@@ -26,6 +26,7 @@ export default function ProfilePanel() {
   const close = useUi((state) => state.closeProfile);
   const opened = useUi((state) => state.profileTab);
   const { t } = useT();
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState<ProfileTab>(opened);
 
   // The caller says which drawer it wants — «Синхронизация» from the desk opens
@@ -98,7 +99,21 @@ export default function ProfilePanel() {
           />
         </nav>
 
-        <div className="panel-scroll min-h-0 flex-1" role="tabpanel">
+        {/*
+          The bar of places lies *on* the sheet rather than the sheet stopping
+          short of it: a modal is a layer over a screen, not a reason to lose
+          the way out of one, and a reader who opened the settings and wants the
+          catalogue back should not have to find the × first. The sheet still
+          reaches the bottom of the window — leaving a strip of dimmed page
+          under it reads as a panel that failed to close — and what keeps the
+          last row of content clear of the bar is this padding. `--foot` is what
+          the bar publishes, and it is zero on every window that has none.
+        */}
+        <div
+          className="panel-scroll min-h-0 flex-1"
+          role="tabpanel"
+          style={isMobile ? { paddingBottom: 'var(--foot, 0px)' } : undefined}
+        >
           {tab === 'account' ? <AccountTab /> : null}
           {tab === 'settings' ? <SettingsTab /> : null}
           {tab === 'data' ? <DataTab /> : null}

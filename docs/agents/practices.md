@@ -1666,3 +1666,47 @@ the one that decides where in the site you are.** Everything else is re-asked as
 **Generally:** when a screen accumulates floating chrome, do not shrink it.
 Rank each piece by the question it answers — *where am I* / *what is this
 screen* / *what does this control do* — and give only the first the thumb.
+
+**And the survivor belongs to the app, not to the screen.** Rendered inside
+each screen, the same bar inherited whatever that screen kept under its
+scroller: the desk had a contribute line and the map did not, so it stood
+forty-one pixels higher on one tab than on the other and *jumped* as a reader
+crossed between them. It also sat under the settings sheet, which is exactly
+the moment somebody wants it. Fixed to the window, rendered once from `App`,
+and drawn above the modal layer, all three go away — and the line that caused
+it moved inside the scrolling column, where it is content rather than a band
+something else has to clear.
+
+Two smaller rules came out of the same pass, and both generalise:
+
+- **A modal that stops short of the navigation leaves a strip of dimmed page
+  under it**, which reads as a panel that failed to close. Let the sheet reach
+  the bottom, put the bar *on* it, and pad the sheet's scroller by the bar's own
+  height — which is why the band publishes that height as a variable in the
+  first place.
+- **A control that can be pressed from inside a layer must dismiss the layer.**
+  Navigating out from under an open modal is a door that leads back into the
+  same room.
+
+## Three near-identical pills in one corner is a header nobody can read
+
+The header grew a third switch — **Обучение | Каталог** — next to **Карта |
+Список** and the language-and-theme plate. Every one of them was defensible on
+its own: same kit, same size, same corner. Together they were a row of pills a
+reader has to *read* before they can tell which is which, and the user's word
+for it was "перегружено".
+
+What fixed it was not styling but noticing that one of the three was a
+navigation and the other two are not. A site already has two places to put
+navigation that need no label at all — **the wordmark goes home, the disc in the
+corner goes to "mine"** — so the switch came out and those two took the job. The
+map/list switch stayed, because it is genuinely a choice about the screen in
+front of you, and on a phone it shrank to one glyph that shows *where the press
+leads* — the same rule the theme and language buttons follow, which is what lets
+a glyph stand for two states with no label under it.
+
+**Generally:** when controls of one shape pile up in one corner, sort them by
+kind before you restyle them. Anything that is navigation should be tried
+against the conventions the browser and the web already installed in the
+reader — a wordmark, a back arrow, an avatar — and only what is left needs a
+control of its own.

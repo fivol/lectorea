@@ -1,10 +1,19 @@
+import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n';
+import { LEARN_PATH } from '@/lib/entry';
 import { useSync } from '@/store/sync';
-import { useUi } from '@/store/ui';
 import Icon from './Icon';
 
 /**
- * The way into the profile panel, identical on both screens.
+ * The way to the desk, identical on every screen that is not it.
+ *
+ * It used to open the profile modal, and the modal used to hold everything a
+ * reader had studied. That moved to a page, and this moved with it: the disc
+ * is the one door to «моё», and the settings are a layer opened from the desk
+ * rather than a second thing hiding behind the same glyph. What it saves is a
+ * pill: the alternative was a two-word switch in the header next to the
+ * map/list switch and the language plate, three near-identical shapes in one
+ * corner.
  *
  * The label is optional because the courses screen has a header full of filters
  * and no room for a word that the avatar already carries; where there is room,
@@ -23,7 +32,7 @@ export default function ProfileButton({
   className?: string;
 }) {
   const { t } = useT();
-  const openProfile = useUi((state) => state.openProfile);
+  const navigate = useNavigate();
   const account = useSync((state) => state.account);
   const initial = (account?.name || account?.email || '').trim().slice(0, 1).toUpperCase();
 
@@ -31,7 +40,7 @@ export default function ProfileButton({
     <button
       type="button"
       className={`profile-btn ${label ? 'pr-3' : ''} ${className}`}
-      onClick={() => openProfile()}
+      onClick={() => navigate(LEARN_PATH)}
       aria-label={t('ui.nav.profile')}
     >
       <span className="profile-disc">

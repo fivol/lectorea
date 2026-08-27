@@ -35,9 +35,21 @@ export const useFoot = (): number => useBand((state) => state.height);
 
 export default function FloatingFoot({
   children,
+  fixed = false,
   className = '',
 }: {
   children: ReactNode;
+  /**
+   * Pinned to the window rather than riding the bottom of a scrolling column.
+   *
+   * The navigation is the app's, not a screen's: rendered inside a screen it
+   * inherits whatever that screen keeps under its scroller — the desk has a
+   * contribute line, the map does not — and the bar lands at two different
+   * heights on two tabs and jumps as a reader crosses between them. Fixed, it
+   * is in the same place on every screen it appears on, and it is above the
+   * settings sheet rather than under it.
+   */
+  fixed?: boolean;
   className?: string;
 }) {
   const band = useRef<HTMLDivElement>(null);
@@ -88,14 +100,17 @@ export default function FloatingFoot({
   return (
     /*
       A row of no height, so that in a scrolling view the grid underneath does
-      not have to leave a gap for something that floats. `sticky` rather than
-      `fixed` for the same reason: it rides the bottom of the column it is in
-      instead of standing over the middle of it.
+      not have to leave a gap for something that floats. `sticky` by default for
+      the same reason: it rides the bottom of the column it is in instead of
+      standing over the middle of it. `fixed` is for the one band that belongs
+      to the app rather than to a screen — see the prop.
     */
     <div
       ref={band}
-      className={`pointer-events-none sticky bottom-0 z-30 flex h-0 items-end justify-center
-                  pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-12 ${className}`}
+      className={`pointer-events-none flex h-0 items-end justify-center
+                  pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-12
+                  ${fixed ? 'fixed inset-x-0 bottom-0 z-[60]' : 'sticky bottom-0 z-30'}
+                  ${className}`}
     >
       <div ref={stack} className="flex flex-col items-center gap-1.5">
         {children}

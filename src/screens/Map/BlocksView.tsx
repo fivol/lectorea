@@ -8,6 +8,7 @@ import { fieldHref, useCatalogParams } from '@/lib/url';
 import { useIsMobile } from '@/lib/hooks';
 import { useProfile, useResolvedTheme } from '@/store/profile';
 import Icon from '@/components/Icon';
+import ContributeBar from '@/components/ContributeBar';
 import DomainIcon from '@/components/DomainIcon';
 import ProfileSummary from '@/components/ProfileSummary';
 
@@ -47,9 +48,13 @@ export default function BlocksView({ matched, searchActive, allowed }: Props) {
   }, [catalog.courses, courses]);
 
   return (
-    /* Room at the foot for the view switch, which floats over this list on a
-       phone rather than taking a row of its own. */
-    <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-4 sm:px-6 sm:pb-16">
+    /* Room at the foot for the bar of places, which floats over this list on a
+       phone rather than taking a row of its own — measured rather than guessed,
+       since what is down there is not the same on every window. */
+    <div
+      className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6 sm:pb-16"
+      style={{ paddingBottom: 'calc(var(--foot, 0px) + 1.5rem)' }}
+    >
       {/* Above the continents, because it is about the reader rather than about
           the catalogue, and what somebody was in the middle of outranks the
           thirty-nine fields they were not. It scrolls away with the page — the
@@ -102,6 +107,14 @@ export default function BlocksView({ matched, searchActive, allowed }: Props) {
           </section>
         );
       })}
+
+      {/* On a phone the line rides the end of the list rather than standing in
+          a band under it: a band is a strip the navigation has to clear, and
+          the map has none, so the bar would sit at two heights on two tabs.
+          Wider windows keep the row under the column — see `MapScreen`. */}
+      {isMobile ? (
+        <ContributeBar className="border-t-0 pt-2">{t('ui.footer.contribute')}</ContributeBar>
+      ) : null}
     </div>
   );
 }

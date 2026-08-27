@@ -7,6 +7,7 @@ import MapScreen from '@/screens/Map/MapScreen';
 import CoursesScreen from '@/screens/Courses/CoursesScreen';
 import LearnScreen from '@/screens/Learn/LearnScreen';
 import ProfilePanel from '@/screens/Profile/ProfilePanel';
+import BottomNav from '@/components/PlaceNav';
 import VersionBanner from '@/components/VersionBanner';
 import Shortcuts from '@/components/Shortcuts';
 
@@ -45,6 +46,11 @@ export default function App() {
         <Route path="/fields/:domainId" element={<CoursesScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {/* The navigation belongs to the app, not to a screen: fixed to the
+          window, in the same place on both tabs, and above the settings sheet
+          rather than under it. It draws nothing where it does not belong — see
+          `BottomNav`. */}
+      <BottomNav />
       <ProfilePanel />
       <Shortcuts />
     </CatalogProvider>

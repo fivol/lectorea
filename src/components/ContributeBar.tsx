@@ -24,9 +24,12 @@ import Icon from './Icon';
 export default function ContributeBar({
   children,
   floating = false,
+  className = '',
 }: {
   children: ReactNode;
   floating?: boolean;
+  /** For the one place it rides inside a scroller rather than under it. */
+  className?: string;
 }) {
   const { t } = useT();
   return (
@@ -45,11 +48,11 @@ export default function ContributeBar({
       a strip of the map away from the hand dragging it.
     */
     <footer
-      className={
+      className={`${
         floating
           ? 'over-map pointer-events-none px-4 text-center'
           : 'shrink-0 border-t border-line px-4 py-2 text-center md:border-t-0 md:px-6 md:pb-2.5 md:pt-1.5'
-      }
+      } ${className}`}
     >
       <p
         className={`inline-flex flex-wrap items-center justify-center gap-x-1.5 text-[11px]

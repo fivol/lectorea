@@ -13,8 +13,7 @@ import FloatingFoot from '@/components/FloatingFoot';
 import GlobalFilters from '@/components/GlobalFilters';
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
-import ViewSwitch from '@/components/ViewSwitch';
-import BottomNav, { PlaceSwitch } from '@/components/PlaceNav';
+import ViewSwitch, { ViewToggle } from '@/components/ViewSwitch';
 import ProfileButton from '@/components/ProfileButton';
 import ProfileSummary, { useHighlights } from '@/components/ProfileSummary';
 import { Plate, PlateDivider } from '@/components/ui';
@@ -146,12 +145,15 @@ export default function MapScreen() {
             also what everything floating below it is measured against — it
             publishes its width as `--rail`; see the corner card. */}
         <div ref={rail} className="flex items-center gap-2">
-          {/* Where you are, then how this place is drawn: the desk and the
-              catalogue are two rooms, and map or list is a choice inside one of
-              them. Neither is in this row on a phone — the places are a bar
-              under the thumb, and the map/list switch rides under the search
-              field where it is part of the screen it changes. */}
-          {isMobile ? null : <PlaceSwitch />}
+          {/* Two plates and no more. How this place is drawn on the left, who is
+              looking on the right — and the way to the desk is the disc rather
+              than a third pill saying «Обучение», which beside these two read
+              as one row of near-identical switches a reader has to spell out
+              before they can tell which is which.
+
+              Neither is in this row on a phone: the places are a bar under the
+              thumb, and the map/list toggle rides beside the search field where
+              it is part of the screen it changes. */}
           {isMobile ? null : <ViewSwitch value={mapView} onChange={setMapView} />}
           <Plate row>
             <LangToggle />
@@ -183,25 +185,25 @@ export default function MapScreen() {
             : 'z-30 flex flex-col items-center gap-2 px-4 py-3 sm:px-6'
         }
       >
-        <div className="pointer-events-auto w-full max-w-xl">
-          <SearchBox
-            query={query}
-            onQueryChange={setQuery}
-            results={results}
-            variant={showMap ? 'floating' : 'inline'}
-          />
+        <div className="pointer-events-auto flex w-full max-w-xl items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <SearchBox
+              query={query}
+              onQueryChange={setQuery}
+              results={results}
+              variant={showMap ? 'floating' : 'inline'}
+            />
+          </div>
+          {/* One glyph rather than the two-word switch, and in the row that is
+              already there rather than in a row of its own: the phone's top was
+              three bands deep — wordmark, field, switch — over a drawing whose
+              names start at the third of them. Like the theme and the language
+              buttons it shows where the press *leads* rather than where you
+              are, which is what makes one glyph enough. */}
+          {isMobile ? (
+            <ViewToggle value={mapView} onChange={setMapView} className="shrink-0" />
+          ) : null}
         </div>
-        {/* On a phone the map/list switch stands here, under the field, rather
-            than floating over the foot of the screen: it changes what this
-            screen *is*, which is a question about the view and not about where
-            in the site you are — and the foot now belongs to the places. */}
-        {isMobile ? (
-          <ViewSwitch
-            value={mapView}
-            onChange={setMapView}
-            className="pointer-events-auto shadow-[var(--shadow-pop)]"
-          />
-        ) : null}
         <GlobalFilters className="pointer-events-auto justify-center" />
         {query.trim() && results.empty ? (
           <p
@@ -291,23 +293,17 @@ export default function MapScreen() {
           stand clear of whatever ends up in here, which is not the same stack
           on every screen or for every reader.
         */}
-        {isMobile || showSummary ? (
+        {/* Between the phone's window and the wide one: a window too narrow for
+            the corner card and too wide for the bar of places still has a
+            reader who stopped somewhere. Nothing here on a phone — the desk is
+            one of the two tabs the app draws over every screen, and the map's
+            own foot is left to the map. */}
+        {showSummary && !isMobile ? (
           <FloatingFoot>
-            {/* Between the phone's two windows and the wide one's: a window
-                too narrow for the corner card and too wide for the bar of
-                places still has a reader who stopped somewhere. It is gone on
-                a phone, where the desk is one of the three tabs below. */}
-            {showSummary && !isMobile ? (
-              <ProfileSummary
-                variant="bar"
-                className="pointer-events-auto shadow-[var(--shadow-pop)] xl:hidden"
-              />
-            ) : null}
-            {/* The one thing floating over the foot of a phone. It used to be
-                four: the zoom controls, the resume bar, the map/list switch
-                and the contribute line, in the band a thumb covers entirely.
-                See `PlaceNav`. */}
-            {isMobile ? <BottomNav /> : null}
+            <ProfileSummary
+              variant="bar"
+              className="pointer-events-auto shadow-[var(--shadow-pop)] xl:hidden"
+            />
           </FloatingFoot>
         ) : null}
       </main>
@@ -328,7 +324,13 @@ export default function MapScreen() {
         foot of the drawing on those, and a line floating over it would be two
         sentences in the same place.
       */}
-      {isMobile && showMap ? null : <ContributeBar>{t('ui.footer.contribute')}</ContributeBar>}
+      {/* A row of its own on a wide window, and nothing at all on a phone:
+          over the map it would be a strip of flat colour under a drawing that
+          runs to the edge, and over the list it would be a band the navigation
+          then has to stand clear of — which is how the bar came to sit at two
+          different heights on two tabs. The list carries the line inside its
+          own scroller instead; see `BlocksView`. */}
+      {isMobile ? null : <ContributeBar>{t('ui.footer.contribute')}</ContributeBar>}
     </div>
   );
 }

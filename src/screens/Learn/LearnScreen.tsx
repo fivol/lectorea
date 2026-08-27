@@ -2,13 +2,11 @@ import { Link } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useIsMobile } from '@/lib/hooks';
 import { useDocumentMeta } from '@/lib/meta';
+import { useUi } from '@/store/ui';
 import ContributeBar from '@/components/ContributeBar';
-import FloatingFoot from '@/components/FloatingFoot';
 import LangToggle from '@/components/LangToggle';
-import BottomNav, { PlaceSwitch } from '@/components/PlaceNav';
-import ProfileButton from '@/components/ProfileButton';
 import ThemeToggle from '@/components/ThemeToggle';
-import { Plate, PlateDivider } from '@/components/ui';
+import { ButtonLink, IconButton, Plate, PlateDivider } from '@/components/ui';
 import StudyBoard from './StudyBoard';
 
 /**
@@ -35,6 +33,7 @@ import StudyBoard from './StudyBoard';
 export default function LearnScreen() {
   const { t } = useT();
   const isMobile = useIsMobile();
+  const openProfile = useUi((state) => state.openProfile);
 
   useDocumentMeta(t('seo.learn.title'), t('seo.learn.desc'), 'learn', { index: false });
 
@@ -52,21 +51,29 @@ export default function LearnScreen() {
           <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
         </div>
 
-        {/* The same two plates the map carries, in the same corner: what you
-            are looking at on the left, who is looking on the right. On a phone
-            neither is here — the places are a bar under the thumb and the
-            profile is one of them. */}
         <div className="flex items-center gap-2">
-          {isMobile ? null : <PlaceSwitch />}
+          {/* The way back, said in a word rather than in a switch: on a wide
+              window this screen is reached by the disc in the corner of the
+              catalogue, and this is the other half of that pair. A phone has
+              the bar of places under the thumb and needs neither. */}
+          {isMobile ? null : (
+            <ButtonLink to="/" icon="map">
+              {t('ui.nav.catalog')}
+            </ButtonLink>
+          )}
           <Plate row>
             <LangToggle />
             <ThemeToggle />
-            {isMobile ? null : (
-              <>
-                <PlateDivider />
-                <ProfileButton label />
-              </>
-            )}
+            <PlateDivider />
+            {/* The drawer, from the one screen it belongs to. It holds the
+                account the profile travels on, the settings and the file —
+                things adjusted and closed again, which is what a layer is for.
+                Everywhere else the disc leads *here* instead. */}
+            <IconButton
+              icon="sliders"
+              label={t('ui.profile.title')}
+              onClick={() => openProfile()}
+            />
           </Plate>
         </div>
       </header>
@@ -74,17 +81,16 @@ export default function LearnScreen() {
       <main className="min-h-0 flex-1 overflow-auto">
         {/* Room at the foot for the navigation, which floats over this column
             on a phone rather than taking a row of its own. */}
-        <div className="mx-auto w-full max-w-4xl px-4 pb-24 pt-4 sm:px-6 sm:pb-10">
+        <div className="mx-auto w-full max-w-4xl px-4 pb-[calc(var(--foot,0px)+2rem)] pt-4 sm:px-6 sm:pb-10">
           <StudyBoard />
+          {/* Inside the scroller rather than under it. A row of its own below
+              the column is a strip the navigation then has to stand clear of —
+              and since the map has no such strip, the bar sat at two different
+              heights on the two tabs and jumped as a reader crossed between
+              them. */}
+          <ContributeBar className="mt-10">{t('ui.footer.contribute')}</ContributeBar>
         </div>
-        {isMobile ? (
-          <FloatingFoot>
-            <BottomNav />
-          </FloatingFoot>
-        ) : null}
       </main>
-
-      <ContributeBar>{t('ui.footer.contribute')}</ContributeBar>
     </div>
   );
 }
