@@ -101,6 +101,40 @@ import type { Course } from '../../shared/schema.js';
  * is judged on is *published* English playlists, not queued ones, so a phrasing
  * that names lecture halls is worth more than a larger one that names formats.
  * `playlist` is the runner-up and the first thing to try when this pool empties.
+ *
+ * The ninth is 2026-08-28 and it is that runner-up, bought at 92 novel titles —
+ * «Calculus 1 Playlist», «Machine Learning Playlist», «Computer Networks
+ * (Complete Playlist)». 193 questions returned 3130 playlists the cache had never
+ * seen and queued 571 of them directly.
+ *
+ * **Two words were measured against it and refused, and both refusals are worth
+ * more than the purchase.**
+ *
+ * `theory` scored **450 novel titles** — five times any word ever considered
+ * here, and the largest count this file has ever produced. It is not a phrasing.
+ * Every hit is the word inside a *subject*: «Theory of Computation», «Game
+ * Theory», «Graph Theory», «Coding Theory». Appended to a course name it asks
+ * «Number theory theory». This is a second way the count lies, distinct from the
+ * substring artefact that nearly bought `learn` and `program`: word-bounding
+ * fixes the spelling but not the part of speech, and the count cannot tell a word
+ * that *names* courses from one that *describes their format*. Only a format word
+ * can be appended, so read the sample before believing a large count —
+ * `_gaps.ts`-style, twelve titles is enough to see it.
+ *
+ * `lecture videos` was the opposite case and was refused on a rehearsal. It is
+ * specific and lecture-hall, which is the shape this table rewards, but only 15
+ * novel titles carry it. 50 questions bought **69 queued playlists — 1.38 per
+ * question — against `playlist`'s 3.88 on the identical thinnest-first slice of
+ * the same brief on the same morning.** 653 of its answers named no course at all.
+ * 5000 units refused a 24 300-unit purchase.
+ *
+ * That pair is the useful residue, because the two rehearsals are comparable —
+ * same slice, same day — and they line up with the counts that predicted them:
+ * **92 novel titles → 3.88 queued per question, 15 → 1.38.** The novel-title
+ * count is therefore a *forecast of the rehearsal*, not merely a filter before
+ * it, and it can refuse a phrasing for nothing. No untried English word now
+ * scores above 41 (`videos`, and vague), so the English phrasing axis is spent:
+ * the next lever is the untouched *name* axis, not a tenth qualifier.
  */
 export const QUALIFIERS: Record<string, string[]> = {
   ru: ['лекции', 'курс', 'видеолекции', 'семинары', 'основы', 'курс лекций'],
@@ -113,6 +147,7 @@ export const QUALIFIERS: Record<string, string[]> = {
     'class',
     'semester',
     'university',
+    'playlist',
   ],
 };
 

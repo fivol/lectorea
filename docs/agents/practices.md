@@ -1746,3 +1746,40 @@ else keeps the entry it is on. Concretely, `setPlaylist` in `src/lib/url.ts`:
 **Generally:** when a dialog's open state lives in the URL, decide its history
 behaviour by how the entry was *created*, not by which button closes it — and
 keep that fact in `location.state`, where the entry itself remembers it.
+
+## Publish the queue nobody has walked, not the queue you are about to walk
+
+The night restores the release and crawls it, and the laptop crawls its own copy,
+so the two budgets collide on exactly one thing: **which playlists are pending at
+08:30 UTC.** 2026-08-27 got this wrong in one direction — it crawled the queue
+flat and handed the night 343 rows against a 9500-unit key. The obvious
+correction, publish early and leave the queue alone, is wrong in the other: the
+night then walks 843 playlists that the laptop walks again a minute later, and
+the merge the next morning shows a few dozen videos for two full crawls.
+
+What both budgets can be spent once each on is a queue that is **re-made between
+them**, and mining is what re-makes it:
+
+```
+hunt / crawl  →  make mine  →  the queue is now rows nobody has walked  →  publish
+```
+
+On 2026-08-28 that ran as: hunt (193 questions, 3130 new playlists) → mine (732)
+→ walk all 1871 → mine again (**843 fresh rows**) → `pnpm cache:publish` at 07:44,
+46 minutes before the cron. The laptop kept the 1871 it paid for; the night got
+843 it alone would walk. Nothing was crawled twice.
+
+**The ordering rule, then, is not "publish early" and not "stop crawling early"
+but publish *last*, after the mine that follows the day's crawling** — and to do
+that before 08:30 the crawling has to start early, which is what makes the merge
+and the hunt the first things a morning does. The stop rule from
+[pitfalls.md](pitfalls.md#the-nights-key-was-left-with-nothing-to-spend-it-on)
+still holds on top of it: if the re-mined queue is already larger than the ~3200
+the night can walk, the surplus is the laptop's to crawl and the night's share
+should be left where it is.
+
+**And once it is published, do not publish again the same day.** `cache:publish`
+replaces the snapshot wholesale, so a second publish after 08:30 deletes whatever
+the night has crawled by then. Verdicts and rules written locally after the
+publish are not lost by waiting — the next morning's `_merge.ts` unions them back
+in, which is what it is for.

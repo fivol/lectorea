@@ -1057,3 +1057,34 @@ absence of an error means nothing at all. Two things close it:
 
 The recipe, and what a good payload looks like, is in
 [analytics.md](../analytics.md#checking-that-it-actually-sends).
+
+## `_probe.ts` was read as "what my edit did", and it answers a wider question
+
+Two lines went into `data/keywords/en.json` on 2026-08-28 — «aristotle's poetics»
+and «aristotle poetics», to bind material for a course that held no English at
+all — and the probe came back `+26 / −0 / ~0`. Twenty-six bindings for two lines
+is a result worth writing down, and it was very nearly written down.
+
+It was wrong. `_probe.ts` replays the current rules against the whole cache and
+compares them with the matches **stored** in `matches`, so every playlist crawled
+since the last `make match` counts as a gain whether or not the edit had anything
+to do with it. That morning the cache had just taken 1559 freshly walked
+playlists and 843 freshly mined ones, and they were the twenty-two. The honest
+reading came from stashing the edit and probing again:
+
+```bash
+git stash push -- data/keywords data/aliases
+pnpm tsx scripts/_probe.ts        # baseline: +22
+git stash pop
+pnpm tsx scripts/_probe.ts        # with the edit: +26
+```
+
+**The edit was worth +4.** Still a good edit — all four went to `poetics` — but
+a sixth of what the first number said. The tell was free and was nearly skipped:
+`_probe.ts gained` lists the titles, and not one of the twenty-six was Aristotle.
+
+So the rule is that the baseline is only zero on a cache that has not moved since
+the last match pass, which on a harvest day is never. **Stash, probe, pop, probe
+— and read `gained` for titles that have something to do with the edit.** The
+skill has always said "baseline → edit → probe"; what this cost was the discovery
+that "baseline" means running the probe, not assuming it reads zero.

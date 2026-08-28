@@ -752,3 +752,31 @@ model.
 the extractor flag above would put a nightly cron on a footing that breaks
 without anybody noticing. The prompt hands the command to the reader's own
 assistant instead, which costs nothing to ship and ages better.
+
+## The mining seam is stale before a purchase, not dry
+
+`make mine` reads playlists linked from API bodies already on disk, and on
+2026-08-28 it was run first thing, before anything had been bought, exactly as
+the runbook's "refill for free" line suggests. It returned **nothing** — queue
+unchanged at 343 — and the obvious conclusion, which the previous day's halving
+(2695 → 1326 → 685 → 343) supported, was that the seam was exhausted.
+
+It was not exhausted, it was **stale**. The same command returned **732** an hour
+later and **843** after that, without a line of code changing. What changed was
+the bodies on disk:
+
+| when | `make mine` returns |
+|---|---|
+| before anything was bought | 0 |
+| after a 193-question hunt | 732 |
+| after walking 1559 playlists | 843 |
+
+Both purchases put new descriptions in the raw archive, and the descriptions are
+what `mine` reads. A search body is as minable as a crawled one — this had only
+ever been written down for the crawl ("the seam refills *after* the crawl"), and
+the hunt does it just as well.
+
+**So a dry `mine` measures the archive, not the seam, and it only means anything
+immediately after a purchase.** Running it before one is free and fine; concluding
+anything from its answer is the trap. The halving is real *within* a round and
+says nothing about the next round, because the next purchase resets it.
