@@ -29,7 +29,7 @@ up what it bought.
 
 The same profile on a laptop, a phone and a tablet, without either of them being
 the master copy. It shipped as **a sync account**: sign in with Google in
-**Профиль → Аккаунт**, and the profile lives in a Firestore document under that
+**Настройки → Аккаунт**, and the profile lives in a Firestore document under that
 identity. How it works, what it costs and how to set the project up is
 [sync.md](sync.md).
 

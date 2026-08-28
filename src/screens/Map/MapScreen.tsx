@@ -14,9 +14,9 @@ import GlobalFilters from '@/components/GlobalFilters';
 import ThemeToggle from '@/components/ThemeToggle';
 import LangToggle from '@/components/LangToggle';
 import ViewSwitch, { ViewToggle } from '@/components/ViewSwitch';
-import ProfileButton from '@/components/ProfileButton';
+import PlaceTabs from '@/components/PlaceTabs';
 import ProfileSummary, { useHighlights } from '@/components/ProfileSummary';
-import { Plate, PlateDivider } from '@/components/ui';
+import { IconButton, Plate, PlateDivider } from '@/components/ui';
 import MapView, { MAP_SEA } from './MapView';
 import BlocksView from './BlocksView';
 
@@ -28,6 +28,7 @@ export default function MapScreen() {
 
   const mapView = useMapView();
   const setMapView = useUi((state) => state.setMapView);
+  const openProfile = useUi((state) => state.openProfile);
 
   const [query, setQuery] = useState('');
   const results = useSearchResults(query);
@@ -115,7 +116,7 @@ export default function MapScreen() {
       >
         {/* Over open water and over a continent alike, so the lettering that
             has no plate under it carries the same halo the map's own names do. */}
-        <div className={`flex items-baseline gap-3 ${showMap ? 'over-map' : ''}`}>
+        <div className={`flex items-center gap-3 ${showMap ? 'over-map' : ''}`}>
           {/* The wordmark is the way home, as it is on every site — and home
               here is the map: from a filtered or searched view, and from the
               blocks, it leads back to the clean drawing. The way back from the
@@ -130,7 +131,11 @@ export default function MapScreen() {
               {t('app.title')}
             </Link>
           </h1>
-          <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
+          {/* The two places, beside the name of the site they are places of —
+              the same pair the bar at the foot of a phone spells out. See
+              `PlaceTabs` for why this end of the header and not the corner. */}
+          {isMobile ? null : <PlaceTabs />}
+          <p className="hidden text-xs text-ink-faint xl:block">{t('app.tagline')}</p>
         </div>
 
         {/* Two plates rather than four buttons: what you are looking at on the
@@ -145,11 +150,10 @@ export default function MapScreen() {
             also what everything floating below it is measured against — it
             publishes its width as `--rail`; see the corner card. */}
         <div ref={rail} className="flex items-center gap-2">
-          {/* Two plates and no more. How this place is drawn on the left, who is
-              looking on the right — and the way to the desk is the disc rather
-              than a third pill saying «Обучение», which beside these two read
-              as one row of near-identical switches a reader has to spell out
-              before they can tell which is which.
+          {/* The controls about this screen, kept apart from the controls about
+              the site: the map/list switch says how this place is drawn, the
+              plate says who is looking, and the way to the desk lives at the
+              other end of the header with the wordmark — see `PlaceTabs`.
 
               Neither is in this row on a phone: the places are a bar under the
               thumb, and the map/list toggle rides beside the search field where
@@ -158,10 +162,18 @@ export default function MapScreen() {
           <Plate row>
             <LangToggle />
             <ThemeToggle />
+            {/* The same drawer the desk opens — the theme and the language are
+                already in this plate, and the rest of the settings should not
+                require a walk to another screen to reach. A phone keeps the
+                sliders on the desk: this corner there is two buttons wide. */}
             {isMobile ? null : (
               <>
                 <PlateDivider />
-                <ProfileButton label />
+                <IconButton
+                  icon="sliders"
+                  label={t('ui.profile.title')}
+                  onClick={() => openProfile()}
+                />
               </>
             )}
           </Plate>

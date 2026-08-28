@@ -25,22 +25,27 @@ import { useProfile } from '@/store/profile';
 export const LEARN_PATH = '/learn';
 
 /**
- * Whether this reader has a past here at all.
+ * Whether this reader has a past here worth opening the desk on.
  *
- * Deliberately cheaper and broader than `useHighlights().any`, which the card
- * on the map uses: that one needs the catalogue in hand to tell a finished
- * course from a course that has since left the catalogue, and the entry
- * decision is made before anything is loaded. Anything at all — a lecture
- * ticked, a course marked, a recording opened, a day logged — is a past.
+ * Cheaper than `useHighlights().any`, which the card on the map uses: that one
+ * needs the catalogue in hand to tell a finished course from a course that has
+ * since left the catalogue, and the entry decision is made before anything is
+ * loaded.
+ *
+ * A *mark*, not an opening. Merely looking at a playlist writes `recent` and
+ * `lastVideoId`, and for a while either counted as a past — so one curious
+ * click on the first visit traded the map for a nearly empty desk, with
+ * «Продолжить» offering the thing the reader had already decided against.
+ * What counts is what the reader did on purpose: a lecture ticked or begun, a
+ * course or recording marked, a day on the record.
  */
 export function hasStudyHistory(profile: Profile): boolean {
-  if (profile.recent.length) return true;
   for (const mark of Object.values(profile.videos)) if (mark.done || mark.sec) return true;
   for (const entry of Object.values(profile.courses)) {
     if (entry.status || entry.favorite) return true;
   }
   for (const entry of Object.values(profile.playlists)) {
-    if (entry.watched || entry.favorite || entry.lastVideoId) return true;
+    if (entry.watched || entry.favorite) return true;
   }
   for (const day of profile.days) if (day.sec || day.lectures) return true;
   return false;

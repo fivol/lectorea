@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { track } from './analytics';
 import { useCatalog } from './catalog';
 
@@ -51,6 +51,7 @@ export type CatalogParams = {
 export function useCatalogParams(): CatalogParams {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const catalog = useCatalog();
   /**
    * Which of the two shapes the current address is in. `domainId` is set by the
@@ -170,9 +171,29 @@ export function useCatalogParams(): CatalogParams {
     toggleProvider: (id) => toggle('provider', providers, id),
     toggleLecturer: (name) => toggle('lecturer', lecturers, name),
     clearGlobalFilters,
-    // The modal is a view of the current page, not a place — replace the entry
-    // so closing it does not require two presses of the back button.
-    setPlaylist: (id) => write('playlist', id, true),
+    // The modal is a layer over the current page, and a layer is what the
+    // system back button closes: opening pushes an entry, so back closes the
+    // player and lands on the course — on a phone the back gesture is how a
+    // layer is closed, and it used to throw the reader out of the course
+    // panel and the player at once. Switching parts inside an open player
+    // replaces: however many parts were leafed through, the layer is one
+    // entry deep, and one back is still one exit.
+    setPlaylist: (id) => {
+      const next = new URLSearchParams(params);
+      if (id) next.set('playlist', id);
+      else next.delete('playlist');
+      if (id) {
+        if (playlistId) setParams(next, { replace: true, state: location.state });
+        else setParams(next, { state: { playlistLayer: true } });
+        return;
+      }
+      // Closing mirrors how it opened. A pushed layer pops, so the × and the
+      // back button are the same exit rather than two entries apart; a pasted
+      // `?playlist=` link has nothing underneath and strips the param in
+      // place — the one close that keeps that reader on the site.
+      if ((location.state as { playlistLayer?: boolean } | null)?.playlistLayer) navigate(-1);
+      else setParams(next, { replace: true });
+    },
     /*
      * One string, whatever shape the address is in: a field of knowledge read
      * off the path comes back as `domain=…` here, because that is how every

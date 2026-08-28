@@ -10,14 +10,18 @@ to, what the graph has opened up, and the shelves of everything marked. Which
 one a visit opens on is decided by whether the profile has anything in it (see
 [the two front doors](#the-two-front-doors)).
 
-Getting from one to the other is one control each way and no switch at all. On
-a wide window the disc in the corner leads to the desk and the wordmark leads
-back to the catalogue — the two things every site has in those two places. A
-segmented **Обучение | Каталог** was tried there first and taken out: beside the
-map/list switch and the language-and-theme plate it made three near-identical
-pills in one corner, and a reader has to read all three to find out which is
-which. On a phone the two places are a bar under the thumb, which is the one
-window where a switch earns its space.
+Getting from one to the other is the same pair of tabs everywhere. On a phone
+they are a bar under the thumb; on a wide window a segmented
+**Обучение | Каталог** stands beside the wordmark on the two top-level screens.
+It was tried once before and taken out, and the objection is worth keeping: it
+stood in the *right-hand corner*, beside the map/list switch and the
+language-and-theme plate — three near-identical pills a reader had to read
+before telling them apart. The answer was never "no switch" but "not that
+corner": beside the wordmark it is site-level navigation next to the site's
+name, and the right corner keeps the controls about the current screen. Deep
+inside a field, where the phone hides its bar too, the disc in the corner —
+labelled «Моё обучение», with the play glyph the tab wears — is the one-press
+way back to the desk.
 
 The settings are neither. The account the profile travels on, the theme, the
 language and the file it exports as are a drawer opened over whichever place
@@ -30,6 +34,13 @@ a crawler — and a redirect to `/learn` for one with a past here. The decision 
 made during the render rather than corrected afterwards: the profile is read
 from `localStorage` when the store is created, so it is already in memory and
 nothing flashes ([`src/lib/entry.ts`](../src/lib/entry.ts)).
+
+A past is a **mark**, not an opening. Merely looking into a playlist writes the
+history shelf, and for a while that counted: one curious click on a first visit
+traded the map for a nearly empty desk, with «Продолжить» offering the very
+thing the reader had decided against. What counts now is what was done on
+purpose — a lecture ticked or begun, a course or recording marked, a day on the
+record.
 
 It fires on **arrival** and never again, which is what keeps the wordmark
 working. Home is the map, and a rule saying "a reader with history never sees
@@ -714,7 +725,7 @@ The rules, and where each is argued in full:
 | | On a wide window | On a phone |
 |---|---|---|
 | The map | three continents ranged, fitted whole | a second drawing with them stacked, opening close in — [two shapes of paper](#two-shapes-of-paper) |
-| Desk or catalogue | the disc in the corner, and the wordmark back | two tabs along the foot of the screen |
+| Desk or catalogue | the same two tabs, beside the wordmark on the two top-level screens; deep inside a field, the disc in the corner | two tabs along the foot of the screen |
 | Map or list | a two-word switch in the header | one glyph beside the search field, showing where the press leads |
 | Where you were | a plate in the corner, a bar between the breakpoints | nothing on the map — the desk is a tab, one thumb away |
 | The map's controls | zoom in, zoom out, fit | fit alone: pinching goes in and out, and nothing but a button puts the world back |
@@ -722,8 +733,9 @@ The rules, and where each is argued in full:
 | A course | a panel beside the columns | a sheet over the list, dragged up for the whole card — [the course panel](#the-course-panel) |
 | Links and path | three sections, always open | folded into one **Связи и путь** line, and the fold is remembered |
 | Search | a field in the header | its own screen, full width and full height — [search](#search) |
+| The player | a fact sheet and a watching shape, the glyph in the header between them | one shape: the frame pinned, the queue and the fact sheet in one scroll under it |
 | The desk | a page, at `max-w-4xl` | the same page, its shelves one card wide |
-| The drawer | a modal, reached by the sliders in the desk's header | a sheet, with the bar of places lying on top of it |
+| The drawer | a modal, reached by the sliders on the desk and on the map | a sheet, reached from the desk, with the bar of places lying on top of it |
 
 **One thing floats over the foot of a phone, and it is the places.** There were
 four: the zoom controls, the resume bar, the map/list switch and the contribute
@@ -784,11 +796,20 @@ session that is the only offer worth making.
 
 ### Reading about a recording, and watching one
 
-Those are two different sittings, and the dialog has a shape for each. What is
-described above is the first: a frame across the top at a comfortable size, the
-lectures under it, and everything the catalogue knows about the recording down
-the side — the shape somebody is in while deciding whether this is the course to
-take on.
+Those are two different sittings, and on a window wide enough for them to
+differ the dialog has a shape for each. What is described above is the first: a
+frame across the top at a comfortable size, the lectures under it, and
+everything the catalogue knows about the recording down the side — the shape
+somebody is in while deciding whether this is the course to take on.
+
+A phone gets **one** shape instead. The frame there is as wide as the screen in
+either shape, so «крупный плеер» could not make the picture any larger — the
+two shapes differed only in which half of the content was hidden, and the
+toggle wore the fullscreen glyph while doing nothing a reader could see. So the
+phone's dialog is the watching shape with the sheet at the end of it: the frame
+pinned at the top, the queue scrolling under it, and the fact sheet past the
+last lecture in the same scroll — read by scrolling on, not found behind a
+button.
 
 The glyph — in the corner of the header, and again under the right-hand corner
 of the picture where a player keeps that button — and pressing play, put it in
@@ -832,7 +853,9 @@ scroll between the last row of the queue and the end of the column — in a colu
 whose whole job while a lecture runs is the queue — for questions that are in
 fact asked *before* sitting down with a course: who is lecturing, how many
 hours, is it any good. It is one press away, and the press is the glyph in the
-header that was already there.
+header that was already there. (On a phone, where the sheet and the queue share
+one scroll, it travels after all — there is no second shape for it to stay on,
+and past the end of the queue is out of a watching thumb's way.)
 
 What does travel is what the queue is missing without it: the recording's own
 progress, over the queue rather than at the far end of a sheet, and for a course
@@ -1516,11 +1539,15 @@ recent rows and no further, for the same reason.
 
 ### The drawer
 
-What the desk left behind: a modal over whatever you were looking at, with
-three tabs — **Аккаунт**, **Настройки**, **Данные**. It is reached by one control on one screen: the
-sliders in the desk's own header. The disc in the corner of every other screen
-leads to the desk instead — one door, one glyph, and the settings a layer over
-the room they belong to.
+What the desk left behind: a modal called **Настройки**, over whatever you were
+looking at, with three tabs — **Аккаунт**, **Общие**, **Данные**. It is reached
+by the sliders in the header — on the desk, and on a wide window on the map as
+well, in the plate that already holds the theme and the language it abbreviates.
+It used to be called «Профиль», which was also what the way to the desk was
+called: one word on two different doors, and a reader had to open both to learn
+which was which. The desk's door now says where it leads — «Моё обучение», with
+the play glyph the «Обучение» tab wears — and «профиль» is no longer the name
+of anything in the navigation.
 
 **Аккаунт is first, and that is the whole point of the tab existing.** Signing
 in used to be a section halfway down «Данные», under the heading about
@@ -1611,6 +1638,16 @@ every progress bar on these screens fills in as its shard lands. See
 
 The domain and provider filters, the selected course and the open playlist — so
 a link carries the exact view and the back button behaves.
+
+The playlist is a **layer**, and opening one pushes a history entry: the back
+button — on a phone, the back gesture — closes the player and lands on the
+course, instead of throwing the reader out of both at once, which is what a
+`replace` used to do. Leafing through the parts of a run inside an open player
+replaces, so the layer stays one entry deep; the × pops the entry it pushed,
+so closing and pressing back are the same exit; and a pasted `?playlist=` link,
+which has nothing underneath, strips the parameter in place — the one close
+that keeps that reader on the site. See `setPlaylist` in
+[`src/lib/url.ts`](../src/lib/url.ts).
 
 The stage cap and the display settings do not: they belong to the reader, not to
 the view being shared, and stay in `localStorage`. Map or list is neither — it

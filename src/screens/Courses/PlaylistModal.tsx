@@ -11,7 +11,7 @@ import { formatCompact, useT } from '@/i18n';
 import { track, watchProgress } from '@/lib/analytics';
 import { useCatalog } from '@/lib/catalog';
 import { formatHours, formatMinutes, hoursFromSeconds } from '@/lib/format';
-import { useEscape, useFocusTrap, useScrollLock } from '@/lib/hooks';
+import { useEscape, useFocusTrap, useIsMobile, useScrollLock } from '@/lib/hooks';
 import { usePomodoro } from '@/lib/pomodoro';
 import { percent, playlistProgress } from '@/lib/progress';
 import { courseHref, useCatalogParams } from '@/lib/url';
@@ -59,7 +59,7 @@ type Props = {
 type Playing = { id: string; start: number };
 
 /**
- * Two shapes of one dialog.
+ * Two shapes of one dialog — on a window wide enough for them to differ.
  *
  * `list` is the sheet about a recording: a small frame, the lectures under it,
  * and everything the catalogue knows about it beside them — what somebody
@@ -73,6 +73,14 @@ type Playing = { id: string; start: number };
  * sitting down with it; under a running lecture they were a screen of scroll
  * between the queue and the end of it. The glyph in the header is the way back,
  * and it is one press.
+ *
+ * A phone gets **one** shape instead. The frame is already as wide as the
+ * screen, so «крупный плеер» could not make the picture any larger — the two
+ * shapes differed only in which half of the content was hidden, and a toggle
+ * wearing the fullscreen glyph did nothing a reader could see. Merged: the
+ * frame pinned at the top, the queue scrolling under it, and the fact sheet at
+ * the end of the same scroll — read past the lectures instead of behind a
+ * button. See `pinned` and `sheet` below.
  */
 export type PlayerView = 'list' | 'watch';
 
@@ -169,6 +177,16 @@ export default function PlaylistModal({
   /** Which of the two shapes the dialog is in — see `PlayerView`. */
   const [view, setView] = useState<PlayerView>('list');
   const watching = view === 'watch';
+  const isMobile = useIsMobile();
+  /**
+   * The two axes the phone's merged shape is cut along — see `PlayerView`.
+   *
+   * `pinned`: the frame stays put and the queue scrolls beside or under it.
+   * `sheet`: the fact sheet is on screen. A wide window has one or the other,
+   * which is what the toggle toggles; a phone always has both, and no toggle.
+   */
+  const pinned = isMobile || watching;
+  const sheet = isMobile || !watching;
 
   const close = useCallback(() => onClose(), [onClose]);
   useEscape(true, close);
@@ -539,15 +557,16 @@ export default function PlaylistModal({
             {provider ? <span className="text-ink-faint"> — {provider.title}</span> : null}
           </h2>
           {/* The way between the two shapes, and the way back the watching one
-              needs. A glyph rather than a word because it sits beside the ×
-              on a phone header that is already carrying a two-line title —
-              and it is the glyph every player wears for the same act. */}
-          <IconButton
-            icon={watching ? 'collapse' : 'fit'}
-            label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
-            aria-pressed={watching}
-            onClick={() => setView(watching ? 'list' : 'watch')}
-          />
+              needs — on the windows that have two shapes. A phone has one, and
+              a toggle there did nothing the reader could see. */}
+          {isMobile ? null : (
+            <IconButton
+              icon={watching ? 'collapse' : 'fit'}
+              label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
+              aria-pressed={watching}
+              onClick={() => setView(watching ? 'list' : 'watch')}
+            />
+          )}
           <IconButton icon="close" label={t('ui.common.close')} onClick={close} />
         </header>
 
@@ -564,7 +583,7 @@ export default function PlaylistModal({
         <div
           className={cx(
             'min-h-0 flex-1 lg:overflow-hidden',
-            watching
+            pinned
               ? // A stated width rather than a share: the queue is a column of
                 // numbered titles and a length, and every pixel past what those
                 // need comes out of the picture. It is the picture the reader is
@@ -574,7 +593,7 @@ export default function PlaylistModal({
                  lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]`
           )}
         >
-          <div className={cx('flex min-w-0 flex-col lg:min-h-0', watching && 'shrink-0')}>
+          <div className={cx('flex min-w-0 flex-col lg:min-h-0', pinned && 'shrink-0')}>
             {/*
               A ratio box with nothing in flow inside it: the poster is 480×360
               and in flow it hands the box a content-based minimum height of its
@@ -772,12 +791,14 @@ export default function PlaylistModal({
                       </span>
                     </Tooltip>
                   ) : null}
-                  <IconButton
-                    icon={watching ? 'collapse' : 'fit'}
-                    label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
-                    aria-pressed={watching}
-                    onClick={() => setView(watching ? 'list' : 'watch')}
-                  />
+                  {isMobile ? null : (
+                    <IconButton
+                      icon={watching ? 'collapse' : 'fit'}
+                      label={watching ? t('ui.player.toList') : t('ui.player.theatre')}
+                      aria-pressed={watching}
+                      onClick={() => setView(watching ? 'list' : 'watch')}
+                    />
+                  )}
                 </div>
               </div>
             ) : null}
@@ -785,8 +806,9 @@ export default function PlaylistModal({
             {/* The lecture list comes from the shard, not from the API. It
                 stands under the frame while the recording is being read about
                 and moves into the sidebar while it is being watched — one list
-                either way, because two would be two sets of ticks. */}
-            {watching ? null : (
+                either way, because two would be two sets of ticks. On a phone
+                it is always in the scrolling half; see `pinned`. */}
+            {pinned ? null : (
               <LectureList
                 videos={playlist.videos}
                 audience={playlist.audience}
@@ -804,10 +826,10 @@ export default function PlaylistModal({
             className={cx(
               `flex min-w-0 flex-col border-t border-line
                lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-t-0`,
-              watching && 'min-h-0 flex-1 overflow-y-auto overscroll-contain'
+              pinned && 'min-h-0 flex-1 overflow-y-auto overscroll-contain'
             )}
           >
-            {watching ? (
+            {pinned ? (
               <>
                 {/*
                   Where the recording as a whole stands, over the queue it is
@@ -872,14 +894,18 @@ export default function PlaylistModal({
                 />
 
               </>
-            ) : (
-              /* The sheet about the recording, and only on the shape that is
-                 read rather than watched. It used to follow the queue as well,
-                 on the argument that «who is this, how long, is it any good» is
-                 asked on the third lecture too — but it is asked *before*
-                 starting, and the price of keeping it was a screen of scroll
-                 between the last row of the queue and the way out of it, in a
-                 column whose whole job while a lecture runs is the queue. */
+            ) : null}
+            {sheet ? (
+              /* The sheet about the recording. On a wide window it is the
+                 reading shape and stands alone — while a lecture runs it would
+                 be a screen of scroll between the last row of the queue and
+                 the way out of it, in a column whose whole job is the queue.
+                 On a phone it follows the queue in the same scroll: there is
+                 no second shape to keep it on, and past the end of the
+                 lectures is where a hand looking for «who is this, how long»
+                 already goes. The blocks the pinned header above already
+                 carries — progress, the day, the way between parts — sit that
+                 branch out rather than printing twice. */
               <div className="min-w-0 p-4">
                 <p className="text-sm font-medium text-ink">
                   {lecturerFilter ? (
@@ -906,7 +932,8 @@ export default function PlaylistModal({
                   {rest}
                 </p>
 
-                {seriesNav}
+                {/* Already over the queue on the pinned shapes. */}
+                {pinned ? null : seriesNav}
 
                 {/* One recording, two courses — «Алгоритмы и структуры данных»
                     is a semester of both, and saying so is how the reader knows
@@ -922,9 +949,9 @@ export default function PlaylistModal({
                 {/* Above the fact sheet, because it is the one thing here that is
                     about the reader rather than about the recording. Absent until
                     there is something to say: an empty bar over «0 из 30» repeats
-                    the lecture count two lines below it. The watching shape has
-                    its own copy of this, over the queue. */}
-                {progress.started ? (
+                    the lecture count two lines below it. The pinned shapes carry
+                    their own copy of this, over the queue. */}
+                {!pinned && progress.started ? (
                   <div className="mt-4">
                     <ProgressBar
                       done={progress.done}
@@ -955,9 +982,9 @@ export default function PlaylistModal({
                   minutes that press is for. Outside the `started` condition
                   above, for the reason the watching copy is outside its own one —
                   the day belongs to the reader and does not wait on this
-                  recording having been begun.
+                  recording having been begun. The pinned header already says it.
                 */}
-                <TodayLine className={progress.started ? 'mt-2' : 'mt-4'} />
+                {pinned ? null : <TodayLine className={progress.started ? 'mt-2' : 'mt-4'} />}
 
                 {/* How big the thing is, in the three numbers somebody deciding
                     whether to take it on actually weighs. Tiles rather than the
@@ -1086,8 +1113,10 @@ export default function PlaylistModal({
                     dialog that leads somewhere, and the press means "put the
                     panel back" — so it goes to the course with the playlist
                     dropped from the query, which is exactly what closing does.
-                    `replace`, like the opening did, so the way back out of the
-                    dialog is still one press. */}
+                    `replace` because it stands in for closing rather than for
+                    going somewhere new — and because, from a recording that
+                    also covers another course, the address it leads to is not
+                    the entry underneath, so popping is not an option. */}
                 {course ? (
                   <p className="mt-4 text-xs text-ink-faint">
                     {t('ui.playlist.forCourse')}:{' '}
@@ -1103,18 +1132,17 @@ export default function PlaylistModal({
                   </p>
                 ) : null}
               </div>
-            )}
+            ) : null}
 
-            {/* Pinned to the bottom of whichever box scrolls — the dialog on a
-                phone, the sidebar itself once it is a column. It lets go on a
-                phone that is watching: three buttons about the recording as a
-                whole, standing over a queue that has three rows left, are the
-                wrong three inches of a screen that has the video and its
-                controls above it already. They scroll into reach instead. */}
+            {/* Pinned to the bottom of the sidebar once it is a column. On a
+                phone they let go and scroll with the sheet: three buttons about
+                the recording as a whole, standing over a queue that has three
+                rows left, are the wrong three inches of a screen that has the
+                video and its controls above it already. */}
             <div
               className={cx(
                 'mt-auto space-y-1.5 border-t border-line bg-surface p-4',
-                watching ? 'lg:sticky lg:bottom-0' : 'sticky bottom-0'
+                pinned ? 'lg:sticky lg:bottom-0' : 'sticky bottom-0'
               )}
             >
               {/* The end of a long recording, said as an event and not as a
@@ -1146,13 +1174,13 @@ export default function PlaylistModal({
               ) : null}
               {/* Two decisions about the recording as a whole — save it for
                   later, and call the whole thing watched — and neither is a
-                  thing anybody does while a lecture is running. They belong to
-                  the sheet somebody reads before starting; on the watching
-                  screen they would be two full-width buttons of nothing to do,
-                  one of which wipes the ticks of a course in progress. What
-                  marking off looks like here is one lecture at a time, under
-                  the picture and down the queue. */}
-              {watching ? null : (
+                  thing anybody does while a lecture is running. They belong
+                  with the sheet somebody reads before starting; on the wide
+                  watching screen they would be two full-width buttons of
+                  nothing to do, one of which wipes the ticks of a course in
+                  progress. What marking off looks like there is one lecture at
+                  a time, under the picture and down the queue. */}
+              {sheet ? (
                 <>
                   <Button
                     variant={favorite ? 'primary' : 'default'}
@@ -1180,7 +1208,7 @@ export default function PlaylistModal({
                         : t('ui.playlist.watched')}
                   </Button>
                 </>
-              )}
+              ) : null}
               <ButtonLink
                 href={watchUrl(listId, shownId ?? playlist.videos[0]?.id)}
                 icon="external"

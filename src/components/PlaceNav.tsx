@@ -16,13 +16,11 @@ import Icon from './Icon';
  * folded into a plate in the corner and, on a phone, into a bar forty pixels
  * tall.
  *
- * On a phone the switch between them is this bar. On a wide window there is no
- * switch at all: the disc in the corner leads to the desk and the wordmark
- * leads back to the catalogue, which is one control each way and the two words
- * a reader already knows. A segmented switch was tried there and taken out —
- * beside the map/list switch and the language/theme plate it made three
- * near-identical pills in one corner, and a reader has to read all three to
- * find out which is which.
+ * On a phone the switch between them is this bar. On a wide window the same
+ * pair stands beside the wordmark on the two top-level screens — see
+ * `PlaceTabs`, and the history of the corner it deliberately avoids — while
+ * the screens deep inside a field keep the disc in the corner as the one-press
+ * way back to the desk.
  */
 
 export type Place = 'learn' | 'catalog';

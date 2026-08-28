@@ -62,7 +62,7 @@ goes to the reader's disk and nowhere else.
 
 ## The switch
 
-**Профиль → Настройки → «Анонимная статистика»**, on by default, and stated in
+**Настройки → Общие → «Анонимная статистика»**, on by default, and stated in
 plain words next to the switch rather than in a policy nobody opens. There is no
 cookie banner: everything a banner would ask about is denied by construction.
 
@@ -180,7 +180,7 @@ payload. So: anything in `ep.` that is not a parameter this site meant to send
 is a config key GA4 never understood.
 
 If nothing is sent at all, the order to check is cheapest first — the switch in
-**Профиль → Настройки**, `Do Not Track` or GPC in the browser, `VITE_GA4_ID` in
+**Настройки → Общие**, `Do Not Track` or GPC in the browser, `VITE_GA4_ID` in
 the build (a fork has none by design), and only then the code.
 
 ## Setting the property up

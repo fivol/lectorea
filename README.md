@@ -147,7 +147,7 @@ press away and the wordmark still leads to it.
 
 **Your data is yours, and it can follow you.** Everything lives in your browser
 and there is no server holding it. If you study on a laptop in the evening and
-on a phone in the morning, **Профиль → Аккаунт** is the sign-in that carries the
+on a phone in the morning, **Настройки → Аккаунт** is the sign-in that carries the
 same profile to both — Google, or a link sent to an email address, which can be
 opened on whichever device is missing the progress. It is a setting and never a
 wall: the catalogue is complete without it, and a reader who never signs in does
@@ -163,7 +163,7 @@ which searches come back empty, because a search with no results is a course
 the catalogue is missing and there is no other way to hear about one. It counts
 nothing about *you*: no account, no identifier, no advertising data, and nothing
 you typed beyond a search term that has been through a filter. Your profile is
-never sent anywhere. **Профиль → Настройки** has a switch that turns the whole
+never sent anywhere. **Настройки → Общие** has a switch that turns the whole
 of it off, and the rules are written out in full in
 [docs/analytics.md](docs/analytics.md).
 

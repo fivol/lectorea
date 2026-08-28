@@ -5,24 +5,24 @@ import { useSync } from '@/store/sync';
 import Icon from './Icon';
 
 /**
- * The way to the desk, identical on every screen that is not it.
+ * The way to the desk from inside the catalogue.
  *
- * It used to open the profile modal, and the modal used to hold everything a
- * reader had studied. That moved to a page, and this moved with it: the disc
- * is the one door to «моё», and the settings are a layer opened from the desk
- * rather than a second thing hiding behind the same glyph. What it saves is a
- * pill: the alternative was a two-word switch in the header next to the
- * map/list switch and the language plate, three near-identical shapes in one
- * corner.
+ * It used to wear the anonymous-person glyph and the word «Профиль», which is
+ * the word the settings drawer also answered to — one name on two doors, and a
+ * person-glyph that reads as "account" leading to a page of study. The disc now
+ * carries the play glyph the «Обучение» tab wears at the foot of a phone, and
+ * the label says where the press leads: «Моё обучение». On the top-level
+ * screens the same journey is a tab beside the wordmark — see `PlaceTabs` —
+ * and this button remains for the screens deep inside a field, whose header
+ * has no room for a pair of tabs.
  *
  * The label is optional because the courses screen has a header full of filters
- * and no room for a word that the avatar already carries; where there is room,
- * the word stays — an unlabelled disc in a corner is a guess.
+ * and no room for the words the disc's `aria-label` still carries.
  *
- * Signed in, the disc carries the account's initial instead of the anonymous
- * glyph. That is the whole of what syncing shows outside its own section, and
- * it is enough: the one thing worth knowing at a glance is *whose* progress
- * this is, which matters on a shared machine and nowhere else.
+ * Signed in, the disc carries the account's initial instead of the glyph. That
+ * is the whole of what syncing shows outside its own section, and it is
+ * enough: the one thing worth knowing at a glance is *whose* progress this is,
+ * which matters on a shared machine and nowhere else.
  */
 export default function ProfileButton({
   label = false,
@@ -41,16 +41,16 @@ export default function ProfileButton({
       type="button"
       className={`profile-btn ${label ? 'pr-3' : ''} ${className}`}
       onClick={() => navigate(LEARN_PATH)}
-      aria-label={t('ui.nav.profile')}
+      aria-label={t('ui.nav.myLearning')}
     >
       <span className="profile-disc">
         {initial ? (
           <span className="font-display text-[13px] leading-none">{initial}</span>
         ) : (
-          <Icon name="profile" size={14} />
+          <Icon name="play" size={12} />
         )}
       </span>
-      {label ? <span className="hidden sm:inline">{t('ui.nav.profile')}</span> : null}
+      {label ? <span className="hidden sm:inline">{t('ui.nav.myLearning')}</span> : null}
     </button>
   );
 }

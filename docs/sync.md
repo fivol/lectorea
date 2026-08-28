@@ -21,7 +21,7 @@ the two cheaper shapes.
 
 ## What a reader sees
 
-**Профиль → Аккаунт.** Signed out it is one sentence and two buttons. Signed in
+**Настройки → Аккаунт.** Signed out it is one sentence and two buttons. Signed in
 it is the account, one word of status, «Выйти», and — set apart, in red —
 «Удалить копию в облаке».
 

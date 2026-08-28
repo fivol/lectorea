@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '@/i18n';
 import { useIsMobile } from '@/lib/hooks';
 import { useDocumentMeta } from '@/lib/meta';
+import { useSearchResults } from '@/lib/search';
 import { useUi } from '@/store/ui';
 import ContributeBar from '@/components/ContributeBar';
 import LangToggle from '@/components/LangToggle';
+import PlaceTabs from '@/components/PlaceTabs';
+import SearchBox from '@/components/SearchBox';
 import ThemeToggle from '@/components/ThemeToggle';
-import { ButtonLink, IconButton, Plate, PlateDivider } from '@/components/ui';
+import { IconButton, Plate, PlateDivider } from '@/components/ui';
 import StudyBoard from './StudyBoard';
 
 /**
@@ -35,12 +39,19 @@ export default function LearnScreen() {
   const isMobile = useIsMobile();
   const openProfile = useUi((state) => state.openProfile);
 
+  // The catalogue's search, from the desk: «смотрю курс, хочу найти второй»
+  // starts here, and the answer should not require a walk to the map first.
+  // The box itself navigates into the catalogue on a pick, so this screen
+  // only holds the query for as long as it is being typed.
+  const [query, setQuery] = useState('');
+  const results = useSearchResults(query);
+
   useDocumentMeta(t('seo.learn.title'), t('seo.learn.desc'), 'learn', { index: false });
 
   return (
     <div className="flex h-full flex-col">
       <header className="relative z-30 flex items-start justify-between gap-4 px-4 pt-4 sm:px-6">
-        <div className="flex items-baseline gap-3">
+        <div className="flex items-center gap-3">
           {/* The wordmark is the way home, as it is on every site — and home
               is the catalogue, on this screen as on the columns. */}
           <h1 className="font-display text-xl tracking-tight">
@@ -48,27 +59,30 @@ export default function LearnScreen() {
               {t('app.title')}
             </Link>
           </h1>
-          <p className="hidden text-xs text-ink-faint lg:block">{t('app.tagline')}</p>
+          {/* The same pair as on the map and at the foot of a phone — the one
+              statement of where in the site this screen is. A phone has the
+              bar of places under the thumb and needs no second copy. */}
+          {isMobile ? null : <PlaceTabs />}
+          <p className="hidden text-xs text-ink-faint xl:block">{t('app.tagline')}</p>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* The way back, said in a word rather than in a switch: on a wide
-              window this screen is reached by the disc in the corner of the
-              catalogue, and this is the other half of that pair. A phone has
-              the bar of places under the thumb and needs neither. */}
-          {isMobile ? null : (
-            <ButtonLink to="/" icon="map">
-              {t('ui.nav.catalog')}
-            </ButtonLink>
-          )}
+          <SearchBox
+            query={query}
+            onQueryChange={setQuery}
+            results={results}
+            variant="compact"
+            className="w-40 sm:w-56"
+          />
           <Plate row>
             <LangToggle />
             <ThemeToggle />
             <PlateDivider />
-            {/* The drawer, from the one screen it belongs to. It holds the
-                account the profile travels on, the settings and the file —
-                things adjusted and closed again, which is what a layer is for.
-                Everywhere else the disc leads *here* instead. */}
+            {/* The settings drawer: the account the profile travels on, the
+                theme and the language in full, and the file — things adjusted
+                and closed again, which is what a layer is for. The map's
+                corner carries the same sliders on a wide window; on a phone
+                this is the one place they are. */}
             <IconButton
               icon="sliders"
               label={t('ui.profile.title')}

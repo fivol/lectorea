@@ -1710,3 +1710,39 @@ kind before you restyle them. Anything that is navigation should be tried
 against the conventions the browser and the web already installed in the
 reader — a wordmark, a back arrow, an avatar — and only what is left needs a
 control of its own.
+
+**Amended later:** the switch came back — at the *other end* of the header. The
+disc-and-wordmark answer left the two places invisible on a wide window (the
+phone's two tabs said plainly what the desktop made a reader discover), and the
+word on the disc — «Профиль» — named the settings drawer too, one word on two
+doors. The lesson above was about the corner, not about the switch: beside the
+wordmark it is site navigation next to the site's name, the right corner keeps
+the controls about the current screen, and nothing piles up. See `PlaceTabs`.
+When re-reading this entry, do not take it as a standing rule against a place
+switch on the desktop.
+
+## A modal that owns a URL parameter is a history layer, and opens by pushing
+
+**The case.** The player opens as `?playlist=` written with `replace`, on the
+argument that closing it should not take two presses of the back button. What
+that bought on a phone was worse than the problem: the course sheet and the
+player were one history entry, so the system back gesture — the way a phone
+closes layers — threw the reader out of both at once, back into the field list.
+The docs promised "the back button behaves"; the code made it behave for the ×
+and betray the gesture.
+
+**The practice.** A layer the reader steps *into* pushes an entry; everything
+else keeps the entry it is on. Concretely, `setPlaylist` in `src/lib/url.ts`:
+
+- opening pushes, with `{ playlistLayer: true }` in `location.state` — the flag
+  travels with the entry, so no module state can go stale on it;
+- *switching* content inside the open layer (parts of a run) replaces, carrying
+  the state along — however far you leaf, the layer is one entry deep;
+- closing reads the flag: pushed → `navigate(-1)`, so the × and the back button
+  are the same exit and no duplicate entry is left behind; not pushed (a pasted
+  link, nothing underneath) → strip the parameter with `replace`, the one close
+  that keeps that reader on the site.
+
+**Generally:** when a dialog's open state lives in the URL, decide its history
+behaviour by how the entry was *created*, not by which button closes it — and
+keep that fact in `location.state`, where the entry itself remembers it.

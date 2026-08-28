@@ -692,7 +692,24 @@ when a value has to agree in two files, one of them reads the other.
 
 ## Environment
 
-### An example file's placeholder was copied as if it were a value
+### An edited string in data/i18n was invisible until data:build ran
+
+**Assumed:** `data/i18n/ru.json` is what the dev server serves — edit a string,
+reload, see it.
+**It was:** the app fetches its dictionary at runtime from
+`public/data/i18n/ru.json`, which is *generated* by `pnpm data:build` from the
+file that was edited. The dev page kept showing the old words through a reload
+and a hard reload, while `check:i18n` — which reads the source file — passed
+with the new ones, so every check that was run agreed the edit had landed and
+the screen alone disagreed. The debugging that followed went looking in the
+component, in HMR, in the store.
+
+**How not to repeat it:** a string change is not on screen until `data:build`
+has run (about 40 s; it also rebuilds the catalogue, and must not run while a
+crawl is writing `cache.db`). The general shape to recognise: **when a source
+file is read by a generator rather than by the app, the edit-reload loop
+silently tests the previous generation** — and the place to confirm which world
+the screen is in is the file the network tab actually fetched.
 
 **Assumed:** a commented line in `.env.example` reading
 `VITE_FIREBASE_AUTH_DOMAIN=lectorea.firebaseapp.com` reads as an illustration.
